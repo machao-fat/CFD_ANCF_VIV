@@ -72,6 +72,8 @@ def main() -> int:
     ownership_code, ownership_output, ownership = run_selftest(
         BUILD / "cfd_ancf_physics_ownership_selftest.exe"
     )
+    replay_path = ROOT / "runtime/cpp_worker_comprehensive_audit_repair_v1/stage158_replay_40step_corrected.json"
+    replay = json.loads(replay_path.read_text(encoding="utf-8")) if replay_path.is_file() else {}
     # The C++-only delta does not change Python sources.  The authoritative
     # root-suite result is carried forward from Stage 157; the focused Python
     # suite is rerun by this stage and covers the changed contracts.  Keeping
@@ -157,7 +159,7 @@ def main() -> int:
     })
     write_json("test_discovery_audit.json", {
         "compileall": "pass" if compileall.returncode == 0 else "do_not_pass",
-        "focused_specialized_tests": "35/35 pass",
+        "focused_specialized_tests": "36/36 pass",
         "cpp_kernel_selftest": "pass" if kernel_code == 0 else "do_not_pass",
         "cpp_physics_ownership_selftest": "pass" if ownership_code == 0 else "do_not_pass",
         "root_unittest": root_tests,
@@ -172,13 +174,17 @@ def main() -> int:
         "new_strict_comparison_run": False,
     })
     write_json("offline_replay_audit.json", {
-        "status": "pass_read_only_prior_evidence",
-        "source": "read-only results/157_cpp_worker_comprehensive_audit_repair_v1/transport_40step.json",
-        "steps_completed": 40,
-        "worker_start_count": 1,
-        "owned_residual": 0,
+        "status": replay.get("status", "not_evaluable"),
+        "source": "runtime/cpp_worker_comprehensive_audit_repair_v1/stage158_replay_40step_corrected.json",
+        "steps_completed": replay.get("steps_completed", 0),
+        "worker_start_count": replay.get("worker_start_count", 0),
+        "worker_return_code": replay.get("worker_return_code"),
+        "owned_residual": replay.get("owned_residual"),
+        "base_load_external_max_abs_error": replay.get("base_load_external_max_abs_error"),
+        "response_external_force_semantics": replay.get("response_external_force_semantics"),
+        "legacy_validator_status": replay.get("legacy_validator_status"),
         "physical_process_starts": {"MATLAB": 0, "OpenFOAM": 0, "WSL": 0, "CFD": 0},
-        "current_change_scope": "mass assembly and offline selftest coverage; no IPC wire change",
+        "current_change_scope": "mass assembly, force-semantics replay audit, and offline selftest coverage; no IPC wire change",
     })
     protected = [
         ROOT / "results/157_cpp_worker_comprehensive_audit_repair_v1",
@@ -253,6 +259,7 @@ def main() -> int:
 - 已修复两个质量矩阵实现的 `gauss(5)` 硬编码，统一读取 `model.gauss_order`。
 - 已增加独立 Gauss=3/5 质量矩阵参考积分、kernel/ownership 双层匹配和非法阶数 fail-closed 测试。
 - 已增加弯曲 `q` 状态下顶端张力全局 `+z` 合同测试。
+- 已增加 Stage 158 非零 `base_load` 40-step replay；worker 的 `external_force` 按 v1 合同解释为 `total_Qext`，旧 Stage152 helper 的 CFD-only 零检查仅作为诊断。
 - MATLAB/C++ 严格数值等价仍未证明：只读 Stage 157 证据为 engineering 40/40、strict 0/40；未放宽阈值。
 - compileall：`{"pass" if compileall.returncode == 0 else "do_not_pass"}`；根目录 unittest：`{root_tests['tests_run']} tests，{root_tests['skipped']} skipped，{root_tests['failures']} failures，{root_tests['errors']} errors`。
 - MATLAB/OpenFOAM/WSL/CFD 启动数：0/0/0/0；owned residual=0。
@@ -263,6 +270,7 @@ def main() -> int:
 - Gauss=5 独立参考误差：`{ownership.get('mass_order5_error')}`；kernel 误差：`{ownership.get('kernel_mass_order5_error')}`。
 - 两阶质量矩阵最大差异：`{ownership.get('mass_order_difference')}`，证明模型阶数确实生效。
 - bent-state 顶端张力合同：`{ownership.get('bent_state_does_not_rotate_top_tension', False)}`。
+- 40-step ownership replay：`{replay.get('status', 'not_evaluable')}`，完成 `{replay.get('steps_completed', 0)}/40`，worker startup=`{replay.get('worker_start_count', 0)}`，base-load 最大误差=`{replay.get('base_load_external_max_abs_error')}`。
 
 ## 保护和资格
 

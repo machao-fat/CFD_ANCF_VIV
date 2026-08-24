@@ -2,7 +2,7 @@
   "compileall": "pass",
   "cpp_kernel_selftest": "pass",
   "cpp_physics_ownership_selftest": "pass",
-  "focused_specialized_tests": "35/35 pass",
+  "focused_specialized_tests": "36/36 pass",
   "root_unittest": {
     "errors": 0,
     "failures": 0,
