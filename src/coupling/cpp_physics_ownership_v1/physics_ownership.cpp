@@ -82,7 +82,8 @@ void validate_model(const Model& model) {
   cfd_ancf::validate_model(model);
   const auto finite_scalar = [](double value) { return std::isfinite(value); };
   if (model.length_m <= 0.0 || model.diameter_m <= model.inner_diameter_m ||
-      model.inner_diameter_m < 0.0 || model.elements < 1 || model.slices < 1 ||
+      model.inner_diameter_m < 0.0 || model.elements < 1 || model.elements > 10000 ||
+      model.slices < 1 || model.slices > 1000 ||
       model.dt_s <= 0.0 || model.beta <= 0.0 || model.gamma <= 0.0 ||
       model.newton_tolerance <= 0.0 || model.gauss_order != 3 && model.gauss_order != 5 ||
       model.damping_alpha != 0.0 || model.damping_beta != 0.0) {
@@ -102,7 +103,7 @@ void validate_model(const Model& model) {
     for (std::size_t i = 0; i < model.slice_positions_m.size(); ++i) {
       const double position = model.slice_positions_m[i];
       if (!finite_scalar(position) || position < 0.0 || position > model.length_m ||
-          (i > 0 && position < model.slice_positions_m[i - 1])) {
+          (i > 0 && position <= model.slice_positions_m[i - 1])) {
         throw std::invalid_argument("slice positions are not finite, bounded, or monotone");
       }
     }

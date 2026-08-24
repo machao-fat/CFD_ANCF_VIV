@@ -10,7 +10,7 @@ ROOT = Path(__file__).resolve().parents[2]
 sys.path.insert(0, str(ROOT / "src"))
 
 from coupling.cpp_worker_persistent_ipc_v1.protocol import (
-    FrameError, HEADER, MESSAGE_SHUTDOWN, StepRequest, decode_response, encode_control,
+    FrameError, HEADER, MESSAGE_SHUTDOWN, REQUEST, StepRequest, decode_response, encode_control,
     encode_request, validate_response,
 )
 
@@ -57,6 +57,26 @@ class TransportWorkerHardeningTests(unittest.TestCase):
         bad = replace(request(2), integer_tick=2209000000)
         with self.assertRaises(FrameError):
             encode_request(bad)
+
+    def test_legacy_worker_rejects_nonzero_bytes_after_fixed_identity_nul(self) -> None:
+        process = subprocess.Popen([str(WORKER)], stdin=subprocess.PIPE, stdout=subprocess.PIPE,
+                                   stderr=subprocess.PIPE, cwd=str(ROOT), bufsize=0)
+        assert process.stdin is not None
+        try:
+            raw = bytearray(encode_request(request(1)))
+            run_offset = HEADER.size + 64
+            raw[run_offset] = ord("r")
+            raw[run_offset + 1] = 0
+            raw[run_offset + 2] = ord("x")
+            process.stdin.write(raw); process.stdin.flush(); process.stdin.close()
+            process.wait(timeout=10)
+            self.assertNotEqual(process.returncode, 0)
+        finally:
+            if process.poll() is None:
+                process.kill(); process.wait(timeout=10)
+            for stream in (process.stdout, process.stderr):
+                if stream is not None and not stream.closed:
+                    stream.close()
 
 
 if __name__ == "__main__":

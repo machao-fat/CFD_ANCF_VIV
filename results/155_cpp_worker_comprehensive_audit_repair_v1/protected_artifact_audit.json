@@ -1,0 +1,9 @@
+{
+  "formal_0_2_1_protocol_semantics_modified": false,
+  "matlab_baseline_kept_read_only": true,
+  "new_runtime_namespace": "runtime/cpp_worker_comprehensive_audit_repair_v1/build-release",
+  "old_runtime_modified": false,
+  "old_stage_1_154_evidence_modified": false,
+  "physical_contract_modified": false,
+  "status": "scope_verified"
+}

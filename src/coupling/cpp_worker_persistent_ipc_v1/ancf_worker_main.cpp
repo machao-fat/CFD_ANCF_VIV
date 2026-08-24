@@ -50,11 +50,17 @@ bool read_bytes(std::istream& input, char* data, std::size_t size) {
 }
 
 bool valid_c_string(const char* value, std::size_t size) {
+  bool terminated = false;
   for (std::size_t index = 0; index < size; ++index) {
-    if (value[index] == '\0') return index > 0;
+    if (value[index] == '\0') {
+      if (index == 0) return false;
+      terminated = true;
+      for (++index; index < size; ++index) if (value[index] != '\0') return false;
+      break;
+    }
     if (static_cast<unsigned char>(value[index]) < 0x20) return false;
   }
-  return false;
+  return terminated;
 }
 
 std::string string_value(const char* value, std::size_t size) {
@@ -138,6 +144,7 @@ int process_step(const std::vector<char>& payload, std::vector<char>& response,
                  std::int32_t& expected_bridge_step, std::uint64_t& expected_tick,
                  double& expected_time_s, double& expected_dt_s,
                  std::array<unsigned char, 32>& expected_model_digest,
+                 int& lineage_mode,
                  std::unordered_set<std::uint64_t>& seen_request_ids,
                  std::unordered_set<std::uint64_t>& seen_transaction_ids) {
   std::size_t offset = 0;
@@ -154,7 +161,7 @@ int process_step(const std::vector<char>& payload, std::vector<char>& response,
     return 2;
   }
   if (schema != SCHEMA || protocol != PROTOCOL || sequence == 0 || n <= 0 || n > static_cast<std::int32_t>(cfd_ancf::MAX_NDOF) ||
-      elements < 2 || elements > 10000 || slices < 1 || slices > 1000 ||
+      elements < 1 || elements > 10000 || slices < 1 || slices > 1000 ||
       gauss_order != 3 && gauss_order != 5 || max_newton <= 0 || dt_s <= 0.0 || !std::isfinite(time_s) ||
       !std::isfinite(dt_s) || n != 6 * (elements + 1)) return 3;
   if (time_s < 0.0 || time_s > 1.0e9) return 3;
@@ -192,15 +199,21 @@ int process_step(const std::vector<char>& payload, std::vector<char>& response,
   std::int32_t base_n = 0, force_n = 0, mass_n = 0;
   if (!take(payload, offset, base_n) || !take(payload, offset, force_n) ||
       base_n != n || force_n != 3 * slices) return 5;
-  // A third size is present only for the extended source-state mass layout.
-  // Legacy frames place the first four run-id bytes here, so rewind unless it
-  // is an explicitly valid mass dimension.
-  const std::size_t after_legacy_sizes = offset;
-  std::int32_t candidate_mass_n = 0;
-  if (take(payload, offset, candidate_mass_n) && (candidate_mass_n == 0 || candidate_mass_n == n)) {
-    mass_n = candidate_mass_n;
+  // Select the layout from the complete frame length.  Guessing from the
+  // first four bytes of run_id is ambiguous because those bytes are arbitrary
+  // valid identity data and can equal n by coincidence.
+  const std::size_t after_sizes = offset;
+  const std::size_t fixed_suffix = ID_RUN + ID_CASE + 2 * ID_ENDPOINT + 32;
+  const std::size_t legacy_arrays = static_cast<std::size_t>(4 * n) + static_cast<std::size_t>(force_n);
+  const std::size_t extended_arrays = legacy_arrays + static_cast<std::size_t>(n) * static_cast<std::size_t>(n);
+  const std::size_t legacy_size = fixed_suffix + legacy_arrays * sizeof(double);
+  const std::size_t extended_size = sizeof(std::int32_t) + fixed_suffix + extended_arrays * sizeof(double);
+  if (payload.size() - after_sizes == legacy_size) {
+    mass_n = 0;
+  } else if (payload.size() - after_sizes == extended_size) {
+    if (!take(payload, offset, mass_n) || mass_n != n) return 5;
   } else {
-    offset = after_legacy_sizes;
+    return 8;
   }
 
   char run_id[ID_RUN]{}, case_id[ID_CASE]{}, producer[ID_ENDPOINT]{}, consumer[ID_ENDPOINT]{};
@@ -231,6 +244,23 @@ int process_step(const std::vector<char>& payload, std::vector<char>& response,
     expected_tick = integer_tick;
     expected_time_s = time_s;
     expected_dt_s = dt_s;
+  } else if (lineage_mode == 0 && expected_sequence == 2) {
+    if (global_step == expected_global_step && bridge_step == expected_bridge_step &&
+        integer_tick == expected_tick && std::abs(time_s - expected_time_s) <= 1.0e-12 &&
+        std::abs(dt_s - expected_dt_s) <= 1.0e-15) {
+      lineage_mode = 2;
+    } else if (global_step == expected_global_step + 1 && bridge_step == expected_bridge_step + 1 &&
+               integer_tick == static_cast<std::uint64_t>(std::llround(time_s * 1.0e9)) &&
+               std::abs(time_s - (expected_time_s + expected_dt_s)) <= 1.0e-12 &&
+               std::abs(dt_s - expected_dt_s) <= 1.0e-15) {
+      lineage_mode = 1;
+    } else {
+      return 16;
+    }
+  } else if (lineage_mode == 2 && expected_sequence % 2 == 0) {
+    if (global_step != expected_global_step || bridge_step != expected_bridge_step ||
+        integer_tick != expected_tick || std::abs(time_s - expected_time_s) > 1.0e-12 ||
+        std::abs(dt_s - expected_dt_s) > 1.0e-15) return 16;
   } else {
     if (global_step != expected_global_step + 1 || bridge_step != expected_bridge_step + 1 ||
         integer_tick != static_cast<std::uint64_t>(std::llround(time_s * 1.0e9)) ||
@@ -360,6 +390,7 @@ int main() {
   std::int32_t expected_global_step = 0, expected_bridge_step = 0;
   std::uint64_t expected_tick = 0;
   double expected_time_s = 0.0, expected_dt_s = 0.0;
+  int lineage_mode = 0;
   std::array<unsigned char, 32> expected_model_digest{};
   std::unordered_set<std::uint64_t> seen_request_ids, seen_transaction_ids;
   while (true) {
@@ -378,7 +409,7 @@ int main() {
     try {
       result = process_step(payload, response, last_sequence + 1, expected_run, expected_case,
                             expected_global_step, expected_bridge_step, expected_tick,
-                            expected_time_s, expected_dt_s, expected_model_digest,
+                            expected_time_s, expected_dt_s, expected_model_digest, lineage_mode,
                             seen_request_ids, seen_transaction_ids);
     } catch (const std::exception& error) {
       std::cerr << "worker exception: " << error.what() << '\n';

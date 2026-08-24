@@ -22,11 +22,17 @@ template <class T> bool read(std::istream& in, T& value) { return static_cast<bo
 template <class T> void append(std::vector<char>& out, const T& value) { const auto* p = reinterpret_cast<const char*>(&value); out.insert(out.end(), p, p + sizeof(T)); }
 bool read_bytes(std::istream& in, char* p, std::size_t n) { return static_cast<bool>(in.read(p, static_cast<std::streamsize>(n))); }
 bool c_string_valid(const char* p, std::size_t n) {
+  bool terminated = false;
   for (std::size_t i = 0; i < n; ++i) {
-    if (p[i] == '\0') return true;
+    if (p[i] == '\0') {
+      if (i == 0) return false;
+      terminated = true;
+      for (++i; i < n; ++i) if (p[i] != '\0') return false;
+      break;
+    }
     if (static_cast<unsigned char>(p[i]) < 0x20) return false;
   }
-  return false;
+  return terminated;
 }
 bool finite_values(const std::vector<double>& values) {
   for (double value : values) if (!std::isfinite(value)) return false;

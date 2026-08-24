@@ -1,0 +1,51 @@
+{
+  "findings": [
+    {
+      "id": "MODEL_VALIDATION_AND_ALLOCATION_BOUNDS",
+      "severity": "high",
+      "status": "fixed_and_tested"
+    },
+    {
+      "id": "STATE_DIMENSION_AND_FINITE_VALUE_BOUNDARY",
+      "severity": "high",
+      "status": "fixed_and_selftested"
+    },
+    {
+      "id": "TIME_TICK_AND_CONTIGUOUS_LINEAGE",
+      "severity": "high",
+      "status": "fixed_and_regression_tested"
+    },
+    {
+      "id": "OWNERSHIP_BASE_DOUBLE_COUNT",
+      "severity": "high",
+      "status": "fixed_and_replayed"
+    },
+    {
+      "id": "FIXED_WIDTH_IDENTITY_TRAILING_GARBAGE",
+      "severity": "medium",
+      "status": "fixed_and_tested"
+    },
+    {
+      "id": "CHECKPOINT_NUMERIC_TYPE_BOUNDARY",
+      "severity": "medium",
+      "status": "fixed_and_tested"
+    },
+    {
+      "id": "IPC_REPLAY_AND_FAILURE_TERMINAL_STATE",
+      "severity": "high",
+      "status": "fixed_and_fault_injected"
+    },
+    {
+      "id": "FULL_MATLAB_CPP_STATE_EQUIVALENCE",
+      "reason": "strict_pass_steps=0/40",
+      "severity": "high",
+      "status": "not_proven"
+    },
+    {
+      "id": "BENT_TOP_TENSION_DIRECTION",
+      "severity": "high",
+      "status": "not_evaluable_without_authoritative_contract"
+    }
+  ],
+  "status": "complete_with_numerical_blockers"
+}

@@ -35,6 +35,12 @@ def _fixed(value: str, size: int, name: str) -> bytes:
     return raw + b"\0" * (size - len(raw))
 
 
+def _bounded_int(value: int, name: str, minimum: int, maximum: int) -> int:
+    if isinstance(value, bool) or not isinstance(value, int) or not minimum <= value <= maximum:
+        raise FrameError(f"{name} is outside its wire range")
+    return value
+
+
 @dataclass(frozen=True)
 class KernelModel:
     length_m: float = 100.0
@@ -79,7 +85,7 @@ class KernelModel:
             raise FrameError("kernel geometry or time step is invalid")
         if self.slice_positions_m and (len(self.slice_positions_m) != self.slices or
                                        any(not math.isfinite(float(x)) or x < 0.0 or x > self.length_m for x in self.slice_positions_m) or
-                                       any(self.slice_positions_m[i] < self.slice_positions_m[i - 1]
+                                       any(self.slice_positions_m[i] <= self.slice_positions_m[i - 1]
                                            for i in range(1, len(self.slice_positions_m)))):
             raise FrameError("kernel slice positions are invalid")
 
@@ -130,9 +136,12 @@ class KernelStepRequest:
             raise FrameError("mass_matrix contains NaN/Inf")
         if any(len(values) != n for values in (q, qdot, qddot, base)) or len(force) != 3 * self.model.slices:
             raise FrameError("kernel state/force dimensions are inconsistent with model")
-        if (self.sequence <= 0 or self.global_step <= 0 or self.case_local_bridge_step <= 0 or
-                self.integer_tick < 0 or self.request_id == 0 or self.transaction_id == 0):
-            raise FrameError("kernel identity is invalid")
+        _bounded_int(self.sequence, "sequence", 1, 0xFFFFFFFF)
+        _bounded_int(self.global_step, "global_step", 1, 0x7FFFFFFF)
+        _bounded_int(self.case_local_bridge_step, "case_local_bridge_step", 1, 0x7FFFFFFF)
+        _bounded_int(self.integer_tick, "integer_tick", 0, 0xFFFFFFFFFFFFFFFF)
+        _bounded_int(self.request_id, "request_id", 1, 0xFFFFFFFFFFFFFFFF)
+        _bounded_int(self.transaction_id, "transaction_id", 1, 0xFFFFFFFFFFFFFFFF)
         if not math.isfinite(self.time_s) or not math.isfinite(self.dt_s):
             raise FrameError("kernel time is NaN/Inf")
         if self.dt_s <= 0.0:
@@ -196,10 +205,18 @@ class KernelStepResponse:
 
 
 def _clean(value: bytes) -> str:
+    if b"\0" not in value:
+        raise FrameError("kernel identity is not NUL-terminated")
+    raw, trailing = value.split(b"\0", 1)
+    if not raw or any(trailing):
+        raise FrameError("kernel identity has invalid fixed-width encoding")
     try:
-        return value.split(b"\0", 1)[0].decode("utf-8")
+        result = raw.decode("utf-8")
     except UnicodeDecodeError as exc:
         raise FrameError("kernel identity is not UTF-8") from exc
+    if any(ord(char) < 0x20 for char in result):
+        raise FrameError("kernel identity contains a control character")
+    return result
 
 
 def decode_kernel_response(frame: bytes) -> KernelStepResponse:

@@ -16,7 +16,17 @@ class CppAdapterError(RuntimeError):
 
 
 def _finite(values: Sequence[float], name: str) -> tuple[float, ...]:
-    result = tuple(float(value) for value in values)
+    if isinstance(values, (str, bytes)):
+        raise CppAdapterError(f"{name} is not a numeric sequence")
+    result_values: list[float] = []
+    try:
+        for value in values:
+            if isinstance(value, bool) or not isinstance(value, (int, float)):
+                raise CppAdapterError(f"{name} contains a non-numeric value")
+            result_values.append(float(value))
+    except TypeError as exc:
+        raise CppAdapterError(f"{name} is not a numeric sequence") from exc
+    result = tuple(result_values)
     if not result or any(not math.isfinite(value) for value in result):
         raise CppAdapterError(f"{name} is empty or contains NaN/Inf")
     return result
@@ -29,6 +39,8 @@ def _canonical(value: Any) -> bytes:
 
 class CppKernelCampaignAdapter:
     """Persistent C++ worker with explicit predictor/corrector transport."""
+
+    CHECKPOINT_SCHEMA = "cpp_kernel_campaign_checkpoint_v1"
 
     def __init__(self, *, worker: Any, model: Any, request_factory: Any,
                  run_id: str, case_id: str, source_global_step: int,
@@ -57,8 +69,12 @@ class CppKernelCampaignAdapter:
         self.pending_kind: str | None = None
         self.pending_step: int | None = None
         self.pending_time_s: float | None = None
+        self.pending_tick: int | None = None
         self._predictor_state: dict[str, list[float]] | None = None
         self._pending_bridge: int | None = None
+        self._committed_step = self.source_global_step
+        self._committed_time_s = self.source_time_s
+        self._committed_tick = self.source_tick
         self.start_count = 0
         self._started = False
         self._terminal = False
@@ -86,6 +102,10 @@ class CppKernelCampaignAdapter:
                    mass_matrix=mass_matrix)
 
     def _identity(self, step: int, time_s: float) -> tuple[int, int]:
+        if isinstance(step, bool) or not isinstance(step, int):
+            raise CppAdapterError("global step is not an integer")
+        if isinstance(time_s, bool) or not isinstance(time_s, (int, float)) or not math.isfinite(float(time_s)):
+            raise CppAdapterError("time_s is not finite")
         bridge = int(step) - self.source_global_step
         expected_time = self.source_time_s + bridge * self.dt_s
         expected_tick = self.source_tick + bridge * round(self.dt_s * 1e9)
@@ -176,6 +196,7 @@ class CppKernelCampaignAdapter:
         }
         self.pending_kind, self.pending_step, self.pending_time_s = "prediction", int(step), float(time_s)
         self._predictor_state, self._pending_bridge = motion_state, bridge
+        self.pending_tick = tick
         return {"step": int(step), "global_step": int(step), "case_local_bridge_step": bridge,
                 "time_s": float(time_s), "integer_tick": tick, "run_id": self.run_id,
                 "case_id": self.case_id, "request_id": request_id, "transaction_id": transaction_id,
@@ -219,31 +240,94 @@ class CppKernelCampaignAdapter:
                 "checkpoint_token": hashlib.sha256(_canonical(audit)).hexdigest(), "audit": audit}, []
 
     def save_checkpoint(self, path: str | Path) -> None:
-        Path(path).write_bytes(_canonical({"state_view": self.state_view(), "source_global_step": self.source_global_step,
-                                           "source_time_s": self.source_time_s, "source_tick": self.source_tick,
-                                           "dt_s": self.dt_s, "run_id": self.run_id, "case_id": self.case_id}))
+        if self.pending_kind is not None:
+            raise CppAdapterError("cannot save a checkpoint while staged state is pending")
+        Path(path).write_bytes(_canonical({
+            "schema_version": self.CHECKPOINT_SCHEMA,
+            "state_view": self.state_view(),
+            "source_global_step": self.source_global_step,
+            "source_time_s": self.source_time_s,
+            "source_tick": self.source_tick,
+            "dt_s": self.dt_s,
+            "run_id": self.run_id,
+            "case_id": self.case_id,
+            "committed_global_step": self._committed_step,
+            "committed_time_s": self._committed_time_s,
+            "committed_tick": self._committed_tick,
+        }))
 
     def load_checkpoint(self, path: str | Path) -> None:
         try:
             value = json.loads(Path(path).read_bytes().decode("utf-8"))
+            if not isinstance(value, Mapping):
+                raise CppAdapterError("C++ checkpoint root must be an object")
+            if value.get("schema_version") != self.CHECKPOINT_SCHEMA:
+                raise CppAdapterError("unsupported C++ checkpoint schema")
+            def checkpoint_int(name: str) -> int:
+                candidate = value.get(name)
+                if isinstance(candidate, bool) or not isinstance(candidate, int):
+                    raise CppAdapterError(f"C++ checkpoint {name} is not an integer")
+                return candidate
+
+            def checkpoint_float(name: str) -> float:
+                candidate = value.get(name)
+                if isinstance(candidate, bool) or not isinstance(candidate, (int, float)):
+                    raise CppAdapterError(f"C++ checkpoint {name} is not numeric")
+                result = float(candidate)
+                if not math.isfinite(result):
+                    raise CppAdapterError(f"C++ checkpoint {name} is NaN/Inf")
+                return result
+
+            if (value.get("run_id") != self.run_id or value.get("case_id") != self.case_id or
+                    checkpoint_int("source_global_step") != self.source_global_step or
+                    not math.isclose(checkpoint_float("source_time_s"), self.source_time_s, rel_tol=0.0, abs_tol=1e-12) or
+                    checkpoint_int("source_tick") != self.source_tick or
+                    not math.isclose(checkpoint_float("dt_s"), self.dt_s, rel_tol=0.0, abs_tol=1e-15)):
+                raise CppAdapterError("C++ checkpoint identity or dt mismatch")
+            committed_step = checkpoint_int("committed_global_step")
+            committed_time = checkpoint_float("committed_time_s")
+            committed_tick = checkpoint_int("committed_tick")
+            bridge = committed_step - self.source_global_step
+            if (committed_step < self.source_global_step or
+                    not math.isfinite(committed_time) or
+                    abs(committed_time - (self.source_time_s + bridge * self.dt_s)) > 1e-12 or
+                    committed_tick != self.source_tick + bridge * round(self.dt_s * 1e9)):
+                raise CppAdapterError("C++ checkpoint committed identity is invalid")
             state = value["state_view"]
+            if not isinstance(state, Mapping) or set(state) != {"q", "qdot", "qddot"}:
+                raise CppAdapterError("C++ checkpoint state schema is invalid")
             self._state = {key: list(_finite(state[key], f"checkpoint.{key}")) for key in ("q", "qdot", "qddot")}
-        except (OSError, UnicodeDecodeError, json.JSONDecodeError, KeyError, TypeError) as exc:
+            if len({len(values) for values in self._state.values()}) != 1:
+                raise CppAdapterError("C++ checkpoint state dimensions disagree")
+            expected_ndof = getattr(self.model, "ndof", None)
+            if expected_ndof is not None and not callable(expected_ndof) and len(self._state["q"]) != int(expected_ndof):
+                raise CppAdapterError("C++ checkpoint state dimension does not match model")
+        except (OSError, UnicodeDecodeError, json.JSONDecodeError, KeyError, TypeError,
+                ValueError, OverflowError) as exc:
             raise CppAdapterError("invalid UTF-8 C++ checkpoint") from exc
         self._committed_state = json.loads(json.dumps(self._state))
+        self._committed_step = committed_step
+        self._committed_time_s = committed_time
+        self._committed_tick = committed_tick
         self.pending_kind = self.pending_step = self.pending_time_s = None
+        self.pending_tick = None
         self._predictor_state = self._pending_bridge = None
 
     def finalize_committed(self, token: object | None = None) -> None:
         if self.pending_kind != "correction":
             raise CppAdapterError("no correction is ready to commit")
         self._committed_state = json.loads(json.dumps(self._state))
+        self._committed_step = int(self.pending_step)
+        self._committed_time_s = float(self.pending_time_s)
+        self._committed_tick = int(self.pending_tick)
         self.pending_kind = self.pending_step = self.pending_time_s = None
+        self.pending_tick = None
         self._predictor_state = self._pending_bridge = None
 
     def discard_staged(self) -> None:
         self._state = json.loads(json.dumps(self._committed_state))
         self.pending_kind = self.pending_step = self.pending_time_s = None
+        self.pending_tick = None
         self._predictor_state = self._pending_bridge = None
 
     def shutdown(self) -> None:

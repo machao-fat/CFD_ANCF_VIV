@@ -17,40 +17,54 @@ class PersistentCppWorkerClient:
         self.writer = writer
         self.last_sequence = 0
         self.closed = False
+        self.initialized = False
         self.seen_request_ids: set[int] = set()
         self.seen_transaction_ids: set[int] = set()
 
     def request(self, value: StepRequest) -> StepResponse:
-        if self.closed or value.sequence != self.last_sequence + 1:
+        if self.closed or not self.initialized or value.sequence != self.last_sequence + 1:
             raise FrameError("worker client is closed or sequence is not monotonic")
         if value.request_id in self.seen_request_ids or value.transaction_id in self.seen_transaction_ids:
             raise FrameError("request_id or transaction_id was already used")
-        frame = encode_request(value)
-        self.writer.write(frame); self.writer.flush()
-        header = self.reader.read(HEADER.size)
-        if len(header) != HEADER.size:
-            raise FrameError("worker disconnected before response header")
-        magic, length, count = HEADER.unpack(header)
-        if length > 64 * 1024 * 1024 or count != 1:
-            raise FrameError("response length/count is invalid")
-        body = self.reader.read(length)
-        if len(body) != length:
-            raise FrameError("worker disconnected during response")
-        response = decode_response(header + body)
-        validate_response(value, response)
+        try:
+            frame = encode_request(value)
+            self.writer.write(frame); self.writer.flush()
+            header = self.reader.read(HEADER.size)
+            if len(header) != HEADER.size:
+                raise FrameError("worker disconnected before response header")
+            _magic, length, count = HEADER.unpack(header)
+            if length > 64 * 1024 * 1024 or count != 1:
+                raise FrameError("response length/count is invalid")
+            body = self.reader.read(length)
+            if len(body) != length:
+                raise FrameError("worker disconnected during response")
+            response = decode_response(header + body)
+            validate_response(value, response)
+        except Exception:
+            self.closed = True
+            raise
         self.last_sequence = value.sequence
         self.seen_request_ids.add(value.request_id)
         self.seen_transaction_ids.add(value.transaction_id)
         return response
 
     def initialize(self) -> None:
-        if self.closed:
+        if self.closed or self.initialized:
             raise FrameError("worker client is closed")
-        self.writer.write(encode_control(MESSAGE_INITIALIZE)); self.writer.flush()
+        try:
+            self.writer.write(encode_control(MESSAGE_INITIALIZE)); self.writer.flush()
+        except Exception:
+            self.closed = True
+            raise
+        self.initialized = True
 
     def shutdown(self) -> None:
         if not self.closed:
-            self.writer.write(encode_control(MESSAGE_SHUTDOWN)); self.writer.flush()
+            try:
+                self.writer.write(encode_control(MESSAGE_SHUTDOWN)); self.writer.flush()
+            except Exception:
+                self.closed = True
+                raise
             self.closed = True
 
     def close(self) -> None:

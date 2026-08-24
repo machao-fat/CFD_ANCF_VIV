@@ -34,6 +34,12 @@ def _finite(value: float, name: str) -> None:
         raise FrameError(f"{name} is NaN/Inf")
 
 
+def _bounded_int(value: int, name: str, minimum: int, maximum: int) -> int:
+    if isinstance(value, bool) or not isinstance(value, int) or not minimum <= value <= maximum:
+        raise FrameError(f"{name} is outside its wire range")
+    return value
+
+
 @dataclass(frozen=True)
 class StepRequest:
     sequence: int
@@ -56,10 +62,12 @@ class StepRequest:
         n = len(self.q)
         if n == 0 or len(self.qdot) != n or len(self.force) != n:
             raise FrameError("state vector lengths do not match")
-        if (self.sequence <= 0 or self.global_step <= 0 or
-                self.case_local_bridge_step <= 0 or self.integer_tick < 0 or
-                self.request_id == 0 or self.transaction_id == 0):
-            raise FrameError("request identity is invalid")
+        _bounded_int(self.sequence, "sequence", 1, 0xFFFFFFFF)
+        _bounded_int(self.global_step, "global_step", 1, 0x7FFFFFFF)
+        _bounded_int(self.case_local_bridge_step, "case_local_bridge_step", 1, 0x7FFFFFFF)
+        _bounded_int(self.integer_tick, "integer_tick", 0, 0xFFFFFFFFFFFFFFFF)
+        _bounded_int(self.request_id, "request_id", 1, 0xFFFFFFFFFFFFFFFF)
+        _bounded_int(self.transaction_id, "transaction_id", 1, 0xFFFFFFFFFFFFFFFF)
         _finite(self.time_s, "time_s"); _finite(self.dt_s, "dt_s")
         if self.dt_s <= 0.0:
             raise FrameError("dt_s must be positive")
@@ -131,11 +139,23 @@ def decode_response(frame: bytes) -> StepResponse:
     if len(raw) != expected:
         raise FrameError("response vector payload length mismatch")
     values = struct.unpack_from("<" + "d" * (3 * n), raw, RESPONSE.size)
-    if any(not math.isfinite(float(item)) for item in values):
+    if not math.isfinite(time_s) or any(not math.isfinite(float(item)) for item in values):
         raise FrameError("response state contains NaN/Inf")
-    clean = lambda value: value.split(b"\0", 1)[0].decode("utf-8")
+    def clean(value: bytes, name: str) -> str:
+        if b"\0" not in value:
+            raise FrameError(f"response {name} is not NUL-terminated")
+        raw_value, trailing = value.split(b"\0", 1)
+        if not raw_value or any(trailing):
+            raise FrameError(f"response {name} has invalid fixed-width encoding")
+        try:
+            decoded = raw_value.decode("utf-8")
+        except UnicodeDecodeError as exc:
+            raise FrameError(f"response {name} is not UTF-8") from exc
+        if any(ord(char) < 0x20 for char in decoded):
+            raise FrameError(f"response {name} contains a control character")
+        return decoded
     return StepResponse(protocol, sequence, step, bridge, tick, time_s, code, digest, tx, request_id, ack,
-                        clean(run), clean(case), clean(producer), clean(consumer),
+                        clean(run, "run_id"), clean(case, "case_id"), clean(producer, "producer"), clean(consumer, "consumer"),
                         tuple(values[:n]), tuple(values[n:2*n]), tuple(values[2*n:]))
 
 

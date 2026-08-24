@@ -88,7 +88,7 @@ double Model::EI() const { return youngs_modulus_Pa*PI*(std::pow(diameter_m,4)-s
 
 void validate_model(const Model& model) {
   const auto finite = [](double value) { return std::isfinite(value); };
-  if (model.elements < 1 || model.slices < 1 || model.ndof() > MAX_NDOF ||
+  if (model.elements < 1 || model.elements > 10000 || model.slices < 1 || model.slices > 1000 || model.ndof() > MAX_NDOF ||
       model.length_m <= 0.0 || model.diameter_m <= model.inner_diameter_m ||
       model.inner_diameter_m < 0.0 || model.dt_s <= 0.0 || model.beta <= 0.0 ||
       model.gamma <= 0.0 || model.max_newton == 0 || model.gauss_order != 3 && model.gauss_order != 5 ||
@@ -112,7 +112,7 @@ void validate_model(const Model& model) {
     for (std::size_t index = 0; index < model.slice_positions_m.size(); ++index) {
       const double position = model.slice_positions_m[index];
       if (!finite(position) || position < 0.0 || position > model.length_m ||
-          (index > 0 && position < model.slice_positions_m[index - 1])) {
+          (index > 0 && position <= model.slice_positions_m[index - 1])) {
         throw std::invalid_argument("ANCF slice positions are invalid");
       }
     }
@@ -161,7 +161,23 @@ StepDiagnostics advance(State& state, const Model& model, const std::vector<doub
   validate_model(model);
   using Clock = std::chrono::steady_clock;
   const auto total_start = Clock::now();
-  if (state.q.size() != model.ndof()) throw std::invalid_argument("state dimensions");
+  const std::size_t n = model.ndof();
+  const auto valid_matrix = [n](const Matrix& value) {
+    return value.rows == n && value.cols == n && value.data.size() == n * n &&
+           std::all_of(value.data.begin(), value.data.end(),
+                       [](double item) { return std::isfinite(item); });
+  };
+  const auto valid_vector = [](const std::vector<double>& values) {
+    return std::all_of(values.begin(), values.end(),
+                       [](double item) { return std::isfinite(item); });
+  };
+  if (state.q.size() != n || state.qdot.size() != n || state.qddot.size() != n ||
+      state.base_load.size() != n || !valid_matrix(state.mass) || !valid_matrix(state.damping) ||
+      !std::isfinite(state.time_s) || state.time_s < 0.0 ||
+      !valid_vector(state.q) || !valid_vector(state.qdot) ||
+      !valid_vector(state.qddot) || !valid_vector(state.base_load)) {
+    throw std::invalid_argument("state dimensions or values are invalid");
+  }
   std::vector<double> Qext = state.base_load;
   auto external_start = Clock::now();
   std::vector<double> qext = external_force(model, slice_force);
@@ -247,6 +263,19 @@ StepDiagnostics advance(State& state, const Model& model, const std::vector<doub
   return d;
 }
 
-bool finite(const State& state) {auto ok=[](const std::vector<double>& v){for(double x:v)if(!std::isfinite(x))return false;return true;};return ok(state.q)&&ok(state.qdot)&&ok(state.qddot)&&ok(state.base_load);}
+bool finite(const State& state) {
+  const auto ok = [](const std::vector<double>& values) {
+    return std::all_of(values.begin(), values.end(),
+                       [](double value) { return std::isfinite(value); });
+  };
+  const auto matrix_ok = [](const Matrix& value) {
+    return value.rows == value.cols && value.data.size() == value.rows * value.cols &&
+           std::all_of(value.data.begin(), value.data.end(),
+                       [](double item) { return std::isfinite(item); });
+  };
+  return ok(state.q) && ok(state.qdot) && ok(state.qddot) && ok(state.base_load) &&
+         matrix_ok(state.mass) && matrix_ok(state.damping) && std::isfinite(state.time_s) &&
+         std::isfinite(state.residual);
+}
 
 }  // namespace cfd_ancf

@@ -1,0 +1,23 @@
+{
+  "case_id": "cpp_worker_comprehensive_audit_stage155_case_001",
+  "changed_paths": [
+    "src/coupling/cpp_worker_confirm_v1/cpp_adapter.py",
+    "src/coupling/cpp_worker_persistent_ipc_v1/ancf_kernel.cpp",
+    "src/coupling/cpp_worker_persistent_ipc_v1/ancf_kernel_selftest.cpp",
+    "src/coupling/cpp_worker_persistent_ipc_v1/ancf_worker_main.cpp",
+    "src/coupling/cpp_worker_persistent_ipc_v1/kernel_protocol.py",
+    "src/coupling/cpp_worker_persistent_ipc_v1/protocol.py",
+    "src/coupling/cpp_worker_persistent_ipc_v1/worker_client.py",
+    "src/coupling/cpp_worker_persistent_ipc_v1/worker_main.cpp",
+    "src/coupling/cpp_physics_ownership_v1/physics_ownership.cpp",
+    "src/coupling/cpp_physics_ownership_v1/physics_ownership_worker_main.cpp",
+    "tests/cpp_worker_comprehensive_audit_repair_v1/test_protocol_lifecycle_and_pair_lineage.py",
+    "tests/cpp_worker_comprehensive_audit_repair_v1/test_transport_worker_hardening.py",
+    "tools/cpp_worker_comprehensive_audit_repair_v1/generate_stage155_evidence.py"
+  ],
+  "protected_stage_range": "Stage 1-154",
+  "real_execution": false,
+  "run_id": "cpp_worker_comprehensive_audit_repair_155_001",
+  "stage_id": "stage4f_d_cpp_worker_comprehensive_audit_repair_v1_stage155",
+  "unrelated_user_files_staged": false
+}
