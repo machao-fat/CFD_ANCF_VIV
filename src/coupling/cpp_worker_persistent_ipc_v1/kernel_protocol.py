@@ -60,10 +60,12 @@ class KernelModel:
         return 6 * (self.elements + 1)
 
     def validate(self, dt_s: float) -> None:
-        if self.elements < 2 or self.slices < 1 or self.gauss_order not in (3, 5):
+        if self.elements < 2 or self.elements > 10000 or self.slices < 1 or self.slices > 1000 or self.gauss_order not in (3, 5):
             raise FrameError("kernel model dimensions or quadrature order are invalid")
         if self.max_newton <= 0 or self.newton_tolerance <= 0.0:
             raise FrameError("kernel Newton contract is invalid")
+        if self.damping_alpha != 0.0 or self.damping_beta != 0.0:
+            raise FrameError("non-zero damping is not implemented in the worker contract")
         for name, value in (("length_m", self.length_m), ("diameter_m", self.diameter_m),
                             ("inner_diameter_m", self.inner_diameter_m), ("youngs_modulus_Pa", self.youngs_modulus_Pa),
                             ("material_density", self.material_density), ("fluid_density", self.fluid_density),
@@ -124,7 +126,8 @@ class KernelStepRequest:
             raise FrameError("mass_matrix contains NaN/Inf")
         if any(len(values) != n for values in (q, qdot, qddot, base)) or len(force) != 3 * self.model.slices:
             raise FrameError("kernel state/force dimensions are inconsistent with model")
-        if self.sequence <= 0 or self.global_step < 0 or self.case_local_bridge_step <= 0 or self.integer_tick < 0:
+        if (self.sequence <= 0 or self.global_step <= 0 or self.case_local_bridge_step <= 0 or
+                self.integer_tick < 0 or self.request_id == 0 or self.transaction_id == 0):
             raise FrameError("kernel identity is invalid")
         if not math.isfinite(self.time_s) or not math.isfinite(self.dt_s):
             raise FrameError("kernel time is NaN/Inf")
@@ -240,8 +243,17 @@ def validate_kernel_response(request: KernelStepRequest, response: KernelStepRes
         raise FrameError("kernel response producer/consumer mismatch")
     if response.return_code != 0 or not response.finite_value_audit:
         raise FrameError("kernel worker returned failure or non-finite state")
+    if len(response.q) != request.model.ndof or len(response.qdot) != request.model.ndof or len(response.qddot) != request.model.ndof:
+        raise FrameError("kernel response state dimension mismatch")
+    if any(len(field) != request.model.ndof for field in (
+        response.internal_force, response.external_force, response.generalized_force,
+        response.predictor, response.corrector)):
+        raise FrameError("kernel response field dimension mismatch")
     if response.checkpoint_step != request.global_step or response.checkpoint_tick != request.integer_tick:
         raise FrameError("kernel checkpoint identity mismatch")
+    if not math.isfinite(response.checkpoint_time_s) or not math.isclose(
+        response.checkpoint_time_s, request.time_s, rel_tol=0.0, abs_tol=1e-12):
+        raise FrameError("kernel checkpoint time mismatch")
     arrays = response.q + response.qdot + response.qddot + response.internal_force + response.external_force + response.generalized_force + response.predictor + response.corrector
     actual = hashlib.sha256(struct.pack("<" + "d" * len(arrays), *arrays)).digest()
     if response.payload_hash != actual:

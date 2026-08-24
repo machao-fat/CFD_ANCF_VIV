@@ -56,7 +56,9 @@ class StepRequest:
         n = len(self.q)
         if n == 0 or len(self.qdot) != n or len(self.force) != n:
             raise FrameError("state vector lengths do not match")
-        if self.sequence <= 0 or self.global_step < 0 or self.case_local_bridge_step <= 0 or self.integer_tick < 0:
+        if (self.sequence <= 0 or self.global_step <= 0 or
+                self.case_local_bridge_step <= 0 or self.integer_tick < 0 or
+                self.request_id == 0 or self.transaction_id == 0):
             raise FrameError("request identity is invalid")
         _finite(self.time_s, "time_s"); _finite(self.dt_s, "dt_s")
         if self.dt_s <= 0.0:
@@ -149,6 +151,8 @@ def validate_response(request: StepRequest, response: StepResponse, *, expected_
         raise FrameError("response time/tick mismatch")
     if response.return_code != 0:
         raise FrameError(f"C++ worker returned {response.return_code}")
+    if len(response.q) != len(request.q) or len(response.qdot) != len(request.qdot) or len(response.qddot) != len(request.q):
+        raise FrameError("response state dimensions do not match request")
     actual_sha256 = hashlib.sha256(struct.pack("<" + "d" * (len(response.q) * 3),
                                                *(response.q + response.qdot + response.qddot))).digest()
     if response.payload_hash != actual_sha256:

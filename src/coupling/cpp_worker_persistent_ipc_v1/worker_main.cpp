@@ -4,6 +4,7 @@
 #include <cstring>
 #include <iostream>
 #include <string>
+#include <unordered_set>
 #include <vector>
 #ifdef _WIN32
 #include <windows.h>
@@ -31,6 +32,10 @@ bool finite_values(const std::vector<double>& values) {
   for (double value : values) if (!std::isfinite(value)) return false;
   return true;
 }
+bool little_endian() {
+  const std::uint16_t marker = 1;
+  return *reinterpret_cast<const std::uint8_t*>(&marker) == 1;
+}
 bool sha256(const std::vector<double>& values, std::array<unsigned char, 32>& digest) {
 #ifdef _WIN32
   BCRYPT_ALG_HANDLE algorithm = nullptr; BCRYPT_HASH_HANDLE hash = nullptr;
@@ -50,11 +55,16 @@ bool sha256(const std::vector<double>& values, std::array<unsigned char, 32>& di
 }
 
 int main() {
+  if (!little_endian()) return 21;
 #ifdef _WIN32
   _setmode(_fileno(stdin), _O_BINARY);
   _setmode(_fileno(stdout), _O_BINARY);
 #endif
   std::uint32_t last_sequence = 0; std::string expected_run, expected_case;
+  std::int32_t expected_step = 0, expected_bridge = 0;
+  std::uint64_t expected_tick = 0;
+  double expected_time_s = 0.0, expected_dt_s = 0.0;
+  std::unordered_set<std::uint64_t> seen_request_ids, seen_transaction_ids;
   while (true) {
     std::array<char, 8> magic{}; std::uint32_t length=0, count=0;
     if (!read_bytes(std::cin, magic.data(), magic.size())) return 0;
@@ -69,7 +79,7 @@ int main() {
     std::size_t offset=0;
     auto take = [&](auto& v) { if (offset + sizeof(v) > payload.size()) return false; std::memcpy(&v, payload.data()+offset, sizeof(v)); offset += sizeof(v); return true; };
     char run_id[ID_RUN]{}, case_id[ID_CASE]{}, producer[ID_ENDPOINT]{}, consumer[ID_ENDPOINT]{};
-    if (!take(schema)||!take(protocol)||!take(sequence)||!take(step)||!take(bridge)||!take(tick)||!take(time_s)||!take(dt_s)||!take(n)||!take(request_id)||!take(transaction_id) || schema != SCHEMA || protocol != PROTOCOL || n <= 0 || n > 100000) return 5;
+    if (!take(schema)||!take(protocol)||!take(sequence)||!take(step)||!take(bridge)||!take(tick)||!take(time_s)||!take(dt_s)||!take(n)||!take(request_id)||!take(transaction_id) || schema != SCHEMA || protocol != PROTOCOL || n <= 0 || n > 100000 || step <= 0 || request_id == 0 || transaction_id == 0) return 5;
     // The fixed identity fields follow the numeric header.
     if (offset + ID_RUN + ID_CASE + ID_ENDPOINT + ID_ENDPOINT > payload.size()) return 5;
     std::memcpy(run_id, payload.data()+offset, ID_RUN); offset += ID_RUN;
@@ -80,13 +90,26 @@ int main() {
     if (offset + request_digest.size() > payload.size()) return 5;
     std::memcpy(request_digest.data(), payload.data()+offset, request_digest.size()); offset += request_digest.size();
     const std::size_t expected = 288u + static_cast<std::size_t>(n) * 3u * sizeof(double);
+    if (!std::isfinite(time_s) || !std::isfinite(dt_s)) return 6;
+    if (time_s < 0.0 || time_s > 1.0e9) return 6;
+    const auto expected_tick_from_time = static_cast<std::uint64_t>(std::llround(time_s * 1.0e9));
     if (payload.size() != expected || dt_s <= 0.0 || bridge <= 0 || sequence == 0 || sequence != last_sequence + 1 ||
+        tick != expected_tick_from_time || time_s < dt_s || (sequence == 1 && bridge != 1) ||
+        seen_request_ids.count(request_id) != 0 || seen_transaction_ids.count(transaction_id) != 0 ||
         !std::isfinite(time_s) || !std::isfinite(dt_s) || !c_string_valid(run_id, ID_RUN) || !c_string_valid(case_id, ID_CASE) ||
         !c_string_valid(producer, ID_ENDPOINT) || !c_string_valid(consumer, ID_ENDPOINT)) return 6;
     const std::string run_value(run_id, strnlen_s(run_id, ID_RUN));
     const std::string case_value(case_id, strnlen_s(case_id, ID_CASE));
     if (expected_run.empty()) { expected_run = run_value; expected_case = case_value; }
     if (run_value != expected_run || case_value != expected_case) return 7;
+    if (sequence > 1 && (step != expected_step + 1 || bridge != expected_bridge + 1 ||
+                         tick != expected_tick + static_cast<std::uint64_t>(std::llround(expected_dt_s * 1.0e9)) ||
+                         std::abs(time_s - (expected_time_s + expected_dt_s)) > 1.0e-12 ||
+                         std::abs(dt_s - expected_dt_s) > 1.0e-15)) return 7;
+    seen_request_ids.insert(request_id);
+    seen_transaction_ids.insert(transaction_id);
+    expected_step = step; expected_bridge = bridge; expected_tick = tick;
+    expected_time_s = time_s; expected_dt_s = dt_s;
     std::vector<double> values(static_cast<std::size_t>(n)*3u);
     std::memcpy(values.data(), payload.data()+offset, values.size()*sizeof(double));
     if (!finite_values(values)) return 8;

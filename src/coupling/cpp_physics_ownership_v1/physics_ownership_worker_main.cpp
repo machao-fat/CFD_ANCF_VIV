@@ -1,4 +1,5 @@
-#include "ancf_kernel.hpp"
+#include "../cpp_worker_persistent_ipc_v1/ancf_kernel.hpp"
+#include "physics_ownership.hpp"
 
 #include <array>
 #include <cmath>
@@ -70,6 +71,17 @@ bool finite_values(const std::vector<double>& values) {
 bool little_endian() {
   const std::uint16_t marker = 1;
   return *reinterpret_cast<const std::uint8_t*>(&marker) == 1;
+}
+
+bool close_vector(const std::vector<double>& lhs, const std::vector<double>& rhs,
+                 double abs_tolerance, double rel_tolerance) {
+  if (lhs.size() != rhs.size()) return false;
+  for (std::size_t index = 0; index < lhs.size(); ++index) {
+    const double scale = (std::max)(1.0, (std::max)(std::abs(lhs[index]), std::abs(rhs[index])));
+    if (std::abs(lhs[index] - rhs[index]) >
+        (std::max)(abs_tolerance, rel_tolerance * scale)) return false;
+  }
+  return true;
 }
 
 bool sha256_bytes(const std::vector<unsigned char>& bytes, std::array<unsigned char, 32>& digest) {
@@ -157,6 +169,7 @@ int process_step(const std::vector<char>& payload, std::vector<char>& response,
       elements < 2 || elements > 10000 || slices < 1 || slices > 1000 ||
       gauss_order != 3 && gauss_order != 5 || max_newton <= 0 || dt_s <= 0.0 || !std::isfinite(time_s) ||
       !std::isfinite(dt_s) || n != 6 * (elements + 1)) return 3;
+
   if (time_s < 0.0 || time_s > 1.0e9) return 3;
   const auto request_tick = static_cast<std::uint64_t>(std::llround(time_s * 1.0e9));
   if (global_step <= 0 || bridge_step <= 0 || integer_tick != request_tick || time_s < dt_s ||
@@ -184,16 +197,7 @@ int process_step(const std::vector<char>& payload, std::vector<char>& response,
   model.elements = static_cast<std::size_t>(elements);
   model.slices = static_cast<std::size_t>(slices);
   model.dt_s = dt_s;
-  if (!std::isfinite(model.length_m) || !std::isfinite(model.diameter_m) ||
-      !std::isfinite(model.inner_diameter_m) || !std::isfinite(model.top_tension_N) ||
-      !std::isfinite(model.youngs_modulus_Pa) || !std::isfinite(model.material_density) ||
-      !std::isfinite(model.fluid_density) || !std::isfinite(model.gravity) ||
-      !std::isfinite(model.beta) || !std::isfinite(model.gamma) ||
-      !std::isfinite(model.newton_tolerance) || !std::isfinite(model.damping_alpha) ||
-      !std::isfinite(model.damping_beta) || model.length_m <= 0.0 ||
-      model.diameter_m <= model.inner_diameter_m || model.inner_diameter_m < 0.0 ||
-      model.beta <= 0.0 || model.gamma <= 0.0 || model.newton_tolerance <= 0.0 ||
-      model.damping_alpha != 0.0 || model.damping_beta != 0.0) return 4;
+  if (model.damping_alpha != 0.0 || model.damping_beta != 0.0) return 4;
   std::int32_t base_n = 0, force_n = 0, mass_n = 0;
   if (!take(payload, offset, base_n) || !take(payload, offset, force_n) ||
       base_n != n || force_n != 3 * slices) return 5;
@@ -230,20 +234,36 @@ int process_step(const std::vector<char>& payload, std::vector<char>& response,
   seen_request_ids.insert(request_id);
   seen_transaction_ids.insert(transaction_id);
 
+  std::vector<unsigned char> model_bytes(
+      payload.begin() + static_cast<std::ptrdiff_t>(model_start),
+      payload.begin() + static_cast<std::ptrdiff_t>(model_end));
+  std::array<unsigned char, 32> model_digest{};
+  if (!sha256_bytes(model_bytes, model_digest)) return 15;
   if (expected_sequence == 1) {
     expected_global_step = global_step;
     expected_bridge_step = bridge_step;
     expected_tick = integer_tick;
     expected_time_s = time_s;
     expected_dt_s = dt_s;
-  } else if (global_step != expected_global_step + 1 || bridge_step != expected_bridge_step + 1 ||
-             integer_tick != static_cast<std::uint64_t>(std::llround(time_s * 1.0e9)) ||
-             std::abs(time_s - (expected_time_s + expected_dt_s)) > 1.0e-12 ||
-             std::abs(dt_s - expected_dt_s) > 1.0e-15) {
-    return 16;
+    expected_model_digest = model_digest;
+  } else {
+    const double expected_next_time = expected_time_s + expected_dt_s;
+    if (global_step != expected_global_step + 1 || bridge_step != expected_bridge_step + 1 ||
+        integer_tick != static_cast<std::uint64_t>(std::llround(time_s * 1.0e9)) ||
+        std::abs(time_s - expected_next_time) > 1.0e-12 ||
+        std::abs(dt_s - expected_dt_s) > 1.0e-15 || model_digest != expected_model_digest) {
+      return 16;
+    }
+    expected_global_step = global_step;
+    expected_bridge_step = bridge_step;
+    expected_tick = integer_tick;
+    expected_time_s = time_s;
   }
 
-  const std::size_t mass_count = mass_n == 0 ? 0u : static_cast<std::size_t>(mass_n) * static_cast<std::size_t>(mass_n);
+  // The ownership worker is the production mass-matrix owner. External mass
+  // matrices belong to the legacy protocol and are rejected here.
+  if (mass_n != 0) return 17;
+  const std::size_t mass_count = 0u;
   const std::size_t array_count = static_cast<std::size_t>(4 * n) + mass_count + static_cast<std::size_t>(force_n);
   if (offset + array_count * sizeof(double) != payload.size()) return 8;
   std::vector<double> input(array_count);
@@ -256,18 +276,18 @@ int process_step(const std::vector<char>& payload, std::vector<char>& response,
   std::array<unsigned char, 32> calculated_request_digest{};
   if (!sha256_bytes(request_hash_bytes, calculated_request_digest) || calculated_request_digest != request_digest ||
       !finite_values(input)) return 9;
-  std::vector<unsigned char> model_bytes(
-      payload.begin() + static_cast<std::ptrdiff_t>(model_start),
-      payload.begin() + static_cast<std::ptrdiff_t>(model_end));
-  std::array<unsigned char, 32> model_digest{};
-  if (!sha256_bytes(model_bytes, model_digest)) return 15;
-  if (expected_sequence == 1) expected_model_digest = model_digest;
-  else if (model_digest != expected_model_digest) return 16;
 
   const std::vector<double> q(input.begin(), input.begin() + n);
   const std::vector<double> qdot(input.begin() + n, input.begin() + 2 * n);
   const std::vector<double> qddot(input.begin() + 2 * n, input.begin() + 3 * n);
-  const std::vector<double> base_load(input.begin() + 3 * n, input.begin() + 4 * n);
+  const std::vector<double> supplied_base_load(input.begin() + 3 * n, input.begin() + 4 * n);
+  const auto owned_base = cfd_ancf::physics_ownership::assemble_base_load(model);
+  if (!cfd_ancf::physics_ownership::finite(supplied_base_load)) return 9;
+  // The fourth request vector is the non-zero MATLAB golden base-load
+  // reference. It is never an additional runtime load. Applying it again
+  // would double-count gravity, buoyancy, and top tension.
+  if (!close_vector(supplied_base_load, owned_base.base, 1.0e-8, 1.0e-12)) return 18;
+  const std::vector<double>& base_load = owned_base.base;
   std::size_t input_offset = 4 * n;
   const std::vector<double> predictor = [&]() {
     std::vector<double> value(q.size());
@@ -278,24 +298,19 @@ int process_step(const std::vector<char>& payload, std::vector<char>& response,
   }();
 
   cfd_ancf::State state = cfd_ancf::make_reference_state(model);
+  state.mass = cfd_ancf::physics_ownership::assemble_mass_matrix(model);
   cfd_ancf::symmetrize_mass(state);
-  if (mass_n != 0) {
-    state.mass = cfd_ancf::Matrix(static_cast<std::size_t>(n), static_cast<std::size_t>(n));
-    for (std::size_t row = 0; row < static_cast<std::size_t>(n); ++row) {
-      for (std::size_t col = 0; col < static_cast<std::size_t>(n); ++col) {
-        state.mass(row, col) = input[input_offset++];
-      }
-    }
-  }
   const std::vector<double> slice_force(input.begin() + static_cast<std::ptrdiff_t>(input_offset), input.end());
   state.q = q; state.qdot = qdot; state.qddot = qddot; state.base_load = base_load;
-  if (global_step <= 0 || time_s < dt_s) return 10;
+  if (time_s < dt_s) return 10;
   state.time_s = time_s - dt_s; state.step = static_cast<std::size_t>(global_step - 1);
   std::vector<double> internal_before; cfd_ancf::Matrix tangent;
   cfd_ancf::internal_force_tangent(state.q, model, internal_before, tangent);
-  const std::vector<double> external = cfd_ancf::external_force(model, slice_force);
+  const auto cfd_load = cfd_ancf::physics_ownership::assemble_cfd_load(
+      model, slice_force, cfd_ancf::physics_ownership::ForceRepresentation::integrated_N);
+  const std::vector<double>& cfd_external = cfd_load.generalized_force;
   std::vector<double> generalized = base_load;
-  for (std::size_t index = 0; index < generalized.size(); ++index) generalized[index] += external[index];
+  for (std::size_t index = 0; index < generalized.size(); ++index) generalized[index] += cfd_external[index];
   cfd_ancf::StepDiagnostics diagnostics;
   try {
     diagnostics = cfd_ancf::advance(state, model, slice_force);
@@ -309,6 +324,8 @@ int process_step(const std::vector<char>& payload, std::vector<char>& response,
     std::vector<double> value; value.reserve(8 * q.size());
     const std::array<const std::vector<double>*, 8> vectors{
         &state.q, &state.qdot, &state.qddot, &internal_after,
+        // MATLAB's current dual-run schema calls this field external_force
+        // but stores total Qext. Preserve that established semantic here.
         &generalized, &generalized, &predictor, &corrector};
     for (const auto* vector : vectors) {
       value.insert(value.end(), vector->begin(), vector->end());
@@ -349,9 +366,11 @@ int main() {
   std::uint32_t last_sequence = 0;
   std::string expected_run;
   std::string expected_case;
-  std::int32_t expected_global_step = 0, expected_bridge_step = 0;
+  std::int32_t expected_global_step = 0;
+  std::int32_t expected_bridge_step = 0;
   std::uint64_t expected_tick = 0;
-  double expected_time_s = 0.0, expected_dt_s = 0.0;
+  double expected_time_s = 0.0;
+  double expected_dt_s = 0.0;
   std::array<unsigned char, 32> expected_model_digest{};
   std::unordered_set<std::uint64_t> seen_request_ids, seen_transaction_ids;
   while (true) {
@@ -373,7 +392,7 @@ int main() {
                             expected_time_s, expected_dt_s, expected_model_digest,
                             seen_request_ids, seen_transaction_ids);
     } catch (const std::exception& error) {
-      std::cerr << "worker exception: " << error.what() << '\n';
+      std::cerr << "ownership worker exception: " << error.what() << '\n';
       return 20;
     }
     if (result != 0) return result;

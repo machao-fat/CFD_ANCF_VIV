@@ -1,0 +1,59 @@
+{
+  "findings": [
+    {
+      "evidence": "nonzero_base_40step_audit.json",
+      "id": "OWNERSHIP_BASE_DOUBLE_COUNT",
+      "severity": "high",
+      "status": "fixed"
+    },
+    {
+      "evidence": "test_repair_contract.py and worker model checks",
+      "id": "UNIMPLEMENTED_DAMPING_ACCEPTED",
+      "severity": "high",
+      "status": "fixed_fail_closed"
+    },
+    {
+      "evidence": "test_ownership_worker.py and test_transport_worker_hardening.py",
+      "id": "DIRECT_WORKER_TOKEN_REPLAY",
+      "severity": "high",
+      "status": "fixed_fail_closed"
+    },
+    {
+      "evidence": "kernel_protocol.py and response validation tests",
+      "id": "DIMENSION_CHECKPOINT_TIME_GAPS",
+      "severity": "medium",
+      "status": "fixed"
+    },
+    {
+      "evidence": "mapping_contract.py and ownership worker first-frame check",
+      "id": "FIRST_FRAME_MAPPING_GAP",
+      "severity": "medium",
+      "status": "fixed_and_tested"
+    },
+    {
+      "evidence": "profile write failure test",
+      "id": "PROFILE_WRITE_FAILURE_SWALLOWED",
+      "severity": "medium",
+      "status": "fixed_fail_closed"
+    },
+    {
+      "id": "BENT_TOP_TENSION_DIRECTION",
+      "reason": "No protected MATLAB golden contract proves whether top tension is global-z or current tangent; no physical semantic change made.",
+      "severity": "high",
+      "status": "not_evaluable"
+    },
+    {
+      "id": "FULL_MATLAB_CPP_STATE_EQUIVALENCE",
+      "reason": "This stage did not launch MATLAB and existing fixture proves ownership base-load/transport, not every state field.",
+      "severity": "high",
+      "status": "not_evaluable"
+    },
+    {
+      "id": "ROOT_DISCOVERY",
+      "reason": "Repository-wide unittest discovery has pre-existing package import failures.",
+      "severity": "medium",
+      "status": "not_passed"
+    }
+  ],
+  "status": "complete_with_blockers"
+}

@@ -17,10 +17,14 @@ class PersistentCppWorkerClient:
         self.writer = writer
         self.last_sequence = 0
         self.closed = False
+        self.seen_request_ids: set[int] = set()
+        self.seen_transaction_ids: set[int] = set()
 
     def request(self, value: StepRequest) -> StepResponse:
         if self.closed or value.sequence != self.last_sequence + 1:
             raise FrameError("worker client is closed or sequence is not monotonic")
+        if value.request_id in self.seen_request_ids or value.transaction_id in self.seen_transaction_ids:
+            raise FrameError("request_id or transaction_id was already used")
         frame = encode_request(value)
         self.writer.write(frame); self.writer.flush()
         header = self.reader.read(HEADER.size)
@@ -35,6 +39,8 @@ class PersistentCppWorkerClient:
         response = decode_response(header + body)
         validate_response(value, response)
         self.last_sequence = value.sequence
+        self.seen_request_ids.add(value.request_id)
+        self.seen_transaction_ids.add(value.transaction_id)
         return response
 
     def initialize(self) -> None:

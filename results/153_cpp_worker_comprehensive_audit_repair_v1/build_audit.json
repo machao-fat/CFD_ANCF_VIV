@@ -1,0 +1,18 @@
+{
+  "architecture": "x64",
+  "build_command": "cmake --build runtime/cpp_worker_comprehensive_audit_repair_v1/build-release --config Release --parallel 4",
+  "cmake": "3.31.6",
+  "compiler": "MSVC 19.44.35228.0 (Visual Studio 2022 BuildTools x64)",
+  "configuration": "Release",
+  "configure_command": "cmake -S src/coupling/cpp_worker_persistent_ipc_v1 -B runtime/cpp_worker_comprehensive_audit_repair_v1/build-release -G \"Visual Studio 17 2022\" -A x64",
+  "generator": "Visual Studio 17 2022",
+  "status": "pass",
+  "targets": [
+    "cfd_ancf_cpp_worker",
+    "cfd_ancf_ancf_kernel_worker",
+    "cfd_ancf_physics_ownership_worker",
+    "cfd_ancf_ancf_kernel_selftest",
+    "cfd_ancf_physics_ownership_selftest"
+  ],
+  "warnings": []
+}

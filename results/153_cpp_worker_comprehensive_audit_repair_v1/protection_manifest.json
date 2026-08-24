@@ -1,0 +1,16 @@
+{
+  "formal_protocol_semantics_modified": false,
+  "note": "Stage 153 uses a new build/runtime/results namespace; protected old evidence is not staged.",
+  "old_runtime_reused_for_stage_153": false,
+  "old_stage_1_152_evidence_modified": false,
+  "physical_contract_modified": false,
+  "protected_paths": [
+    "results/152_cpp_physics_ownership_v1",
+    "runtime/cpp_worker_numerical_equivalence_before_cfd_v1",
+    "runtime/cpp_worker_persistent_ipc_v1",
+    "results/97_cpp_worker_persistent_ipc_v1",
+    "results/98_cpp_worker_persistent_ipc_v1",
+    "results/99_cpp_worker_persistent_ipc_v1"
+  ],
+  "status": "verified_read_only_by_scope"
+}
