@@ -3,19 +3,25 @@
   "branch": "codex/cpp-worker-comprehensive-audit-repair-v1",
   "parent_commit": "550b827aaf63f2bd27919bb930be287fc40e97b3",
   "code_commit": "7c10c09cdaf7174a9cd40907db85a02379afe95e",
-  "annotated_tag": "cfd-ancf-viv-cpp-worker-audit-repair-v4",
+  "semantic_replay_fix_commit": "a74125f1f008817c446f40141039a52c67f4ebdd",
+  "annotated_tags": [
+    "cfd-ancf-viv-cpp-worker-audit-repair-v4",
+    "cfd-ancf-viv-cpp-worker-audit-repair-v4.2"
+  ],
   "changed_files": [
     "src/coupling/cpp_worker_persistent_ipc_v1/ancf_kernel.cpp",
     "src/coupling/cpp_physics_ownership_v1/physics_ownership.cpp",
     "src/coupling/cpp_physics_ownership_v1/physics_ownership_selftest.cpp",
     "tools/cpp_worker_comprehensive_audit_repair_v4/generate_stage158_evidence.py",
+    "tools/cpp_worker_comprehensive_audit_repair_v4/run_ownership_40step_replay.py",
+    "tests/cpp_worker_comprehensive_audit_repair_v4/test_force_semantics_replay.py",
     "results/158_cpp_worker_comprehensive_audit_repair_v1",
     "docs/158_cpp_worker_comprehensive_audit_repair_v1"
   ],
   "commit_message": "fix(cpp-worker): align mass integration with numerical contract",
   "diff_stat": {
-    "files_changed": 18,
-    "insertions": 682,
+    "files_changed": 22,
+    "insertions": 837,
     "deletions": 4
   },
   "verification": {
