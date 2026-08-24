@@ -1,0 +1,21 @@
+{
+  "build_commands": [
+    "cmake.exe -S src/coupling/cpp_worker_persistent_ipc_v1 -B runtime/cpp_worker_comprehensive_audit_repair_v1/stage161_build -G \"Visual Studio 17 2022\" -A x64",
+    "cmake.exe --build runtime/cpp_worker_comprehensive_audit_repair_v1/stage161_build --config Release --parallel 2"
+  ],
+  "build_directory": "runtime/cpp_worker_comprehensive_audit_repair_v1/stage161_build",
+  "cmake": "3.31.6",
+  "compiler": "MSVC 2022 BuildTools 14.44.35207 x64",
+  "configuration": "Release",
+  "generator": "Visual Studio 17 2022",
+  "selftests": {
+    "ancf_kernel": "pass",
+    "diagnostic": "pass",
+    "physics_ownership": "pass"
+  },
+  "static_analyzers": {
+    "clang_tidy": "unavailable",
+    "cppcheck": "unavailable"
+  },
+  "status": "pass"
+}

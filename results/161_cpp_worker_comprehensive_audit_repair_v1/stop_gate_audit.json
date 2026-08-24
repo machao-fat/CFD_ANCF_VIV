@@ -1,0 +1,12 @@
+{
+  "launch_performed": false,
+  "new_cfd_confirm_started": false,
+  "next_action": "do not request CFD confirm until strict numerical equivalence is resolved",
+  "owned_residual": 0,
+  "real_process_starts": {
+    "CFD": 0,
+    "MATLAB": 0,
+    "OpenFOAM": 0,
+    "WSL": 0
+  }
+}

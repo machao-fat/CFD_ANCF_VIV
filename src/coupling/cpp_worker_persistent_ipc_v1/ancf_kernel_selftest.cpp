@@ -7,7 +7,8 @@
 
 int main() {
   cfd_ancf::Model model;
-  model.include_gravity = false; model.include_buoyancy = false; model.top_tension_N = 0.0;
+  model.include_gravity = false; model.include_buoyancy = false;
+  model.top_tension_N = 0.0;
   model.newton_tolerance = 1.0e-4;
   auto state = cfd_ancf::make_reference_state(model);
   auto force = std::vector<double>(3 * model.slices, 0.0);
@@ -57,6 +58,52 @@ int main() {
     } catch (const std::invalid_argument&) {
       // Every malformed state must fail before numerical assembly.
     }
+  }
+  auto malformed_force_state = cfd_ancf::make_reference_state(model);
+  malformed_force_state.q[0] = std::numeric_limits<double>::quiet_NaN();
+  try {
+    std::vector<double> bad_force;
+    cfd_ancf::Matrix bad_tangent;
+    cfd_ancf::internal_force_tangent(malformed_force_state.q, model, bad_force, bad_tangent);
+    return 4;
+  } catch (const std::invalid_argument&) {
+    // Public force/tangent evaluation must reject non-finite input.
+  }
+  auto excessive_newton = model;
+  excessive_newton.max_newton = cfd_ancf::MAX_NEWTON + 1;
+  try {
+    cfd_ancf::validate_model(excessive_newton);
+    return 4;
+  } catch (const std::invalid_argument&) {
+    // A malformed solver budget must fail before allocation or iteration.
+  }
+  auto nonmonotone_slices = model;
+  nonmonotone_slices.slices = 3;
+  nonmonotone_slices.slice_positions_m = {0.75, 0.25, 0.5};
+  try {
+    cfd_ancf::validate_model(nonmonotone_slices);
+    return 4;
+  } catch (const std::invalid_argument&) {
+    // The C++ boundary must not rely on Python-side ordering checks.
+  }
+  auto wrong_slice_count = model;
+  wrong_slice_count.slices = 3;
+  wrong_slice_count.slice_positions_m = {0.25, 0.75};
+  try {
+    cfd_ancf::validate_model(wrong_slice_count);
+    return 4;
+  } catch (const std::invalid_argument&) {
+    // Missing or extra mapping positions are a contract violation.
+  }
+  auto overflowing_load_state = cfd_ancf::make_reference_state(model);
+  auto overflowing_force = force;
+  overflowing_load_state.base_load[0] = std::numeric_limits<double>::max();
+  overflowing_force[0] = std::numeric_limits<double>::max();
+  try {
+    (void)cfd_ancf::advance(overflowing_load_state, model, overflowing_force);
+    return 4;
+  } catch (const std::runtime_error&) {
+    // Addition overflow must fail before the Newton scale is computed.
   }
   std::cout << "ancf_kernel_selftest=pass ndof=" << model.ndof() << " iterations=" << diagnostics.iterations << "," << loaded.iterations << "\n";
   return 0;

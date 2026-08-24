@@ -1,0 +1,31 @@
+{
+  "compileall": {
+    "command": "python -m compileall -q src tools tests",
+    "status": "pass"
+  },
+  "focused_suites": {
+    "compileall": {
+      "status": "pass"
+    },
+    "cpp_kernel_selftests": {
+      "status": "pass",
+      "tests": 3
+    },
+    "cpp_root_unittest": {
+      "skipped": 1,
+      "status": "pass",
+      "tests": 1163
+    },
+    "cpp_worker_comprehensive_audit_repair_v1": {
+      "status": "pass",
+      "tests": 39
+    }
+  },
+  "real_process_starts": {
+    "CFD": 0,
+    "MATLAB": 0,
+    "OpenFOAM": 0,
+    "WSL": 0
+  },
+  "root_command": "$env:PYTHONPATH='src'; python -m unittest discover -s tests -t . -p 'test_*.py'"
+}

@@ -1,0 +1,9 @@
+{
+  "formal_0_2_1_protocol_semantics_modified": false,
+  "matlab_baseline_read_only": true,
+  "numerical_thresholds_modified": false,
+  "old_runtime_modified": false,
+  "old_stage_1_160_evidence_modified": false,
+  "physical_contract_modified": false,
+  "status": "verified_by_scope"
+}

@@ -10,6 +10,10 @@ namespace cfd_ancf {
 // protects the worker from malformed frames that could otherwise request an
 // unbounded n-by-n allocation before numerical validation runs.
 constexpr std::size_t MAX_NDOF = 2048;
+// The v1 wire contract is a bounded transient solver.  A larger value can
+// turn a malformed frame into an unbounded CPU request before fail-closed
+// cleanup runs.
+constexpr std::size_t MAX_NEWTON = 1000;
 
 struct Matrix {
   std::size_t rows = 0, cols = 0;

@@ -18,6 +18,7 @@ ID_ENDPOINT = 32
 REQUEST_PRODUCER = "python_scheduler"
 REQUEST_CONSUMER = "cpp_ancf_kernel_worker"
 MAX_NDOF = 2048
+MAX_NEWTON = 1000
 
 # v1 is a positional response schema without per-field wire labels. Preserve
 # the historical MATLAB golden-record meaning explicitly: both force slots
@@ -107,7 +108,7 @@ class KernelModel:
         if (self.elements < 1 or self.elements > 10000 or self.slices < 1 or
                 self.slices > 1000 or self.ndof > MAX_NDOF or self.gauss_order not in (3, 5)):
             raise FrameError("kernel model dimensions or quadrature order are invalid")
-        if self.max_newton <= 0 or self.newton_tolerance <= 0.0:
+        if self.max_newton <= 0 or self.max_newton > MAX_NEWTON or self.newton_tolerance <= 0.0:
             raise FrameError("kernel Newton contract is invalid")
         if self.damping_alpha != 0.0 or self.damping_beta != 0.0:
             raise FrameError("non-zero damping is not implemented in the worker contract")

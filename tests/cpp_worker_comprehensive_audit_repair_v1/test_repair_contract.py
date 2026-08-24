@@ -61,10 +61,20 @@ class RepairContractTests(unittest.TestCase):
         with self.assertRaises(FrameError):
             replace(request, model=replace(request.model, elements=400)).payload()
 
+    def test_newton_budget_is_bounded_before_frame(self):
+        request = self.request()
+        with self.assertRaises(FrameError):
+            replace(request, model=replace(request.model, max_newton=1001)).payload()
+
     def test_nonmonotone_slice_positions_are_rejected(self):
         request = self.request()
         with self.assertRaises(FrameError):
             replace(request, model=replace(request.model, slice_positions_m=(0.0, 6.0, 5.0))).payload()
+
+    def test_slice_position_count_is_rejected(self):
+        request = self.request()
+        with self.assertRaises(FrameError):
+            replace(request, model=replace(request.model, slice_positions_m=(0.0, 10.0))).payload()
 
     def test_time_tick_mismatch_is_rejected_before_frame(self):
         request = self.request()

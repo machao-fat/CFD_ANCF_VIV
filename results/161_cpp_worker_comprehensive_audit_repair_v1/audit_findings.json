@@ -1,0 +1,26 @@
+{
+  "findings": [
+    {
+      "id": "MAX_NEWTON_RESOURCE_BOUND",
+      "severity": "high",
+      "status": "fixed_and_tested"
+    },
+    {
+      "id": "NONFINITE_ASSEMBLY_AND_SOLVER_OUTPUT",
+      "severity": "high",
+      "status": "fixed_and_tested"
+    },
+    {
+      "id": "SLICE_POSITION_CONTRACT",
+      "severity": "medium",
+      "status": "fixed_and_tested"
+    },
+    {
+      "id": "FULL_MATLAB_CPP_STATE_EQUIVALENCE",
+      "reason": "strict_pass_steps=0/40; first failure is internal_force at step 560",
+      "severity": "high",
+      "status": "not_proven"
+    }
+  ],
+  "status": "complete_with_strict_numerical_blocker"
+}

@@ -1,0 +1,8 @@
+{
+  "branch": "codex/cpp-worker-comprehensive-audit-repair-v1",
+  "force_push": false,
+  "head_before_commit": "48fc04e079aca0d814774d6183e09eb094884f4e",
+  "history_rewrite": false,
+  "status_scoped": "M src/coupling/cpp_worker_persistent_ipc_v1/ancf_kernel.cpp\n M src/coupling/cpp_worker_persistent_ipc_v1/ancf_kernel.hpp\n M src/coupling/cpp_worker_persistent_ipc_v1/ancf_kernel_selftest.cpp\n M src/coupling/cpp_worker_persistent_ipc_v1/kernel_protocol.py\n M tests/cpp_worker_comprehensive_audit_repair_v1/test_repair_contract.py\n?? tools/cpp_worker_comprehensive_audit_repair_v1/generate_stage161_evidence.py",
+  "unrelated_user_files_excluded": true
+}

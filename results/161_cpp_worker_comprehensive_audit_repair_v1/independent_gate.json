@@ -1,0 +1,51 @@
+{
+  "C++_ANCF_NUMERICAL_CORE_STATUS": "not_completed",
+  "FORMAL_STROUHAL_STATUS": "not_completed",
+  "LOCK_IN_CLAIM": "not_completed",
+  "STABLE_VIV_RESPONSE_CLAIM": "not_completed",
+  "case_id": "cpp_worker_comprehensive_audit_stage161_case_001",
+  "conditions": {
+    "compileall": true,
+    "cpp_selftests": true,
+    "focused_tests": true,
+    "ipc_fail_closed": true,
+    "owned_residual_zero": true,
+    "ownership_nonzero_base_40step": true,
+    "physical_process_starts_zero": true,
+    "protected_artifacts_unmodified": true,
+    "root_unittest": true,
+    "stage161_fresh_release_build": true,
+    "strict_matlab_cpp_numerical_equivalence": false
+  },
+  "gate": "STAGE4F_D_CPP_WORKER_COMPREHENSIVE_AUDIT_REPAIR_V1_GATE: do_not_pass",
+  "generated_at_utc": "2026-08-24T21:52:12.706366+00:00",
+  "new_real_cfd_authorization_required": true,
+  "owned_residual": 0,
+  "real_process_starts": {
+    "CFD": 0,
+    "MATLAB": 0,
+    "OpenFOAM": 0,
+    "WSL": 0
+  },
+  "run_id": "cpp_worker_comprehensive_audit_repair_161_001",
+  "stage_id": "stage4f_d_cpp_worker_comprehensive_audit_repair_v1_stage161",
+  "status": "do_not_pass",
+  "tests": {
+    "compileall": {
+      "status": "pass"
+    },
+    "cpp_kernel_selftests": {
+      "status": "pass",
+      "tests": 3
+    },
+    "cpp_root_unittest": {
+      "skipped": 1,
+      "status": "pass",
+      "tests": 1163
+    },
+    "cpp_worker_comprehensive_audit_repair_v1": {
+      "status": "pass",
+      "tests": 39
+    }
+  }
+}

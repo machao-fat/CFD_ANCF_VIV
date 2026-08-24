@@ -29,6 +29,21 @@ Vec3 mul3(const Mat3& a, const Vec3& b) { return {a[0]*b[0]+a[1]*b[1]+a[2]*b[2],
 Mat3 outer3(const Vec3& a, const Vec3& b) { Mat3 c{}; for(int i=0;i<3;++i)for(int j=0;j<3;++j)c[3*i+j]=a[i]*b[j]; return c; }
 Mat3 cross_matrix(const Vec3& a) { return {0,-a[2],a[1],a[2],0,-a[0],-a[1],a[0],0}; }
 
+bool finite_vector(const std::vector<double>& values) {
+  return !values.empty() && std::all_of(values.begin(), values.end(),
+                                        [](double value) { return std::isfinite(value); });
+}
+
+bool finite_matrix(const Matrix& value) {
+  if (value.rows == 0 || value.cols == 0 ||
+      value.rows > (std::numeric_limits<std::size_t>::max)() / value.cols)
+    return false;
+  return
+         value.data.size() == value.rows * value.cols &&
+         std::all_of(value.data.begin(), value.data.end(),
+                     [](double item) { return std::isfinite(item); });
+}
+
 Vec4 shape(double x, double L, int derivative) {
   const double xi = x / L;
   if (derivative == 0) return {1-3*xi*xi+2*xi*xi*xi, L*(xi-2*xi*xi+xi*xi*xi), 3*xi*xi-2*xi*xi*xi, L*(-xi*xi+xi*xi*xi)};
@@ -58,25 +73,64 @@ Matrix multiply(const Matrix& a, const Matrix& b) { Matrix out(a.rows,b.cols); f
 std::vector<double> multiply(const Matrix& a, const std::vector<double>& x) { if(a.cols!=x.size())throw std::invalid_argument("matrix vector dimensions"); std::vector<double> y(a.rows); for(std::size_t i=0;i<a.rows;++i)for(std::size_t j=0;j<a.cols;++j)y[i]+=a(i,j)*x[j]; return y; }
 std::vector<double> solve(Matrix a, std::vector<double> b) {
   if(a.rows!=a.cols || b.size()!=a.rows)throw std::invalid_argument("linear solve dimensions");
+  if (!finite_matrix(a) || !finite_vector(b))
+    throw std::runtime_error("linear solve input contains NaN/Inf");
   const std::size_t n=a.rows;
 #ifdef CFD_ANCF_USE_DOUBLE_SOLVE
   std::vector<double> aa = a.data, bb = std::move(b);
   for(std::size_t k=0;k<n;++k){ std::size_t pivot=k; for(std::size_t i=k+1;i<n;++i)if(std::abs(aa[i*n+k])>std::abs(aa[pivot*n+k]))pivot=i; if(std::abs(aa[pivot*n+k])<1e-24)throw std::runtime_error("singular ANCF tangent"); if(pivot!=k){for(std::size_t j=k;j<n;++j)std::swap(aa[k*n+j],aa[pivot*n+j]);std::swap(bb[k],bb[pivot]);} for(std::size_t i=k+1;i<n;++i){double f=aa[i*n+k]/aa[k*n+k];aa[i*n+k]=0;for(std::size_t j=k+1;j<n;++j)aa[i*n+j]-=f*aa[k*n+j];bb[i]-=f*bb[k];}}
-  std::vector<double> xx(n); for(std::size_t ii=0;ii<n;++ii){std::size_t i=n-1-ii;double s=bb[i];for(std::size_t j=i+1;j<n;++j)s-=aa[i*n+j]*xx[j];xx[i]=s/aa[i*n+i];} return xx;
+  std::vector<double> xx(n); for(std::size_t ii=0;ii<n;++ii){std::size_t i=n-1-ii;double s=bb[i];for(std::size_t j=i+1;j<n;++j)s-=aa[i*n+j]*xx[j];xx[i]=s/aa[i*n+i];}
+  if (!finite_vector(xx)) throw std::runtime_error("linear solve output contains NaN/Inf");
+  return xx;
 #else
   std::vector<long double> aa(n*n), bb(n);
   for(std::size_t i=0;i<n;++i){bb[i]=static_cast<long double>(b[i]);for(std::size_t j=0;j<n;++j)aa[i*n+j]=static_cast<long double>(a(i,j));}
   for(std::size_t k=0;k<n;++k){ std::size_t pivot=k; for(std::size_t i=k+1;i<n;++i)if(std::abs(aa[i*n+k])>std::abs(aa[pivot*n+k]))pivot=i; if(std::abs(aa[pivot*n+k])<1e-24L)throw std::runtime_error("singular ANCF tangent"); if(pivot!=k){for(std::size_t j=k;j<n;++j)std::swap(aa[k*n+j],aa[pivot*n+j]);std::swap(bb[k],bb[pivot]);} for(std::size_t i=k+1;i<n;++i){long double f=aa[i*n+k]/aa[k*n+k];aa[i*n+k]=0;for(std::size_t j=k+1;j<n;++j)aa[i*n+j]-=f*aa[k*n+j];bb[i]-=f*bb[k];}}
   std::vector<long double> xx(n); for(std::size_t ii=0;ii<n;++ii){std::size_t i=n-1-ii;long double s=bb[i];for(std::size_t j=i+1;j<n;++j)s-=aa[i*n+j]*xx[j];xx[i]=s/aa[i*n+i];}
-  std::vector<double>x(n); for(std::size_t i=0;i<n;++i)x[i]=static_cast<double>(xx[i]); return x;
+  std::vector<double>x(n); for(std::size_t i=0;i<n;++i)x[i]=static_cast<double>(xx[i]);
+  if (!finite_vector(x)) throw std::runtime_error("linear solve output contains NaN/Inf");
+  return x;
 #endif
 }
 
 void element_force_tangent(const std::vector<double>& qe, double Le, double EA, double EI, std::size_t ngauss, std::vector<double>& fe, Matrix& Ke) {
   fe.assign(12,0.0); Ke=Matrix(12,12);
   const auto [xi,w]=gauss(ngauss);
-  for(std::size_t k=0;k<xi.size();++k){double x=0.5*(xi[k]+1)*Le; Matrix B=block_matrix(shape(x,Le,1));Matrix C=block_matrix(shape(x,Le,2));Vec3 a{},b{};for(int i=0;i<3;++i){for(int j=0;j<12;++j){a[i]+=B(i,j)*qe[j];b[i]+=C(i,j)*qe[j];}}double a2=dot(a,a);if(a2<EPS)throw std::runtime_error("degenerate ANCF tangent");Vec3 v=cross(a,b);double v2=dot(v,v);Mat3 Xa=cross_matrix(a),Xb=cross_matrix(b),Xv=cross_matrix(v);Vec3 ga_b=add(scale(mul3(Xb,v),std::pow(a2,-3)),scale(a,-3*v2*std::pow(a2,-4)));Vec3 gb_b=scale(mul3(Xa,v),-std::pow(a2,-3));Mat3 Haa_b=add3(add3(add3(add3(scale3(mul3(Xb,Xb),-std::pow(a2,-3)),scale3(outer3(mul3(Xb,v),a),-6*std::pow(a2,-4))),scale3(outer3(a,mul3(Xb,v)),-3*std::pow(a2,-4))),scale3(outer3(a,a),24*v2*std::pow(a2,-5))),scale3(eye3(),-3*v2*std::pow(a2,-4)));Mat3 Hab=add3(scale3(add3(scale3(Xv,-1),mul3(Xb,Xa)),std::pow(a2,-3)),scale3(outer3(a,mul3(Xa,v)),3*std::pow(a2,-4)));Mat3 Hbb=scale3(mul3(Xa,Xa),-std::pow(a2,-3));double eps=0.5*(a2-1);Vec3 ga=add(scale(a,EA*eps),scale(ga_b,EI));Vec3 gb=scale(gb_b,EI);Mat3 Haa=add3(scale3(add3(outer3(a,a),scale3(eye3(),eps)),EA),scale3(Haa_b,EI));Mat3 HabS=scale3(Hab,EI),HbbS=scale3(Hbb,EI);double wt=w[k]*Le/2;
-    for(int i=0;i<12;++i){for(int c=0;c<3;++c)fe[i]+=wt*(B(c,i)*ga[c]+C(c,i)*gb[c]);for(int j=0;j<12;++j){double value=0;for(int r=0;r<3;++r)for(int s=0;s<3;++s)value+=B(r,i)*Haa[3*r+s]*B(s,j)+B(r,i)*HabS[3*r+s]*C(s,j)+C(r,i)*HabS[3*s+r]*B(s,j)+C(r,i)*HbbS[3*r+s]*C(s,j);Ke(i,j)+=wt*value;}}
+  for(std::size_t k=0;k<xi.size();++k){double x=0.5*(xi[k]+1)*Le; Matrix B=block_matrix(shape(x,Le,1));Matrix C=block_matrix(shape(x,Le,2));Vec3 a{},b{};for(int i=0;i<3;++i){for(int j=0;j<12;++j){a[i]+=B(i,j)*qe[j];b[i]+=C(i,j)*qe[j];}}double a2=dot(a,a);if(a2<EPS)throw std::runtime_error("degenerate ANCF tangent");Vec3 v=cross(a,b);double v2=dot(v,v);Mat3 Xa=cross_matrix(a),Xb=cross_matrix(b),Xv=cross_matrix(v);
+    // The MATLAB contract uses integer negative powers.  Evaluate the
+    // reciprocal powers explicitly so the C++ path does not depend on a
+    // platform libm pow implementation or its reassociation choices.
+    const double inv_a2 = 1.0 / a2;
+    const double inv_a2_2 = inv_a2 * inv_a2;
+    const double inv_a2_3 = inv_a2_2 * inv_a2;
+    const double inv_a2_4 = inv_a2_3 * inv_a2;
+    const double inv_a2_5 = inv_a2_4 * inv_a2;
+    Vec3 ga_b=add(scale(mul3(Xb,v),inv_a2_3),scale(a,-3*v2*inv_a2_4));Vec3 gb_b=scale(mul3(Xa,v),-inv_a2_3);Mat3 Haa_b=add3(add3(add3(add3(scale3(mul3(Xb,Xb),-inv_a2_3),scale3(outer3(mul3(Xb,v),a),-6*inv_a2_4)),scale3(outer3(a,mul3(Xb,v)),-3*inv_a2_4)),scale3(outer3(a,a),24*v2*inv_a2_5)),scale3(eye3(),-3*v2*inv_a2_4));Mat3 Hab=add3(scale3(add3(scale3(Xv,-1),mul3(Xb,Xa)),inv_a2_3),scale3(outer3(a,mul3(Xa,v)),3*inv_a2_4));Mat3 Hbb=scale3(mul3(Xa,Xa),-inv_a2_3);double eps=0.5*(a2-1);Vec3 ga=add(scale(a,EA*eps),scale(ga_b,EI));Vec3 gb=scale(gb_b,EI);Mat3 Haa=add3(scale3(add3(outer3(a,a),scale3(eye3(),eps)),EA),scale3(Haa_b,EI));Mat3 HabS=scale3(Hab,EI),HbbS=scale3(Hbb,EI);double wt=w[k]*Le/2;
+    // Keep the force assembly in the same staged order as MATLAB:
+    // compute B.'*ga and C.'*gb independently, add them, then apply the
+    // quadrature weight.  Folding the weight and both products into one
+    // accumulation changes low-magnitude components by several ulps after
+    // cancellation, which is material to the strict dual-run contract.
+    std::array<double, 12> bga{};
+    std::array<double, 12> cgb{};
+    for (int i = 0; i < 12; ++i) {
+      for (int c = 0; c < 3; ++c) {
+        bga[static_cast<std::size_t>(i)] += B(c, i) * ga[c];
+        cgb[static_cast<std::size_t>(i)] += C(c, i) * gb[c];
+      }
+      fe[static_cast<std::size_t>(i)] += (bga[static_cast<std::size_t>(i)] +
+                                           cgb[static_cast<std::size_t>(i)]) * wt;
+      for (int j = 0; j < 12; ++j) {
+        double value = 0;
+        for (int r = 0; r < 3; ++r)
+          for (int s = 0; s < 3; ++s)
+            value += B(r, i) * Haa[3 * r + s] * B(s, j) +
+                     B(r, i) * HabS[3 * r + s] * C(s, j) +
+                     C(r, i) * HabS[3 * s + r] * B(s, j) +
+                     C(r, i) * HbbS[3 * r + s] * C(s, j);
+        Ke(i, j) += wt * value;
+      }
+    }
   }
 }
 }
@@ -84,15 +138,15 @@ void element_force_tangent(const std::vector<double>& qe, double Le, double EA, 
 double Model::area() const { return PI*(diameter_m*diameter_m-inner_diameter_m*inner_diameter_m)/4.0; }
 double Model::displaced_area() const { return PI*diameter_m*diameter_m/4.0; }
 double Model::EA() const { return youngs_modulus_Pa*area(); }
-// Match the MATLAB material contract's integer-power evaluation path.  Using
-// std::pow here can select a different libm implementation and produce a
-// different last-bit EI even when E, D, and d are identical.
+// Preserve the MATLAB material contract literally: MATLAB evaluates this
+// scalar expression as E*pi*(D^4-d^4)/64.  Replacing each fourth power with
+// (D*D)*(D*D) changes EI by a few ulps for non-binary diameters; bending-force
+// cancellation can amplify that difference in small generalized-force
+// components.
 double Model::EI() const {
-  const double diameter_squared = diameter_m * diameter_m;
-  const double inner_squared = inner_diameter_m * inner_diameter_m;
-  const double diameter_fourth = diameter_squared * diameter_squared;
-  const double inner_fourth = inner_squared * inner_squared;
-  return youngs_modulus_Pa * PI * (diameter_fourth - inner_fourth) / 64.0;
+  return youngs_modulus_Pa * PI *
+         (std::pow(diameter_m, 4.0) - std::pow(inner_diameter_m, 4.0)) /
+         64.0;
 }
 
 void validate_model(const Model& model) {
@@ -100,7 +154,8 @@ void validate_model(const Model& model) {
   if (model.elements < 1 || model.elements > 10000 || model.slices < 1 || model.slices > 1000 || model.ndof() > MAX_NDOF ||
       model.length_m <= 0.0 || model.diameter_m <= model.inner_diameter_m ||
       model.inner_diameter_m < 0.0 || model.dt_s <= 0.0 || model.beta <= 0.0 ||
-      model.gamma <= 0.0 || model.max_newton == 0 || model.gauss_order != 3 && model.gauss_order != 5 ||
+      model.gamma <= 0.0 || model.max_newton == 0 || model.max_newton > MAX_NEWTON ||
+      model.gauss_order != 3 && model.gauss_order != 5 ||
       model.damping_alpha != 0.0 || model.damping_beta != 0.0) {
     throw std::invalid_argument("invalid ANCF model dimensions or numerical contract");
   }
@@ -161,8 +216,20 @@ std::vector<double> external_force(const Model& model, const std::vector<double>
 
 void internal_force_tangent(const std::vector<double>& q, const Model& model, std::vector<double>& force, Matrix& tangent) {
   validate_model(model);
-  if(q.size()!=model.ndof())throw std::invalid_argument("q dimensions");force.assign(model.ndof(),0);tangent=Matrix(model.ndof(),model.ndof());double Le=model.length_m/model.elements;for(std::size_t e=0;e<model.elements;++e){std::vector<double> qe(q.begin()+6*e,q.begin()+6*e+12),fe;Matrix Ke;element_force_tangent(qe,Le,model.EA(),model.EI(),model.gauss_order,fe,Ke);for(int i=0;i<12;++i){force[6*e+i]+=fe[i];for(int j=0;j<12;++j)tangent(6*e+i,6*e+j)+=Ke(i,j);}}
+  if(q.size()!=model.ndof() || !finite_vector(q))
+    throw std::invalid_argument("q dimensions or values are invalid");
+  force.assign(model.ndof(),0);tangent=Matrix(model.ndof(),model.ndof());
+  double Le=model.length_m/model.elements;
+  for(std::size_t e=0;e<model.elements;++e){
+    std::vector<double> qe(q.begin()+6*e,q.begin()+6*e+12),fe;Matrix Ke;
+    element_force_tangent(qe,Le,model.EA(),model.EI(),model.gauss_order,fe,Ke);
+    if (!finite_vector(fe) || !finite_matrix(Ke))
+      throw std::runtime_error("ANCF internal force or tangent contains NaN/Inf");
+    for(int i=0;i<12;++i){force[6*e+i]+=fe[i];for(int j=0;j<12;++j)tangent(6*e+i,6*e+j)+=Ke(i,j);}
+  }
   for(std::size_t i=0;i<model.ndof();++i)for(std::size_t j=i+1;j<model.ndof();++j){double v=0.5*(tangent(i,j)+tangent(j,i));tangent(i,j)=tangent(j,i)=v;}
+  if (!finite_vector(force) || !finite_matrix(tangent))
+    throw std::runtime_error("ANCF assembled force or tangent contains NaN/Inf");
 }
 
 State make_reference_state(const Model& model) {
@@ -218,6 +285,8 @@ StepDiagnostics advance(State& state, const Model& model, const std::vector<doub
   std::vector<double> qext = external_force(model, slice_force);
   const auto external_end = Clock::now();
   for (std::size_t i = 0; i < Qext.size(); ++i) Qext[i] += qext[i];
+  if (!finite_vector(Qext))
+    throw std::runtime_error("ANCF total external load contains NaN/Inf");
   std::vector<char> fixed(model.ndof(), 0);
   fixed[0] = fixed[1] = fixed[2] = 1;
   const std::size_t top = 6 * model.elements;
@@ -252,6 +321,8 @@ StepDiagnostics advance(State& state, const Model& model, const std::vector<doub
     Matrix K;
     const auto assembly_start = Clock::now();
     internal_force_tangent(q, model, qi, K);
+    if (!finite_vector(qi) || !finite_matrix(K))
+      throw std::runtime_error("ANCF Newton assembly contains NaN/Inf");
     const auto assembly_end = Clock::now();
     d.matrix_assembly_s += std::chrono::duration<double>(assembly_end - assembly_start).count();
     std::vector<double> R(model.ndof());
@@ -261,6 +332,7 @@ StepDiagnostics advance(State& state, const Model& model, const std::vector<doub
       R[i] += qi[i] - Qext[i];
       if (fixed[i]) R[i] = 0.0;
     }
+    if (!finite_vector(R)) throw std::runtime_error("ANCF residual contains NaN/Inf");
     double norm = 0.0;
     for (std::size_t i = 0; i < R.size(); ++i) if (!fixed[i]) norm = std::max(norm, std::abs(R[i]));
     if (iter == 1) d.initial_residual = norm;
@@ -277,6 +349,7 @@ StepDiagnostics advance(State& state, const Model& model, const std::vector<doub
       for (std::size_t j = 0; j < model.ndof(); ++j)
         Keff(i, j) += state.mass(i, j) / (model.beta * model.dt_s * model.dt_s) +
                       state.damping(i, j) * model.gamma / (model.beta * model.dt_s);
+    if (!finite_matrix(Keff)) throw std::runtime_error("ANCF effective tangent contains NaN/Inf");
     std::vector<std::size_t> free;
     for (std::size_t i = 0; i < model.ndof(); ++i) if (!fixed[i]) free.push_back(i);
     Matrix Kff(free.size(), free.size());
@@ -287,6 +360,7 @@ StepDiagnostics advance(State& state, const Model& model, const std::vector<doub
     }
     const auto solve_start = Clock::now();
     auto dq = solve(Kff, Rf);
+    if (!finite_vector(dq)) throw std::runtime_error("ANCF Newton increment contains NaN/Inf");
     const auto solve_end = Clock::now();
     d.linear_solve_s += std::chrono::duration<double>(solve_end - solve_start).count();
     for (std::size_t i = 0; i < free.size(); ++i) q[free[i]] -= dq[i];
