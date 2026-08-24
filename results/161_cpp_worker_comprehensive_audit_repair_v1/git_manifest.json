@@ -3,7 +3,7 @@
   "branch": "codex/cpp-worker-comprehensive-audit-repair-v1",
   "parent_commit": "48fc04e079aca0d814774d6183e09eb094884f4e",
   "implementation_commit": "4eacf38",
-  "annotated_tag": "cfd-ancf-viv-cpp-worker-comprehensive-audit-repair-v1.2.0",
+  "annotated_tag": "cfd-ancf-viv-cpp-worker-comprehensive-audit-repair-v1.2.1",
   "implementation_commit_message": "fix(cpp-worker): harden numerical assembly and solver contracts",
   "changed_files": [
     "src/coupling/cpp_worker_persistent_ipc_v1/ancf_kernel.cpp",
@@ -40,5 +40,12 @@
     "force_push": false,
     "history_rewrite": false
   },
-  "remote_push": "pending_explicit_push_step"
+  "remote_push": {
+    "status": "completed",
+    "remote": "origin",
+    "repository": "https://github.com/machao-fat/CFD_ANCF_VIV.git",
+    "branch": "codex/cpp-worker-comprehensive-audit-repair-v1",
+    "branch_commit": "614e4dd04dc359f92be9e1823443bb036f358a97",
+    "pushed_tag": "cfd-ancf-viv-cpp-worker-comprehensive-audit-repair-v1.2.0"
+  }
 }
