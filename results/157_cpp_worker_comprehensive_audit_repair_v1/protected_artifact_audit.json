@@ -1,0 +1,11 @@
+{
+  "old_evidence_modified": false,
+  "old_evidence_read_only": true,
+  "old_runtime_reused": false,
+  "protected_paths": [
+    "results/1-156 legacy evidence and runtimes",
+    "runtime/cpp_worker_persistent_ipc_v1/dual_run_018",
+    "MATLAB worker baseline and formal 0.2.1 protocol"
+  ],
+  "status": "pass"
+}

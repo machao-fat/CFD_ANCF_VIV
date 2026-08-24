@@ -136,6 +136,9 @@ class CppAdapterTests(unittest.TestCase):
             self.assertEqual(adapter.start_count, 1)
             self.assertEqual([item["transport_sequence"] for item in adapter.responses if "transport_sequence" in item], [1, 2, 3, 4])
             self.assertEqual(adapter.owned_residual, 0)
+            self.assertIn("stdout", worker.audit)
+            self.assertIn("stderr", worker.audit)
+            self.assertEqual(worker.audit["failure_classification"] if "failure_classification" in worker.audit else None, None)
 
 
 if __name__ == "__main__": unittest.main()

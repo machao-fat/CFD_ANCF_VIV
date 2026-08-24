@@ -66,6 +66,10 @@ class KernelWorker:
         self.start_count = 0
         self.audit: dict[str, Any] = {}
 
+    def _record_failure(self, classification: str, error: BaseException) -> None:
+        self.audit["failure_classification"] = classification
+        self.audit["last_error"] = f"{type(error).__name__}: {error}"
+
     def start(self) -> None:
         if self.process is not None:
             raise ConfirmError("C++ worker duplicate start")
@@ -86,23 +90,27 @@ class KernelWorker:
     def step(self, request: KernelStepRequest):
         if self.process is None or self.process.stdin is None or self.process.stdout is None:
             raise ConfirmError("C++ worker is not running")
-        frame = encode_kernel_request(request)
-        self.process.stdin.write(frame)
-        self.process.stdin.flush()
-        header = self.process.stdout.read(HEADER.size)
-        if len(header) != HEADER.size:
-            raise ConfirmError("C++ worker disconnected before response")
-        _magic, length, message_type = HEADER.unpack(header)
-        if message_type != 6 or length > 64 * 1024 * 1024:
-            raise ConfirmError("C++ worker response frame is invalid")
-        body = self.process.stdout.read(length)
-        if len(body) != length:
-            raise ConfirmError("C++ worker response is truncated")
         try:
+            frame = encode_kernel_request(request)
+            self.process.stdin.write(frame)
+            self.process.stdin.flush()
+            header = self.process.stdout.read(HEADER.size)
+            if len(header) != HEADER.size:
+                raise ConfirmError("C++ worker disconnected before response")
+            _magic, length, message_type = HEADER.unpack(header)
+            if message_type != 6 or length > 64 * 1024 * 1024:
+                raise ConfirmError("C++ worker response frame is invalid")
+            body = self.process.stdout.read(length)
+            if len(body) != length:
+                raise ConfirmError("C++ worker response is truncated")
             response = decode_kernel_response(header + body)
             validate_kernel_response(request, response)
         except FrameError as exc:
+            self._record_failure("protocol_validation", exc)
             raise ConfirmError(str(exc)) from exc
+        except Exception as exc:
+            self._record_failure("worker_transport", exc)
+            raise
         return response
 
     def stop(self) -> None:
@@ -114,13 +122,26 @@ class KernelWorker:
                 process.stdin.close()
             process.wait(timeout=5)
         except (OSError, subprocess.TimeoutExpired):
+            self._record_failure("cleanup_timeout", TimeoutError("worker did not exit within cleanup timeout"))
             process.terminate()
             try:
                 process.wait(timeout=5)
             except subprocess.TimeoutExpired:
+                self._record_failure("cleanup_kill", TimeoutError("worker required forced kill"))
                 process.kill(); process.wait(timeout=5)
+        stream_text: dict[str, str] = {}
+        for name, stream in (("stdout", process.stdout), ("stderr", process.stderr)):
+            if stream is None:
+                stream_text[name] = ""
+                continue
+            try:
+                stream_text[name] = stream.read().decode("utf-8", errors="replace")
+            except (OSError, ValueError) as exc:
+                stream_text[name] = ""
+                self._record_failure("audit_stream_read", exc)
         self.audit.update({"end_time_ns": time.time_ns(), "return_code": process.returncode,
-                           "cleanup_result": "closed" if process.returncode == 0 else "closed_nonzero"})
+                           "cleanup_result": "closed" if process.returncode == 0 else "closed_nonzero",
+                           "stdout": stream_text["stdout"], "stderr": stream_text["stderr"]})
         for stream in (process.stdout, process.stderr):
             if stream is not None:
                 stream.close()

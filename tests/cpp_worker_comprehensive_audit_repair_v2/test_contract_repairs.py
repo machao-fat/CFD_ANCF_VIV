@@ -10,11 +10,18 @@ ROOT = Path(__file__).resolve().parents[2]
 sys.path.insert(0, str(ROOT / "src"))
 
 from coupling.cpp_worker_confirm_v1.cpp_adapter import CppAdapterError, CppKernelCampaignAdapter
-from coupling.cpp_worker_persistent_ipc_v1.kernel_protocol import FrameError, KernelModel, KernelStepRequest
+from coupling.cpp_worker_persistent_ipc_v1.kernel_protocol import (
+    FrameError, KernelModel, KernelStepRequest, RESPONSE_FIELD_SEMANTICS,
+)
 from coupling.cpp_worker_persistent_ipc_v1.protocol import FrameError as TransportFrameError, StepRequest
 
 
 class ContractRepairTests(unittest.TestCase):
+    def test_v1_response_force_field_semantics_are_explicit(self) -> None:
+        self.assertEqual(RESPONSE_FIELD_SEMANTICS["external_force"], "total_Qext")
+        self.assertEqual(RESPONSE_FIELD_SEMANTICS["generalized_force"], "total_Qext_alias")
+        self.assertNotEqual(RESPONSE_FIELD_SEMANTICS["external_force"], "cfd_only_force")
+
     def test_kernel_model_rejects_nan_top_tension_and_boolean_numbers(self) -> None:
         model = KernelModel(top_tension_N=float("nan"))
         with self.assertRaises(FrameError):

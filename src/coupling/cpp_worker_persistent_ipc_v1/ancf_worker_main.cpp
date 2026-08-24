@@ -346,6 +346,10 @@ int process_step(const std::vector<char>& payload, std::vector<char>& response,
   const std::vector<double> corrector = state.q;
   const std::vector<double> output_arrays = [&]() {
     std::vector<double> value; value.reserve(8 * q.size());
+    // v1 is a positional wire schema. The historical MATLAB golden record
+    // calls both force slots external_force and generalized_force, but both
+    // contain total Qext = base_load + mapped slice force. Do not reinterpret
+    // either slot as CFD-only force without a versioned schema migration.
     const std::array<const std::vector<double>*, 8> vectors{
         &state.q, &state.qdot, &state.qddot, &internal_after,
         &generalized, &generalized, &predictor, &corrector};

@@ -1,0 +1,18 @@
+{
+  "all_fail_closed": true,
+  "cases": [
+    "identity mismatch",
+    "stale/duplicate/out-of-order response",
+    "tick/time mismatch",
+    "payload hash mismatch",
+    "NaN/Inf",
+    "dimension mismatch",
+    "malformed mass matrix",
+    "failed checkpoint load state preservation",
+    "worker disconnect",
+    "worker non-zero return and stream preservation",
+    "duplicate lifecycle start"
+  ],
+  "same_runtime_retry": false,
+  "status": "pass"
+}

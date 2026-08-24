@@ -17,6 +17,18 @@ ID_CASE = 64
 ID_ENDPOINT = 32
 MAX_NDOF = 2048
 
+# v1 is a positional response schema without per-field wire labels. Preserve
+# the historical MATLAB golden-record meaning explicitly: both force slots
+# contain total Qext (base load plus mapped slice force). A CFD-only force
+# field requires a versioned schema migration.
+RESPONSE_FIELD_SEMANTICS = {
+    "external_force": "total_Qext",
+    "generalized_force": "total_Qext_alias",
+    "internal_force": "Qint_at_corrected_state",
+    "predictor": "Newmark_position_predictor",
+    "corrector": "corrected_q",
+}
+
 _PREFIX = struct.Struct("<IIIiiQddiiiiiQQ")
 _MODEL = struct.Struct("<13dii")
 _RESPONSE_PREFIX = struct.Struct("<IIIiiQdiiidQQI")

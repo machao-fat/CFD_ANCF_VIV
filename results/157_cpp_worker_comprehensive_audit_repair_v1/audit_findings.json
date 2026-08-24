@@ -1,0 +1,41 @@
+{
+  "findings": [
+    {
+      "id": "WORKER_FAILURE_STREAM_PRESERVATION",
+      "scope": "coordinator.py",
+      "severity": "high",
+      "status": "fixed_and_regression_tested"
+    },
+    {
+      "id": "FORCE_FIELD_SEMANTICS_EXPLICIT",
+      "scope": "kernel_protocol.py/ancf_worker_main.cpp",
+      "severity": "medium",
+      "status": "fixed_without_wire_migration"
+    },
+    {
+      "id": "NEWTON_RESIDUAL_SCALE_FIXED_FREE_DOF",
+      "scope": "ancf_kernel.cpp",
+      "severity": "high",
+      "status": "fixed_and_selftested"
+    },
+    {
+      "id": "MASS_MATRIX_SHAPE_AND_FINITE_BOUNDARY",
+      "scope": "ancf_kernel.cpp",
+      "severity": "high",
+      "status": "fixed_and_selftested"
+    },
+    {
+      "id": "MATLAB_CPP_STRICT_NUMERICAL_EQUIVALENCE",
+      "severity": "high",
+      "status": "not_proven",
+      "strict_pass_steps": 0
+    },
+    {
+      "id": "BENT_TOP_TENSION_DIRECTION",
+      "severity": "high",
+      "status": "not_evaluable_without_authoritative_contract"
+    }
+  ],
+  "stage_id": "stage4f_d_cpp_worker_comprehensive_audit_repair_v3",
+  "status": "complete_with_numerical_blockers"
+}
