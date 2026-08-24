@@ -1,0 +1,3 @@
+# v6 lock-in classification
+
+Classification is shared across all Ur values; there is no Ur-specific branch. A locked/near-lock-in label requires a final response-cycle steady result, reliable frequency, synchronization, positive mean input power above the 0.5 W noise floor, positive `cos(phi_Fv)`, and an amplitude above the campaign baseline. The phase is normalized to [-180, 180] degrees; no fixed `phi > -45°` rule is used. NaN phase cannot pass the positive-power phase gate. Unsteady or quasi-periodic points remain transitional unless their separate stationarity/spectral evidence is complete.

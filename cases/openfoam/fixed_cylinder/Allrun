@@ -1,0 +1,30 @@
+#!/usr/bin/env bash
+
+case_dir="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+project_dir="$(cd "$case_dir/../../.." && pwd)"
+result_dir="$project_dir/results/03_fixed_cylinder/medium"
+
+cd "$case_dir"
+source /opt/openfoam10/etc/bashrc
+set -euo pipefail
+
+if [[ -e log.icoFoam || -d postProcessing || -d constant/polyMesh ]]; then
+    echo "Existing generated output detected. Run ./Allclean after checking it, then rerun ./Allrun." >&2
+    exit 2
+fi
+
+if [[ -d 0.orig ]]; then
+    cp -r 0.orig/. 0/
+fi
+
+blockMesh | tee log.blockMesh
+checkMesh -allGeometry -allTopology -meshQuality | tee log.checkMesh
+setFields | tee log.setFields
+icoFoam | tee log.icoFoam
+
+mkdir -p "$result_dir"
+python3 "$case_dir/scripts/postprocess_fixed_cylinder.py" \
+    --case "$case_dir" \
+    --result "$result_dir"
+
+echo "Fixed-cylinder run and post-processing completed."

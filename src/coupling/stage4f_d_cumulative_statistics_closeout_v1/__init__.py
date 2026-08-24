@@ -1,0 +1,1 @@
+"""Offline cumulative statistics closeout."""

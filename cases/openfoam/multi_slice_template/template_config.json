@@ -1,0 +1,18 @@
+{
+  "schema_version": "0.2.1",
+  "protocol": "Stage4-Multislice",
+  "case_id": "{{CASE_ID}}",
+  "slice_id": {{SLICE_ID}},
+  "s_ref_m": {{S_REF_M}},
+  "slice_length_m": {{SLICE_LENGTH_M}},
+  "unit_span_m": {{UNIT_SPAN_M}},
+  "start_time_s": {{START_TIME_S}},
+  "end_time_s": {{END_TIME_S}},
+  "delta_t_s": {{DELTA_T_S}},
+  "exchange_dir": "{{EXCHANGE_DIR}}",
+  "motion_input": "{{MOTION_INPUT}}",
+  "load_output": "{{LOAD_OUTPUT}}",
+  "slice_manifest_sha256": "",
+  "config_sha256": "",
+  "motionScale_relative_path": "0/motionScale"
+}

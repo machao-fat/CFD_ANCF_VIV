@@ -1,0 +1,1 @@
+"""Strong-coupling algorithm tests."""

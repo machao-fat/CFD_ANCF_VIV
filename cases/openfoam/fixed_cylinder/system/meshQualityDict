@@ -1,0 +1,31 @@
+/*--------------------------------*- C++ -*----------------------------------*\
+  =========                 |
+  \\      /  Field         | OpenFOAM: The Open Source CFD Toolbox
+   \\    /   Operation     | Version: 10
+    \\  /    And           |
+     \/     Manipulation  |
+\*---------------------------------------------------------------------------*/
+FoamFile
+{
+    format      ascii;
+    class       dictionary;
+    location    "system";
+    object      meshQualityDict;
+}
+
+// The far-field block is intentionally stretched.  The measured minimum
+// face interpolation weight of the medium mesh is about 0.0315; retain a
+// stricter-than-default project threshold of 0.03 and report the measured
+// value in results rather than hiding the warning.
+minFaceWeight       0.03;
+minVol              1e-13;
+minVolRatio         0.01;
+minTetQuality       1e-30;
+minTwist            0.001;
+minDeterminant      0.001;
+maxNonOrtho         70;
+maxBoundarySkewness 20;
+maxInternalSkewness 4;
+maxConcave          80;
+
+// ************************************************************************* //

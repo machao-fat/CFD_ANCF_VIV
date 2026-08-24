@@ -1,0 +1,1 @@
+"""Persistent structure-runner checks."""

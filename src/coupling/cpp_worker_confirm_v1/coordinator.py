@@ -1,0 +1,271 @@
+from __future__ import annotations
+
+import hashlib
+import json
+import os
+import struct
+import subprocess
+import time
+from dataclasses import dataclass
+from pathlib import Path
+from typing import Any
+
+from coupling.cpp_worker_persistent_ipc_v1.kernel_protocol import (
+    FrameError,
+    HEADER,
+    KernelModel,
+    KernelStepRequest,
+    decode_kernel_response,
+    encode_kernel_request,
+    validate_kernel_response,
+)
+
+
+class ConfirmError(RuntimeError):
+    """A bounded confirm violated a protocol or ownership invariant."""
+
+
+@dataclass(frozen=True)
+class Mapping:
+    source_step: int = 559
+    source_time_s: float = 2.2075
+    source_tick: int = 2_207_500_000
+    dt_s: float = 0.00125
+
+    def identity(self, global_step: int) -> tuple[int, float, int]:
+        bridge = int(global_step) - self.source_step
+        if bridge <= 0:
+            raise ConfirmError("global step is before the accepted source")
+        tick_step = round(self.dt_s * 1_000_000_000)
+        return bridge, self.source_time_s + bridge * self.dt_s, self.source_tick + bridge * tick_step
+
+
+def _canonical(value: Any) -> bytes:
+    return (json.dumps(value, ensure_ascii=True, sort_keys=True, separators=(",", ":"), allow_nan=False) + "\n").encode("utf-8")
+
+
+def _write_json(path: Path, value: Any) -> None:
+    path.parent.mkdir(parents=True, exist_ok=True)
+    tmp = path.with_name(path.name + f".{os.getpid()}.{time.time_ns()}.tmp")
+    tmp.write_bytes(_canonical(value))
+    os.replace(tmp, path)
+
+
+def _sha_vectors(*vectors: tuple[float, ...]) -> str:
+    values = tuple(item for vector in vectors for item in vector)
+    return hashlib.sha256(struct.pack("<" + "d" * len(values), *values)).hexdigest()
+
+
+class KernelWorker:
+    def __init__(self, executable: Path, runtime: Path, run_id: str, case_id: str) -> None:
+        self.executable = executable.resolve()
+        self.runtime = runtime.resolve()
+        self.run_id = run_id
+        self.case_id = case_id
+        self.process: subprocess.Popen[bytes] | None = None
+        self.start_count = 0
+        self.audit: dict[str, Any] = {}
+
+    def start(self) -> None:
+        if self.process is not None:
+            raise ConfirmError("C++ worker duplicate start")
+        if not self.executable.is_file():
+            raise ConfirmError(f"C++ kernel worker missing: {self.executable}")
+        self.runtime.mkdir(parents=True, exist_ok=True)
+        self.process = subprocess.Popen(
+            [str(self.executable)], stdin=subprocess.PIPE, stdout=subprocess.PIPE,
+            stderr=subprocess.PIPE, cwd=str(self.runtime),
+        )
+        self.start_count = 1
+        self.audit = {
+            "component": "cpp_ancf_kernel_worker", "pid": int(self.process.pid),
+            "parent_pid": os.getpid(), "command_line": [str(self.executable)],
+            "cwd": str(self.runtime), "owned": True, "start_time_ns": time.time_ns(),
+        }
+
+    def step(self, request: KernelStepRequest):
+        if self.process is None or self.process.stdin is None or self.process.stdout is None:
+            raise ConfirmError("C++ worker is not running")
+        frame = encode_kernel_request(request)
+        self.process.stdin.write(frame)
+        self.process.stdin.flush()
+        header = self.process.stdout.read(HEADER.size)
+        if len(header) != HEADER.size:
+            raise ConfirmError("C++ worker disconnected before response")
+        _magic, length, message_type = HEADER.unpack(header)
+        if message_type != 6 or length > 64 * 1024 * 1024:
+            raise ConfirmError("C++ worker response frame is invalid")
+        body = self.process.stdout.read(length)
+        if len(body) != length:
+            raise ConfirmError("C++ worker response is truncated")
+        try:
+            response = decode_kernel_response(header + body)
+            validate_kernel_response(request, response)
+        except FrameError as exc:
+            raise ConfirmError(str(exc)) from exc
+        return response
+
+    def stop(self) -> None:
+        process = self.process
+        if process is None:
+            return
+        try:
+            if process.stdin is not None:
+                process.stdin.close()
+            process.wait(timeout=5)
+        except (OSError, subprocess.TimeoutExpired):
+            process.terminate()
+            try:
+                process.wait(timeout=5)
+            except subprocess.TimeoutExpired:
+                process.kill(); process.wait(timeout=5)
+        self.audit.update({"end_time_ns": time.time_ns(), "return_code": process.returncode,
+                           "cleanup_result": "closed" if process.returncode == 0 else "closed_nonzero"})
+        for stream in (process.stdout, process.stderr):
+            if stream is not None:
+                stream.close()
+        self.process = None
+
+
+class MockSlice:
+    def __init__(self, slice_id: int, mapping: Mapping) -> None:
+        self.slice_id = int(slice_id)
+        self.mapping = mapping
+        self.started = False
+        self.closed = False
+        self.start_count = 0
+        self.pid = 20_000 + self.slice_id
+        self.start_time_ns: int | None = None
+        self.end_time_ns: int | None = None
+        self.return_code: int | None = None
+
+    def start(self) -> None:
+        if self.started:
+            raise ConfirmError(f"slice {self.slice_id} duplicate start")
+        self.started = True; self.start_count += 1; self.start_time_ns = time.time_ns()
+
+    def advance(self, *, global_step: int, time_s: float, tick: int, q: tuple[float, ...]) -> dict[str, Any]:
+        if not self.started or self.closed:
+            raise ConfirmError(f"slice {self.slice_id} is not live")
+        bridge, expected_time, expected_tick = self.mapping.identity(global_step)
+        if abs(time_s - expected_time) > 1e-12 or tick != expected_tick:
+            raise ConfirmError(f"slice {self.slice_id} identity mismatch")
+        # Deterministic mock load; production OpenFOAM adapter will implement
+        # the same identity and acknowledgement contract.
+        amplitude = 0.01 * (self.slice_id + 1) * (1.0 + abs(q[3]) if len(q) > 3 else 1.0)
+        force = (amplitude, 0.1 * amplitude, 0.0)
+        return {"slice_id": self.slice_id, "global_step": global_step,
+                "case_local_bridge_step": bridge, "time_s": time_s,
+                "integer_tick": tick, "sequence": global_step - self.mapping.source_step,
+                "transaction_id": global_step * 10 + self.slice_id,
+                "ack": "consumed", "payload_hash": _sha_vectors(force), "force": force}
+
+    def stop(self) -> None:
+        if not self.started or self.closed:
+            return
+        self.closed = True; self.end_time_ns = time.time_ns(); self.return_code = 0
+
+
+def _fixture() -> tuple[KernelModel, tuple[float, ...], tuple[float, ...], tuple[float, ...], tuple[float, ...]]:
+    path = Path(__file__).resolve().parents[3] / "runtime/cpp_worker_persistent_ipc_v1/dual_run_018/results/cpp_input_fixture.json"
+    raw = json.loads(path.read_text(encoding="utf-8"))
+    model = KernelModel(
+        length_m=float(raw["length_m"]), diameter_m=float(raw["diameter_m"]),
+        inner_diameter_m=float(raw["inner_diameter_m"]), elements=int(raw["elements"]),
+        slices=int(raw["slices"]), top_tension_N=float(raw["top_tension_N"]),
+        youngs_modulus_Pa=float(raw["youngs_modulus_Pa"]), material_density=float(raw["material_density"]),
+        fluid_density=float(raw["fluid_density"]), gravity=float(raw["gravity"]),
+        beta=float(raw["beta"]), gamma=float(raw["gamma"]), newton_tolerance=float(raw["newton_tolerance"]),
+        damping_alpha=float(raw["damping_alpha"]), damping_beta=float(raw["damping_beta"]),
+        gauss_order=int(raw["gauss_order"]), max_newton=int(raw["max_newton"]),
+        slice_positions_m=tuple(float(x) for x in raw["slice_positions_m"]),
+    )
+    n = model.ndof
+    return model, tuple(raw["q"][:n]), tuple(raw["qdot"][:n]), tuple(raw["qddot"][:n]), tuple(raw["base_load"][:n])
+
+
+def run_mock_confirm(*, runtime: Path, executable: Path | None = None,
+                     run_id: str = "cpp_confirm_mock_001", case_id: str = "cpp_confirm_mock_case_001",
+                     steps: int = 40, results_dir: Path | None = None) -> dict[str, Any]:
+    if steps != 40:
+        raise ConfirmError("mock confirm is intentionally bounded to exactly 40 steps")
+    mapping = Mapping()
+    model, q, qdot, qddot, base_load = _fixture()
+    executable = executable or (Path(__file__).resolve().parents[3] / "runtime/cpp_worker_persistent_ipc_v1/build-release/cfd_ancf_ancf_kernel_worker.exe")
+    worker = KernelWorker(executable, runtime / "process", run_id, case_id)
+    slices = [MockSlice(index, mapping) for index in range(3)]
+    rows: list[dict[str, Any]] = []
+    committed: list[dict[str, Any]] = []
+    previous_force = tuple(0.0 for _ in range(3 * model.slices))
+    started = time.perf_counter()
+    try:
+        worker.start()
+        for item in slices: item.start()
+        for index in range(1, 41):
+            global_step = mapping.source_step + index
+            bridge, time_s, tick = mapping.identity(global_step)
+            request = KernelStepRequest(
+                sequence=index, global_step=global_step, case_local_bridge_step=bridge,
+                integer_tick=tick, time_s=time_s, dt_s=mapping.dt_s,
+                request_id=100_000 + index, transaction_id=200_000 + index,
+                run_id=run_id, case_id=case_id, model=model, q=q, qdot=qdot, qddot=qddot,
+                base_load=base_load, slice_force=previous_force,
+            )
+            response = worker.step(request)
+            motion = tuple(response.q)
+            acks = [item.advance(global_step=global_step, time_s=time_s, tick=tick, q=motion) for item in slices]
+            if {ack["slice_id"] for ack in acks} != {0, 1, 2}:
+                raise ConfirmError("global barrier did not receive all slices")
+            previous_force = tuple(value for ack in acks for value in ack["force"])
+            row = {"global_step": global_step, "case_local_bridge_step": bridge,
+                   "time_s": time_s, "integer_tick": tick, "run_id": run_id,
+                   "case_id": case_id, "worker_sequence": response.sequence,
+                   "worker_transaction_id": response.transaction_id, "worker_payload_hash": response.payload_hash.hex(),
+                   "slice_acks": acks, "finite_value_audit": response.finite_value_audit,
+                   "return_code": response.return_code}
+            rows.append(row)
+            committed.append({"global_step": global_step, "case_local_bridge_step": bridge,
+                              "time_s": time_s, "integer_tick": tick,
+                              "checkpoint_hash": hashlib.sha256(_canonical(row)).hexdigest()})
+            q, qdot, qddot = response.q, response.qdot, response.qddot
+    finally:
+        for item in slices: item.stop()
+        worker.stop()
+    wall = time.perf_counter() - started
+    residual = 0 if all(item.closed for item in slices) and not worker.process else 1
+    result = {"status": "completed" if len(committed) == 40 and residual == 0 else "failed",
+              "stage_id": "stage4f_d_cpp_worker_confirm_v1", "run_id": run_id, "case_id": case_id,
+              "steps": len(committed), "segment_duration_s": 0.05, "slice_count": 3,
+              "source_global_step": mapping.source_step, "source_time_s": mapping.source_time_s,
+              "source_tick": mapping.source_tick, "global_dt_s": mapping.dt_s,
+              "wall_clock_s": wall, "worker_start_count": worker.start_count,
+              "slice_start_counts": [item.start_count for item in slices],
+              "physical_committed": len(committed), "fully_audited": len(rows),
+              "owned_residual": residual, "real_process_starts": {"MATLAB": 0, "OpenFOAM": 0, "WSL": 0, "CFD": 0},
+              "worker_process_audit": worker.audit, "committed": committed, "step_records": rows}
+    result["process_registry"] = [worker.audit] + [
+        {"component": "mock_slice", "slice_id": item.slice_id, "pid": item.pid,
+         "parent_pid": os.getpid(), "command_line": ["mock_openfoam_slice", str(item.slice_id)],
+         "cwd": str(runtime), "owned": True, "start_time_ns": item.start_time_ns,
+         "end_time_ns": item.end_time_ns, "return_code": item.return_code,
+         "cleanup_result": "closed" if item.closed else "open"} for item in slices
+    ]
+    result["protocol_audit"] = {"mapping": {"source_step": mapping.source_step, "source_time_s": mapping.source_time_s,
+                                              "source_tick": mapping.source_tick, "dt_s": mapping.dt_s},
+                                "first_target": rows[0]["global_step"], "last_target": rows[-1]["global_step"],
+                                "duplicate_ack_count": 0, "stale_ack_count": 0, "out_of_order_ack_count": 0,
+                                "identity_mismatch_count": 0, "nonfinite_count": 0,
+                                "worker_sequences_contiguous": [row["worker_sequence"] for row in rows] == list(range(1, 41)),
+                                "barrier_release_count": len(committed)}
+    output_root = (results_dir or (runtime / "results")).resolve()
+    _write_json(output_root / "mock_confirm_result.json", result)
+    gate = {"gate": "STAGE4F_D_CPP_WORKER_CONFIRM_V1_GATE: pass" if result["status"] == "completed" else "STAGE4F_D_CPP_WORKER_CONFIRM_V1_GATE: do_not_pass",
+            "scope": {"steps": 40, "segment_duration_s": 0.05, "slice_count": 3},
+            "physical_committed": result["physical_committed"], "fully_audited": result["fully_audited"],
+            "worker_start_count": result["worker_start_count"], "slice_start_counts": result["slice_start_counts"],
+            "owned_residual": residual, "real_process_starts": result["real_process_starts"],
+            "persistent_ipc": True, "mock_openfoam": True,
+            "statistics_status": {"frequency": "not_evaluable_cpp_confirm_only", "FORMAL_STROUHAL_STATUS": "not_completed",
+                                   "STABLE_VIV_RESPONSE_CLAIM": "not_completed", "LOCK_IN_CLAIM": "not_completed"}}
+    _write_json(output_root / "stage4f_d_cpp_worker_confirm_v1_gate.json", gate)
+    return gate

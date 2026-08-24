@@ -1,0 +1,36 @@
+FoamFile
+{
+    format      ascii;
+    class       dictionary;
+    location    "constant";
+    object      dynamicMeshDict;
+}
+
+/* Stage-three verified OpenFOAM 10 motion method retained in the template.
+   The external 0.2.1 adapter materializes the motion.csv bridge atomically. */
+mover
+{
+    type            motionSolver;
+    libs            ("libancfFileMotion.so" "libfvMeshMovers.so" "libfvMotionSolvers.so");
+    motionSolver    interpolatingSolidBody;
+    patches         (cylinder);
+    CofG            (0 0 0);
+    innerDistance   0.75;
+    outerDistance   2.50;
+    solidBodyMotionFunction ancfFileMotion;
+    ancfFileMotionCoeffs
+    {
+        CofG            (0 0 0);
+        motionFile      "$FOAM_CASE/{{MOTION_INPUT}}";
+        readyFile       "$FOAM_CASE/{{EXCHANGE_DIR}}/motion_ready";
+        consumedFile    "$FOAM_CASE/{{EXCHANGE_DIR}}/motion_consumed";
+        consumedDirectory "$FOAM_CASE/{{EXCHANGE_DIR}}/consumed";
+        initialPosition (0 0 0);
+        sliceId         {{SLICE_ID}};
+        stepOffset      {{STEP_OFFSET}};
+        startTime       {{START_TIME_S}};
+        couplingDeltaT  {{DELTA_T_S}};
+        timeTolerance   1e-9;
+        readyTimeout    30;
+    }
+}

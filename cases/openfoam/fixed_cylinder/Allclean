@@ -1,0 +1,14 @@
+#!/usr/bin/env bash
+set -euo pipefail
+
+case_dir="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+cd "$case_dir"
+
+# The target is deliberately restricted to generated output in this case.
+rm -rf constant/polyMesh postProcessing log.blockMesh log.checkMesh log.setFields log.icoFoam VTK
+find . -maxdepth 1 -mindepth 1 -type d -regex './[0-9]+(\.[0-9]+)?' \
+    ! -name 0 -exec rm -rf -- {} +
+
+if [[ -d 0.orig ]]; then
+    cp -r 0.orig/. 0/
+fi

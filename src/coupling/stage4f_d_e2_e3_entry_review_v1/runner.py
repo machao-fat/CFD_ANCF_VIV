@@ -1,0 +1,16 @@
+from __future__ import annotations
+import hashlib,json
+from pathlib import Path
+DT=.00125; STEP_WALL=970.844/40; DISK_STEP=555805219/40
+SOURCE_SHA='a944a040c0fbfcd560a36fcf185cd422262c6091e98bb9f50af19aaa2f58965c'
+def h(x): return hashlib.sha256(json.dumps(x,sort_keys=True,separators=(',',':')).encode()).hexdigest()
+def build(out):
+ out=Path(out); out.mkdir(parents=True,exist_ok=True)
+ times={'D_m':.01,'U_m_per_s':1.0,'convective_time_s':.01,'first_mode_frequency_Hz':2.0,'first_mode_period_s':.5,'prior_St_range':[.1,.2],'prior_shedding_period_s_range':[.05,.1],'provenance':'contract/externally-informed prior; no measured frequency'}
+ cand=[]
+ for name,extra in [('E2',.10),('E3',.20),('CUMULATIVE_020',.15),('CUMULATIVE_030',.25),('MIN_15_PRIOR_CYCLES',.75)]:
+  steps=round(extra/DT); total=.10+extra; cand.append({'id':name,'additional_s':extra,'cumulative_s':total,'steps':steps,'blocks':(steps+9)//10,'convective_times':total/.01,'first_mode_periods':total/.5,'prior_shedding_cycles_range':[total/.1,total/.05],'wall_clock_s':steps*STEP_WALL,'disk_gb':steps*DISK_STEP/1e9,'within_4h':steps*STEP_WALL<=14400,'within_20gb':steps*DISK_STEP<=20e9,'frequency_15_cycles_possible':total/.1>=15,'bounded_transient':total<=.3000001})
+ data={'stage':'44_stage4f_d_e2_e3_entry_review_v1','parent_status':'accepted_scope_limited','source':{'id':'step00000079_e19d01431943','path':'Stage42 block_3 endpoint checkpoint','sha256':SOURCE_SHA,'physical_time_s':1.6075,'tick':1607500000,'immutable':True},'physical_timescale_audit':times,'current_e1_window':{'cumulative_s':.10,'convective_times':10.0,'first_mode_periods':.2,'prior_shedding_cycles_range':[1,2],'frequency':'not_evaluable_insufficient_cycles'},'candidates':cand,'cost_basis':{'e1_steps':40,'e1_wall_clock_s':970.844,'e1_disk_bytes':555805219,'wall_s_per_step':STEP_WALL,'disk_bytes_per_step':DISK_STEP,'max_concurrency':1,'matlab_calls_per_step':1,'wsl_openfoam_calls_per_step':3},'statistical_contract':{'discard':'none; retain early transient','minimum_cycles':5,'minimum_samples':256,'minimum_frequency_cycles_for_formal_claim':15,'amplitude_floor':'frozen before run; below floor => not_evaluable_low_amplitude','methods':['FFT','zero_crossing'],'agreement_relative_tolerance':.05,'insufficient':'not_evaluable_insufficient_cycles'},'stop_rules':{'hard_gate':'stop immediately and preserve evidence','budget':'stop at block boundary; do not extend','block_failure':'no next block','frequency':'never emit formal St below minimum cycles'},'option_matrix':{'A':'do_not_enter; closes scope conservatively','B':'enter_E2_pending_user_authorization; best bounded information gain','C':'do_not_enter_E3_without_E2','D':'do_not_directly_pursue_15_cycles','E':'five_nine_slice_do_not_enter'},'recommendation':'enter_E2_pending_user_authorization','claim_boundary':{'vortex_shedding_statistics':'not_completed','stable_viv_response':'not_completed','five_slice':'do_not_enter','nine_slice':'do_not_enter','long_time_viv':'do_not_enter','stage4e_physical_validation':'not_completed'}}
+ data['contract_hash']=h(data['statistical_contract'])
+ for k,v in data.items(): (out/(k+'.json')).write_text(json.dumps(v,indent=2,ensure_ascii=False),encoding='utf-8')
+ return data

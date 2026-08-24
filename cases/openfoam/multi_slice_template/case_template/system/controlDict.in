@@ -1,0 +1,66 @@
+/*--------------------------------*- C++ -*----------------------------------*\
+  Stage-four parameterized independent slice case.
+\*---------------------------------------------------------------------------*/
+FoamFile
+{
+    format      ascii;
+    class       dictionary;
+    location    "system";
+    object      controlDict;
+}
+
+application     pimpleFoam;
+startFrom       startTime;
+startTime       {{START_TIME_S}};
+stopAt          endTime;
+endTime         {{END_TIME_S}};
+deltaT          {{DELTA_T_S}};
+writeControl    timeStep;
+writeInterval   1;
+purgeWrite      0;
+writeFormat     ascii;
+writePrecision  16;
+writeCompression off;
+timeFormat      general;
+timePrecision   12;
+runTimeModifiable false;
+
+functions
+{
+    cylinderForces
+    {
+        type            forces;
+        libs            ("libforces.so");
+        writeControl    timeStep;
+        writeInterval   1;
+        log             yes;
+        patches         (cylinder);
+        rho             rhoInf;
+        rhoInf          1000;
+        CofR            (0 0 0);
+    }
+    cylinderForceCoeffs
+    {
+        type            forceCoeffs;
+        libs            ("libforces.so");
+        writeControl    timeStep;
+        writeInterval   1;
+        log             yes;
+        patches         (cylinder);
+        rho             rhoInf;
+        rhoInf          1000;
+        liftDir         (0 1 0);
+        dragDir         (1 0 0);
+        pitchAxis       (0 0 1);
+        origin          (0 0 0);
+        coordinateRotation
+        {
+            type            axesRotation;
+            e1              (1 0 0);
+            e2              (0 1 0);
+        }
+        magUInf         1;
+        lRef            1;
+        Aref            1;
+    }
+}

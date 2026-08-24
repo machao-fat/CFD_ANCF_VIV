@@ -1,0 +1,3 @@
+SOURCE += ancfFileMotion.C
+
+LIB = $(FOAM_USER_LIBBIN)/libancfFileMotion

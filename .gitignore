@@ -1,0 +1,57 @@
+# Python caches and local environments
+__pycache__/
+*.py[cod]
+.pytest_cache/
+.mypy_cache/
+.ruff_cache/
+.venv/
+venv/
+env/
+
+# C/C++ and CMake build products
+build/
+cmake-build-*/
+out/
+*.o
+*.obj
+*.a
+*.lib
+*.so
+*.dll
+*.dylib
+*.exe
+
+# Local solver/runtime state and generated experiment output
+runtime/
+tmp/
+results/
+archives/
+postProcessing/
+VTK/
+dynamicCode/
+processor*/
+**/lnInclude/
+cases/**/coupling/
+cases/**/mesh/**/generated/
+
+# OpenFOAM generated time directories; keep initial conditions such as 0/ and 0.orig/
+cases/**/[1-9]*/
+cases/**/0.[0-9]*/
+
+# Logs and command output
+*.log
+*.out
+*.err
+log.*
+
+# OS/editor files
+.DS_Store
+Thumbs.db
+*.swp
+*.swo
+.vscode/
+.idea/
+
+# Local environment/configuration files
+.env
+.env.*

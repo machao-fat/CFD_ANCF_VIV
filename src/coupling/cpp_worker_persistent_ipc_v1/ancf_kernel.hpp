@@ -1,0 +1,76 @@
+#pragma once
+
+#include <cstddef>
+#include <vector>
+
+namespace cfd_ancf {
+
+struct Matrix {
+  std::size_t rows = 0, cols = 0;
+  std::vector<double> data;
+  Matrix() = default;
+  Matrix(std::size_t r, std::size_t c, double value = 0.0) : rows(r), cols(c), data(r * c, value) {}
+  double& operator()(std::size_t r, std::size_t c) { return data[r * cols + c]; }
+  double operator()(std::size_t r, std::size_t c) const { return data[r * cols + c]; }
+};
+
+struct Model {
+  double length_m = 10.0;
+  double diameter_m = 1.0;
+  double inner_diameter_m = 0.9;
+  std::size_t elements = 2;
+  std::size_t slices = 3;
+  std::vector<double> slice_positions_m;
+  double top_tension_N = 1.0e7;
+  double youngs_modulus_Pa = 2.07e11;
+  double material_density = 7850.0;
+  double fluid_density = 1025.0;
+  double gravity = 9.81;
+  bool include_gravity = true;
+  bool include_buoyancy = true;
+  double dt_s = 0.00125;
+  double beta = 0.25;
+  double gamma = 0.5;
+  std::size_t max_newton = 40;
+  double newton_tolerance = 1.0e-8;
+  double damping_alpha = 0.0;
+  double damping_beta = 0.0;
+  std::size_t gauss_order = 3;
+  double area() const;
+  double displaced_area() const;
+  double EA() const;
+  double EI() const;
+  std::size_t ndof() const { return 6 * (elements + 1); }
+};
+
+struct State {
+  std::vector<double> q, qdot, qddot, base_load;
+  Matrix mass, damping;
+  double time_s = 0.0;
+  std::size_t step = 0;
+  double residual = 0.0;
+  std::size_t iterations = 0;
+};
+
+struct StepDiagnostics {
+  double initial_residual = 0.0;
+  double residual = 0.0;
+  std::size_t iterations = 0;
+  bool converged = false;
+  // Profiling-only timings. They are not part of the numerical contract.
+  double matrix_assembly_s = 0.0;
+  double linear_solve_s = 0.0;
+  double state_update_s = 0.0;
+  double predictor_s = 0.0;
+  double external_mapping_s = 0.0;
+};
+
+State make_reference_state(const Model& model);
+void symmetrize_mass(State& state);
+StepDiagnostics advance(State& state, const Model& model, const std::vector<double>& slice_force);
+void internal_force_tangent(const std::vector<double>& q, const Model& model, std::vector<double>& force, Matrix& tangent);
+std::vector<double> external_force(const Model& model, const std::vector<double>& slice_force);
+Matrix mapping_H3(const Model& model);
+bool finite(const State& state);
+
+}  // namespace cfd_ancf
