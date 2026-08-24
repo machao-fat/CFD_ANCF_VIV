@@ -1,0 +1,113 @@
+from __future__ import annotations
+
+import json
+import sys
+import unittest
+from pathlib import Path
+from types import SimpleNamespace
+
+ROOT = Path(__file__).resolve().parents[2]
+sys.path.insert(0, str(ROOT / "src"))
+
+from coupling.cpp_worker_confirm_v1.cpp_adapter import CppAdapterError, CppKernelCampaignAdapter
+from coupling.cpp_worker_persistent_ipc_v1.kernel_protocol import FrameError, KernelModel, KernelStepRequest
+from coupling.cpp_worker_persistent_ipc_v1.protocol import FrameError as TransportFrameError, StepRequest
+
+
+class ContractRepairTests(unittest.TestCase):
+    def test_kernel_model_rejects_nan_top_tension_and_boolean_numbers(self) -> None:
+        model = KernelModel(top_tension_N=float("nan"))
+        with self.assertRaises(FrameError):
+            model.validate(0.00125)
+        model = KernelModel(elements=True)
+        with self.assertRaises(FrameError):
+            model.validate(0.00125)
+
+    def test_kernel_payload_rejects_non_numeric_mass_matrix(self) -> None:
+        model = KernelModel(elements=1, slices=1, slice_positions_m=(0.0,))
+        n = model.ndof
+        request = KernelStepRequest(
+            sequence=1, global_step=1, case_local_bridge_step=1,
+            integer_tick=1_250_000, time_s=0.00125, dt_s=0.00125,
+            request_id=1, transaction_id=2, run_id="r", case_id="c", model=model,
+            q=(0.0,) * n, qdot=(0.0,) * n, qddot=(0.0,) * n,
+            base_load=(0.0,) * n, slice_force=(0.0,) * 3,
+            mass_matrix=("bad",),
+        )
+        with self.assertRaises(FrameError):
+            request.payload()
+
+    def test_transport_payload_rejects_non_numeric_state(self) -> None:
+        request = StepRequest(
+            1, 1, 1, 1_250_000, 0.00125, 0.00125, 1, 2,
+            "run", "case", ("bad",), (0.0,), (0.0,),
+        )
+        with self.assertRaises(TransportFrameError):
+            request.payload()
+
+    def _adapter(self) -> CppKernelCampaignAdapter:
+        class Worker:
+            def start(self) -> None:
+                return None
+            def stop(self) -> None:
+                return None
+        return CppKernelCampaignAdapter(
+            worker=Worker(), model=object(), request_factory=lambda **kwargs: SimpleNamespace(**kwargs),
+            run_id="repair_run", case_id="repair_case", source_global_step=559,
+            source_time_s=2.2075, source_tick=2_207_500_000, dt_s=0.00125,
+            q=(0.0, 0.0, 0.0), qdot=(0.0, 0.0, 0.0), qddot=(0.0, 0.0, 0.0),
+            base_load=(0.0, 0.0, 0.0), slice_count=3,
+        )
+
+    def test_failed_checkpoint_load_does_not_mutate_state(self) -> None:
+        adapter = self._adapter()
+        path = ROOT / "runtime" / "cpp_worker_comprehensive_audit_repair_v2" / "checkpoint.json"
+        path.parent.mkdir(parents=True, exist_ok=True)
+        try:
+            adapter.save_checkpoint(path)
+            original = adapter.state_view()
+            raw = json.loads(path.read_text(encoding="utf-8"))
+            raw["state_view"]["q"] = [1.0]
+            path.write_text(json.dumps(raw), encoding="utf-8")
+            with self.assertRaises(CppAdapterError):
+                adapter.load_checkpoint(path)
+            self.assertEqual(adapter.state_view(), original)
+        finally:
+            path.unlink(missing_ok=True)
+
+    def test_invalid_adapter_identity_is_rejected(self) -> None:
+        with self.assertRaises(CppAdapterError):
+            self._adapter_with(run_id=None)
+        with self.assertRaises(CppAdapterError):
+            self._adapter_with(source_tick=2_207_500_001)
+
+    def test_adapter_rejects_source_dimension_mismatch(self) -> None:
+        class Worker:
+            def start(self) -> None: return None
+            def stop(self) -> None: return None
+        with self.assertRaises(CppAdapterError):
+            CppKernelCampaignAdapter(
+                worker=Worker(), model=SimpleNamespace(ndof=3),
+                request_factory=lambda **kwargs: SimpleNamespace(**kwargs),
+                run_id="repair_run", case_id="repair_case", source_global_step=559,
+                source_time_s=2.2075, source_tick=2_207_500_000, dt_s=0.00125,
+                q=(0.0, 0.0), qdot=(0.0, 0.0), qddot=(0.0, 0.0),
+                base_load=(0.0, 0.0), slice_count=3,
+            )
+
+    def _adapter_with(self, **changes: object) -> CppKernelCampaignAdapter:
+        values = dict(run_id="repair_run", case_id="repair_case", source_global_step=559,
+                      source_time_s=2.2075, source_tick=2_207_500_000, dt_s=0.00125)
+        values.update(changes)
+        class Worker:
+            def start(self) -> None: return None
+            def stop(self) -> None: return None
+        return CppKernelCampaignAdapter(
+            worker=Worker(), model=object(), request_factory=lambda **kwargs: SimpleNamespace(**kwargs),
+            **values, q=(0.0, 0.0, 0.0), qdot=(0.0, 0.0, 0.0), qddot=(0.0, 0.0, 0.0),
+            base_load=(0.0, 0.0, 0.0), slice_count=3,
+        )
+
+
+if __name__ == "__main__":
+    unittest.main()

@@ -1,0 +1,11 @@
+{
+  "compileall": "pass",
+  "cpp_kernel_selftest": "pass",
+  "cpp_physics_ownership_selftest": "pass",
+  "offline_transport_replay": "40/40 pass",
+  "protocol_lifecycle_regression": "23/23 pass",
+  "root_unittest": "1147 tests, 1 skipped, 0 failures after legal hash fixture update",
+  "root_unittest_command": "PYTHONPATH=src;src/coupling python -m unittest discover -s tests -t . -p test_*.py",
+  "stage_specific_tests": "6/6 pass",
+  "status": "pass"
+}

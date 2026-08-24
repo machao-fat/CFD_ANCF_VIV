@@ -1,0 +1,14 @@
+{
+  "comparison_method": "scope-limited git diff and read-only source manifests",
+  "old_evidence_modified": false,
+  "old_evidence_read_only": true,
+  "old_runtime_reused": false,
+  "protected_paths": [
+    "results/149_cpp_worker_numerical_equivalence_fresh_golden_v1",
+    "results/155_cpp_worker_comprehensive_audit_repair_v1",
+    "runtime/cpp_worker_numerical_equivalence_before_cfd_v1",
+    "runtime/cpp_worker_comprehensive_audit_repair_v1",
+    "src/structure_ancf_matlab"
+  ],
+  "status": "pass"
+}

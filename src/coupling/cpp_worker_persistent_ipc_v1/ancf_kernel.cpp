@@ -133,7 +133,21 @@ Matrix mapping_H3(const Model& model) {
 
 std::vector<double> external_force(const Model& model, const std::vector<double>& slice_force) {
   validate_model(model);
-  if(slice_force.size()!=3*model.slices)throw std::invalid_argument("slice force dimensions"); Matrix H=mapping_H3(model);std::vector<double> out=std::vector<double>(model.ndof());for(std::size_t j=0;j<model.ndof();++j)for(std::size_t i=0;i<3*model.slices;++i)out[j]+=H(i,j)*slice_force[i];return out;
+  if (slice_force.size() != 3 * model.slices ||
+      !std::all_of(slice_force.begin(), slice_force.end(),
+                   [](double value) { return std::isfinite(value); })) {
+    throw std::invalid_argument("slice force dimensions or values are invalid");
+  }
+  Matrix H = mapping_H3(model);
+  std::vector<double> out(model.ndof());
+  for (std::size_t j = 0; j < model.ndof(); ++j)
+    for (std::size_t i = 0; i < 3 * model.slices; ++i)
+      out[j] += H(i, j) * slice_force[i];
+  if (!std::all_of(out.begin(), out.end(),
+                  [](double value) { return std::isfinite(value); })) {
+    throw std::runtime_error("mapped external force contains NaN/Inf");
+  }
+  return out;
 }
 
 void internal_force_tangent(const std::vector<double>& q, const Model& model, std::vector<double>& force, Matrix& tangent) {
@@ -148,6 +162,14 @@ State make_reference_state(const Model& model) {
 }
 
 void symmetrize_mass(State& state) {
+  if (state.mass.rows != state.mass.cols ||
+      state.mass.data.size() != state.mass.rows * state.mass.cols) {
+    throw std::invalid_argument("mass matrix dimensions are invalid");
+  }
+  if (!std::all_of(state.mass.data.begin(), state.mass.data.end(),
+                   [](double value) { return std::isfinite(value); })) {
+    throw std::invalid_argument("mass matrix contains NaN/Inf");
+  }
   for (std::size_t i = 0; i < state.mass.rows; ++i) {
     for (std::size_t j = i + 1; j < state.mass.cols; ++j) {
       const double value = 0.5 * (state.mass(i, j) + state.mass(j, i));
@@ -178,6 +200,10 @@ StepDiagnostics advance(State& state, const Model& model, const std::vector<doub
       !valid_vector(state.qddot) || !valid_vector(state.base_load)) {
     throw std::invalid_argument("state dimensions or values are invalid");
   }
+  if (state.step == (std::numeric_limits<std::size_t>::max)() ||
+      !std::isfinite(state.time_s + model.dt_s)) {
+    throw std::invalid_argument("state time or step would overflow");
+  }
   std::vector<double> Qext = state.base_load;
   auto external_start = Clock::now();
   std::vector<double> qext = external_force(model, slice_force);
@@ -187,6 +213,10 @@ StepDiagnostics advance(State& state, const Model& model, const std::vector<doub
   fixed[0] = fixed[1] = fixed[2] = 1;
   const std::size_t top = 6 * model.elements;
   fixed[top] = fixed[top + 1] = 1;
+  // The v1 ANCF contract has prescribed bottom position [0,0,0] and a top
+  // guide at x=y=0.  These values are part of the protected model contract;
+  // they must not be inherited from a possibly corrupted restart state.
+  const auto fixed_value = []() { return 0.0; };
   const auto predictor_start = Clock::now();
   std::vector<double> qpred = state.q, qdpred = state.qdot;
   for (std::size_t i = 0; i < model.ndof(); ++i) {
@@ -195,10 +225,14 @@ StepDiagnostics advance(State& state, const Model& model, const std::vector<doub
   }
   const auto predictor_end = Clock::now();
   std::vector<double> q = qpred;
-  for (std::size_t i = 0; i < model.ndof(); ++i) if (fixed[i]) q[i] = state.q[i];
+  for (std::size_t i = 0; i < model.ndof(); ++i) if (fixed[i]) q[i] = fixed_value();
   StepDiagnostics d;
+  // MATLAB evaluates max(1,norm(Qext(free),inf)); prescribed-DOF reactions
+  // must not loosen the convergence threshold for free coordinates.
   double scale_value = 1.0;
-  for (double x : Qext) scale_value = std::max(scale_value, std::abs(x));
+  for (std::size_t i = 0; i < Qext.size(); ++i)
+    if (!fixed[i]) scale_value = std::max(scale_value, std::abs(Qext[i]));
+  d.residual_scale = scale_value;
   for (std::size_t iter = 1; iter <= model.max_newton; ++iter) {
     std::vector<double> qdd(model.ndof()), qd(model.ndof());
     for (std::size_t i = 0; i < model.ndof(); ++i) {
@@ -247,6 +281,7 @@ StepDiagnostics advance(State& state, const Model& model, const std::vector<doub
     const auto solve_end = Clock::now();
     d.linear_solve_s += std::chrono::duration<double>(solve_end - solve_start).count();
     for (std::size_t i = 0; i < free.size(); ++i) q[free[i]] -= dq[i];
+    for (std::size_t i = 0; i < model.ndof(); ++i) if (fixed[i]) q[i] = fixed_value();
   }
   if (!d.converged) throw std::runtime_error("ANCF Newton did not converge");
   const auto update_start = Clock::now();

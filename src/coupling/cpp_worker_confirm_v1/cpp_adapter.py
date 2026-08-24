@@ -5,6 +5,9 @@ from __future__ import annotations
 import hashlib
 import json
 import math
+import os
+import tempfile
+from numbers import Real
 from pathlib import Path
 from typing import Any, Mapping, Sequence
 
@@ -21,7 +24,7 @@ def _finite(values: Sequence[float], name: str) -> tuple[float, ...]:
     result_values: list[float] = []
     try:
         for value in values:
-            if isinstance(value, bool) or not isinstance(value, (int, float)):
+            if isinstance(value, bool) or not isinstance(value, Real):
                 raise CppAdapterError(f"{name} contains a non-numeric value")
             result_values.append(float(value))
     except TypeError as exc:
@@ -48,8 +51,24 @@ class CppKernelCampaignAdapter:
                  q: Sequence[float], qdot: Sequence[float], qddot: Sequence[float],
                  base_load: Sequence[float], slice_count: int = 3,
                  mass_matrix: Sequence[float] = ()) -> None:
-        if slice_count != 3:
+        if isinstance(slice_count, bool) or not isinstance(slice_count, int) or slice_count != 3:
             raise CppAdapterError("C++ confirm requires exactly three slices")
+        if not isinstance(run_id, str) or not run_id or any(ord(char) < 0x20 for char in run_id):
+            raise CppAdapterError("run_id is invalid")
+        if not isinstance(case_id, str) or not case_id or any(ord(char) < 0x20 for char in case_id):
+            raise CppAdapterError("case_id is invalid")
+        if isinstance(source_global_step, bool) or not isinstance(source_global_step, int) or source_global_step < 0:
+            raise CppAdapterError("source_global_step is invalid")
+        if isinstance(source_tick, bool) or not isinstance(source_tick, int) or source_tick < 0:
+            raise CppAdapterError("source_tick is invalid")
+        if isinstance(source_time_s, bool) or not isinstance(source_time_s, Real) or not math.isfinite(float(source_time_s)):
+            raise CppAdapterError("source_time_s is invalid")
+        if float(source_time_s) < 0.0:
+            raise CppAdapterError("source_time_s is negative")
+        if isinstance(dt_s, bool) or not isinstance(dt_s, Real) or not math.isfinite(float(dt_s)) or float(dt_s) <= 0.0:
+            raise CppAdapterError("dt_s is invalid")
+        if int(source_tick) != int(round(float(source_time_s) * 1.0e9)):
+            raise CppAdapterError("source time/tick identity is inconsistent")
         self.worker = worker
         self.model = model
         self.request_factory = request_factory
@@ -61,7 +80,24 @@ class CppKernelCampaignAdapter:
                        "qddot": list(_finite(qddot, "qddot"))}
         self._committed_state = json.loads(json.dumps(self._state))
         self.base_load = _finite(base_load, "base_load")
-        mass = tuple(float(value) for value in mass_matrix)
+        if len({len(values) for values in self._state.values()}) != 1 or len(self.base_load) != len(self._state["q"]):
+            raise CppAdapterError("source state/load dimensions disagree")
+        expected_ndof = getattr(model, "ndof", None)
+        if expected_ndof is not None and not callable(expected_ndof):
+            if isinstance(expected_ndof, bool) or not isinstance(expected_ndof, int) or expected_ndof != len(self._state["q"]):
+                raise CppAdapterError("source state dimension does not match model")
+        if isinstance(mass_matrix, (str, bytes)):
+            raise CppAdapterError("source mass_matrix is not a numeric sequence")
+        try:
+            raw_mass = tuple(mass_matrix)
+        except TypeError as exc:
+            raise CppAdapterError("source mass_matrix is not a numeric sequence") from exc
+        if any(isinstance(value, bool) or not isinstance(value, Real) for value in raw_mass):
+            raise CppAdapterError("source mass_matrix contains a non-numeric value")
+        try:
+            mass = tuple(float(value) for value in raw_mass)
+        except (TypeError, ValueError, OverflowError) as exc:
+            raise CppAdapterError("source mass_matrix is not a numeric sequence") from exc
         if mass and (len(mass) != model.ndof * model.ndof or
                      any(not math.isfinite(value) for value in mass)):
             raise CppAdapterError("source mass_matrix is invalid")
@@ -92,7 +128,12 @@ class CppKernelCampaignAdapter:
             raise ContractError("source checkpoint missing structure object")
         if not {"q", "qdot", "qddot"}.issubset(structure):
             raise ContractError("source checkpoint missing q/qdot/qddot")
-        if int(value.get("step", -1)) != 559 or abs(float(value.get("time_s", -1.0)) - 2.2075) > 1e-12:
+        source_step = value.get("step")
+        source_time = value.get("time_s")
+        if (isinstance(source_step, bool) or not isinstance(source_step, int) or
+                isinstance(source_time, bool) or not isinstance(source_time, Real) or
+                not math.isfinite(float(source_time)) or source_step != 559 or
+                abs(float(source_time) - 2.2075) > 1e-12):
             raise ContractError("source checkpoint identity is not step 559 at 2.2075 s")
         return cls(worker=worker, model=model, request_factory=request_factory,
                    run_id=run_id, case_id=case_id, source_global_step=559,
@@ -109,7 +150,8 @@ class CppKernelCampaignAdapter:
         bridge = int(step) - self.source_global_step
         expected_time = self.source_time_s + bridge * self.dt_s
         expected_tick = self.source_tick + bridge * round(self.dt_s * 1e9)
-        if bridge <= 0 or abs(float(time_s) - expected_time) > 1e-12:
+        if (bridge <= 0 or expected_tick < 0 or expected_tick > 0xFFFFFFFFFFFFFFFF or
+                abs(float(time_s) - expected_time) > 1e-12):
             raise CppAdapterError("global step/time does not match source mapping")
         return bridge, expected_tick
 
@@ -158,9 +200,21 @@ class CppKernelCampaignAdapter:
         if not math.isclose(float(response.time_s), float(time_s), rel_tol=0.0, abs_tol=1e-12):
             self._terminal = True
             raise CppAdapterError("C++ worker response time mismatch")
-        if getattr(response, "ack", None) not in (1, "ack", "committed") or not getattr(response, "payload_hash", None):
+        if getattr(response, "ack", None) not in (1, "ack", "committed"):
             self._terminal = True
-            raise CppAdapterError("C++ worker response acknowledgement/hash is missing")
+            raise CppAdapterError("C++ worker response acknowledgement is invalid")
+        payload_hash = getattr(response, "payload_hash", None)
+        if not isinstance(payload_hash, (bytes, bytearray)) or len(payload_hash) != 32:
+            self._terminal = True
+            raise CppAdapterError("C++ worker response payload hash is invalid")
+        expected_ndof = len(self._state["q"])
+        for field_name in ("internal_force", "external_force", "generalized_force",
+                           "predictor", "corrector"):
+            if hasattr(response, field_name):
+                field = _finite(getattr(response, field_name), f"response.{field_name}")
+                if len(field) != expected_ndof:
+                    self._terminal = True
+                    raise CppAdapterError(f"C++ worker response {field_name} dimension mismatch")
         state_out = {"q": list(_finite(response.q, "response.q")),
                      "qdot": list(_finite(response.qdot, "response.qdot")),
                      "qddot": list(_finite(response.qddot, "response.qddot"))}
@@ -177,6 +231,9 @@ class CppKernelCampaignAdapter:
         if self._terminal or not self._started:
             raise CppAdapterError("C++ worker adapter is unavailable")
         bridge, tick = self._identity(step, time_s)
+        if int(step) != self._committed_step + 1:
+            self._terminal = True
+            raise CppAdapterError("prediction skipped a committed global step")
         if self.pending_kind is not None:
             raise CppAdapterError("prediction requested with pending state")
         force = self._flatten_forces(previous_slice_forces)
@@ -242,7 +299,9 @@ class CppKernelCampaignAdapter:
     def save_checkpoint(self, path: str | Path) -> None:
         if self.pending_kind is not None:
             raise CppAdapterError("cannot save a checkpoint while staged state is pending")
-        Path(path).write_bytes(_canonical({
+        target = Path(path)
+        target.parent.mkdir(parents=True, exist_ok=True)
+        payload = _canonical({
             "schema_version": self.CHECKPOINT_SCHEMA,
             "state_view": self.state_view(),
             "source_global_step": self.source_global_step,
@@ -254,7 +313,19 @@ class CppKernelCampaignAdapter:
             "committed_global_step": self._committed_step,
             "committed_time_s": self._committed_time_s,
             "committed_tick": self._committed_tick,
-        }))
+        })
+        fd, temporary_name = tempfile.mkstemp(prefix=f".{target.name}.", suffix=".tmp",
+                                               dir=str(target.parent))
+        os.close(fd)
+        temporary = Path(temporary_name)
+        try:
+            with temporary.open("wb") as stream:
+                stream.write(payload)
+                stream.flush()
+                os.fsync(stream.fileno())
+            os.replace(temporary, target)
+        finally:
+            temporary.unlink(missing_ok=True)
 
     def load_checkpoint(self, path: str | Path) -> None:
         try:
@@ -296,16 +367,17 @@ class CppKernelCampaignAdapter:
             state = value["state_view"]
             if not isinstance(state, Mapping) or set(state) != {"q", "qdot", "qddot"}:
                 raise CppAdapterError("C++ checkpoint state schema is invalid")
-            self._state = {key: list(_finite(state[key], f"checkpoint.{key}")) for key in ("q", "qdot", "qddot")}
-            if len({len(values) for values in self._state.values()}) != 1:
+            loaded_state = {key: list(_finite(state[key], f"checkpoint.{key}")) for key in ("q", "qdot", "qddot")}
+            if len({len(values) for values in loaded_state.values()}) != 1:
                 raise CppAdapterError("C++ checkpoint state dimensions disagree")
             expected_ndof = getattr(self.model, "ndof", None)
-            if expected_ndof is not None and not callable(expected_ndof) and len(self._state["q"]) != int(expected_ndof):
+            if expected_ndof is not None and not callable(expected_ndof) and len(loaded_state["q"]) != int(expected_ndof):
                 raise CppAdapterError("C++ checkpoint state dimension does not match model")
         except (OSError, UnicodeDecodeError, json.JSONDecodeError, KeyError, TypeError,
                 ValueError, OverflowError) as exc:
             raise CppAdapterError("invalid UTF-8 C++ checkpoint") from exc
-        self._committed_state = json.loads(json.dumps(self._state))
+        self._state = loaded_state
+        self._committed_state = json.loads(json.dumps(loaded_state))
         self._committed_step = committed_step
         self._committed_time_s = committed_time
         self._committed_tick = committed_tick

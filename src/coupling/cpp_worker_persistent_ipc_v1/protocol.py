@@ -2,6 +2,7 @@ from __future__ import annotations
 
 import hashlib
 import math
+from numbers import Real
 import struct
 from dataclasses import dataclass
 
@@ -29,8 +30,23 @@ class FrameError(ValueError):
     """Persistent IPC frame is malformed or violates identity rules."""
 
 
+def _fixed(value: str, size: int, name: str) -> bytes:
+    if not isinstance(value, str) or not value or any(ord(char) < 0x20 for char in value):
+        raise FrameError(f"{name} is missing or contains a control character")
+    raw = value.encode("utf-8")
+    if b"\0" in raw or len(raw) >= size:
+        raise FrameError(f"{name} is missing or too long")
+    return raw + b"\0" * (size - len(raw))
+
+
 def _finite(value: float, name: str) -> None:
-    if not math.isfinite(float(value)):
+    if isinstance(value, bool) or not isinstance(value, Real):
+        raise FrameError(f"{name} is not numeric")
+    try:
+        finite = math.isfinite(float(value))
+    except (TypeError, ValueError, OverflowError) as exc:
+        raise FrameError(f"{name} is not numeric") from exc
+    if not finite:
         raise FrameError(f"{name} is NaN/Inf")
 
 
@@ -72,22 +88,27 @@ class StepRequest:
         if self.dt_s <= 0.0:
             raise FrameError("dt_s must be positive")
         expected_tick = int(round(self.time_s * 1.0e9))
-        if self.time_s < self.dt_s or self.integer_tick != expected_tick:
+        if (self.time_s < self.dt_s or self.time_s > 1.0e9 or expected_tick < 0 or
+                expected_tick > 0xFFFFFFFFFFFFFFFF or self.integer_tick != expected_tick):
             raise FrameError("time_s and integer_tick are inconsistent")
         for value, name, limit in ((self.run_id, "run_id", ID_RUN), (self.case_id, "case_id", ID_CASE),
                                     (self.producer, "producer", ID_ENDPOINT), (self.consumer, "consumer", ID_ENDPOINT)):
-            if not value or len(value.encode("utf-8")) >= limit:
-                raise FrameError(f"{name} is missing or too long")
+            _fixed(value, limit, name)
         values = [*self.q, *self.qdot, *self.force]
-        if any(not math.isfinite(float(item)) for item in values):
+        if any(isinstance(item, bool) or not isinstance(item, Real) for item in values):
+            raise FrameError("request state contains a non-numeric value")
+        try:
+            numeric_values = [float(item) for item in values]
+        except (TypeError, ValueError, OverflowError) as exc:
+            raise FrameError("request state contains a non-numeric value") from exc
+        if any(not math.isfinite(item) for item in numeric_values):
             raise FrameError("request state contains NaN/Inf")
-        fixed = lambda value, size: value.encode("utf-8") + b"\0" * (size - len(value.encode("utf-8")))
-        state_bytes = struct.pack("<" + "d" * len(values), *values)
+        state_bytes = struct.pack("<" + "d" * len(numeric_values), *numeric_values)
         request_hash = hashlib.sha256(state_bytes).digest()
         return REQUEST.pack(SCHEMA_VERSION, PROTOCOL_VERSION, self.sequence, self.global_step, self.case_local_bridge_step,
                             self.integer_tick, self.time_s, self.dt_s, n, self.request_id, self.transaction_id,
-                            fixed(self.run_id, ID_RUN), fixed(self.case_id, ID_CASE),
-                            fixed(self.producer, ID_ENDPOINT), fixed(self.consumer, ID_ENDPOINT), request_hash) + state_bytes
+                            _fixed(self.run_id, ID_RUN, "run_id"), _fixed(self.case_id, ID_CASE, "case_id"),
+                            _fixed(self.producer, ID_ENDPOINT, "producer"), _fixed(self.consumer, ID_ENDPOINT, "consumer"), request_hash) + state_bytes
 
 
 def encode_request(request: StepRequest) -> bytes:

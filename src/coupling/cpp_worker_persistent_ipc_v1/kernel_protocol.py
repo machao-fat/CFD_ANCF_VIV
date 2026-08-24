@@ -2,6 +2,7 @@ from __future__ import annotations
 
 import hashlib
 import math
+from numbers import Real
 import struct
 from dataclasses import dataclass
 from typing import BinaryIO, Sequence
@@ -22,15 +23,27 @@ _RESPONSE_PREFIX = struct.Struct("<IIIiiQdiiidQQI")
 
 
 def _finite_vector(values: Sequence[float], name: str) -> tuple[float, ...]:
-    result = tuple(float(value) for value in values)
+    if isinstance(values, (str, bytes)):
+        raise FrameError(f"{name} is not a numeric sequence")
+    try:
+        result_values = []
+        for value in values:
+            if isinstance(value, bool) or not isinstance(value, Real):
+                raise FrameError(f"{name} contains a non-numeric value")
+            result_values.append(float(value))
+    except TypeError as exc:
+        raise FrameError(f"{name} is not a numeric sequence") from exc
+    result = tuple(result_values)
     if not result or any(not math.isfinite(value) for value in result):
         raise FrameError(f"{name} is empty or contains NaN/Inf")
     return result
 
 
 def _fixed(value: str, size: int, name: str) -> bytes:
+    if not isinstance(value, str) or not value or any(ord(char) < 0x20 for char in value):
+        raise FrameError(f"{name} is missing or contains a control character")
     raw = value.encode("utf-8")
-    if not raw or len(raw) >= size:
+    if b"\0" in raw or len(raw) >= size:
         raise FrameError(f"{name} is missing or too long")
     return raw + b"\0" * (size - len(raw))
 
@@ -61,12 +74,22 @@ class KernelModel:
     gauss_order: int = 3
     max_newton: int = 40
     slice_positions_m: tuple[float, ...] = ()
+    # Kept explicit in the model object even though the v1 wire layout
+    # intentionally requires both owned components to be enabled.
+    include_gravity: bool = True
+    include_buoyancy: bool = True
 
     @property
     def ndof(self) -> int:
+        if isinstance(self.elements, bool) or not isinstance(self.elements, int):
+            raise FrameError("kernel elements is not an integer")
         return 6 * (self.elements + 1)
 
     def validate(self, dt_s: float) -> None:
+        for name, value in (("elements", self.elements), ("slices", self.slices),
+                            ("gauss_order", self.gauss_order), ("max_newton", self.max_newton)):
+            if isinstance(value, bool) or not isinstance(value, int):
+                raise FrameError(f"kernel model {name} is not an integer")
         if (self.elements < 1 or self.elements > 10000 or self.slices < 1 or
                 self.slices > 1000 or self.ndof > MAX_NDOF or self.gauss_order not in (3, 5)):
             raise FrameError("kernel model dimensions or quadrature order are invalid")
@@ -74,17 +97,32 @@ class KernelModel:
             raise FrameError("kernel Newton contract is invalid")
         if self.damping_alpha != 0.0 or self.damping_beta != 0.0:
             raise FrameError("non-zero damping is not implemented in the worker contract")
+        if not isinstance(self.include_gravity, bool) or not isinstance(self.include_buoyancy, bool):
+            raise FrameError("kernel physics switches must be boolean")
+        # The v1 wire model does not carry these switches.  Accepting false
+        # here would silently make the C++ ownership worker use different
+        # physics from the request, so reject the unrepresentable contract.
+        if not self.include_gravity or not self.include_buoyancy:
+            raise FrameError("kernel v1 wire contract requires gravity and buoyancy enabled")
         for name, value in (("length_m", self.length_m), ("diameter_m", self.diameter_m),
                             ("inner_diameter_m", self.inner_diameter_m), ("youngs_modulus_Pa", self.youngs_modulus_Pa),
                             ("material_density", self.material_density), ("fluid_density", self.fluid_density),
-                            ("gravity", self.gravity), ("beta", self.beta), ("gamma", self.gamma),
+                            ("gravity", self.gravity), ("top_tension_N", self.top_tension_N),
+                            ("beta", self.beta), ("gamma", self.gamma),
                             ("newton_tolerance", self.newton_tolerance), ("dt_s", dt_s)):
+            if isinstance(value, bool) or not isinstance(value, Real):
+                raise FrameError(f"kernel model {name} is not numeric")
             if not math.isfinite(float(value)):
                 raise FrameError(f"kernel model {name} is NaN/Inf")
-        if self.length_m <= 0.0 or self.diameter_m <= self.inner_diameter_m or dt_s <= 0.0:
+        if (self.length_m <= 0.0 or self.diameter_m <= 0.0 or
+                self.diameter_m <= self.inner_diameter_m or self.inner_diameter_m < 0.0 or dt_s <= 0.0):
             raise FrameError("kernel geometry or time step is invalid")
+        if isinstance(self.slice_positions_m, (str, bytes)):
+            raise FrameError("kernel slice positions are not numeric")
         if self.slice_positions_m and (len(self.slice_positions_m) != self.slices or
-                                       any(not math.isfinite(float(x)) or x < 0.0 or x > self.length_m for x in self.slice_positions_m) or
+                                       any(isinstance(x, bool) or not isinstance(x, Real) or
+                                           not math.isfinite(float(x)) or x < 0.0 or x > self.length_m
+                                           for x in self.slice_positions_m) or
                                        any(self.slice_positions_m[i] <= self.slice_positions_m[i - 1]
                                            for i in range(1, len(self.slice_positions_m)))):
             raise FrameError("kernel slice positions are invalid")
@@ -129,7 +167,18 @@ class KernelStepRequest:
         q = _finite_vector(self.q, "q"); qdot = _finite_vector(self.qdot, "qdot")
         qddot = _finite_vector(self.qddot, "qddot"); base = _finite_vector(self.base_load, "base_load")
         force = _finite_vector(self.slice_force, "slice_force")
-        mass = tuple(float(value) for value in self.mass_matrix)
+        if isinstance(self.mass_matrix, (str, bytes)):
+            raise FrameError("mass_matrix is not a numeric sequence")
+        try:
+            raw_mass = tuple(self.mass_matrix)
+        except TypeError as exc:
+            raise FrameError("mass_matrix is not a numeric sequence") from exc
+        if any(isinstance(value, bool) or not isinstance(value, Real) for value in raw_mass):
+            raise FrameError("mass_matrix contains a non-numeric value")
+        try:
+            mass = tuple(float(value) for value in raw_mass)
+        except (TypeError, ValueError, OverflowError) as exc:
+            raise FrameError("mass_matrix is not a numeric sequence") from exc
         if mass and len(mass) != n * n:
             raise FrameError("mass_matrix dimension is inconsistent with model")
         if any(not math.isfinite(value) for value in mass):
@@ -142,12 +191,14 @@ class KernelStepRequest:
         _bounded_int(self.integer_tick, "integer_tick", 0, 0xFFFFFFFFFFFFFFFF)
         _bounded_int(self.request_id, "request_id", 1, 0xFFFFFFFFFFFFFFFF)
         _bounded_int(self.transaction_id, "transaction_id", 1, 0xFFFFFFFFFFFFFFFF)
-        if not math.isfinite(self.time_s) or not math.isfinite(self.dt_s):
+        if not math.isfinite(float(self.time_s)) or not math.isfinite(float(self.dt_s)):
             raise FrameError("kernel time is NaN/Inf")
         if self.dt_s <= 0.0:
             raise FrameError("kernel dt_s must be positive")
         expected_tick = int(round(self.time_s * 1.0e9))
-        if self.time_s < self.dt_s or self.integer_tick != expected_tick:
+        if (self.time_s < self.dt_s or self.time_s > 1.0e9 or
+                expected_tick < 0 or expected_tick > 0xFFFFFFFFFFFFFFFF or
+                self.integer_tick != expected_tick):
             raise FrameError("kernel time_s and integer_tick are inconsistent")
         prefix = _PREFIX.pack(SCHEMA_VERSION, PROTOCOL_VERSION, self.sequence, self.global_step,
                               self.case_local_bridge_step, self.integer_tick, self.time_s, self.dt_s,

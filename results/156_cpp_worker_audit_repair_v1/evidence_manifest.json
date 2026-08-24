@@ -1,0 +1,17 @@
+{
+  "files": {
+    "audit_findings.json": "30866dd651f4e426b2bb751aa645ced6d81ea46fe630102397bae7cd35c5c822",
+    "build_audit.json": "15f049febff7af1645073ea4ddd1614da7fdacfb3b040142df98291e96873fd2",
+    "fault_injection_report.json": "01faa5a6aa95b8bf994d4488bffdaa5894ec623544bda518510ca133cfbf2050",
+    "independent_gate.json": "ff6466376d0f7d7970011b95fde68b56992ce6b01dbc94eb5a2c7295cc101e79",
+    "numerical_equivalence_report.json": "8b5d7d0fad171465ef498ce2a81b827793bbd2999ea5cb2a3c9b1a754bbb15ec",
+    "ownership_nonzero_40step.json": "87ca0cb07aae069b0ff17e8014d372b2369735e7f8316ede073c5a537ba54d90",
+    "protected_artifact_audit.json": "e0477f37a9f21d0d3b46496ebadb785095d9341674c114f339d771b43ea6a777",
+    "repair_manifest.json": "f03cdec75ec24948963eec5ee9fcdd936cc116e054ae20787d3dc0f93e00bdf5",
+    "resource_audit.json": "7fb58d643097c7af5cfcc82f23ece6afc879701f4bc892da1214194bab4faff1",
+    "stop_gate_audit.json": "fc3724bee2d0baee72ef53916e55377654350ebf4f94045a7506ab88b2b57385",
+    "test_discovery_audit.json": "f6c524032fa72b6a996ea39ad8b52e5794fd3875dbb430012130d5a9a256e740",
+    "transport_40step.json": "fd73e3b0bb9d9e56becbb4e9688b6110f436df53fae9179ed623f66abcae69e0"
+  },
+  "stage_id": "stage4f_d_cpp_worker_comprehensive_audit_repair_v2"
+}

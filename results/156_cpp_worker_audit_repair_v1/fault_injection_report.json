@@ -1,0 +1,16 @@
+{
+  "all_fail_closed": true,
+  "cases": [
+    "source tick mismatch",
+    "source state dimension mismatch",
+    "invalid numeric payload",
+    "malformed mass matrix",
+    "failed checkpoint load state preservation",
+    "stale/duplicate/out-of-order identity",
+    "hash mismatch",
+    "NaN/Inf"
+  ],
+  "same_runtime_retry": false,
+  "source": "tests/cpp_worker_comprehensive_audit_repair_v2/test_contract_repairs.py and prior Stage 155 fault audit",
+  "status": "pass"
+}

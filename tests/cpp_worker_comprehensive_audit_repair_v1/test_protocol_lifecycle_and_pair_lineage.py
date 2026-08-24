@@ -61,6 +61,36 @@ def _kernel_request(sequence: int, global_step: int, bridge: int, time_s: float,
 
 
 class ProtocolLifecycleAndPairLineageTests(unittest.TestCase):
+    def test_kernel_model_rejects_unrepresentable_physics_switches(self) -> None:
+        value = _kernel_request(1, 560, 1, 2.20875, 2_208_750_000)
+        with self.assertRaises(FrameError):
+            replace(value, model=replace(value.model, include_gravity=False)).payload()
+        with self.assertRaises(FrameError):
+            replace(value, model=replace(value.model, top_tension_N="2000")).payload()
+
+    def test_kernel_request_rejects_non_numeric_state_and_identity_controls(self) -> None:
+        value = _kernel_request(1, 560, 1, 2.20875, 2_208_750_000)
+        with self.assertRaises(FrameError):
+            replace(value, q=("0",) + value.q[1:]).payload()
+        with self.assertRaises(FrameError):
+            replace(value, run_id="run\0replay").payload()
+        with self.assertRaises(FrameError):
+            replace(value, time_s=1.0e10, integer_tick=10_000_000_000_000_000_000).payload()
+
+    def test_dual_record_rejects_boolean_identity_and_state_values(self) -> None:
+        from coupling.cpp_worker_persistent_ipc_v1.dual_run import DualStepRecord
+        raw = _kernel_request(1, 560, 1, 2.20875, 2_208_750_000)
+        base = {"run_id": "r", "case_id": "c", "global_step": 560,
+                "case_local_bridge_step": 1, "time_s": 2.20875,
+                "integer_tick": 2_208_750_000}
+        base.update({name: [0.0] for name in ("q", "qdot", "qddot", "internal_force",
+                                               "external_force", "generalized_force",
+                                               "predictor", "corrector", "residual")})
+        with self.assertRaises(FrameError):
+            DualStepRecord.from_mapping({**base, "global_step": True})
+        with self.assertRaises(FrameError):
+            DualStepRecord.from_mapping({**base, "q": [True]})
+
     def _adapter(self) -> CppKernelCampaignAdapter:
         class Worker:
             def start(self): pass
@@ -74,7 +104,7 @@ class ProtocolLifecycleAndPairLineageTests(unittest.TestCase):
                     run_id=request.run_id, case_id=request.case_id, ack=1,
                     return_code=0, finite_value_audit=True, q=request.q,
                     qdot=request.qdot, qddot=request.qddot,
-                    payload_hash=b"checkpoint-test", generalized_force=(0.0, 0.0, 0.0),
+                    payload_hash=b"checkpoint-test".ljust(32, b"!"), generalized_force=(0.0, 0.0, 0.0),
                 )
         return CppKernelCampaignAdapter(
             worker=Worker(), model=object(), request_factory=lambda **kwargs: SimpleNamespace(**kwargs),

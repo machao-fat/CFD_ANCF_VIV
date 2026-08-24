@@ -73,6 +73,8 @@ struct StepDiagnostics {
   double state_update_s = 0.0;
   double predictor_s = 0.0;
   double external_mapping_s = 0.0;
+  // MATLAB's free-DOF residual scale, retained for audit diagnostics.
+  double residual_scale = 0.0;
 };
 
 State make_reference_state(const Model& model);

@@ -1,0 +1,17 @@
+{
+  "formal_protocol_semantics_modified": false,
+  "generated_at_utc": "2026-08-24T18:32:47.464561+00:00",
+  "modified_files": [
+    "src/coupling/cpp_worker_persistent_ipc_v1/ancf_kernel.cpp",
+    "src/coupling/cpp_worker_persistent_ipc_v1/ancf_kernel.hpp",
+    "src/coupling/cpp_worker_persistent_ipc_v1/ancf_kernel_selftest.cpp",
+    "src/coupling/cpp_worker_confirm_v1/cpp_adapter.py",
+    "tests/cpp_worker_comprehensive_audit_repair_v2/test_contract_repairs.py",
+    "tests/cpp_worker_comprehensive_audit_repair_v1/test_protocol_lifecycle_and_pair_lineage.py",
+    "tests/cpp_worker_confirm_v1/test_cpp_adapter.py",
+    "tests/cpp_worker_confirm_v1/test_lifecycle.py"
+  ],
+  "old_evidence_modified": false,
+  "physical_core_or_thresholds_modified": false,
+  "stage_id": "stage4f_d_cpp_worker_comprehensive_audit_repair_v2"
+}

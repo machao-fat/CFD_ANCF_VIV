@@ -1,0 +1,311 @@
+{
+  "case_id": "cpp_worker_audit_case_156_001",
+  "owned_residual": 0,
+  "processed_steps": 40,
+  "real_process_starts": {
+    "CFD": 0,
+    "MATLAB": 0,
+    "OpenFOAM": 0,
+    "WSL": 0
+  },
+  "requested_steps": 40,
+  "rows": [
+    {
+      "case_local_bridge_step": 1,
+      "global_step": 560,
+      "integer_tick": 2208750000,
+      "latency_s": 0.003274,
+      "time_s": 2.20875
+    },
+    {
+      "case_local_bridge_step": 2,
+      "global_step": 561,
+      "integer_tick": 2210000000,
+      "latency_s": 7.04e-05,
+      "time_s": 2.21
+    },
+    {
+      "case_local_bridge_step": 3,
+      "global_step": 562,
+      "integer_tick": 2211250000,
+      "latency_s": 5.51e-05,
+      "time_s": 2.21125
+    },
+    {
+      "case_local_bridge_step": 4,
+      "global_step": 563,
+      "integer_tick": 2212500000,
+      "latency_s": 4.99e-05,
+      "time_s": 2.2125
+    },
+    {
+      "case_local_bridge_step": 5,
+      "global_step": 564,
+      "integer_tick": 2213750000,
+      "latency_s": 4.9e-05,
+      "time_s": 2.21375
+    },
+    {
+      "case_local_bridge_step": 6,
+      "global_step": 565,
+      "integer_tick": 2215000000,
+      "latency_s": 4.95e-05,
+      "time_s": 2.215
+    },
+    {
+      "case_local_bridge_step": 7,
+      "global_step": 566,
+      "integer_tick": 2216250000,
+      "latency_s": 4.75e-05,
+      "time_s": 2.21625
+    },
+    {
+      "case_local_bridge_step": 8,
+      "global_step": 567,
+      "integer_tick": 2217500000,
+      "latency_s": 4.76e-05,
+      "time_s": 2.2175
+    },
+    {
+      "case_local_bridge_step": 9,
+      "global_step": 568,
+      "integer_tick": 2218750000,
+      "latency_s": 4.94e-05,
+      "time_s": 2.21875
+    },
+    {
+      "case_local_bridge_step": 10,
+      "global_step": 569,
+      "integer_tick": 2220000000,
+      "latency_s": 4.94e-05,
+      "time_s": 2.22
+    },
+    {
+      "case_local_bridge_step": 11,
+      "global_step": 570,
+      "integer_tick": 2221250000,
+      "latency_s": 4.66e-05,
+      "time_s": 2.22125
+    },
+    {
+      "case_local_bridge_step": 12,
+      "global_step": 571,
+      "integer_tick": 2222500000,
+      "latency_s": 4.71e-05,
+      "time_s": 2.2225
+    },
+    {
+      "case_local_bridge_step": 13,
+      "global_step": 572,
+      "integer_tick": 2223750000,
+      "latency_s": 4.58e-05,
+      "time_s": 2.22375
+    },
+    {
+      "case_local_bridge_step": 14,
+      "global_step": 573,
+      "integer_tick": 2225000000,
+      "latency_s": 4.65e-05,
+      "time_s": 2.225
+    },
+    {
+      "case_local_bridge_step": 15,
+      "global_step": 574,
+      "integer_tick": 2226250000,
+      "latency_s": 4.66e-05,
+      "time_s": 2.22625
+    },
+    {
+      "case_local_bridge_step": 16,
+      "global_step": 575,
+      "integer_tick": 2227500000,
+      "latency_s": 4.6e-05,
+      "time_s": 2.2275
+    },
+    {
+      "case_local_bridge_step": 17,
+      "global_step": 576,
+      "integer_tick": 2228750000,
+      "latency_s": 4.51e-05,
+      "time_s": 2.2287500000000002
+    },
+    {
+      "case_local_bridge_step": 18,
+      "global_step": 577,
+      "integer_tick": 2230000000,
+      "latency_s": 4.8e-05,
+      "time_s": 2.23
+    },
+    {
+      "case_local_bridge_step": 19,
+      "global_step": 578,
+      "integer_tick": 2231250000,
+      "latency_s": 4.55e-05,
+      "time_s": 2.23125
+    },
+    {
+      "case_local_bridge_step": 20,
+      "global_step": 579,
+      "integer_tick": 2232500000,
+      "latency_s": 4.56e-05,
+      "time_s": 2.2325
+    },
+    {
+      "case_local_bridge_step": 21,
+      "global_step": 580,
+      "integer_tick": 2233750000,
+      "latency_s": 4.75e-05,
+      "time_s": 2.23375
+    },
+    {
+      "case_local_bridge_step": 22,
+      "global_step": 581,
+      "integer_tick": 2235000000,
+      "latency_s": 4.74e-05,
+      "time_s": 2.235
+    },
+    {
+      "case_local_bridge_step": 23,
+      "global_step": 582,
+      "integer_tick": 2236250000,
+      "latency_s": 4.61e-05,
+      "time_s": 2.23625
+    },
+    {
+      "case_local_bridge_step": 24,
+      "global_step": 583,
+      "integer_tick": 2237500000,
+      "latency_s": 4.62e-05,
+      "time_s": 2.2375
+    },
+    {
+      "case_local_bridge_step": 25,
+      "global_step": 584,
+      "integer_tick": 2238750000,
+      "latency_s": 4.57e-05,
+      "time_s": 2.23875
+    },
+    {
+      "case_local_bridge_step": 26,
+      "global_step": 585,
+      "integer_tick": 2240000000,
+      "latency_s": 4.58e-05,
+      "time_s": 2.24
+    },
+    {
+      "case_local_bridge_step": 27,
+      "global_step": 586,
+      "integer_tick": 2241250000,
+      "latency_s": 4.46e-05,
+      "time_s": 2.24125
+    },
+    {
+      "case_local_bridge_step": 28,
+      "global_step": 587,
+      "integer_tick": 2242500000,
+      "latency_s": 4.57e-05,
+      "time_s": 2.2425
+    },
+    {
+      "case_local_bridge_step": 29,
+      "global_step": 588,
+      "integer_tick": 2243750000,
+      "latency_s": 4.57e-05,
+      "time_s": 2.24375
+    },
+    {
+      "case_local_bridge_step": 30,
+      "global_step": 589,
+      "integer_tick": 2245000000,
+      "latency_s": 4.58e-05,
+      "time_s": 2.245
+    },
+    {
+      "case_local_bridge_step": 31,
+      "global_step": 590,
+      "integer_tick": 2246250000,
+      "latency_s": 4.53e-05,
+      "time_s": 2.24625
+    },
+    {
+      "case_local_bridge_step": 32,
+      "global_step": 591,
+      "integer_tick": 2247500000,
+      "latency_s": 4.53e-05,
+      "time_s": 2.2475
+    },
+    {
+      "case_local_bridge_step": 33,
+      "global_step": 592,
+      "integer_tick": 2248750000,
+      "latency_s": 8.1e-05,
+      "time_s": 2.24875
+    },
+    {
+      "case_local_bridge_step": 34,
+      "global_step": 593,
+      "integer_tick": 2250000000,
+      "latency_s": 4.67e-05,
+      "time_s": 2.25
+    },
+    {
+      "case_local_bridge_step": 35,
+      "global_step": 594,
+      "integer_tick": 2251250000,
+      "latency_s": 4.85e-05,
+      "time_s": 2.25125
+    },
+    {
+      "case_local_bridge_step": 36,
+      "global_step": 595,
+      "integer_tick": 2252500000,
+      "latency_s": 4.48e-05,
+      "time_s": 2.2525
+    },
+    {
+      "case_local_bridge_step": 37,
+      "global_step": 596,
+      "integer_tick": 2253750000,
+      "latency_s": 4.52e-05,
+      "time_s": 2.25375
+    },
+    {
+      "case_local_bridge_step": 38,
+      "global_step": 597,
+      "integer_tick": 2255000000,
+      "latency_s": 4.59e-05,
+      "time_s": 2.255
+    },
+    {
+      "case_local_bridge_step": 39,
+      "global_step": 598,
+      "integer_tick": 2256250000,
+      "latency_s": 4.49e-05,
+      "time_s": 2.25625
+    },
+    {
+      "case_local_bridge_step": 40,
+      "global_step": 599,
+      "integer_tick": 2257500000,
+      "latency_s": 4.52e-05,
+      "time_s": 2.2575
+    }
+  ],
+  "run_id": "cpp_worker_audit_repair_156_001",
+  "stage_id": "stage4f_d_cpp_worker_comprehensive_audit_repair_v2",
+  "status": "pass",
+  "stderr": "",
+  "worker_process": {
+    "cleanup_result": "closed",
+    "command_line": [
+      "D:\\研二文件\\开题准备\\CFD_ANCF_VIV\\runtime\\cpp_worker_comprehensive_audit_repair_v2\\build-release\\Release\\cfd_ancf_cpp_worker.exe"
+    ],
+    "cwd": "D:\\研二文件\\开题准备\\CFD_ANCF_VIV\\results\\156_cpp_worker_audit_repair_v1",
+    "owned": true,
+    "parent_pid": 22632,
+    "pid": 20468,
+    "start_time_ns": 1787596101800403600
+  },
+  "worker_return_code": 0,
+  "worker_start_count": 1
+}

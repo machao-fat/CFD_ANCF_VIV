@@ -145,8 +145,9 @@ bool append_profile(std::int32_t global_step, std::uint32_t sequence,
          << ",\"linear_solve_s\":" << diagnostics.linear_solve_s
          << ",\"state_update_s\":" << diagnostics.state_update_s
          << ",\"predictor_s\":" << diagnostics.predictor_s
-          << ",\"external_mapping_s\":" << diagnostics.external_mapping_s
-          << ",\"newton_iterations\":" << diagnostics.iterations << "}\n";
+         << ",\"external_mapping_s\":" << diagnostics.external_mapping_s
+         << ",\"residual_scale\":" << diagnostics.residual_scale
+         << ",\"newton_iterations\":" << diagnostics.iterations << "}\n";
   return static_cast<bool>(output);
 }
 

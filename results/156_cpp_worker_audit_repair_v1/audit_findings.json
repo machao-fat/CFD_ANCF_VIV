@@ -1,0 +1,54 @@
+{
+  "findings": [
+    {
+      "id": "NEWTON_RESIDUAL_SCALE_FIXED_FREE_DOF",
+      "scope": "ancf_kernel.cpp",
+      "severity": "high",
+      "status": "fixed_and_selftested"
+    },
+    {
+      "id": "MASS_MATRIX_SHAPE_AND_FINITE_BOUNDARY",
+      "scope": "ancf_kernel.cpp",
+      "severity": "high",
+      "status": "fixed_and_selftested"
+    },
+    {
+      "id": "SOURCE_IDENTITY_AND_DIMENSION_BOUNDARY",
+      "scope": "cpp_adapter.py",
+      "severity": "high",
+      "status": "fixed_and_tested"
+    },
+    {
+      "id": "ATOMIC_CHECKPOINT_COMMIT",
+      "scope": "cpp_adapter.py",
+      "severity": "medium",
+      "status": "fixed_and_tested"
+    },
+    {
+      "id": "RESPONSE_HASH_LENGTH_AND_VECTOR_BOUNDARY",
+      "scope": "cpp_adapter.py",
+      "severity": "high",
+      "status": "fixed_and_regression_tested"
+    },
+    {
+      "id": "MATLAB_CPP_STRICT_NUMERICAL_EQUIVALENCE",
+      "requested_steps": 40,
+      "severity": "high",
+      "status": "not_proven",
+      "strict_pass_steps": 0
+    },
+    {
+      "detail": "v1 response external_force and generalized_force retain historical total-Qext schema semantics; no wire migration was introduced",
+      "id": "FORCE_FIELD_SEMANTIC_RISK",
+      "severity": "medium",
+      "status": "open"
+    },
+    {
+      "id": "BENT_TOP_TENSION_DIRECTION",
+      "severity": "high",
+      "status": "not_evaluable_without_authoritative_contract"
+    }
+  ],
+  "stage_id": "stage4f_d_cpp_worker_comprehensive_audit_repair_v2",
+  "status": "complete_with_numerical_blockers"
+}

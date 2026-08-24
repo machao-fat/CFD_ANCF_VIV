@@ -26,7 +26,7 @@ class FakeWorker:
             time_s=request.time_s, integer_tick=request.integer_tick, request_id=request.request_id,
             transaction_id=request.transaction_id, run_id=request.run_id, case_id=request.case_id,
             ack=1, return_code=0, finite_value_audit=True, q=q, qdot=tuple(request.qdot), qddot=tuple(request.qddot),
-            generalized_force=zeros, payload_hash=b"hash")
+            generalized_force=zeros, payload_hash=b"h" * 32)
 
 
 def factory(**kwargs): return SimpleNamespace(**kwargs)

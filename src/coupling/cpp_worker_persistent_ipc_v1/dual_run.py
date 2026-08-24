@@ -2,6 +2,7 @@ from __future__ import annotations
 
 import json
 import math
+from numbers import Real
 from dataclasses import dataclass
 from pathlib import Path
 from typing import Mapping, Sequence
@@ -46,16 +47,31 @@ class DualStepRecord:
             else:
                 if not isinstance(raw, Sequence) or isinstance(raw, (str, bytes)):
                     raise FrameError(f"dual record missing vector {name}")
+                if any(isinstance(item, bool) or not isinstance(item, Real) for item in raw):
+                    raise FrameError(f"dual record {name} contains a non-numeric value")
                 result = tuple(float(item) for item in raw)
             if not result or any(not math.isfinite(item) for item in result):
                 raise FrameError(f"dual record {name} is empty or non-finite")
             return result
 
         try:
+            run_id = value["run_id"]
+            case_id = value["case_id"]
+            global_step = value["global_step"]
+            bridge_step = value["case_local_bridge_step"]
+            time_s = value["time_s"]
+            integer_tick = value["integer_tick"]
+            if (not isinstance(run_id, str) or not run_id or
+                    not isinstance(case_id, str) or not case_id or
+                    isinstance(global_step, bool) or not isinstance(global_step, int) or global_step <= 0 or
+                    isinstance(bridge_step, bool) or not isinstance(bridge_step, int) or bridge_step <= 0 or
+                    isinstance(integer_tick, bool) or not isinstance(integer_tick, int) or integer_tick < 0 or
+                    isinstance(time_s, bool) or not isinstance(time_s, Real)):
+                raise FrameError("dual record identity is malformed")
             record = cls(
-                run_id=str(value["run_id"]), case_id=str(value["case_id"]),
-                global_step=int(value["global_step"]), case_local_bridge_step=int(value["case_local_bridge_step"]),
-                time_s=float(value["time_s"]), integer_tick=int(value["integer_tick"]),
+                run_id=run_id, case_id=case_id,
+                global_step=global_step, case_local_bridge_step=bridge_step,
+                time_s=float(time_s), integer_tick=integer_tick,
                 **{name: vector(name) for name in NUMERIC_FIELDS},
             )
         except (KeyError, TypeError, ValueError) as exc:

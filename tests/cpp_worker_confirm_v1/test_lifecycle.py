@@ -42,7 +42,7 @@ class Worker:
             return_code=0, finite_value_audit=True,
             q=tuple(value + 1.0e-6 for value in request.q),
             qdot=tuple(request.qdot), qddot=tuple(request.qddot),
-            generalized_force=zeros, payload_hash=b"hash",
+            generalized_force=zeros, payload_hash=b"h" * 32,
         )
 
 
