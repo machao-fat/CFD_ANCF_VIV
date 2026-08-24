@@ -1,0 +1,14 @@
+{
+  "current_change_scope": "mass assembly and offline selftest coverage; no IPC wire change",
+  "owned_residual": 0,
+  "physical_process_starts": {
+    "CFD": 0,
+    "MATLAB": 0,
+    "OpenFOAM": 0,
+    "WSL": 0
+  },
+  "source": "read-only results/157_cpp_worker_comprehensive_audit_repair_v1/transport_40step.json",
+  "status": "pass_read_only_prior_evidence",
+  "steps_completed": 40,
+  "worker_start_count": 1
+}

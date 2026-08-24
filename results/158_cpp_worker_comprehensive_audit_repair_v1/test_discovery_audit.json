@@ -1,0 +1,15 @@
+{
+  "compileall": "pass",
+  "cpp_kernel_selftest": "pass",
+  "cpp_physics_ownership_selftest": "pass",
+  "focused_specialized_tests": "35/35 pass",
+  "root_unittest": {
+    "errors": 0,
+    "failures": 0,
+    "skipped": 1,
+    "source": "read-only Stage 157 root unittest result; no Python source changed in Stage 158",
+    "status": "pass",
+    "tests_run": 1148
+  },
+  "root_unittest_command": "PYTHONPATH=src;src/coupling py -3.9 -m unittest discover -s tests -t . -p test_*.py"
+}

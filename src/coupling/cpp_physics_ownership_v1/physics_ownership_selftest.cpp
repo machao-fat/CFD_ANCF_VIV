@@ -1,6 +1,7 @@
 #include "physics_ownership.hpp"
 
 #include <cmath>
+#include <array>
 #include <iomanip>
 #include <iostream>
 #include <random>
@@ -50,6 +51,60 @@ std::vector<double> mat_vec(const Matrix& matrix, const std::vector<double>& vec
 
 bool near(double value, double expected, double tolerance) {
   return std::abs(value - expected) <= tolerance * std::max(1.0, std::abs(expected));
+}
+
+std::pair<std::vector<double>, std::vector<double>> reference_gauss(std::size_t order) {
+  if (order == 3) {
+    return {{-std::sqrt(3.0 / 5.0), 0.0, std::sqrt(3.0 / 5.0)},
+            {5.0 / 9.0, 8.0 / 9.0, 5.0 / 9.0}};
+  }
+  if (order == 5) {
+    const double a = std::sqrt(5.0 + 2.0 * std::sqrt(10.0 / 7.0)) / 3.0;
+    const double b = std::sqrt(5.0 - 2.0 * std::sqrt(10.0 / 7.0)) / 3.0;
+    return {{-a, -b, 0.0, b, a},
+            {(322.0 - 13.0 * std::sqrt(70.0)) / 900.0,
+             (322.0 + 13.0 * std::sqrt(70.0)) / 900.0,
+             128.0 / 225.0,
+             (322.0 + 13.0 * std::sqrt(70.0)) / 900.0,
+             (322.0 - 13.0 * std::sqrt(70.0)) / 900.0}};
+  }
+  throw std::invalid_argument("reference Gauss order");
+}
+
+std::array<double, 4> reference_shape(double x, double length) {
+  const double xi = x / length;
+  return {1.0 - 3.0 * xi * xi + 2.0 * xi * xi * xi,
+          length * (xi - 2.0 * xi * xi + xi * xi * xi),
+          3.0 * xi * xi - 2.0 * xi * xi * xi,
+          length * (-xi * xi + xi * xi * xi)};
+}
+
+Matrix independently_integrated_mass(const Model& value, std::size_t order) {
+  const auto [points, weights] = reference_gauss(order);
+  Matrix result(value.ndof(), value.ndof());
+  const double element_length = value.length_m / static_cast<double>(value.elements);
+  const double rho_area = value.material_density * value.area();
+  for (std::size_t element = 0; element < value.elements; ++element) {
+    for (std::size_t k = 0; k < points.size(); ++k) {
+      const double x = 0.5 * (points[k] + 1.0) * element_length;
+      const auto shape = reference_shape(x, element_length);
+      const double weight = weights[k] * element_length / 2.0 * rho_area;
+      for (int row_block = 0; row_block < 4; ++row_block) {
+        for (int col_block = 0; col_block < 4; ++col_block) {
+          const double value_block = weight * shape[static_cast<std::size_t>(row_block)] *
+                                     shape[static_cast<std::size_t>(col_block)];
+          for (int component = 0; component < 3; ++component) {
+            const std::size_t row = 6 * element + 3 * static_cast<std::size_t>(row_block) +
+                                    static_cast<std::size_t>(component);
+            const std::size_t col = 6 * element + 3 * static_cast<std::size_t>(col_block) +
+                                    static_cast<std::size_t>(component);
+            result(row, col) += value_block;
+          }
+        }
+      }
+    }
+  }
+  return result;
 }
 
 Model model() {
@@ -305,17 +360,65 @@ int main() {
     const auto reference = cfd_ancf::make_reference_state(value);
     // The frozen MATLAB contract applies top tension in the global +z
     // translational DOF.  It is not reoriented to a bent current tangent.
-    const auto bent_contract_load = cfd_ancf::physics_ownership::assemble_base_load(value);
+    auto bent_state = reference.q;
+    for (std::size_t node = 1; node <= value.elements; ++node) {
+      bent_state[6 * node] += 0.05 * static_cast<double>(node);
+      bent_state[6 * node + 1] -= 0.03 * static_cast<double>(node);
+    }
     const std::size_t top_dof = 6 * value.elements;
+    bent_state[top_dof] += 0.2;
+    bent_state[top_dof + 1] -= 0.1;
+    const bool bent_state_is_nontrivial =
+        norm_inf(difference(bent_state, reference.q)) > 0.0;
+    const auto bent_contract_load = cfd_ancf::physics_ownership::assemble_base_load(value);
     bool top_tension_global_z_contract = true;
     for (std::size_t index = 0; index < bent_contract_load.top_tension.size(); ++index) {
       const double expected = index == top_dof + 2 ? value.top_tension_N : 0.0;
       if (bent_contract_load.top_tension[index] != expected) top_tension_global_z_contract = false;
     }
+    const auto bent_repeat_load = cfd_ancf::physics_ownership::assemble_base_load(value);
+    const bool bent_state_does_not_rotate_top_tension =
+        bent_state_is_nontrivial &&
+        norm_inf(difference(bent_contract_load.top_tension, bent_repeat_load.top_tension)) == 0.0 &&
+        bent_contract_load.top_tension[top_dof] == 0.0 &&
+        bent_contract_load.top_tension[top_dof + 1] == 0.0 &&
+        bent_contract_load.top_tension[top_dof + 2] == value.top_tension_N;
     const auto owned_mass = cfd_ancf::physics_ownership::assemble_mass_matrix(value);
     const double mass_assembly_error = norm_inf(difference(reference.mass.data, owned_mass.data));
     const double mass_assembly_scale = std::max(1.0, norm_inf(reference.mass.data));
     const bool mass_assembly_matches_kernel = mass_assembly_error <= 1.0e-14 * mass_assembly_scale;
+    Model order3 = value;
+    order3.gauss_order = 3;
+    Model order5 = value;
+    order5.gauss_order = 5;
+    const auto mass3 = cfd_ancf::physics_ownership::assemble_mass_matrix(order3);
+    const auto mass5 = cfd_ancf::physics_ownership::assemble_mass_matrix(order5);
+    const auto kernel_mass3 = cfd_ancf::make_reference_state(order3).mass;
+    const auto kernel_mass5 = cfd_ancf::make_reference_state(order5).mass;
+    const auto expected_mass3 = independently_integrated_mass(order3, 3);
+    const auto expected_mass5 = independently_integrated_mass(order5, 5);
+    const double mass_order3_error = norm_inf(difference(mass3.data, expected_mass3.data));
+    const double mass_order5_error = norm_inf(difference(mass5.data, expected_mass5.data));
+    const double kernel_mass_order3_error =
+        norm_inf(difference(kernel_mass3.data, expected_mass3.data));
+    const double kernel_mass_order5_error =
+        norm_inf(difference(kernel_mass5.data, expected_mass5.data));
+    const double mass_order_scale = std::max(1.0, norm_inf(expected_mass5.data));
+    const double mass_order_difference = norm_inf(difference(mass3.data, mass5.data));
+    const bool mass_order_contract =
+        mass_order3_error <= 1.0e-14 * mass_order_scale &&
+        mass_order5_error <= 1.0e-14 * mass_order_scale &&
+        kernel_mass_order3_error <= 1.0e-14 * mass_order_scale &&
+        kernel_mass_order5_error <= 1.0e-14 * mass_order_scale &&
+        mass_order_difference > 1.0e-12 * mass_order_scale;
+    bool invalid_gauss_rejected = false;
+    try {
+      Model invalid = value;
+      invalid.gauss_order = 4;
+      (void)cfd_ancf::physics_ownership::assemble_mass_matrix(invalid);
+    } catch (const std::invalid_argument&) {
+      invalid_gauss_rejected = true;
+    }
     bool mass_symmetric = true;
     bool mass_positive = true;
     for (std::size_t i = 0; i < reference.mass.rows; ++i) {
@@ -338,7 +441,8 @@ int main() {
                       time_step_convergence && grid_convergence &&
                       invalid_representation_rejected && invalid_line_weight_rejected &&
                       mass_symmetric && mass_positive && mass_assembly_matches_kernel &&
-                      top_tension_global_z_contract;
+                      mass_order_contract && invalid_gauss_rejected &&
+                      top_tension_global_z_contract && bent_state_does_not_rotate_top_tension;
     const auto loads_hash = [](const std::vector<double>& values) {
       return cfd_ancf::physics_ownership::sha256_vector(values);
     };
@@ -353,8 +457,18 @@ int main() {
               << ",\"mass_positive_samples\":" << (mass_positive ? "true" : "false")
               << ",\"mass_assembly_matches_kernel\":"
               << (mass_assembly_matches_kernel ? "true" : "false")
+              << ",\"mass_order_contract\":" << (mass_order_contract ? "true" : "false")
+              << ",\"invalid_gauss_rejected\":"
+              << (invalid_gauss_rejected ? "true" : "false")
+              << ",\"mass_order3_error\":" << mass_order3_error
+              << ",\"mass_order5_error\":" << mass_order5_error
+              << ",\"kernel_mass_order3_error\":" << kernel_mass_order3_error
+              << ",\"kernel_mass_order5_error\":" << kernel_mass_order5_error
+              << ",\"mass_order_difference\":" << mass_order_difference
               << ",\"top_tension_global_z_contract\":"
               << (top_tension_global_z_contract ? "true" : "false")
+              << ",\"bent_state_does_not_rotate_top_tension\":"
+              << (bent_state_does_not_rotate_top_tension ? "true" : "false")
               << ",\"mass_assembly_error\":" << mass_assembly_error
               << ",\"mass_assembly_scale\":" << mass_assembly_scale
               << ",\"tangent_symmetric\":" << (tangent_symmetric ? "true" : "false")

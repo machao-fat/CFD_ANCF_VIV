@@ -1,0 +1,17 @@
+{
+  "build_directory": "D:\\研二文件\\开题准备\\CFD_ANCF_VIV\\runtime\\cpp_worker_comprehensive_audit_repair_v1\\stage158_build\\Release",
+  "cmake": "3.31.6",
+  "compiler": "MSVC 2022 x64 14.44.35207",
+  "configuration": "Release",
+  "status": "pass",
+  "targets_built": [
+    "cfd_ancf_cpp_worker",
+    "cfd_ancf_ancf_kernel_worker",
+    "cfd_ancf_ancf_kernel_worker_double_solve",
+    "cfd_ancf_ancf_kernel_selftest",
+    "cfd_ancf_ancf_kernel_diagnostic",
+    "cfd_ancf_physics_ownership_worker",
+    "cfd_ancf_physics_ownership_worker_double_solve",
+    "cfd_ancf_physics_ownership_selftest"
+  ]
+}

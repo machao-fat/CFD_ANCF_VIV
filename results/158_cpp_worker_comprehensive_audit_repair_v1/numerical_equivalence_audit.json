@@ -1,0 +1,8 @@
+{
+  "C++_ANCF_NUMERICAL_CORE_STATUS": "not_completed",
+  "engineering_pass_steps": 40,
+  "new_strict_comparison_run": false,
+  "source": "read-only results/157_cpp_worker_comprehensive_audit_repair_v1/numerical_equivalence_report.json",
+  "status": "engineering_pass_strict_not_proven",
+  "strict_pass_steps": 0
+}

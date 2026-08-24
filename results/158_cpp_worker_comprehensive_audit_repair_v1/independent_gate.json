@@ -1,0 +1,25 @@
+{
+  "case_id": "cpp_worker_comprehensive_audit_case_158_001",
+  "conditions": {
+    "C++_ANCF_NUMERICAL_CORE_STATUS": "not_completed",
+    "bent_top_tension_contract_tested": true,
+    "compileall": true,
+    "gauss_order_contract_repaired": true,
+    "owned_residual_zero": true,
+    "physical_process_starts_zero": true,
+    "protected_artifacts_unmodified": true,
+    "root_unittest": true,
+    "strict_matlab_cpp_numerical_equivalence": false
+  },
+  "formal_status": {
+    "FORMAL_STROUHAL_STATUS": "not_completed",
+    "LOCK_IN_CLAIM": "not_completed",
+    "STABLE_VIV_RESPONSE_CLAIM": "not_completed"
+  },
+  "gate": "STAGE4F_D_CPP_WORKER_COMPREHENSIVE_AUDIT_REPAIR_V4_GATE: do_not_pass",
+  "generated_at_utc": "2026-08-24T19:23:19.336479+00:00",
+  "new_real_cfd_authorization_required": true,
+  "run_id": "cpp_worker_comprehensive_audit_repair_158_001",
+  "stage_id": "stage4f_d_cpp_worker_comprehensive_audit_repair_v4",
+  "status": "do_not_pass"
+}
