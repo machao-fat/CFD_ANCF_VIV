@@ -1,0 +1,29 @@
+{
+  "parent_commit": "b9d631a",
+  "new_commit": "9199a31",
+  "branch": "codex/cpp-worker-comprehensive-audit-repair-v1",
+  "tag_to_create": "cfd-ancf-viv-cpp-worker-audit-repair-v2",
+  "commit_message": "fix(cpp-worker): comprehensive audit and numerical contract repair v2",
+  "changed_scope": "C++ worker, ownership/IPC boundary repairs, tests, Stage 156 evidence only",
+  "excluded_user_files": ["cases/", "references/", "FAKE_PROCESS_SUMMARY.json"],
+  "test_commands": [
+    "python -m compileall -q src tests tools",
+    "cmake --build runtime/cpp_worker_comprehensive_audit_repair_v2/build-release --config Release --parallel 2",
+    "python -m unittest discover -s tests/cpp_worker_comprehensive_audit_repair_v2 -p test_*.py",
+    "python -m unittest tests.cpp_worker_comprehensive_audit_repair_v1.test_protocol_lifecycle_and_pair_lineage tests.cpp_worker_confirm_v1.test_cpp_adapter tests.cpp_worker_confirm_v1.test_lifecycle",
+    "python -m unittest discover -s tests -t . -p test_*.py",
+    "python tools/cpp_worker_comprehensive_audit_repair_v2/run_offline_transport.py .../cfd_ancf_cpp_worker.exe results/156_cpp_worker_audit_repair_v1/transport_40step.json"
+  ],
+  "test_results": {
+    "compileall": "pass",
+    "cmake_release": "pass",
+    "specialized": "6/6",
+    "protocol_lifecycle": "23/23",
+    "root_unittest": "1147 tests, 1 skipped, 0 failures",
+    "transport": "40/40, worker_startup=1, owned_residual=0"
+  },
+  "gate": "STAGE4F_D_CPP_WORKER_COMPREHENSIVE_AUDIT_REPAIR_V2_GATE: do_not_pass",
+  "numerical_equivalence": {"strict_pass_steps": 0, "engineering_pass_steps": 40, "status": "not_completed"},
+  "real_process_starts": {"MATLAB": 0, "OpenFOAM": 0, "WSL": 0, "CFD": 0},
+  "push_performed": false
+}
