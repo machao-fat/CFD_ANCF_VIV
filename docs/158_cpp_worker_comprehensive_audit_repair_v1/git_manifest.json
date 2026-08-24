@@ -1,0 +1,33 @@
+{
+  "stage_id": "stage4f_d_cpp_worker_comprehensive_audit_repair_v4",
+  "branch": "codex/cpp-worker-comprehensive-audit-repair-v1",
+  "parent_commit": "550b827aaf63f2bd27919bb930be287fc40e97b3",
+  "code_commit": "7c10c09cdaf7174a9cd40907db85a02379afe95e",
+  "annotated_tag": "cfd-ancf-viv-cpp-worker-audit-repair-v4",
+  "changed_files": [
+    "src/coupling/cpp_worker_persistent_ipc_v1/ancf_kernel.cpp",
+    "src/coupling/cpp_physics_ownership_v1/physics_ownership.cpp",
+    "src/coupling/cpp_physics_ownership_v1/physics_ownership_selftest.cpp",
+    "tools/cpp_worker_comprehensive_audit_repair_v4/generate_stage158_evidence.py",
+    "results/158_cpp_worker_comprehensive_audit_repair_v1",
+    "docs/158_cpp_worker_comprehensive_audit_repair_v1"
+  ],
+  "commit_message": "fix(cpp-worker): align mass integration with numerical contract",
+  "diff_stat": {
+    "files_changed": 18,
+    "insertions": 682,
+    "deletions": 4
+  },
+  "verification": {
+    "cmake_release": "pass",
+    "cpp_selftests": "pass",
+    "focused_python_tests": "35/35 pass",
+    "compileall": "pass",
+    "root_unittest": "1148 tests, 1 skipped, 0 failures (read-only Stage 157 result; no Python source changed in Stage 158)",
+    "real_process_starts": {"MATLAB": 0, "OpenFOAM": 0, "WSL": 0, "CFD": 0},
+    "owned_residual": 0,
+    "gate": "STAGE4F_D_CPP_WORKER_COMPREHENSIVE_AUDIT_REPAIR_V4_GATE: do_not_pass"
+  },
+  "evidence_manifest_sha256": "generated/committed at results/158_cpp_worker_comprehensive_audit_repair_v1/evidence_manifest.json",
+  "working_tree_policy": "user-owned untracked cases and FAKE_PROCESS_SUMMARY.json were not staged"
+}
