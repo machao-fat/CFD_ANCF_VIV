@@ -4,9 +4,11 @@
   "parent_commit": "550b827aaf63f2bd27919bb930be287fc40e97b3",
   "code_commit": "7c10c09cdaf7174a9cd40907db85a02379afe95e",
   "semantic_replay_fix_commit": "a74125f1f008817c446f40141039a52c67f4ebdd",
+  "latest_manifest_commit": "000440a3fd5d9f1888f6a569d75bf79428a34c02",
   "annotated_tags": [
     "cfd-ancf-viv-cpp-worker-audit-repair-v4",
-    "cfd-ancf-viv-cpp-worker-audit-repair-v4.2"
+    "cfd-ancf-viv-cpp-worker-audit-repair-v4.2",
+    "cfd-ancf-viv-cpp-worker-audit-repair-v4.2.1"
   ],
   "changed_files": [
     "src/coupling/cpp_worker_persistent_ipc_v1/ancf_kernel.cpp",
@@ -27,7 +29,7 @@
   "verification": {
     "cmake_release": "pass",
     "cpp_selftests": "pass",
-    "focused_python_tests": "35/35 pass",
+    "focused_python_tests": "36/36 pass",
     "compileall": "pass",
     "root_unittest": "1148 tests, 1 skipped, 0 failures (read-only Stage 157 result; no Python source changed in Stage 158)",
     "real_process_starts": {"MATLAB": 0, "OpenFOAM": 0, "WSL": 0, "CFD": 0},
