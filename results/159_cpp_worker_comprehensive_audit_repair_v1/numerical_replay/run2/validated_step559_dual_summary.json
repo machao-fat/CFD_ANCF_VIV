@@ -1,0 +1,501 @@
+{
+  "case_id": "cpp_worker_numerical_equivalence_before_cfd_case_001_matlab",
+  "cfd_started": false,
+  "dual_audit": {
+    "engineering_pass_steps": 40,
+    "engineering_tolerances": {
+      "corrector": 0.0001,
+      "external_force": 1e-08,
+      "generalized_force": 1e-08,
+      "internal_force": 500.0,
+      "predictor": 0.0001,
+      "q": 0.0001,
+      "qddot": 1.0,
+      "qdot": 0.005,
+      "residual": 0.02
+    },
+    "matlab_start_count": 0,
+    "max_error_by_field": {
+      "corrector": {
+        "max_abs": 6.750155989720952e-13,
+        "max_relative": 1.341169596989822e-13
+      },
+      "external_force": {
+        "max_abs": 3.637978807091713e-12,
+        "max_relative": 4.2497892749067917e-16
+      },
+      "generalized_force": {
+        "max_abs": 3.637978807091713e-12,
+        "max_relative": 4.2497892749067917e-16
+      },
+      "internal_force": {
+        "max_abs": 7.272954098880291e-05,
+        "max_relative": 3.5788893001154065e-05
+      },
+      "predictor": {
+        "max_abs": 6.821210263296962e-13,
+        "max_relative": 1.3635637688001072e-13
+      },
+      "q": {
+        "max_abs": 6.750155989720952e-13,
+        "max_relative": 1.341169596989822e-13
+      },
+      "qddot": {
+        "max_abs": 1.8189894035458565e-08,
+        "max_relative": 1.8189894035458565e-08
+      },
+      "qdot": {
+        "max_abs": 9.094947017729282e-11,
+        "max_relative": 9.094947017729282e-11
+      },
+      "residual": {
+        "max_abs": 3.2955839913029195e-05,
+        "max_relative": 3.2955839913029195e-05
+      }
+    },
+    "openfoam_start_count": 0,
+    "owned_residual": 0,
+    "processed_steps": 40,
+    "requested_steps": 40,
+    "status": "pass_with_engineering_tolerance",
+    "stderr": "",
+    "strict_failure_count": 40,
+    "strict_failure_examples": [
+      {
+        "error": "dual numerical mismatch: internal_force abs=4.15021e-07 rel=1.16888e-07",
+        "step": 560
+      },
+      {
+        "error": "dual numerical mismatch: qddot abs=1.7053e-09 rel=1.7053e-09",
+        "step": 561
+      },
+      {
+        "error": "dual numerical mismatch: qddot abs=1.13687e-09 rel=1.13687e-09",
+        "step": 562
+      },
+      {
+        "error": "dual numerical mismatch: qddot abs=2.84217e-09 rel=2.84217e-09",
+        "step": 563
+      },
+      {
+        "error": "dual numerical mismatch: qddot abs=1.7053e-09 rel=1.7053e-09",
+        "step": 564
+      },
+      {
+        "error": "dual numerical mismatch: qddot abs=2.84217e-09 rel=2.84217e-09",
+        "step": 565
+      },
+      {
+        "error": "dual numerical mismatch: qddot abs=1.7053e-09 rel=1.7053e-09",
+        "step": 566
+      },
+      {
+        "error": "dual numerical mismatch: qddot abs=3.41061e-09 rel=3.41061e-09",
+        "step": 567
+      },
+      {
+        "error": "dual numerical mismatch: qddot abs=1.81899e-08 rel=1.81899e-08",
+        "step": 568
+      },
+      {
+        "error": "dual numerical mismatch: qddot abs=4.54747e-09 rel=4.54747e-09",
+        "step": 569
+      },
+      {
+        "error": "dual numerical mismatch: qddot abs=2.84217e-09 rel=2.84217e-09",
+        "step": 570
+      },
+      {
+        "error": "dual numerical mismatch: qddot abs=5.11591e-09 rel=5.11591e-09",
+        "step": 571
+      },
+      {
+        "error": "dual numerical mismatch: qddot abs=5.68434e-09 rel=5.68434e-09",
+        "step": 572
+      },
+      {
+        "error": "dual numerical mismatch: qddot abs=1.81899e-08 rel=1.81899e-08",
+        "step": 573
+      },
+      {
+        "error": "dual numerical mismatch: qddot abs=1.81899e-08 rel=1.81899e-08",
+        "step": 574
+      },
+      {
+        "error": "dual numerical mismatch: qddot abs=3.97904e-09 rel=3.97904e-09",
+        "step": 575
+      },
+      {
+        "error": "dual numerical mismatch: qddot abs=7.38964e-09 rel=7.38964e-09",
+        "step": 576
+      },
+      {
+        "error": "dual numerical mismatch: qddot abs=1.81899e-08 rel=1.81899e-08",
+        "step": 577
+      },
+      {
+        "error": "dual numerical mismatch: qddot abs=1.81899e-08 rel=1.81899e-08",
+        "step": 578
+      },
+      {
+        "error": "dual numerical mismatch: qddot abs=1.81899e-08 rel=1.81899e-08",
+        "step": 579
+      },
+      {
+        "error": "dual numerical mismatch: qddot abs=1.81899e-08 rel=1.81899e-08",
+        "step": 580
+      },
+      {
+        "error": "dual numerical mismatch: qddot abs=1.81899e-08 rel=1.81899e-08",
+        "step": 581
+      },
+      {
+        "error": "dual numerical mismatch: qddot abs=9.09495e-09 rel=9.09495e-09",
+        "step": 582
+      },
+      {
+        "error": "dual numerical mismatch: qddot abs=1.81899e-08 rel=1.81899e-08",
+        "step": 583
+      },
+      {
+        "error": "dual numerical mismatch: qddot abs=1.81899e-08 rel=1.81899e-08",
+        "step": 584
+      },
+      {
+        "error": "dual numerical mismatch: qddot abs=1.81899e-08 rel=1.81899e-08",
+        "step": 585
+      },
+      {
+        "error": "dual numerical mismatch: qddot abs=6.25278e-09 rel=6.25278e-09",
+        "step": 586
+      },
+      {
+        "error": "dual numerical mismatch: qddot abs=1.81899e-08 rel=1.81899e-08",
+        "step": 587
+      },
+      {
+        "error": "dual numerical mismatch: qddot abs=1.81899e-08 rel=1.81899e-08",
+        "step": 588
+      },
+      {
+        "error": "dual numerical mismatch: qddot abs=1.81899e-08 rel=1.81899e-08",
+        "step": 589
+      },
+      {
+        "error": "dual numerical mismatch: qddot abs=1.81899e-08 rel=1.81899e-08",
+        "step": 590
+      },
+      {
+        "error": "dual numerical mismatch: qddot abs=1.81899e-08 rel=1.81899e-08",
+        "step": 591
+      },
+      {
+        "error": "dual numerical mismatch: qddot abs=1.81899e-08 rel=1.81899e-08",
+        "step": 592
+      },
+      {
+        "error": "dual numerical mismatch: qddot abs=1.81899e-08 rel=1.81899e-08",
+        "step": 593
+      },
+      {
+        "error": "dual numerical mismatch: qddot abs=9.09495e-09 rel=9.09495e-09",
+        "step": 594
+      },
+      {
+        "error": "dual numerical mismatch: qddot abs=1.81899e-08 rel=1.81899e-08",
+        "step": 595
+      },
+      {
+        "error": "dual numerical mismatch: qddot abs=1.81899e-08 rel=1.81899e-08",
+        "step": 596
+      },
+      {
+        "error": "dual numerical mismatch: qddot abs=1.81899e-08 rel=1.81899e-08",
+        "step": 597
+      },
+      {
+        "error": "dual numerical mismatch: qddot abs=1.81899e-08 rel=1.81899e-08",
+        "step": 598
+      },
+      {
+        "error": "dual numerical mismatch: qddot abs=1.81899e-08 rel=1.81899e-08",
+        "step": 599
+      }
+    ],
+    "strict_pass_steps": 0,
+    "worker_process_audit": {
+      "cleanup_result": "closed",
+      "command_line": [
+        "D:\\\u7814\u4e8c\u6587\u4ef6\\\u5f00\u9898\u51c6\u5907\\CFD_ANCF_VIV\\runtime\\cpp_worker_comprehensive_audit_repair_v1\\stage158_build\\Release\\cfd_ancf_ancf_kernel_worker.exe"
+      ],
+      "creation_time_ns": 1787603324427476800,
+      "cwd": "D:\\\u7814\u4e8c\u6587\u4ef6\\\u5f00\u9898\u51c6\u5907\\CFD_ANCF_VIV\\results\\159_cpp_worker_comprehensive_audit_repair_v1\\numerical_replay\\run2",
+      "end_time_ns": 1787603324667110800,
+      "owned": true,
+      "parent_pid": 37580,
+      "pid": 20008,
+      "return_code": 0
+    },
+    "worker_return_code": 0,
+    "worker_start_count": 1,
+    "wsl_start_count": 0
+  },
+  "golden_validation": {
+    "count": 40,
+    "records": [
+      {
+        "global_step": 560,
+        "index": 1,
+        "payload_hash": "86b883366f4649b8bddf6687f87ce62846fefcfa55f7fc12219deb0e88a3b44a",
+        "payload_size_bytes": 6528
+      },
+      {
+        "global_step": 561,
+        "index": 2,
+        "payload_hash": "c8a63a804b978cda132d899af7d53887cc5b9386a976f9a0ed503552a8f153bb",
+        "payload_size_bytes": 6528
+      },
+      {
+        "global_step": 562,
+        "index": 3,
+        "payload_hash": "b5cc89831dab26bcca89431e428ff97911d183178419311a67bd742fd9744280",
+        "payload_size_bytes": 6528
+      },
+      {
+        "global_step": 563,
+        "index": 4,
+        "payload_hash": "91ee7ee85584d9656b82bd00837e9a3574f0093f04e64e4b51c5909c0625d9f2",
+        "payload_size_bytes": 6528
+      },
+      {
+        "global_step": 564,
+        "index": 5,
+        "payload_hash": "79564377fdeee987516dc0fb455dca66cff4b820b41307f3f2062ebf8199c4b3",
+        "payload_size_bytes": 6528
+      },
+      {
+        "global_step": 565,
+        "index": 6,
+        "payload_hash": "b6eb9a8bfbe0ea994ef9342b0f42bd891155d70c6a0bed19ca859bb85d461cb1",
+        "payload_size_bytes": 6528
+      },
+      {
+        "global_step": 566,
+        "index": 7,
+        "payload_hash": "5f6760d6bf06e531b05c2421935108857c3e2412eeb8d526e19c570dca17b181",
+        "payload_size_bytes": 6528
+      },
+      {
+        "global_step": 567,
+        "index": 8,
+        "payload_hash": "f643299e41af37d628a019e9c96c7589f4c4aefd2be78c1587e6bcc50a2b1dc6",
+        "payload_size_bytes": 6528
+      },
+      {
+        "global_step": 568,
+        "index": 9,
+        "payload_hash": "d99a9118d52eb78fc3c713e39c6cbd7469f0275593a06760d016b94040f48f6e",
+        "payload_size_bytes": 6528
+      },
+      {
+        "global_step": 569,
+        "index": 10,
+        "payload_hash": "4b9337f843f937040f7989077a918ddf422c42427629be3863cce6f23a5984bb",
+        "payload_size_bytes": 6528
+      },
+      {
+        "global_step": 570,
+        "index": 11,
+        "payload_hash": "2d0d0197dc89c582b94e09be13d18901ec1bb21f626ff3d7ef30567f5aeb72d3",
+        "payload_size_bytes": 6528
+      },
+      {
+        "global_step": 571,
+        "index": 12,
+        "payload_hash": "a5f406671d0bf7e2563e3becee49f2b88235c84073034c5ad9f748b4c071a189",
+        "payload_size_bytes": 6528
+      },
+      {
+        "global_step": 572,
+        "index": 13,
+        "payload_hash": "5e934ac013f9d203dc6362e541da1ab7990de90cdb6c0677cb700ae0079beb6a",
+        "payload_size_bytes": 6528
+      },
+      {
+        "global_step": 573,
+        "index": 14,
+        "payload_hash": "1f4ae43852fad185ba382ebdfdb2f98cb7f27eedc15ade31ceffaf2d85209d47",
+        "payload_size_bytes": 6528
+      },
+      {
+        "global_step": 574,
+        "index": 15,
+        "payload_hash": "202d5011b224b2728c71214e3fbc6eddbc40c3bf1c4b30504a4ae641ab4d3838",
+        "payload_size_bytes": 6528
+      },
+      {
+        "global_step": 575,
+        "index": 16,
+        "payload_hash": "80b0c7fd225d27dd093fa920654aef3a5198ebb859dee4737a3888fdf7cb81be",
+        "payload_size_bytes": 6528
+      },
+      {
+        "global_step": 576,
+        "index": 17,
+        "payload_hash": "1027be69244e0b3a9353582dc2c72e25427b9b7241b689db9ca824c1254769f1",
+        "payload_size_bytes": 6528
+      },
+      {
+        "global_step": 577,
+        "index": 18,
+        "payload_hash": "23cf039a786e89afc0fb7aebef3f8f37d989952b03c333f0b96672e6b4d8a616",
+        "payload_size_bytes": 6528
+      },
+      {
+        "global_step": 578,
+        "index": 19,
+        "payload_hash": "f578a82a6211309706b15a602ba67a65c4812d428266752ce5c33e030e9c68b4",
+        "payload_size_bytes": 6528
+      },
+      {
+        "global_step": 579,
+        "index": 20,
+        "payload_hash": "0cc40b12830d0ca48aa261dcce6a839b535cf20fe99f28bb0e8c14a81137bb10",
+        "payload_size_bytes": 6528
+      },
+      {
+        "global_step": 580,
+        "index": 21,
+        "payload_hash": "9f691fa8345905ea5f597e6ebf374945e92ecf246c06965747353641bd147497",
+        "payload_size_bytes": 6528
+      },
+      {
+        "global_step": 581,
+        "index": 22,
+        "payload_hash": "4154a4a7c09ea5f5e0dc166c670472ab654588c2e4827f1b63264d28beec570d",
+        "payload_size_bytes": 6528
+      },
+      {
+        "global_step": 582,
+        "index": 23,
+        "payload_hash": "0f1dbf5363e765cad83d0e910e4fb0edf7b00c044201ff187f317ce82ed0fd35",
+        "payload_size_bytes": 6528
+      },
+      {
+        "global_step": 583,
+        "index": 24,
+        "payload_hash": "8bce63f3098720002d593ecfb82d0487f6c8753158d56e1fb5f56158da50cef3",
+        "payload_size_bytes": 6528
+      },
+      {
+        "global_step": 584,
+        "index": 25,
+        "payload_hash": "9c8a7378e6e033a82386e7090b02eff0654061b540afb94d4026cddaa9c9a4da",
+        "payload_size_bytes": 6528
+      },
+      {
+        "global_step": 585,
+        "index": 26,
+        "payload_hash": "b8b1a525352b8926e5148995e2f33d8eaf3a9f7848510ca56c68be5296bcbf4e",
+        "payload_size_bytes": 6528
+      },
+      {
+        "global_step": 586,
+        "index": 27,
+        "payload_hash": "c6f4db88e792b6d54c01b39d628bdfdd2c91bc7577f06d51b345f0c615e85f70",
+        "payload_size_bytes": 6528
+      },
+      {
+        "global_step": 587,
+        "index": 28,
+        "payload_hash": "7033060e3517dbec1683e67f59e463a13bc47e14ee40bc2fd8096312782cf1d0",
+        "payload_size_bytes": 6528
+      },
+      {
+        "global_step": 588,
+        "index": 29,
+        "payload_hash": "97ff4648d29f7091aeedb9d118a472855e938fa2a92d80a7df4c44764a0620d8",
+        "payload_size_bytes": 6528
+      },
+      {
+        "global_step": 589,
+        "index": 30,
+        "payload_hash": "dfe7421f867f74796534ac71fc982512633cc4c0540e99e6780a59f616d2d78b",
+        "payload_size_bytes": 6528
+      },
+      {
+        "global_step": 590,
+        "index": 31,
+        "payload_hash": "cf64c4e1bb23e43d8dbe4e6f8f00c0ff9861b3af9eb93ea04f99a16b245444e3",
+        "payload_size_bytes": 6528
+      },
+      {
+        "global_step": 591,
+        "index": 32,
+        "payload_hash": "8de8b0ce1d05c98a57a7536d94ab1f2f7660a83fc51eabe9b7132161a38c3644",
+        "payload_size_bytes": 6528
+      },
+      {
+        "global_step": 592,
+        "index": 33,
+        "payload_hash": "7976c89bbf5d9c60149c83971bf1754b39e8f32aa2fa21d0044e6cedbd1ec054",
+        "payload_size_bytes": 6528
+      },
+      {
+        "global_step": 593,
+        "index": 34,
+        "payload_hash": "175b20c25b54b4388a8bf075a1d03313bc27c6ef49947bfe0135762b83c3e026",
+        "payload_size_bytes": 6528
+      },
+      {
+        "global_step": 594,
+        "index": 35,
+        "payload_hash": "03ea8a03bc3333a68d29ade118a743442b295ee2175b0aca1ac193f379849cbc",
+        "payload_size_bytes": 6528
+      },
+      {
+        "global_step": 595,
+        "index": 36,
+        "payload_hash": "776c8d3f2442bc6b63707d8ad8b0814b888397b6cd9db1576e0545a93b4c2a50",
+        "payload_size_bytes": 6528
+      },
+      {
+        "global_step": 596,
+        "index": 37,
+        "payload_hash": "96183767d9c884e4919160af46c197b367ea471ed8663c7ae5672135ae08ac1c",
+        "payload_size_bytes": 6528
+      },
+      {
+        "global_step": 597,
+        "index": 38,
+        "payload_hash": "f3dbd0e8edf8e3ef5364d4368d0e3ef8fabb663df415789ec6b2e6245b18fcb7",
+        "payload_size_bytes": 6528
+      },
+      {
+        "global_step": 598,
+        "index": 39,
+        "payload_hash": "04412fc64443266f60afd8a0f990709bd8e810437db30d56ad4e3996701e927d",
+        "payload_size_bytes": 6528
+      },
+      {
+        "global_step": 599,
+        "index": 40,
+        "payload_hash": "0e8c252a8a3573d36e7ce73c8c1e600c2d2d4fb9372847d48fd1dd7cf3475a9b",
+        "payload_size_bytes": 6528
+      }
+    ],
+    "status": "pass"
+  },
+  "old_evidence_modified": false,
+  "old_runtime_reused": false,
+  "owned_residual": 0,
+  "real_process_starts": {
+    "C++_worker": 1,
+    "CFD": 0,
+    "MATLAB": 0,
+    "OpenFOAM": 0,
+    "WSL": 0
+  },
+  "run_id": "cpp_worker_numerical_equivalence_before_cfd_001_matlab",
+  "stage_id": "stage4f_d_cpp_worker_numerical_equivalence_before_cfd_v1"
+}

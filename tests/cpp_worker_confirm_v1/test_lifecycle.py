@@ -4,6 +4,7 @@ import tempfile
 import unittest
 import hashlib
 import json
+import struct
 from pathlib import Path
 from types import SimpleNamespace
 
@@ -33,6 +34,9 @@ class Worker:
         self.requests.append(request)
         n = len(request.q)
         zeros = tuple(0.0 for _ in range(n))
+        q = tuple(value + 1.0e-6 for value in request.q)
+        arrays = q + tuple(request.qdot) + tuple(request.qddot) + zeros * 4 + q
+        payload_hash = hashlib.sha256(struct.pack("<" + "d" * len(arrays), *arrays)).digest()
         return SimpleNamespace(
             sequence=request.sequence, global_step=request.global_step,
             case_local_bridge_step=request.case_local_bridge_step,
@@ -40,9 +44,11 @@ class Worker:
             request_id=request.request_id, transaction_id=request.transaction_id,
             run_id=request.run_id, case_id=request.case_id, ack=1,
             return_code=0, finite_value_audit=True,
-            q=tuple(value + 1.0e-6 for value in request.q),
+            q=q,
             qdot=tuple(request.qdot), qddot=tuple(request.qddot),
-            generalized_force=zeros, payload_hash=b"h" * 32,
+            internal_force=zeros, external_force=zeros, generalized_force=zeros,
+            predictor=zeros, corrector=q, residual=0.0, iterations=1,
+            payload_hash=payload_hash,
         )
 
 

@@ -29,6 +29,31 @@ VECTOR_FIELDS = (
     "corrector",
 )
 
+INTEGER_ID_FIELDS = (
+    "global_step",
+    "case_local_bridge_step",
+    "integer_tick",
+)
+
+
+def _canonicalize_identity(row: dict[str, Any], index: int) -> None:
+    """Normalize MATLAB JSON numeric identities without changing their value."""
+    for field in INTEGER_ID_FIELDS:
+        value = row.get(field)
+        if isinstance(value, bool) or not isinstance(value, (int, float)):
+            raise ValueError(f"{field} must be numeric at record {index}")
+        numeric = float(value)
+        if not math.isfinite(numeric) or numeric < 0.0 or not numeric.is_integer():
+            raise ValueError(f"{field} must be a finite integer at record {index}")
+        row[field] = int(numeric)
+
+    time_s = row.get("time_s")
+    if isinstance(time_s, bool) or not isinstance(time_s, (int, float)):
+        raise ValueError(f"time_s must be numeric at record {index}")
+    if not math.isfinite(float(time_s)):
+        raise ValueError(f"time_s must be finite at record {index}")
+    row["time_s"] = float(time_s)
+
 
 def _canonical_payload(row: dict[str, Any]) -> bytes:
     values: list[float] = []
@@ -55,6 +80,9 @@ def normalize(raw_path: Path, output_path: Path) -> int:
 
     normalized: list[str] = []
     for index, row in enumerate(rows, start=1):
+        if not isinstance(row, dict):
+            raise ValueError(f"record {index} is not an object")
+        _canonicalize_identity(row, index)
         payload = _canonical_payload(row)
         original_hash = str(row.get("payload_hash", ""))
         if not original_hash:

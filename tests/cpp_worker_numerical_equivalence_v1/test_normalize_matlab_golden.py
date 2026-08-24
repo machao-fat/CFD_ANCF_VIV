@@ -45,6 +45,35 @@ def _raw_record(index: int) -> dict[str, object]:
 
 
 class NormalizeMatlabGoldenTests(unittest.TestCase):
+    def test_matlab_float_identity_fields_are_canonicalized_to_int(self) -> None:
+        with tempfile.TemporaryDirectory() as directory:
+            root = Path(directory)
+            rows = [_raw_record(index) for index in range(1, 41)]
+            rows[0]["global_step"] = 560.0
+            rows[0]["case_local_bridge_step"] = 1.0
+            rows[0]["integer_tick"] = 2208750000.0
+            raw = root / "raw.jsonl"
+            normalized = root / "normalized.jsonl"
+            raw.write_text("\n".join(json.dumps(row) for row in rows), encoding="utf-8")
+            self.assertEqual(normalize(raw, normalized), 40)
+            first = json.loads(normalized.read_text(encoding="utf-8").splitlines()[0])
+            self.assertIsInstance(first["global_step"], int)
+            self.assertIsInstance(first["case_local_bridge_step"], int)
+            self.assertIsInstance(first["integer_tick"], int)
+            self.assertEqual(first["integer_tick"], 2208750000)
+
+    def test_fractional_identity_is_rejected(self) -> None:
+        with tempfile.TemporaryDirectory() as directory:
+            root = Path(directory)
+            row = _raw_record(1)
+            row["integer_tick"] = 2208750000.5
+            raw = root / "raw.jsonl"
+            normalized = root / "normalized.jsonl"
+            raw.write_text("\n".join(json.dumps(_raw_record(index)) if index != 1 else json.dumps(row)
+                                       for index in range(1, 41)), encoding="utf-8")
+            with self.assertRaises(ValueError):
+                normalize(raw, normalized)
+
     def test_normalized_payload_is_validator_compatible(self) -> None:
         with tempfile.TemporaryDirectory() as directory:
             root = Path(directory)

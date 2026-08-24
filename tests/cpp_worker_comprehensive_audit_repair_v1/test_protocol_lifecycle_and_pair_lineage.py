@@ -1,7 +1,9 @@
 from __future__ import annotations
 
 import io
+import hashlib
 import json
+import struct
 import subprocess
 import unittest
 from dataclasses import replace
@@ -96,6 +98,8 @@ class ProtocolLifecycleAndPairLineageTests(unittest.TestCase):
             def start(self): pass
             def stop(self): pass
             def step(self, request):
+                zeros = (0.0,) * len(request.q)
+                arrays = tuple(request.q) + tuple(request.qdot) + tuple(request.qddot) + zeros * 4 + tuple(request.q)
                 return SimpleNamespace(
                     sequence=request.sequence, global_step=request.global_step,
                     case_local_bridge_step=request.case_local_bridge_step,
@@ -104,7 +108,9 @@ class ProtocolLifecycleAndPairLineageTests(unittest.TestCase):
                     run_id=request.run_id, case_id=request.case_id, ack=1,
                     return_code=0, finite_value_audit=True, q=request.q,
                     qdot=request.qdot, qddot=request.qddot,
-                    payload_hash=b"checkpoint-test".ljust(32, b"!"), generalized_force=(0.0, 0.0, 0.0),
+                    internal_force=zeros, external_force=zeros, generalized_force=zeros,
+                    predictor=zeros, corrector=request.q, residual=0.0, iterations=1,
+                    payload_hash=hashlib.sha256(struct.pack("<" + "d" * len(arrays), *arrays)).digest(),
                 )
         return CppKernelCampaignAdapter(
             worker=Worker(), model=object(), request_factory=lambda **kwargs: SimpleNamespace(**kwargs),

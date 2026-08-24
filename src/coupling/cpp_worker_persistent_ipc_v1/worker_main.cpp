@@ -18,6 +18,9 @@ constexpr std::array<char, 8> MAGIC{'C','F','D','A','N','C','F','1'};
 constexpr std::uint32_t SCHEMA = 1;
 constexpr std::uint32_t PROTOCOL = 1;
 constexpr std::size_t ID_RUN=64, ID_CASE=64, ID_ENDPOINT=32;
+constexpr std::size_t MAX_NDOF = 2048;
+constexpr char REQUEST_PRODUCER[] = "python_scheduler";
+constexpr char REQUEST_CONSUMER[] = "cpp_ancf_worker";
 template <class T> bool read(std::istream& in, T& value) { return static_cast<bool>(in.read(reinterpret_cast<char*>(&value), sizeof(T))); }
 template <class T> void append(std::vector<char>& out, const T& value) { const auto* p = reinterpret_cast<const char*>(&value); out.insert(out.end(), p, p + sizeof(T)); }
 bool read_bytes(std::istream& in, char* p, std::size_t n) { return static_cast<bool>(in.read(p, static_cast<std::streamsize>(n))); }
@@ -85,7 +88,7 @@ int main() {
     std::size_t offset=0;
     auto take = [&](auto& v) { if (offset + sizeof(v) > payload.size()) return false; std::memcpy(&v, payload.data()+offset, sizeof(v)); offset += sizeof(v); return true; };
     char run_id[ID_RUN]{}, case_id[ID_CASE]{}, producer[ID_ENDPOINT]{}, consumer[ID_ENDPOINT]{};
-    if (!take(schema)||!take(protocol)||!take(sequence)||!take(step)||!take(bridge)||!take(tick)||!take(time_s)||!take(dt_s)||!take(n)||!take(request_id)||!take(transaction_id) || schema != SCHEMA || protocol != PROTOCOL || n <= 0 || n > 100000 || step <= 0 || request_id == 0 || transaction_id == 0) return 5;
+    if (!take(schema)||!take(protocol)||!take(sequence)||!take(step)||!take(bridge)||!take(tick)||!take(time_s)||!take(dt_s)||!take(n)||!take(request_id)||!take(transaction_id) || schema != SCHEMA || protocol != PROTOCOL || n <= 0 || static_cast<std::size_t>(n) > MAX_NDOF || step <= 0 || request_id == 0 || transaction_id == 0) return 5;
     // The fixed identity fields follow the numeric header.
     if (offset + ID_RUN + ID_CASE + ID_ENDPOINT + ID_ENDPOINT > payload.size()) return 5;
     std::memcpy(run_id, payload.data()+offset, ID_RUN); offset += ID_RUN;
@@ -99,11 +102,14 @@ int main() {
     if (!std::isfinite(time_s) || !std::isfinite(dt_s)) return 6;
     if (time_s < 0.0 || time_s > 1.0e9) return 6;
     const auto expected_tick_from_time = static_cast<std::uint64_t>(std::llround(time_s * 1.0e9));
-    if (payload.size() != expected || dt_s <= 0.0 || bridge <= 0 || sequence == 0 || sequence != last_sequence + 1 ||
+    if (payload.size() != expected || dt_s <= 0.0 || dt_s > 1.0e9 || bridge <= 0 || sequence == 0 ||
+        (last_sequence == 0xFFFFFFFFu ? true : sequence != last_sequence + 1) ||
         tick != expected_tick_from_time || time_s < dt_s || (sequence == 1 && bridge != 1) ||
         seen_request_ids.count(request_id) != 0 || seen_transaction_ids.count(transaction_id) != 0 ||
         !std::isfinite(time_s) || !std::isfinite(dt_s) || !c_string_valid(run_id, ID_RUN) || !c_string_valid(case_id, ID_CASE) ||
-        !c_string_valid(producer, ID_ENDPOINT) || !c_string_valid(consumer, ID_ENDPOINT)) return 6;
+        !c_string_valid(producer, ID_ENDPOINT) || !c_string_valid(consumer, ID_ENDPOINT) ||
+        std::string(producer, strnlen_s(producer, ID_ENDPOINT)) != REQUEST_PRODUCER ||
+        std::string(consumer, strnlen_s(consumer, ID_ENDPOINT)) != REQUEST_CONSUMER) return 6;
     const std::string run_value(run_id, strnlen_s(run_id, ID_RUN));
     const std::string case_value(case_id, strnlen_s(case_id, ID_CASE));
     if (expected_run.empty()) { expected_run = run_value; expected_case = case_value; }

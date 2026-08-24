@@ -1,0 +1,21 @@
+{
+  "all_fail_closed": true,
+  "cases": [
+    "producer/consumer endpoint mismatch",
+    "stale response",
+    "duplicate request",
+    "duplicate transaction",
+    "out-of-order sequence",
+    "tick/time mismatch",
+    "global/bridge step mismatch",
+    "payload hash mismatch",
+    "NaN/Inf",
+    "dimension mismatch",
+    "checkpoint identity mismatch",
+    "worker timeout",
+    "worker disconnect",
+    "non-zero return and stream preservation"
+  ],
+  "same_runtime_retry": false,
+  "status": "pass"
+}

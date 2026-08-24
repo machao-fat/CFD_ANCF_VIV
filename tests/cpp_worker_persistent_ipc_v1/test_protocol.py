@@ -62,6 +62,13 @@ class CppPersistentWorkerTests(unittest.TestCase):
             encode_request(StepRequest(1, 560, 1, 2208750000, 2.20875, 0.00125, 1, 2,
                                        "r", "c", (float("nan"),), (0.0,), (0.0,)))
 
+    def test_request_endpoint_identity_is_fixed(self):
+        value = request(1)
+        with self.assertRaises(FrameError):
+            encode_request(StepRequest(**{**value.__dict__, "producer": "untrusted_sender"}))
+        with self.assertRaises(FrameError):
+            encode_request(StepRequest(**{**value.__dict__, "consumer": "wrong_worker"}))
+
     def test_protocol_shutdown_exits_cleanly(self):
         process = subprocess.Popen([str(WORKER)], stdin=subprocess.PIPE, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
         try:

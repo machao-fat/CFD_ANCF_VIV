@@ -6,6 +6,7 @@ import hashlib
 import json
 import math
 import os
+import struct
 import tempfile
 from numbers import Real
 from pathlib import Path
@@ -38,6 +39,41 @@ def _finite(values: Sequence[float], name: str) -> tuple[float, ...]:
 def _canonical(value: Any) -> bytes:
     return (json.dumps(value, ensure_ascii=True, sort_keys=True,
                        separators=(",", ":"), allow_nan=False) + "\n").encode("utf-8")
+
+
+def _response_payload_hash(response: Any, expected_ndof: int) -> bytes:
+    """Recompute the v1 kernel response hash at the adapter boundary."""
+    field_names = (
+        "q", "qdot", "qddot", "internal_force", "external_force",
+        "generalized_force", "predictor", "corrector",
+    )
+    arrays: list[float] = []
+    for name in field_names:
+        if not hasattr(response, name):
+            raise CppAdapterError(f"C++ worker response is missing {name}")
+        field = _finite(getattr(response, name), f"response.{name}")
+        if len(field) != expected_ndof:
+            raise CppAdapterError(f"C++ worker response {name} dimension mismatch")
+        arrays.extend(field)
+    try:
+        return hashlib.sha256(struct.pack("<" + "d" * len(arrays), *arrays)).digest()
+    except (struct.error, OverflowError) as exc:
+        raise CppAdapterError("C++ worker response payload cannot be serialized") from exc
+
+
+def _model_contract_sha256(model: Any, mass_matrix: Sequence[float]) -> str | None:
+    """Return a stable model/mass identity when the request model supports it."""
+    serializer = getattr(model, "bytes", None)
+    if not callable(serializer):
+        return None
+    try:
+        model_bytes = serializer()
+        if not isinstance(model_bytes, (bytes, bytearray)):
+            raise TypeError("model.bytes() did not return bytes")
+        mass_bytes = struct.pack("<" + "d" * len(mass_matrix), *mass_matrix)
+    except (TypeError, ValueError, OverflowError, struct.error) as exc:
+        raise CppAdapterError("C++ model contract cannot be serialized") from exc
+    return hashlib.sha256(bytes(model_bytes) + mass_bytes).hexdigest()
 
 
 class CppKernelCampaignAdapter:
@@ -102,6 +138,7 @@ class CppKernelCampaignAdapter:
                      any(not math.isfinite(value) for value in mass)):
             raise CppAdapterError("source mass_matrix is invalid")
         self.mass_matrix = mass
+        self.model_contract_sha256 = _model_contract_sha256(self.model, self.mass_matrix)
         self.pending_kind: str | None = None
         self.pending_step: int | None = None
         self.pending_time_s: float | None = None
@@ -184,40 +221,41 @@ class CppKernelCampaignAdapter:
             base_load=self.base_load, slice_force=force, mass_matrix=self.mass_matrix)
         try:
             response = self.worker.step(request)
+            if getattr(response, "return_code", None) != 0 or getattr(response, "finite_value_audit", False) is not True:
+                raise CppAdapterError("C++ worker returned nonzero or non-finite result")
+            for key, expected in (("global_step", step), ("case_local_bridge_step", bridge),
+                                  ("integer_tick", tick), ("request_id", request_id),
+                                  ("transaction_id", transaction_id), ("run_id", self.run_id),
+                                  ("case_id", self.case_id), ("sequence", sequence)):
+                if getattr(response, key, None) != expected:
+                    raise CppAdapterError(f"C++ worker response identity mismatch: {key}")
+            if not math.isclose(float(response.time_s), float(time_s), rel_tol=0.0, abs_tol=1e-12):
+                raise CppAdapterError("C++ worker response time mismatch")
+            # The wire schema defines ACK as the numeric value 1.  Accepting
+            # display strings here would allow a non-conforming adapter to
+            # commit a response that the binary protocol would reject.
+            if getattr(response, "ack", None) != 1:
+                raise CppAdapterError("C++ worker response acknowledgement is invalid")
+            payload_hash = getattr(response, "payload_hash", None)
+            if not isinstance(payload_hash, (bytes, bytearray)) or len(payload_hash) != 32:
+                raise CppAdapterError("C++ worker response payload hash is invalid")
+            expected_ndof = len(self._state["q"])
+            calculated_hash = _response_payload_hash(response, expected_ndof)
+            if bytes(payload_hash) != calculated_hash:
+                raise CppAdapterError("C++ worker response payload hash mismatch")
+            residual = getattr(response, "residual", None)
+            if residual is None or isinstance(residual, bool) or not isinstance(residual, Real) or not math.isfinite(float(residual)):
+                raise CppAdapterError("C++ worker response residual is invalid")
+            iterations = getattr(response, "iterations", None)
+            if (isinstance(iterations, bool) or not isinstance(iterations, int) or
+                    iterations <= 0):
+                raise CppAdapterError("C++ worker response iteration count is invalid")
+            state_out = {"q": list(_finite(response.q, "response.q")),
+                         "qdot": list(_finite(response.qdot, "response.qdot")),
+                         "qddot": list(_finite(response.qddot, "response.qddot"))}
         except Exception:
             self._terminal = True
             raise
-        if getattr(response, "return_code", None) != 0 or getattr(response, "finite_value_audit", False) is not True:
-            self._terminal = True
-            raise CppAdapterError("C++ worker returned nonzero or non-finite result")
-        for key, expected in (("global_step", step), ("case_local_bridge_step", bridge),
-                              ("integer_tick", tick), ("request_id", request_id),
-                              ("transaction_id", transaction_id), ("run_id", self.run_id),
-                              ("case_id", self.case_id), ("sequence", sequence)):
-            if getattr(response, key, None) != expected:
-                self._terminal = True
-                raise CppAdapterError(f"C++ worker response identity mismatch: {key}")
-        if not math.isclose(float(response.time_s), float(time_s), rel_tol=0.0, abs_tol=1e-12):
-            self._terminal = True
-            raise CppAdapterError("C++ worker response time mismatch")
-        if getattr(response, "ack", None) not in (1, "ack", "committed"):
-            self._terminal = True
-            raise CppAdapterError("C++ worker response acknowledgement is invalid")
-        payload_hash = getattr(response, "payload_hash", None)
-        if not isinstance(payload_hash, (bytes, bytearray)) or len(payload_hash) != 32:
-            self._terminal = True
-            raise CppAdapterError("C++ worker response payload hash is invalid")
-        expected_ndof = len(self._state["q"])
-        for field_name in ("internal_force", "external_force", "generalized_force",
-                           "predictor", "corrector"):
-            if hasattr(response, field_name):
-                field = _finite(getattr(response, field_name), f"response.{field_name}")
-                if len(field) != expected_ndof:
-                    self._terminal = True
-                    raise CppAdapterError(f"C++ worker response {field_name} dimension mismatch")
-        state_out = {"q": list(_finite(response.q, "response.q")),
-                     "qdot": list(_finite(response.qdot, "response.qdot")),
-                     "qddot": list(_finite(response.qddot, "response.qddot"))}
         self.responses.append({"phase": "prediction" if sequence % 2 else "correction",
                                "transport_sequence": sequence, "step": int(step),
                                "time_s": float(time_s), "integer_tick": tick,
@@ -310,6 +348,7 @@ class CppKernelCampaignAdapter:
             "dt_s": self.dt_s,
             "run_id": self.run_id,
             "case_id": self.case_id,
+            "model_contract_sha256": self.model_contract_sha256,
             "committed_global_step": self._committed_step,
             "committed_time_s": self._committed_time_s,
             "committed_tick": self._committed_tick,
@@ -355,6 +394,9 @@ class CppKernelCampaignAdapter:
                     checkpoint_int("source_tick") != self.source_tick or
                     not math.isclose(checkpoint_float("dt_s"), self.dt_s, rel_tol=0.0, abs_tol=1e-15)):
                 raise CppAdapterError("C++ checkpoint identity or dt mismatch")
+            stored_model_hash = value.get("model_contract_sha256")
+            if self.model_contract_sha256 is not None and stored_model_hash != self.model_contract_sha256:
+                raise CppAdapterError("C++ checkpoint model contract mismatch")
             committed_step = checkpoint_int("committed_global_step")
             committed_time = checkpoint_float("committed_time_s")
             committed_tick = checkpoint_int("committed_tick")

@@ -2,9 +2,12 @@ from __future__ import annotations
 
 import hashlib
 import json
+import math
 import os
+import queue
 import struct
 import subprocess
+import threading
 import time
 from dataclasses import dataclass
 from pathlib import Path
@@ -57,11 +60,15 @@ def _sha_vectors(*vectors: tuple[float, ...]) -> str:
 
 
 class KernelWorker:
-    def __init__(self, executable: Path, runtime: Path, run_id: str, case_id: str) -> None:
+    def __init__(self, executable: Path, runtime: Path, run_id: str, case_id: str,
+                 timeout_s: float = 30.0) -> None:
+        if not isinstance(timeout_s, (int, float)) or isinstance(timeout_s, bool) or not math.isfinite(float(timeout_s)) or timeout_s <= 0.0:
+            raise ConfirmError("C++ worker timeout must be a positive finite value")
         self.executable = executable.resolve()
         self.runtime = runtime.resolve()
         self.run_id = run_id
         self.case_id = case_id
+        self.timeout_s = float(timeout_s)
         self.process: subprocess.Popen[bytes] | None = None
         self.start_count = 0
         self.audit: dict[str, Any] = {}
@@ -94,20 +101,47 @@ class KernelWorker:
             frame = encode_kernel_request(request)
             self.process.stdin.write(frame)
             self.process.stdin.flush()
-            header = self.process.stdout.read(HEADER.size)
-            if len(header) != HEADER.size:
-                raise ConfirmError("C++ worker disconnected before response")
-            _magic, length, message_type = HEADER.unpack(header)
-            if message_type != 6 or length > 64 * 1024 * 1024:
-                raise ConfirmError("C++ worker response frame is invalid")
-            body = self.process.stdout.read(length)
-            if len(body) != length:
-                raise ConfirmError("C++ worker response is truncated")
-            response = decode_kernel_response(header + body)
+            # ``Popen.stdout.read`` has no portable timeout on Windows pipes.
+            # Read the complete frame on a daemon thread and make the caller's
+            # bounded segment fail closed when the worker stops responding.
+            result_queue: queue.Queue[tuple[bytes | None, BaseException | None]] = queue.Queue(maxsize=1)
+
+            def read_frame() -> None:
+                try:
+                    header = self.process.stdout.read(HEADER.size)
+                    if len(header) != HEADER.size:
+                        raise ConfirmError("C++ worker disconnected before response")
+                    _magic, length, message_type = HEADER.unpack(header)
+                    if message_type != 6 or length > 64 * 1024 * 1024:
+                        raise ConfirmError("C++ worker response frame is invalid")
+                    body = self.process.stdout.read(length)
+                    if len(body) != length:
+                        raise ConfirmError("C++ worker response is truncated")
+                    result_queue.put((header + body, None))
+                except BaseException as error:
+                    result_queue.put((None, error))
+
+            threading.Thread(target=read_frame, name="cpp-worker-response-reader", daemon=True).start()
+            try:
+                frame, error = result_queue.get(timeout=self.timeout_s)
+            except queue.Empty as exc:
+                self._record_failure("worker_timeout", TimeoutError(
+                    f"C++ worker response exceeded {self.timeout_s:g}s"))
+                raise ConfirmError(self.audit["last_error"]) from exc
+            if error is not None:
+                raise error
+            if frame is None:
+                raise ConfirmError("C++ worker response frame is missing")
+            response = decode_kernel_response(frame)
             validate_kernel_response(request, response)
         except FrameError as exc:
             self._record_failure("protocol_validation", exc)
             raise ConfirmError(str(exc)) from exc
+        except ConfirmError:
+            # Preserve a precise timeout/disconnect classification already
+            # recorded by the bounded reader instead of relabeling it as a
+            # generic transport failure.
+            raise
         except Exception as exc:
             self._record_failure("worker_transport", exc)
             raise

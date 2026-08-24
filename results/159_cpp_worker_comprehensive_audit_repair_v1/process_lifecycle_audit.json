@@ -1,0 +1,16 @@
+{
+  "non_owned_processes_not_terminated": true,
+  "offline_worker_starts": {
+    "kernel_40step_replay": 1,
+    "ownership_40step_replay": 1
+  },
+  "owned_residual": 0,
+  "real_process_starts": {
+    "CFD": 0,
+    "MATLAB": 0,
+    "OpenFOAM": 0,
+    "WSL": 0
+  },
+  "same_runtime_retry": false,
+  "status": "pass"
+}

@@ -78,6 +78,30 @@ class TransportWorkerHardeningTests(unittest.TestCase):
                 if stream is not None and not stream.closed:
                     stream.close()
 
+    def test_legacy_worker_rejects_wrong_request_endpoint(self) -> None:
+        process = subprocess.Popen([str(WORKER)], stdin=subprocess.PIPE, stdout=subprocess.PIPE,
+                                   stderr=subprocess.PIPE, cwd=str(ROOT), bufsize=0)
+        assert process.stdin is not None
+        try:
+            raw = bytearray(encode_request(request(1)))
+            producer_offset = HEADER.size + 68 + 64 + 64
+            raw[producer_offset] = ord("x")
+            process.stdin.write(raw); process.stdin.flush(); process.stdin.close()
+            process.wait(timeout=10)
+            self.assertNotEqual(process.returncode, 0)
+        finally:
+            if process.poll() is None:
+                process.kill(); process.wait(timeout=10)
+            for stream in (process.stdout, process.stderr):
+                if stream is not None and not stream.closed:
+                    stream.close()
+
+    def test_request_dimension_limit_is_fail_closed(self) -> None:
+        with self.assertRaises(FrameError):
+            value = request(1)
+            encode_request(StepRequest(**{**value.__dict__, "q": (0.0,) * 2049,
+                                          "qdot": (0.0,) * 2049, "force": (0.0,) * 2049}))
+
 
 if __name__ == "__main__":
     unittest.main()

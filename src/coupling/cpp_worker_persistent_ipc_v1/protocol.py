@@ -19,6 +19,9 @@ MESSAGE_INITIALIZE = 4
 ID_RUN = 64
 ID_CASE = 64
 ID_ENDPOINT = 32
+REQUEST_PRODUCER = "python_scheduler"
+REQUEST_CONSUMER = "cpp_ancf_worker"
+MAX_NDOF = 2048
 # schema, sequence, global_step, bridge_step, tick, time, dt, n, request token,
 # transaction token, run_id, case_id, producer, consumer
 REQUEST = struct.Struct("<IIIiiQddiQQ64s64s32s32s32s")
@@ -75,8 +78,10 @@ class StepRequest:
     consumer: str = "cpp_ancf_worker"
 
     def payload(self) -> bytes:
+        if self.producer != REQUEST_PRODUCER or self.consumer != REQUEST_CONSUMER:
+            raise FrameError("request producer/consumer endpoint mismatch")
         n = len(self.q)
-        if n == 0 or len(self.qdot) != n or len(self.force) != n:
+        if n == 0 or n > MAX_NDOF or len(self.qdot) != n or len(self.force) != n:
             raise FrameError("state vector lengths do not match")
         _bounded_int(self.sequence, "sequence", 1, 0xFFFFFFFF)
         _bounded_int(self.global_step, "global_step", 1, 0x7FFFFFFF)

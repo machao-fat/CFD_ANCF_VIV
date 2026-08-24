@@ -84,7 +84,16 @@ void element_force_tangent(const std::vector<double>& qe, double Le, double EA, 
 double Model::area() const { return PI*(diameter_m*diameter_m-inner_diameter_m*inner_diameter_m)/4.0; }
 double Model::displaced_area() const { return PI*diameter_m*diameter_m/4.0; }
 double Model::EA() const { return youngs_modulus_Pa*area(); }
-double Model::EI() const { return youngs_modulus_Pa*PI*(std::pow(diameter_m,4)-std::pow(inner_diameter_m,4))/64.0; }
+// Match the MATLAB material contract's integer-power evaluation path.  Using
+// std::pow here can select a different libm implementation and produce a
+// different last-bit EI even when E, D, and d are identical.
+double Model::EI() const {
+  const double diameter_squared = diameter_m * diameter_m;
+  const double inner_squared = inner_diameter_m * inner_diameter_m;
+  const double diameter_fourth = diameter_squared * diameter_squared;
+  const double inner_fourth = inner_squared * inner_squared;
+  return youngs_modulus_Pa * PI * (diameter_fourth - inner_fourth) / 64.0;
+}
 
 void validate_model(const Model& model) {
   const auto finite = [](double value) { return std::isfinite(value); };

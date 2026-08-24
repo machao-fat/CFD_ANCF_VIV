@@ -15,6 +15,8 @@ MESSAGE_KERNEL_STEP_RESPONSE = 6
 ID_RUN = 64
 ID_CASE = 64
 ID_ENDPOINT = 32
+REQUEST_PRODUCER = "python_scheduler"
+REQUEST_CONSUMER = "cpp_ancf_kernel_worker"
 MAX_NDOF = 2048
 
 # v1 is a positional response schema without per-field wire labels. Preserve
@@ -175,6 +177,8 @@ class KernelStepRequest:
 
     def payload(self) -> bytes:
         self.model.validate(self.dt_s)
+        if self.producer != REQUEST_PRODUCER or self.consumer != REQUEST_CONSUMER:
+            raise FrameError("kernel request producer/consumer endpoint mismatch")
         n = self.model.ndof
         q = _finite_vector(self.q, "q"); qdot = _finite_vector(self.qdot, "qdot")
         qddot = _finite_vector(self.qddot, "qddot"); base = _finite_vector(self.base_load, "base_load")
@@ -309,7 +313,8 @@ def decode_kernel_response(frame: bytes) -> KernelStepResponse:
         raise FrameError("kernel response vector length mismatch")
     values = struct.unpack_from("<" + "d" * vector_count, raw, offset); offset += vector_bytes
     checkpoint_step, checkpoint_time, checkpoint_tick, finite_audit = trailer.unpack_from(raw, offset)
-    if any(not math.isfinite(value) for value in values) or not math.isfinite(time_s) or not math.isfinite(residual):
+    if (any(not math.isfinite(value) for value in values) or not math.isfinite(time_s) or
+            not math.isfinite(residual) or finite_audit != 1):
         raise FrameError("kernel response contains NaN/Inf")
     fields = [tuple(values[index * n:(index + 1) * n]) for index in range(8)]
     return KernelStepResponse(sequence, step, bridge, tick, time_s, code, iterations, residual,

@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import subprocess
+import struct
 import unittest
 from pathlib import Path
 
@@ -67,6 +68,33 @@ class KernelWorkerTests(unittest.TestCase):
         value = request(1, 560)
         with self.assertRaises(FrameError):
             encode_kernel_request(KernelStepRequest(**{**value.__dict__, "q": (float("nan"),) + value.q[1:]}))
+
+    def test_kernel_request_endpoint_identity_is_fixed(self) -> None:
+        value = request(1, 560)
+        with self.assertRaises(FrameError):
+            encode_kernel_request(KernelStepRequest(**{**value.__dict__, "producer": "untrusted_sender"}))
+        with self.assertRaises(FrameError):
+            encode_kernel_request(KernelStepRequest(**{**value.__dict__, "consumer": "wrong_worker"}))
+
+    def test_kernel_response_finite_audit_must_be_exactly_one(self) -> None:
+        self.assertTrue(WORKER.is_file(), "kernel worker must be built before this test")
+        process = subprocess.Popen([str(WORKER)], stdin=subprocess.PIPE, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
+        try:
+            value = request(1, 560)
+            assert process.stdin is not None and process.stdout is not None
+            process.stdin.write(encode_kernel_request(value)); process.stdin.flush()
+            header = process.stdout.read(HEADER.size)
+            body = process.stdout.read(HEADER.unpack(header)[1])
+            self.assertGreaterEqual(len(body), 4)
+            malformed = header + body[:-4] + struct.pack("<I", 2)
+            with self.assertRaises(FrameError):
+                decode_kernel_response(malformed)
+        finally:
+            if process.poll() is None:
+                process.terminate(); process.wait(timeout=5)
+            for stream in (process.stdin, process.stdout, process.stderr):
+                if stream is not None and not stream.closed:
+                    stream.close()
 
 
 if __name__ == "__main__":

@@ -1,11 +1,14 @@
 from __future__ import annotations
 
 import json
+import threading
 import tempfile
 import unittest
 from pathlib import Path
+from types import SimpleNamespace
 
-from coupling.cpp_worker_confirm_v1.coordinator import ConfirmError, Mapping, MockSlice, run_mock_confirm
+from coupling.cpp_worker_confirm_v1.coordinator import ConfirmError, KernelWorker, Mapping, MockSlice, _fixture, run_mock_confirm
+from coupling.cpp_worker_persistent_ipc_v1.kernel_protocol import KernelStepRequest
 
 
 class CppConfirmTests(unittest.TestCase):
@@ -28,6 +31,41 @@ class CppConfirmTests(unittest.TestCase):
         item = MockSlice(1, Mapping()); item.start()
         with self.assertRaises(ConfirmError):
             item.start()
+
+    def test_worker_response_timeout_fails_closed(self) -> None:
+        class BlockingStream:
+            def __init__(self):
+                self.release = threading.Event()
+
+            def write(self, _value):
+                return None
+
+            def flush(self):
+                return None
+
+            def read(self, _size):
+                self.release.wait(1.0)
+                return b""
+
+            def close(self):
+                self.release.set()
+
+        stream = BlockingStream()
+        fake_process = SimpleNamespace(stdin=stream, stdout=stream, pid=12345)
+        worker = KernelWorker(Path(__file__), Path(tempfile.mkdtemp()), "run", "case", timeout_s=0.01)
+        worker.process = fake_process
+        model, q, qdot, qddot, base_load = _fixture()
+        request = KernelStepRequest(
+            sequence=1, global_step=560, case_local_bridge_step=1,
+            integer_tick=2_208_750_000, time_s=2.20875, dt_s=0.00125,
+            request_id=1, transaction_id=2, run_id="run", case_id="case",
+            model=model, q=q, qdot=qdot, qddot=qddot, base_load=base_load,
+            slice_force=(0.0,) * (3 * model.slices),
+        )
+        with self.assertRaises(ConfirmError):
+            worker.step(request)
+        self.assertEqual(worker.audit["failure_classification"], "worker_timeout")
+        stream.release.set()
 
     def test_mock_confirm_has_one_worker_and_three_slice_starts(self) -> None:
         with tempfile.TemporaryDirectory() as directory:

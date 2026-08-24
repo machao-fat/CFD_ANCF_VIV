@@ -1,0 +1,46 @@
+{
+  "findings": [
+    {
+      "id": "LEGACY_ENDPOINT_IDENTITY",
+      "severity": "high",
+      "status": "fixed_and_tested"
+    },
+    {
+      "id": "LEGACY_DIMENSION_BOUND",
+      "severity": "high",
+      "status": "fixed_and_tested"
+    },
+    {
+      "id": "SEQUENCE_AND_DT_OVERFLOW_DEFENSE",
+      "severity": "medium",
+      "status": "fixed_and_built"
+    },
+    {
+      "id": "KERNEL_RESPONSE_FIELD_VALIDATION",
+      "severity": "high",
+      "status": "fixed_and_tested"
+    },
+    {
+      "id": "CHECKPOINT_MODEL_CONTRACT",
+      "severity": "high",
+      "status": "fixed_and_tested"
+    },
+    {
+      "id": "OWNERSHIP_NONZERO_BASE_LOAD",
+      "severity": "high",
+      "status": "fixed_and_replayed"
+    },
+    {
+      "id": "IPC_FAIL_CLOSED_BOUNDARY",
+      "severity": "high",
+      "status": "fixed_and_fault_injected"
+    },
+    {
+      "id": "FULL_MATLAB_CPP_STATE_EQUIVALENCE",
+      "reason": "strict_pass_steps=0/40",
+      "severity": "high",
+      "status": "not_proven"
+    }
+  ],
+  "status": "complete_with_strict_numerical_blocker"
+}

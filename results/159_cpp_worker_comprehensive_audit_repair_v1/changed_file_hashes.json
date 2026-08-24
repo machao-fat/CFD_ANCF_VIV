@@ -1,0 +1,21 @@
+{
+  "src/coupling/cpp_physics_ownership_v1/physics_ownership_worker_main.cpp": "dd09c1797dfda000bbdb0e28d50880252fea3dcfec2fdd3309f63fd18be2854c",
+  "src/coupling/cpp_worker_confirm_v1/coordinator.py": "3037504ec7a6e2fcde27052b3af431bf185f42941c7b159b6c12c5344e83968d",
+  "src/coupling/cpp_worker_confirm_v1/cpp_adapter.py": "8e1932a481edbbb7743daae2023289aa76838222eaeaec57124997e06ddb6270",
+  "src/coupling/cpp_worker_persistent_ipc_v1/ancf_kernel.cpp": "eb5e15c2cf89f9514d3c4c2acf5703e119c975db7d980f31dd8348ef67249821",
+  "src/coupling/cpp_worker_persistent_ipc_v1/ancf_worker_main.cpp": "3b519350ceeaad84ce625c3bfe0e43ccd657c1db96bf66746306156716d9f352",
+  "src/coupling/cpp_worker_persistent_ipc_v1/kernel_protocol.py": "a58d72ce8e19f8a785837fdb50f57322c1a82abe7ee68faf9265900ad6b96107",
+  "src/coupling/cpp_worker_persistent_ipc_v1/protocol.py": "e08fc355fcbd209ae38ed9f69a7e3f7be59c9403e3e6848a0a3ee41d126c0b12",
+  "src/coupling/cpp_worker_persistent_ipc_v1/worker_main.cpp": "c9cafe452a3141b70e60d8d6e66d3d179c1be1c35e7e15ef8afb4e7bd49a5e0c",
+  "tests/cpp_worker_comprehensive_audit_repair_v1/test_ownership_worker.py": "c82677744e0a20b15c060a9e0cf18f1828e14dcb2339dfb4c6ee7540509ecd71",
+  "tests/cpp_worker_comprehensive_audit_repair_v1/test_protocol_lifecycle_and_pair_lineage.py": "c87c4bb5c4e83110de41ccb286195f5c3409dd6a6c58a5eeeac9937fdc10bfea",
+  "tests/cpp_worker_comprehensive_audit_repair_v1/test_transport_worker_hardening.py": "380875d108cbe2ee8e8c57b7040150c2d34adb029c8f66eb87726e59185fc07c",
+  "tests/cpp_worker_confirm_v1/test_coordinator.py": "c7868ca772d03fb43e688d5020209ff3b5dce91d6a5bf8c808d8a38707560723",
+  "tests/cpp_worker_confirm_v1/test_cpp_adapter.py": "2a3c3a0865fd6d452e27c49d8e5ec6cfd54a83d6bfff14fa94eb726ef260f02f",
+  "tests/cpp_worker_confirm_v1/test_lifecycle.py": "c8084e9b920ee8a4d07d1739bc9899e95784b4697bfbc754a027fd750119ff93",
+  "tests/cpp_worker_numerical_equivalence_v1/test_normalize_matlab_golden.py": "b2d0873c7d056d3d80f0f9a5a228f67118a14bdb6c51807c8606d2f2227c3118",
+  "tests/cpp_worker_persistent_ipc_v1/test_kernel_worker.py": "575263492feec17d0261709abf466fb96fa864e7a1de6a4a1e438448462d6cd1",
+  "tests/cpp_worker_persistent_ipc_v1/test_protocol.py": "0a4911d0d848087a3624265426ba514ca360ce8931858d476d64d0ed78051607",
+  "tools/cpp_worker_comprehensive_audit_repair_v1/generate_stage159_evidence.py": "5626bae718f84bdea11dd75710a5267c7d6c6c6fc2166c7320e74a92a422823c",
+  "tools/cpp_worker_numerical_equivalence_v1/normalize_matlab_golden.py": "7fdc797e62328636be2e2663f06ebd681269d735e0c1919045cffb0c5d70fee2"
+}

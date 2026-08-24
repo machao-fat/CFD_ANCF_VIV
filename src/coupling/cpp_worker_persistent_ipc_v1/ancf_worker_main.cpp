@@ -28,6 +28,8 @@ constexpr std::uint32_t STEP_RESPONSE = 6;
 constexpr std::size_t ID_RUN = 64;
 constexpr std::size_t ID_CASE = 64;
 constexpr std::size_t ID_ENDPOINT = 32;
+constexpr char REQUEST_PRODUCER[] = "python_scheduler";
+constexpr char REQUEST_CONSUMER[] = "cpp_ancf_kernel_worker";
 
 template <class T>
 bool take(const std::vector<char>& payload, std::size_t& offset, T& value) {
@@ -227,6 +229,8 @@ int process_step(const std::vector<char>& payload, std::vector<char>& response,
   std::memcpy(request_digest.data(), payload.data() + offset, request_digest.size()); offset += request_digest.size();
   if (!valid_c_string(run_id, ID_RUN) || !valid_c_string(case_id, ID_CASE) ||
       !valid_c_string(producer, ID_ENDPOINT) || !valid_c_string(consumer, ID_ENDPOINT)) return 7;
+  if (string_value(producer, ID_ENDPOINT) != REQUEST_PRODUCER ||
+      string_value(consumer, ID_ENDPOINT) != REQUEST_CONSUMER) return 14;
   if (sequence != expected_sequence) return 13;
   const std::string run_value = string_value(run_id, ID_RUN);
   const std::string case_value = string_value(case_id, ID_CASE);

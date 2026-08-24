@@ -18,7 +18,7 @@ from coupling.cpp_worker_persistent_ipc_v1.kernel_protocol import (
 
 
 ROOT = Path(__file__).resolve().parents[2]
-WORKER = ROOT / "runtime" / "cpp_worker_comprehensive_audit_repair_v1" / "build-release" / "Release" / "cfd_ancf_physics_ownership_worker.exe"
+WORKER = ROOT / "runtime" / "cpp_worker_comprehensive_audit_repair_v1" / "stage158_build" / "Release" / "cfd_ancf_physics_ownership_worker.exe"
 
 
 def model() -> KernelModel:
@@ -98,6 +98,28 @@ class OwnershipWorkerRepairTests(unittest.TestCase):
         response, code = exchange(request(value, (0.0,) * value.ndof))
         self.assertIsNone(response)
         self.assertNotEqual(code, 0)
+
+    def test_endpoint_identity_mismatch_fails_closed(self):
+        value = model()
+        base = expected_base(value)
+        req = request(value, base)
+        raw = bytearray(encode_kernel_request(req))
+        from coupling.cpp_worker_persistent_ipc_v1.kernel_protocol import ID_CASE, ID_ENDPOINT, ID_RUN, _PREFIX
+        producer_offset = HEADER.size + _PREFIX.size + len(req.model.bytes()) + 8 + ID_RUN + ID_CASE
+        raw[producer_offset:producer_offset + ID_ENDPOINT] = b"untrusted_sender\0" + b"\0" * (ID_ENDPOINT - len("untrusted_sender") - 1)
+        process = subprocess.Popen([str(WORKER)], stdin=subprocess.PIPE, stdout=subprocess.PIPE,
+                                   stderr=subprocess.PIPE, cwd=str(ROOT), bufsize=0)
+        try:
+            assert process.stdin is not None
+            process.stdin.write(bytes(raw)); process.stdin.flush(); process.stdin.close()
+            process.wait(timeout=10)
+            self.assertNotEqual(process.returncode, 0)
+        finally:
+            if process.poll() is None:
+                process.kill(); process.wait(timeout=10)
+            for stream in (process.stdout, process.stderr):
+                if stream is not None and not stream.closed:
+                    stream.close()
 
     def test_first_bridge_step_must_start_at_one(self):
         value = model()
