@@ -1,0 +1,10 @@
+{
+  "architecture": "x64",
+  "build_command": "cmake --build runtime/cpp_worker_comprehensive_audit_repair_v1/build-release --config Release --parallel 4",
+  "cmake": "3.31.6",
+  "compiler": "MSVC 2022 BuildTools x64",
+  "configuration": "Release",
+  "generator": "Visual Studio 17 2022",
+  "status": "pass",
+  "warnings": []
+}

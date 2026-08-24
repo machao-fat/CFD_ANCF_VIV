@@ -63,6 +63,9 @@ class StepRequest:
         _finite(self.time_s, "time_s"); _finite(self.dt_s, "dt_s")
         if self.dt_s <= 0.0:
             raise FrameError("dt_s must be positive")
+        expected_tick = int(round(self.time_s * 1.0e9))
+        if self.time_s < self.dt_s or self.integer_tick != expected_tick:
+            raise FrameError("time_s and integer_tick are inconsistent")
         for value, name, limit in ((self.run_id, "run_id", ID_RUN), (self.case_id, "case_id", ID_CASE),
                                     (self.producer, "producer", ID_ENDPOINT), (self.consumer, "consumer", ID_ENDPOINT)):
             if not value or len(value.encode("utf-8")) >= limit:

@@ -153,7 +153,7 @@ int process_step(const std::vector<char>& payload, std::vector<char>& response,
       !take(payload, offset, max_newton) || !take(payload, offset, request_id) || !take(payload, offset, transaction_id)) {
     return 2;
   }
-  if (schema != SCHEMA || protocol != PROTOCOL || sequence == 0 || n <= 0 || n > 100000 ||
+  if (schema != SCHEMA || protocol != PROTOCOL || sequence == 0 || n <= 0 || n > static_cast<std::int32_t>(cfd_ancf::MAX_NDOF) ||
       elements < 2 || elements > 10000 || slices < 1 || slices > 1000 ||
       gauss_order != 3 && gauss_order != 5 || max_newton <= 0 || dt_s <= 0.0 || !std::isfinite(time_s) ||
       !std::isfinite(dt_s) || n != 6 * (elements + 1)) return 3;
@@ -184,16 +184,11 @@ int process_step(const std::vector<char>& payload, std::vector<char>& response,
   model.elements = static_cast<std::size_t>(elements);
   model.slices = static_cast<std::size_t>(slices);
   model.dt_s = dt_s;
-  if (!std::isfinite(model.length_m) || !std::isfinite(model.diameter_m) ||
-      !std::isfinite(model.inner_diameter_m) || !std::isfinite(model.top_tension_N) ||
-      !std::isfinite(model.youngs_modulus_Pa) || !std::isfinite(model.material_density) ||
-      !std::isfinite(model.fluid_density) || !std::isfinite(model.gravity) ||
-      !std::isfinite(model.beta) || !std::isfinite(model.gamma) ||
-      !std::isfinite(model.newton_tolerance) || !std::isfinite(model.damping_alpha) ||
-      !std::isfinite(model.damping_beta) || model.length_m <= 0.0 ||
-      model.diameter_m <= model.inner_diameter_m || model.inner_diameter_m < 0.0 ||
-      model.beta <= 0.0 || model.gamma <= 0.0 || model.newton_tolerance <= 0.0 ||
-      model.damping_alpha != 0.0 || model.damping_beta != 0.0) return 4;
+  try {
+    cfd_ancf::validate_model(model);
+  } catch (const std::exception&) {
+    return 4;
+  }
   std::int32_t base_n = 0, force_n = 0, mass_n = 0;
   if (!take(payload, offset, base_n) || !take(payload, offset, force_n) ||
       base_n != n || force_n != 3 * slices) return 5;
@@ -236,12 +231,22 @@ int process_step(const std::vector<char>& payload, std::vector<char>& response,
     expected_tick = integer_tick;
     expected_time_s = time_s;
     expected_dt_s = dt_s;
-  } else if (global_step != expected_global_step + 1 || bridge_step != expected_bridge_step + 1 ||
-             integer_tick != static_cast<std::uint64_t>(std::llround(time_s * 1.0e9)) ||
-             std::abs(time_s - (expected_time_s + expected_dt_s)) > 1.0e-12 ||
-             std::abs(dt_s - expected_dt_s) > 1.0e-15) {
-    return 16;
+  } else {
+    if (global_step != expected_global_step + 1 || bridge_step != expected_bridge_step + 1 ||
+        integer_tick != static_cast<std::uint64_t>(std::llround(time_s * 1.0e9)) ||
+        std::abs(time_s - (expected_time_s + expected_dt_s)) > 1.0e-12 ||
+        std::abs(dt_s - expected_dt_s) > 1.0e-15) {
+      std::cerr << "worker identity continuity mismatch at sequence " << sequence << '\n';
+      return 16;
+    }
   }
+  // Advance the accepted lineage after every validated request.  Keeping the
+  // first-step seed forever would reject the third and later contiguous steps.
+  expected_global_step = global_step;
+  expected_bridge_step = bridge_step;
+  expected_tick = integer_tick;
+  expected_time_s = time_s;
+  expected_dt_s = dt_s;
 
   const std::size_t mass_count = mass_n == 0 ? 0u : static_cast<std::size_t>(mass_n) * static_cast<std::size_t>(mass_n);
   const std::size_t array_count = static_cast<std::size_t>(4 * n) + mass_count + static_cast<std::size_t>(force_n);
@@ -262,7 +267,10 @@ int process_step(const std::vector<char>& payload, std::vector<char>& response,
   std::array<unsigned char, 32> model_digest{};
   if (!sha256_bytes(model_bytes, model_digest)) return 15;
   if (expected_sequence == 1) expected_model_digest = model_digest;
-  else if (model_digest != expected_model_digest) return 16;
+  else if (model_digest != expected_model_digest) {
+    std::cerr << "worker model digest mismatch at sequence " << sequence << '\n';
+    return 16;
+  }
 
   const std::vector<double> q(input.begin(), input.begin() + n);
   const std::vector<double> qdot(input.begin() + n, input.begin() + 2 * n);

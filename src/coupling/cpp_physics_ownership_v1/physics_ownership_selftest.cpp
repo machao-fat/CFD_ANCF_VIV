@@ -303,6 +303,15 @@ int main() {
     }
 
     const auto reference = cfd_ancf::make_reference_state(value);
+    // The frozen MATLAB contract applies top tension in the global +z
+    // translational DOF.  It is not reoriented to a bent current tangent.
+    const auto bent_contract_load = cfd_ancf::physics_ownership::assemble_base_load(value);
+    const std::size_t top_dof = 6 * value.elements;
+    bool top_tension_global_z_contract = true;
+    for (std::size_t index = 0; index < bent_contract_load.top_tension.size(); ++index) {
+      const double expected = index == top_dof + 2 ? value.top_tension_N : 0.0;
+      if (bent_contract_load.top_tension[index] != expected) top_tension_global_z_contract = false;
+    }
     const auto owned_mass = cfd_ancf::physics_ownership::assemble_mass_matrix(value);
     const double mass_assembly_error = norm_inf(difference(reference.mass.data, owned_mass.data));
     const double mass_assembly_scale = std::max(1.0, norm_inf(reference.mass.data));
@@ -328,7 +337,8 @@ int main() {
                       zero_load_limit && axial_patch && component_limits && newmark_consistent &&
                       time_step_convergence && grid_convergence &&
                       invalid_representation_rejected && invalid_line_weight_rejected &&
-                       mass_symmetric && mass_positive && mass_assembly_matches_kernel;
+                      mass_symmetric && mass_positive && mass_assembly_matches_kernel &&
+                      top_tension_global_z_contract;
     const auto loads_hash = [](const std::vector<double>& values) {
       return cfd_ancf::physics_ownership::sha256_vector(values);
     };
@@ -343,6 +353,8 @@ int main() {
               << ",\"mass_positive_samples\":" << (mass_positive ? "true" : "false")
               << ",\"mass_assembly_matches_kernel\":"
               << (mass_assembly_matches_kernel ? "true" : "false")
+              << ",\"top_tension_global_z_contract\":"
+              << (top_tension_global_z_contract ? "true" : "false")
               << ",\"mass_assembly_error\":" << mass_assembly_error
               << ",\"mass_assembly_scale\":" << mass_assembly_scale
               << ",\"tangent_symmetric\":" << (tangent_symmetric ? "true" : "false")

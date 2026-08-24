@@ -1,0 +1,13 @@
+{
+  "formal_protocol_semantics_modified": false,
+  "old_runtime_modified": false,
+  "old_stage_1_153_evidence_modified": false,
+  "physical_contract_modified": false,
+  "protected_paths": [
+    "results/153_cpp_worker_comprehensive_audit_repair_v1",
+    "runtime/cpp_worker_persistent_ipc_v1",
+    "runtime/cpp_worker_numerical_equivalence_before_cfd_v1"
+  ],
+  "real_matlab_openfoam_wsl_cfd_started": false,
+  "status": "verified_read_only_by_scope"
+}

@@ -79,6 +79,7 @@ void add_body_component(std::vector<double>& target, const Model& model, const V
 }  // namespace
 
 void validate_model(const Model& model) {
+  cfd_ancf::validate_model(model);
   const auto finite_scalar = [](double value) { return std::isfinite(value); };
   if (model.length_m <= 0.0 || model.diameter_m <= model.inner_diameter_m ||
       model.inner_diameter_m < 0.0 || model.elements < 1 || model.slices < 1 ||
@@ -109,7 +110,7 @@ void validate_model(const Model& model) {
 }
 
 Matrix assemble_mass_matrix(const Model& model) {
-  validate_model(model);
+  physics_ownership::validate_model(model);
   Matrix result(model.ndof(), model.ndof());
   const auto [points, weights] = gauss(5);
   const double element_length = model.length_m / static_cast<double>(model.elements);
@@ -142,7 +143,7 @@ Matrix assemble_mass_matrix(const Model& model) {
 }
 
 BaseLoadBreakdown assemble_base_load(const Model& model) {
-  validate_model(model);
+  physics_ownership::validate_model(model);
   BaseLoadBreakdown result;
   const std::size_t n = model.ndof();
   result.body_gravity.assign(n, 0.0);
@@ -171,7 +172,7 @@ CfdLoadBreakdown assemble_cfd_load(const Model& model,
                                    const std::vector<double>& slice_force,
                                    ForceRepresentation representation,
                                    const std::vector<double>& slice_weights_m) {
-  validate_model(model);
+  physics_ownership::validate_model(model);
   if (slice_force.size() != 3 * model.slices) {
     throw std::invalid_argument("slice force dimension mismatch");
   }

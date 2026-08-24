@@ -14,6 +14,7 @@ MESSAGE_KERNEL_STEP_RESPONSE = 6
 ID_RUN = 64
 ID_CASE = 64
 ID_ENDPOINT = 32
+MAX_NDOF = 2048
 
 _PREFIX = struct.Struct("<IIIiiQddiiiiiQQ")
 _MODEL = struct.Struct("<13dii")
@@ -60,7 +61,8 @@ class KernelModel:
         return 6 * (self.elements + 1)
 
     def validate(self, dt_s: float) -> None:
-        if self.elements < 2 or self.elements > 10000 or self.slices < 1 or self.slices > 1000 or self.gauss_order not in (3, 5):
+        if (self.elements < 1 or self.elements > 10000 or self.slices < 1 or
+                self.slices > 1000 or self.ndof > MAX_NDOF or self.gauss_order not in (3, 5)):
             raise FrameError("kernel model dimensions or quadrature order are invalid")
         if self.max_newton <= 0 or self.newton_tolerance <= 0.0:
             raise FrameError("kernel Newton contract is invalid")
@@ -76,7 +78,9 @@ class KernelModel:
         if self.length_m <= 0.0 or self.diameter_m <= self.inner_diameter_m or dt_s <= 0.0:
             raise FrameError("kernel geometry or time step is invalid")
         if self.slice_positions_m and (len(self.slice_positions_m) != self.slices or
-                                       any(not math.isfinite(float(x)) or x < 0.0 or x > self.length_m for x in self.slice_positions_m)):
+                                       any(not math.isfinite(float(x)) or x < 0.0 or x > self.length_m for x in self.slice_positions_m) or
+                                       any(self.slice_positions_m[i] < self.slice_positions_m[i - 1]
+                                           for i in range(1, len(self.slice_positions_m)))):
             raise FrameError("kernel slice positions are invalid")
 
     def bytes(self) -> bytes:
@@ -131,6 +135,11 @@ class KernelStepRequest:
             raise FrameError("kernel identity is invalid")
         if not math.isfinite(self.time_s) or not math.isfinite(self.dt_s):
             raise FrameError("kernel time is NaN/Inf")
+        if self.dt_s <= 0.0:
+            raise FrameError("kernel dt_s must be positive")
+        expected_tick = int(round(self.time_s * 1.0e9))
+        if self.time_s < self.dt_s or self.integer_tick != expected_tick:
+            raise FrameError("kernel time_s and integer_tick are inconsistent")
         prefix = _PREFIX.pack(SCHEMA_VERSION, PROTOCOL_VERSION, self.sequence, self.global_step,
                               self.case_local_bridge_step, self.integer_tick, self.time_s, self.dt_s,
                               n, self.model.elements, self.model.slices, self.model.gauss_order,

@@ -86,7 +86,41 @@ double Model::displaced_area() const { return PI*diameter_m*diameter_m/4.0; }
 double Model::EA() const { return youngs_modulus_Pa*area(); }
 double Model::EI() const { return youngs_modulus_Pa*PI*(std::pow(diameter_m,4)-std::pow(inner_diameter_m,4))/64.0; }
 
+void validate_model(const Model& model) {
+  const auto finite = [](double value) { return std::isfinite(value); };
+  if (model.elements < 1 || model.slices < 1 || model.ndof() > MAX_NDOF ||
+      model.length_m <= 0.0 || model.diameter_m <= model.inner_diameter_m ||
+      model.inner_diameter_m < 0.0 || model.dt_s <= 0.0 || model.beta <= 0.0 ||
+      model.gamma <= 0.0 || model.max_newton == 0 || model.gauss_order != 3 && model.gauss_order != 5 ||
+      model.damping_alpha != 0.0 || model.damping_beta != 0.0) {
+    throw std::invalid_argument("invalid ANCF model dimensions or numerical contract");
+  }
+  for (double value : {model.length_m, model.diameter_m, model.inner_diameter_m,
+                       model.top_tension_N, model.youngs_modulus_Pa,
+                       model.material_density, model.fluid_density, model.gravity,
+                       model.dt_s, model.beta, model.gamma, model.newton_tolerance,
+                       model.damping_alpha, model.damping_beta}) {
+    if (!finite(value)) throw std::invalid_argument("ANCF model contains NaN/Inf");
+  }
+  if (model.newton_tolerance <= 0.0) {
+    throw std::invalid_argument("ANCF Newton tolerance must be positive");
+  }
+  if (!model.slice_positions_m.empty()) {
+    if (model.slice_positions_m.size() != model.slices) {
+      throw std::invalid_argument("ANCF slice position count mismatch");
+    }
+    for (std::size_t index = 0; index < model.slice_positions_m.size(); ++index) {
+      const double position = model.slice_positions_m[index];
+      if (!finite(position) || position < 0.0 || position > model.length_m ||
+          (index > 0 && position < model.slice_positions_m[index - 1])) {
+        throw std::invalid_argument("ANCF slice positions are invalid");
+      }
+    }
+  }
+}
+
 Matrix mapping_H3(const Model& model) {
+  validate_model(model);
   Matrix H(3*model.slices,model.ndof()); const double Le=model.length_m/model.elements;
   for(std::size_t k=0;k<model.slices;++k){
     const double s = model.slice_positions_m.size()==model.slices ? model.slice_positions_m[k] :
@@ -98,15 +132,18 @@ Matrix mapping_H3(const Model& model) {
 }
 
 std::vector<double> external_force(const Model& model, const std::vector<double>& slice_force) {
+  validate_model(model);
   if(slice_force.size()!=3*model.slices)throw std::invalid_argument("slice force dimensions"); Matrix H=mapping_H3(model);std::vector<double> out=std::vector<double>(model.ndof());for(std::size_t j=0;j<model.ndof();++j)for(std::size_t i=0;i<3*model.slices;++i)out[j]+=H(i,j)*slice_force[i];return out;
 }
 
 void internal_force_tangent(const std::vector<double>& q, const Model& model, std::vector<double>& force, Matrix& tangent) {
+  validate_model(model);
   if(q.size()!=model.ndof())throw std::invalid_argument("q dimensions");force.assign(model.ndof(),0);tangent=Matrix(model.ndof(),model.ndof());double Le=model.length_m/model.elements;for(std::size_t e=0;e<model.elements;++e){std::vector<double> qe(q.begin()+6*e,q.begin()+6*e+12),fe;Matrix Ke;element_force_tangent(qe,Le,model.EA(),model.EI(),model.gauss_order,fe,Ke);for(int i=0;i<12;++i){force[6*e+i]+=fe[i];for(int j=0;j<12;++j)tangent(6*e+i,6*e+j)+=Ke(i,j);}}
   for(std::size_t i=0;i<model.ndof();++i)for(std::size_t j=i+1;j<model.ndof();++j){double v=0.5*(tangent(i,j)+tangent(j,i));tangent(i,j)=tangent(j,i)=v;}
 }
 
 State make_reference_state(const Model& model) {
+  validate_model(model);
   State state;state.q.assign(model.ndof(),0);state.qdot.assign(model.ndof(),0);state.qddot.assign(model.ndof(),0);double Le=model.length_m/model.elements;for(std::size_t node=0;node<=model.elements;++node){std::size_t base=6*node;double s=node*Le;state.q[base+2]=s;state.q[base+5]=1.0;}state.mass=Matrix(model.ndof(),model.ndof());auto [xi,w]=gauss(5);double rhoA=model.material_density*model.area();for(std::size_t e=0;e<model.elements;++e){Matrix Me(12,12);for(std::size_t k=0;k<xi.size();++k){double x=0.5*(xi[k]+1)*Le;Matrix N=block_matrix(shape(x,Le,0));Matrix Nt=transpose(N);Matrix local=multiply(Nt,N);for(std::size_t i=0;i<12;++i)for(std::size_t j=0;j<12;++j)Me(i,j)+=w[k]*local(i,j)*Le/2*rhoA;}for(int i=0;i<12;++i)for(int j=0;j<12;++j)state.mass(6*e+i,6*e+j)+=Me(i,j);}state.damping=Matrix(model.ndof(),model.ndof());state.base_load.assign(model.ndof(),0);return state;
 }
 
@@ -121,6 +158,7 @@ void symmetrize_mass(State& state) {
 }
 
 StepDiagnostics advance(State& state, const Model& model, const std::vector<double>& slice_force) {
+  validate_model(model);
   using Clock = std::chrono::steady_clock;
   const auto total_start = Clock::now();
   if (state.q.size() != model.ndof()) throw std::invalid_argument("state dimensions");

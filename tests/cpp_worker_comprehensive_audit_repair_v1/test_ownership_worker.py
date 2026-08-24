@@ -143,6 +143,37 @@ class OwnershipWorkerRepairTests(unittest.TestCase):
             if process.stderr is not None and not process.stderr.closed:
                 process.stderr.close()
 
+    def test_contiguous_lineage_advances_past_second_step(self):
+        value = model()
+        base = expected_base(value)
+        first = request(value, base)
+        second = replace(first, sequence=2, global_step=561, case_local_bridge_step=2,
+                         integer_tick=2210000000, time_s=2.2100,
+                         request_id=153101, transaction_id=15310100)
+        third = replace(second, sequence=3, global_step=562, case_local_bridge_step=3,
+                        integer_tick=2211250000, time_s=2.21125,
+                        request_id=153102, transaction_id=15310200)
+        process = subprocess.Popen([str(WORKER)], stdin=subprocess.PIPE, stdout=subprocess.PIPE,
+                                   stderr=subprocess.PIPE, cwd=str(ROOT), bufsize=0)
+        assert process.stdin is not None and process.stdout is not None
+        try:
+            for item in (first, second, third):
+                process.stdin.write(encode_kernel_request(item)); process.stdin.flush()
+                header = process.stdout.read(HEADER.size)
+                self.assertEqual(len(header), HEADER.size)
+                body = process.stdout.read(HEADER.unpack(header)[1])
+                response = decode_kernel_response(header + body)
+                validate_kernel_response(item, response)
+            process.stdin.write(HEADER.pack(MAGIC, 0, 3)); process.stdin.flush()
+            process.stdin.close(); process.wait(timeout=10)
+            self.assertEqual(process.returncode, 0)
+        finally:
+            if process.poll() is None:
+                process.kill(); process.wait(timeout=10)
+            for stream in (process.stdin, process.stdout, process.stderr):
+                if stream is not None and not stream.closed:
+                    stream.close()
+
     def test_profile_write_failure_is_not_silent(self):
         value = model()
         base = expected_base(value)

@@ -1,0 +1,17 @@
+{
+  "compileall": {
+    "scope": "C++ worker Python protocol and audit tests",
+    "status": "pass"
+  },
+  "focused_unittest": {
+    "command": "python -m unittest tests.cpp_worker_persistent_ipc_v1.test_protocol tests.cpp_worker_persistent_ipc_v1.test_kernel_worker tests.cpp_worker_persistent_ipc_v1.test_dual_run tests.cpp_physics_ownership_v1.test_offline_evidence tests.cpp_worker_comprehensive_audit_repair_v1.test_repair_contract tests.cpp_worker_comprehensive_audit_repair_v1.test_mapping_contract tests.cpp_worker_comprehensive_audit_repair_v1.test_ownership_worker tests.cpp_worker_comprehensive_audit_repair_v1.test_transport_worker_hardening",
+    "status": "pass",
+    "tests": 38
+  },
+  "root_unittest": {
+    "command": "PYTHONPATH=src python -m unittest discover -s tests -t . -p 'test_*.py'",
+    "skipped": 1,
+    "status": "pass",
+    "tests": 1127
+  }
+}

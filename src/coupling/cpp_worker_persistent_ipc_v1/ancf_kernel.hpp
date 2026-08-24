@@ -1,9 +1,15 @@
 #pragma once
 
 #include <cstddef>
+#include <limits>
 #include <vector>
 
 namespace cfd_ancf {
+
+// Dense ANCF matrices are intentionally bounded at the IPC boundary.  This
+// protects the worker from malformed frames that could otherwise request an
+// unbounded n-by-n allocation before numerical validation runs.
+constexpr std::size_t MAX_NDOF = 2048;
 
 struct Matrix {
   std::size_t rows = 0, cols = 0;
@@ -40,7 +46,11 @@ struct Model {
   double displaced_area() const;
   double EA() const;
   double EI() const;
-  std::size_t ndof() const { return 6 * (elements + 1); }
+  std::size_t ndof() const {
+    constexpr std::size_t max_value = (std::numeric_limits<std::size_t>::max)();
+    if (elements == max_value || elements > (max_value - 1u) / 6u) return max_value;
+    return 6u * (elements + 1u);
+  }
 };
 
 struct State {
@@ -66,6 +76,7 @@ struct StepDiagnostics {
 };
 
 State make_reference_state(const Model& model);
+void validate_model(const Model& model);
 void symmetrize_mass(State& state);
 StepDiagnostics advance(State& state, const Model& model, const std::vector<double>& slice_force);
 void internal_force_tangent(const std::vector<double>& q, const Model& model, std::vector<double>& force, Matrix& tangent);

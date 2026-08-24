@@ -56,6 +56,21 @@ class RepairContractTests(unittest.TestCase):
         with self.assertRaises(FrameError):
             replace(request, model=replace(request.model, elements=10001)).payload()
 
+    def test_dense_matrix_memory_bound_is_rejected(self):
+        request = self.request()
+        with self.assertRaises(FrameError):
+            replace(request, model=replace(request.model, elements=400)).payload()
+
+    def test_nonmonotone_slice_positions_are_rejected(self):
+        request = self.request()
+        with self.assertRaises(FrameError):
+            replace(request, model=replace(request.model, slice_positions_m=(0.0, 6.0, 5.0))).payload()
+
+    def test_time_tick_mismatch_is_rejected_before_frame(self):
+        request = self.request()
+        with self.assertRaises(FrameError):
+            replace(request, integer_tick=request.integer_tick + 1).payload()
+
     def test_repair_tool_exists_in_stage_local_directory(self):
         root = ROOT
         self.assertTrue((root / "tools" / "cpp_worker_comprehensive_audit_repair_v1" /

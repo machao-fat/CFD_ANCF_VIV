@@ -1,0 +1,24 @@
+{
+  "C++_ANCF_NUMERICAL_CORE_STATUS": "not_completed",
+  "FORMAL_STROUHAL_STATUS": "not_completed",
+  "LOCK_IN_CLAIM": "not_completed",
+  "STABLE_VIV_RESPONSE_CLAIM": "not_completed",
+  "case_id": "cpp_worker_comprehensive_audit_continuation_case_001",
+  "conditions": {
+    "build": true,
+    "compileall": true,
+    "focused_tests": true,
+    "lineage_regression": true,
+    "owned_residual_zero": true,
+    "ownership_40step_engineering_replay": true,
+    "physical_process_starts_zero": true,
+    "protected_artifacts_unmodified": true,
+    "root_unittest": true,
+    "strict_matlab_cpp_state_equivalence": false
+  },
+  "gate": "STAGE4F_D_CPP_WORKER_COMPREHENSIVE_AUDIT_REPAIR_V1_GATE: do_not_pass",
+  "generated_at_utc": "2026-08-24T16:56:58.172025+00:00",
+  "run_id": "cpp_worker_comprehensive_audit_repair_continuation_001",
+  "stage_id": "stage4f_d_cpp_worker_comprehensive_audit_repair_v1_continuation",
+  "status": "do_not_pass"
+}

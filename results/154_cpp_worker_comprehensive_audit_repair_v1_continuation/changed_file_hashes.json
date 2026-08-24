@@ -1,0 +1,14 @@
+{
+  "src/coupling/cpp_physics_ownership_v1/physics_ownership.cpp": "2b202d432203a5cfdf58d7812916bae0a2c1d798a18255ed03011b57c9c11284",
+  "src/coupling/cpp_physics_ownership_v1/physics_ownership_selftest.cpp": "ffb0580cbc215003b5bcc8e1b04fe788a131290f57089afc80fa8b3d2c761493",
+  "src/coupling/cpp_physics_ownership_v1/physics_ownership_worker_main.cpp": "c8292d1681707a6f598d9900d45e415671ac038f9396c8b19806d9b815adee0d",
+  "src/coupling/cpp_worker_persistent_ipc_v1/ancf_kernel.cpp": "1a73ec8c766de28b6bdbc4a1a54d0f435015c2016f53d80fd4ccb160a99c557b",
+  "src/coupling/cpp_worker_persistent_ipc_v1/ancf_kernel.hpp": "88d1d31615fc56ba9aaff5a1d7283de155331d4f14073cd122cd2d8fb9a58857",
+  "src/coupling/cpp_worker_persistent_ipc_v1/ancf_worker_main.cpp": "122bc2d64348262f6e9a044a9a52655fad74f2ed4671126179ee136714fea66d",
+  "src/coupling/cpp_worker_persistent_ipc_v1/kernel_protocol.py": "f5c369d442e8aa193b3721d7a9c186c5c1ae3a91e6ad8e223ae8bdd17e1e5a2f",
+  "src/coupling/cpp_worker_persistent_ipc_v1/protocol.py": "4bdebef4cbedbb5afbb1338bceb33c899e6b0cdb441e059db946544b68905f01",
+  "tests/cpp_worker_comprehensive_audit_repair_v1/test_ownership_worker.py": "fdf7f474f89f44368d173cdfaae452c5ba290c44653ae116ac05dca0e26b9846",
+  "tests/cpp_worker_comprehensive_audit_repair_v1/test_repair_contract.py": "c7f0772a405075ecfb69deabbc87154507b0eefbe85abd6fa05cdbdb0f3b1d71",
+  "tests/cpp_worker_comprehensive_audit_repair_v1/test_transport_worker_hardening.py": "e8ad55d764e0bb153c18b39a4aa7129a30ceda5c95efb1c55213523bb735e1ef",
+  "tools/cpp_worker_comprehensive_audit_repair_v1/generate_continuation_evidence.py": "de1abba605b2ce7e1e03daf3babcc8440e7cd886e5cbbd1baac5a72354345659"
+}
