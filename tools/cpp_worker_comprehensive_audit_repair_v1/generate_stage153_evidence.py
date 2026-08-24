@@ -161,6 +161,35 @@ def main() -> int:
         "generated_at_utc": datetime.now(timezone.utc).isoformat(),
     })
     write("changed_file_hashes.json", changed_hashes)
+    audit_commit = run("git", "rev-parse", "HEAD")
+    parent_commit = run("git", "rev-parse", f"{audit_commit}^")
+    evidence_hashes = {
+        path.name: sha256(path)
+        for path in RESULTS.glob("*.json")
+        if path.name != "git_manifest.json"
+    }
+    write("git_manifest.json", {
+        "branch": run("git", "branch", "--show-current"),
+        "parent_commit": parent_commit,
+        "audit_commit": audit_commit,
+        "annotated_tag": "cfd-ancf-viv-cpp-worker-audit-repair-v1",
+        "tag_target": "the manifest commit created after this audit commit",
+        "changed_files": run("git", "diff", "--name-only", parent_commit, audit_commit).splitlines(),
+        "diff_stat": run("git", "diff", "--stat", parent_commit, audit_commit),
+        "test_commands": [
+            "cmake configure: Visual Studio 17 2022 x64",
+            "cmake --build ... --config Release --parallel 4",
+            "python -m compileall ...",
+            "python -m unittest <Stage 153 focused suite>",
+            "python tools/cpp_physics_ownership_v1/run_fault_injection.py ...",
+            "python tools/cpp_worker_comprehensive_audit_repair_v1/run_ownership_nonzero_base_dual.py ...",
+            "python -m unittest discover -s tests (397 tests, 157 pre-existing import errors)",
+        ],
+        "gate": gate,
+        "evidence_sha256": evidence_hashes,
+        "force_push": False,
+        "main_master_overwritten": False,
+    })
     DOCS.mkdir(parents=True, exist_ok=True)
     report = f'''# Stage 153 C++ Worker 全面审查与修复报告
 
