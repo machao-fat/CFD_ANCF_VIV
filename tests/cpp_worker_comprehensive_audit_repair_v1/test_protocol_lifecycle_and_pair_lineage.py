@@ -19,6 +19,7 @@ from coupling.cpp_worker_persistent_ipc_v1.kernel_protocol import (
     encode_kernel_request,
     validate_kernel_response,
 )
+from coupling.cpp_worker_persistent_ipc_v1 import kernel_protocol
 from coupling.cpp_worker_persistent_ipc_v1.protocol import (
     FrameError,
     HEADER,
@@ -195,6 +196,28 @@ class ProtocolLifecycleAndPairLineageTests(unittest.TestCase):
         ) + b"\0" * 24
         with self.assertRaises(FrameError):
             decode_response(HEADER.pack(b"CFDANCF1", len(raw), 2) + raw)
+
+    def test_response_decoders_reject_oversized_dimension_before_unpack(self) -> None:
+        oversized = 2049
+        run = b"r\0" + b"\0" * 63
+        case = b"c\0" + b"\0" * 63
+        endpoint = b"e\0" + b"\0" * 31
+        legacy_raw = RESPONSE.pack(
+            1, 1, 1, 560, 1, 2_208_750_000, 2.20875, oversized, 0,
+            b"\0" * 32, 2, 1, 1, run, case, endpoint, endpoint,
+        )
+        with self.assertRaises(FrameError):
+            decode_response(HEADER.pack(b"CFDANCF1", len(legacy_raw), 2) + legacy_raw)
+
+        kernel_prefix = kernel_protocol._RESPONSE_PREFIX.pack(
+            1, 1, 1, 560, 1, 2_208_750_000, 2.20875, oversized, 0,
+            1, 0.0, 2, 1, 1,
+        )
+        kernel_raw = kernel_prefix + run + case + endpoint + endpoint + b"\0" * 32
+        with self.assertRaises(kernel_protocol.FrameError):
+            decode_kernel_response(
+                KERNEL_HEADER.pack(b"CFDANCF1", len(kernel_raw), 6) + kernel_raw
+            )
 
     def test_model_rejects_duplicate_explicit_slice_positions(self) -> None:
         model = KernelModel(elements=2, slices=3, slice_positions_m=(0.0, 5.0, 5.0))

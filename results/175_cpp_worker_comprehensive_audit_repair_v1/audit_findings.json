@@ -1,0 +1,23 @@
+{
+  "findings": [
+    {
+      "description": "Legacy and kernel response decoders now bound n before size arithmetic/unpacking.",
+      "id": "RESPONSE_DIMENSION_PRECHECK",
+      "severity": "high",
+      "status": "fixed_and_tested"
+    },
+    {
+      "id": "FULL_MATLAB_CPP_STATE_EQUIVALENCE",
+      "reason": "Strict replay remains 0/40; first independent Newton/internal-force mismatch is step 560.",
+      "severity": "high",
+      "status": "not_proven"
+    },
+    {
+      "id": "BENT_TOP_TENSION_AUTHORITATIVE_DIRECTION",
+      "reason": "No new authoritative physical contract was created.",
+      "severity": "medium",
+      "status": "not_evaluable"
+    }
+  ],
+  "status": "complete_with_strict_numerical_blocker"
+}

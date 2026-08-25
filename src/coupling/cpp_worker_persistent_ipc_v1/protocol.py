@@ -159,7 +159,10 @@ def decode_response(frame: bytes) -> StepResponse:
     if len(raw) < RESPONSE.size:
         raise FrameError("response payload is truncated")
     schema, protocol, sequence, step, bridge, tick, time_s, n, code, digest, tx, request_id, ack, run, case, producer, consumer = RESPONSE.unpack_from(raw)
-    if schema != SCHEMA_VERSION or protocol != PROTOCOL_VERSION or n <= 0:
+    # Bound the decoded vector dimension before computing the payload size or
+    # unpacking values from an untrusted response frame.
+    if (schema != SCHEMA_VERSION or protocol != PROTOCOL_VERSION or
+            n <= 0 or n > MAX_NDOF):
         raise FrameError("response schema or vector length invalid")
     expected = RESPONSE.size + 8 * n * 3
     if len(raw) != expected:

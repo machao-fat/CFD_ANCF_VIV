@@ -1,0 +1,39 @@
+{
+  "architecture": "x64",
+  "cmake": "3.31.6",
+  "compileall": "pass",
+  "compiler": "MSVC 19.44.35228.0",
+  "configuration": "Release",
+  "cpp_selftests": {
+    "ancf_kernel": "pass",
+    "physics_ownership": "pass"
+  },
+  "focused_tests": {
+    "cpp_physics_ownership_v1": {
+      "errors": 0,
+      "failures": 0,
+      "tests": 6
+    },
+    "cpp_worker_comprehensive_audit_repair_v1": {
+      "errors": 0,
+      "failures": 0,
+      "tests": 46
+    },
+    "cpp_worker_persistent_ipc_v1": {
+      "errors": 0,
+      "failures": 0,
+      "tests": 18
+    }
+  },
+  "generator": "Visual Studio 17 2022",
+  "root_unittest": {
+    "command": "CFD_ANCF_STAGE_BUILD=<stage174_response_bounds_build>; python -m unittest discover -v",
+    "errors": 0,
+    "failures": 0,
+    "skipped": 1,
+    "status": "pass",
+    "tests": 1170
+  },
+  "status": "pass",
+  "warning_level": "/W4"
+}

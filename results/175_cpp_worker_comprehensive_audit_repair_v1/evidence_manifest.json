@@ -1,0 +1,19 @@
+{
+  "case_id": "cpp_worker_comprehensive_audit_stage175_case_001",
+  "files": {
+    "results\\175_cpp_worker_comprehensive_audit_repair_v1\\audit_findings.json": "eb108be4fc640ddd5080a3c5dfeac4eb1119616c4a5f8421f4df3d6a0d0a2f55",
+    "results\\175_cpp_worker_comprehensive_audit_repair_v1\\build_and_test_audit.json": "d8b0d909c609bf5299f2faf55eede94df21e54fb9a769d97317c4bca56d66bd6",
+    "results\\175_cpp_worker_comprehensive_audit_repair_v1\\git_preflight.json": "e4ebea378eef0d5bc950ccd4632a8a5025bed36ea8f0a124e712a263ad4a01e0",
+    "results\\175_cpp_worker_comprehensive_audit_repair_v1\\independent_gate.json": "f45601bb7d127ec66fa984926dc0c632e6d85892fdf3ab4a6705412478b09c93",
+    "results\\175_cpp_worker_comprehensive_audit_repair_v1\\numerical_equivalence_report.json": "ebfa18bcf7e15de555e6e100c4cae360a42054c9c812f2085f301f940815bdf9",
+    "results\\175_cpp_worker_comprehensive_audit_repair_v1\\process_cleanup_audit.json": "13731eb26983a7005f8ed896dc9ac8ae7dd195b00688fd94d43808c9a6eeb7c0",
+    "results\\175_cpp_worker_comprehensive_audit_repair_v1\\protection_manifest.json": "7e562adf0589f3bd8ffacfe50cc700963db70bb9dad7f82c7fd6748613f53a09",
+    "results\\175_cpp_worker_comprehensive_audit_repair_v1\\protocol_fault_injection_report.json": "7b38f398f3ff63ff665124d75ff0c5bb300d70acbfa138f7faaa9bf3c98bd9bf",
+    "results\\175_cpp_worker_comprehensive_audit_repair_v1\\repair_manifest.json": "763e6bc8f1801c6e98ec9c19edd4a4721e858327ed72e1f59789193e299abd1e"
+  },
+  "report": {
+    "docs\\175_cpp_worker_comprehensive_audit_repair_v1\\最终报告_中文.md": "e643617e70b0c31bf276eb5aeddfe48232faaf651980ee10003b1817a8c4de8d"
+  },
+  "run_id": "cpp_worker_comprehensive_audit_repair_175_001",
+  "stage_id": "stage4f_d_cpp_worker_comprehensive_audit_repair_v1_stage175"
+}

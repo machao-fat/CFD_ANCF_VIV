@@ -299,7 +299,11 @@ def decode_kernel_response(frame: bytes) -> KernelStepResponse:
         raise FrameError("kernel response payload is truncated")
     (schema, protocol, sequence, step, bridge, tick, time_s, n, code,
      iterations, residual, tx, request_id, ack) = _RESPONSE_PREFIX.unpack_from(raw)
-    if schema != SCHEMA_VERSION or protocol != PROTOCOL_VERSION or n <= 0:
+    # Reject the dimension before calculating vector_count or unpacking any
+    # response arrays.  A malformed frame must not turn the response decoder
+    # into an unbounded allocation path.
+    if (schema != SCHEMA_VERSION or protocol != PROTOCOL_VERSION or
+            n <= 0 or n > MAX_NDOF):
         raise FrameError("kernel response schema or dimension is invalid")
     offset = _RESPONSE_PREFIX.size
     run = _clean(raw[offset:offset + ID_RUN]); offset += ID_RUN
