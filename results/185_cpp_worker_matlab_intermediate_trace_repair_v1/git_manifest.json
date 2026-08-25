@@ -3,19 +3,29 @@
   "run_id": "cpp_worker_matlab_intermediate_trace_001",
   "case_id": "cpp_worker_matlab_intermediate_trace_case_001",
   "branch": "codex/cpp-worker-comprehensive-audit-repair-v1",
-  "parent_commit": "f1c217d",
-  "implementation_commit": null,
-  "tag": null,
+  "parent_commit": "0fb9a57",
+  "implementation_commit": "e24bedf",
+  "tag": "cfd-ancf-viv-cpp-worker-matlab-intermediate-trace-repair-v1-stage185-source-fix",
   "remote": "origin",
   "remote_url": "https://github.com/machao-fat/CFD_ANCF_VIV.git",
-  "push": {"branch": "pending", "tag": "pending", "force_push": false, "history_rewrite": false},
+  "push": {
+    "branch": "pending",
+    "tag": "pending",
+    "force_push": false,
+    "history_rewrite": false
+  },
   "scoped_files": [
     "docs/185_cpp_worker_matlab_intermediate_trace_repair_v1/report_zh.md",
     "results/185_cpp_worker_matlab_intermediate_trace_repair_v1",
     "tools/cpp_worker_matlab_intermediate_trace_repair_v1/export_step560_matlab_intermediate_trace.m",
     "tools/cpp_worker_matlab_intermediate_trace_repair_v1/record_stage185_failure.py"
   ],
-  "excluded_user_files": ["cases/", "references/", "FAKE_PROCESS_SUMMARY.json", "unrelated existing tools and docs"],
+  "excluded_user_files": [
+    "cases/",
+    "references/",
+    "FAKE_PROCESS_SUMMARY.json",
+    "unrelated existing tools and docs"
+  ],
   "changed_file_sha256": {
     "docs/185_cpp_worker_matlab_intermediate_trace_repair_v1/report_zh.md": "f3417ae0761e186e144e1490fb7d33210912d71d03aee160055e2e3a96ef66c6",
     "tools/cpp_worker_matlab_intermediate_trace_repair_v1/export_step560_matlab_intermediate_trace.m": "fdb75567d197486f912b04bb655a0838e1fc53f98ffc7940cd89e77478e7f139",
@@ -33,14 +43,16 @@
     "results/185_cpp_worker_matlab_intermediate_trace_repair_v1/test_and_build_audit.json": "34660f51f326dfdce51e67570b17c34b2f05b3849148cb29a37338e515b782f1"
   },
   "verification": {
-    "matlab_export": "fail_closed: source checkpoint not found",
+    "matlab_export": "not_rerun: corrected exporter awaits new explicit authorization",
     "matlab_start_count": 1,
     "openfoam_start_count": 0,
     "wsl_start_count": 0,
     "cfd_start_count": 0,
     "owned_residual": 0,
+    "source_candidate_contract": "pass_offline",
     "cpp_trace": "not_started",
     "repair": "not_started",
+    "compileall": "pass",
     "gate": "STAGE4F_D_CPP_WORKER_MATLAB_INTERMEDIATE_TRACE_REPAIR_V1_GATE: do_not_pass"
   }
-}
+}\n
