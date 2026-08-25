@@ -15,12 +15,16 @@ from typing import Any
 
 from coupling.cpp_worker_persistent_ipc_v1.kernel_protocol import (
     FrameError,
-    HEADER,
     KernelModel,
     KernelStepRequest,
     decode_kernel_response,
     encode_kernel_request,
     validate_kernel_response,
+)
+from coupling.cpp_worker_persistent_ipc_v1.protocol import (
+    HEADER as IPC_HEADER, INITIALIZE_ACK, MESSAGE_INITIALIZE, MESSAGE_INITIALIZE_ACK,
+    MESSAGE_SHUTDOWN, SCHEMA_VERSION, PROTOCOL_VERSION, WORKER_ROLE,
+    canonical_tick_delta, encode_control,
 )
 
 
@@ -39,7 +43,7 @@ class Mapping:
         bridge = int(global_step) - self.source_step
         if bridge <= 0:
             raise ConfirmError("global step is before the accepted source")
-        tick_step = round(self.dt_s * 1_000_000_000)
+        tick_step = canonical_tick_delta(self.dt_s)
         return bridge, self.source_time_s + bridge * self.dt_s, self.source_tick + bridge * tick_step
 
 
@@ -60,8 +64,13 @@ def _sha_vectors(*vectors: tuple[float, ...]) -> str:
 
 
 class KernelWorker:
+    PRODUCTION_WORKER_NAMES = frozenset({
+        "cfd_ancf_ancf_kernel_worker.exe", "cfd_ancf_ancf_kernel_worker",
+    })
+
     def __init__(self, executable: Path, runtime: Path, run_id: str, case_id: str,
-                 timeout_s: float = 30.0) -> None:
+                 timeout_s: float = 30.0,
+                 expected_model_contract_sha256: str | None = None) -> None:
         if not isinstance(timeout_s, (int, float)) or isinstance(timeout_s, bool) or not math.isfinite(float(timeout_s)) or timeout_s <= 0.0:
             raise ConfirmError("C++ worker timeout must be a positive finite value")
         self.executable = executable.resolve()
@@ -69,9 +78,99 @@ class KernelWorker:
         self.run_id = run_id
         self.case_id = case_id
         self.timeout_s = float(timeout_s)
+        if (expected_model_contract_sha256 is not None and
+                (not isinstance(expected_model_contract_sha256, str) or
+                 len(expected_model_contract_sha256) != 64 or
+                 any(char not in "0123456789abcdefABCDEF" for char in expected_model_contract_sha256))):
+            raise ConfirmError("expected C++ model contract hash is invalid")
+        self.expected_model_contract_sha256 = (expected_model_contract_sha256.lower()
+                                               if expected_model_contract_sha256 is not None else None)
         self.process: subprocess.Popen[bytes] | None = None
         self.start_count = 0
         self.audit: dict[str, Any] = {}
+
+    def _read_frame_bounded(self, expected_type: int) -> bytes:
+        process = self.process
+        if process is None or process.stdout is None:
+            raise ConfirmError("C++ worker stdout is unavailable")
+        result_queue: queue.Queue[tuple[bytes | None, BaseException | None]] = queue.Queue(maxsize=1)
+
+        def read_frame() -> None:
+            try:
+                def read_exact(size: int) -> bytes:
+                    chunks: list[bytes] = []
+                    remaining = size
+                    while remaining:
+                        chunk = process.stdout.read(remaining)
+                        if not chunk:
+                            break
+                        chunks.append(chunk)
+                        remaining -= len(chunk)
+                    return b"".join(chunks)
+
+                header = read_exact(IPC_HEADER.size)
+                if len(header) != IPC_HEADER.size:
+                    raise ConfirmError("C++ worker disconnected before response")
+                magic, length, message_type = IPC_HEADER.unpack(header)
+                if magic != b"CFDANCF1" or message_type != expected_type or length > 64 * 1024 * 1024:
+                    raise ConfirmError("C++ worker response frame is invalid")
+                body = read_exact(length)
+                if len(body) != length:
+                    raise ConfirmError("C++ worker response is truncated")
+                result_queue.put((header + body, None))
+            except BaseException as error:
+                result_queue.put((None, error))
+
+        threading.Thread(target=read_frame, name="cpp-worker-response-reader", daemon=True).start()
+        try:
+            frame, error = result_queue.get(timeout=self.timeout_s)
+        except queue.Empty as exc:
+            self._record_failure("worker_timeout", TimeoutError(
+                f"C++ worker response exceeded {self.timeout_s:g}s"))
+            raise ConfirmError(f"C++ worker response exceeded {self.timeout_s:g}s") from exc
+        if error is not None:
+            raise error
+        if frame is None:
+            raise ConfirmError("C++ worker response frame is missing")
+        return frame
+
+    def _abort_owned_process(self, classification: str) -> None:
+        process = self.process
+        if process is None:
+            return
+        if "failure_classification" not in self.audit:
+            self._record_failure(classification, RuntimeError(classification))
+        try:
+            poll = getattr(process, "poll", lambda: None)
+            if poll() is None:
+                terminate = getattr(process, "terminate", None)
+                wait = getattr(process, "wait", None)
+                if callable(terminate):
+                    terminate()
+                if callable(wait):
+                    wait(timeout=5)
+        except (OSError, subprocess.TimeoutExpired):
+            try:
+                kill = getattr(process, "kill", None)
+                wait = getattr(process, "wait", None)
+                if callable(kill):
+                    kill()
+                if callable(wait):
+                    wait(timeout=5)
+            except (OSError, subprocess.TimeoutExpired) as exc:
+                self._record_failure("cleanup_kill", exc)
+        for stream in (getattr(process, "stdin", None), getattr(process, "stdout", None),
+                       getattr(process, "stderr", None)):
+            if stream is not None:
+                try:
+                    stream.close()
+                except (OSError, ValueError):
+                    pass
+        poll_value = getattr(process, "poll", lambda: 0)()
+        self.audit.update({"end_time_ns": time.time_ns(), "return_code": getattr(process, "returncode", poll_value),
+                           "cleanup_result": "aborted" if poll_value is not None else "residual",
+                           "owned_residual": 0 if poll_value is not None else 1})
+        self.process = None
 
     def _record_failure(self, classification: str, error: BaseException) -> None:
         self.audit["failure_classification"] = classification
@@ -82,17 +181,48 @@ class KernelWorker:
             raise ConfirmError("C++ worker duplicate start")
         if not self.executable.is_file():
             raise ConfirmError(f"C++ kernel worker missing: {self.executable}")
+        if self.executable.name.lower() not in self.PRODUCTION_WORKER_NAMES:
+            raise ConfirmError("production coordinator may only launch the full ANCF kernel worker")
         self.runtime.mkdir(parents=True, exist_ok=True)
+        environment = os.environ.copy()
+        if self.expected_model_contract_sha256 is not None:
+            environment["CFD_ANCF_EXPECTED_MODEL_CONTRACT_SHA256"] = self.expected_model_contract_sha256
+        else:
+            environment.pop("CFD_ANCF_EXPECTED_MODEL_CONTRACT_SHA256", None)
         self.process = subprocess.Popen(
             [str(self.executable)], stdin=subprocess.PIPE, stdout=subprocess.PIPE,
-            stderr=subprocess.PIPE, cwd=str(self.runtime),
+            stderr=subprocess.PIPE, cwd=str(self.runtime), env=environment,
         )
         self.start_count = 1
         self.audit = {
             "component": "cpp_ancf_kernel_worker", "pid": int(self.process.pid),
             "parent_pid": os.getpid(), "command_line": [str(self.executable)],
             "cwd": str(self.runtime), "owned": True, "start_time_ns": time.time_ns(),
+            "expected_model_contract_sha256": self.expected_model_contract_sha256,
         }
+        try:
+            self.process.stdin.write(encode_control(MESSAGE_INITIALIZE))
+            self.process.stdin.flush()
+            frame = self._read_frame_bounded(MESSAGE_INITIALIZE_ACK)
+            body = frame[IPC_HEADER.size:]
+            if len(body) != INITIALIZE_ACK.size:
+                raise ConfirmError("C++ worker initialization acknowledgement length is invalid")
+            schema, protocol, message_type, role = INITIALIZE_ACK.unpack(body)
+            if b"\0" not in role:
+                raise ConfirmError("C++ worker role acknowledgement is not terminated")
+            role_raw, role_tail = role.split(b"\0", 1)
+            if not role_raw or any(role_tail):
+                raise ConfirmError("C++ worker role acknowledgement has invalid padding")
+            role_value = role_raw.decode("ascii")
+            if (schema != SCHEMA_VERSION or protocol != PROTOCOL_VERSION or
+                    message_type != MESSAGE_INITIALIZE_ACK or role_value != WORKER_ROLE):
+                raise ConfirmError("C++ worker initialization acknowledgement is invalid")
+            self.audit["worker_role"] = role_value
+        except Exception as exc:
+            self._abort_owned_process("worker_startup_handshake")
+            if isinstance(exc, ConfirmError):
+                raise
+            raise ConfirmError(str(exc)) from exc
 
     def step(self, request: KernelStepRequest):
         if self.process is None or self.process.stdin is None or self.process.stdout is None:
@@ -104,46 +234,25 @@ class KernelWorker:
             # ``Popen.stdout.read`` has no portable timeout on Windows pipes.
             # Read the complete frame on a daemon thread and make the caller's
             # bounded segment fail closed when the worker stops responding.
-            result_queue: queue.Queue[tuple[bytes | None, BaseException | None]] = queue.Queue(maxsize=1)
-
-            def read_frame() -> None:
-                try:
-                    header = self.process.stdout.read(HEADER.size)
-                    if len(header) != HEADER.size:
-                        raise ConfirmError("C++ worker disconnected before response")
-                    _magic, length, message_type = HEADER.unpack(header)
-                    if message_type != 6 or length > 64 * 1024 * 1024:
-                        raise ConfirmError("C++ worker response frame is invalid")
-                    body = self.process.stdout.read(length)
-                    if len(body) != length:
-                        raise ConfirmError("C++ worker response is truncated")
-                    result_queue.put((header + body, None))
-                except BaseException as error:
-                    result_queue.put((None, error))
-
-            threading.Thread(target=read_frame, name="cpp-worker-response-reader", daemon=True).start()
-            try:
-                frame, error = result_queue.get(timeout=self.timeout_s)
-            except queue.Empty as exc:
-                self._record_failure("worker_timeout", TimeoutError(
-                    f"C++ worker response exceeded {self.timeout_s:g}s"))
-                raise ConfirmError(self.audit["last_error"]) from exc
-            if error is not None:
-                raise error
-            if frame is None:
-                raise ConfirmError("C++ worker response frame is missing")
+            frame = self._read_frame_bounded(6)
             response = decode_kernel_response(frame)
             validate_kernel_response(request, response)
         except FrameError as exc:
             self._record_failure("protocol_validation", exc)
+            if self.process is not None:
+                self._abort_owned_process("worker_protocol_failure")
             raise ConfirmError(str(exc)) from exc
         except ConfirmError:
             # Preserve a precise timeout/disconnect classification already
             # recorded by the bounded reader instead of relabeling it as a
             # generic transport failure.
+            if self.process is not None:
+                self._abort_owned_process("worker_protocol_failure")
             raise
         except Exception as exc:
             self._record_failure("worker_transport", exc)
+            if self.process is not None:
+                self._abort_owned_process("worker_transport_failure")
             raise
         return response
 
@@ -152,7 +261,9 @@ class KernelWorker:
         if process is None:
             return
         try:
-            if process.stdin is not None:
+            if process.poll() is None and process.stdin is not None:
+                process.stdin.write(encode_control(MESSAGE_SHUTDOWN))
+                process.stdin.flush()
                 process.stdin.close()
             process.wait(timeout=5)
         except (OSError, subprocess.TimeoutExpired):
@@ -175,6 +286,7 @@ class KernelWorker:
                 self._record_failure("audit_stream_read", exc)
         self.audit.update({"end_time_ns": time.time_ns(), "return_code": process.returncode,
                            "cleanup_result": "closed" if process.returncode == 0 else "closed_nonzero",
+                           "owned_residual": 0 if process.poll() is not None else 1,
                            "stdout": stream_text["stdout"], "stderr": stream_text["stderr"]})
         for stream in (process.stdout, process.stderr):
             if stream is not None:

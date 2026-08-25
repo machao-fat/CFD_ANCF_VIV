@@ -15,7 +15,6 @@ int main() {
           0xba,0x78,0x16,0xbf,0x8f,0x01,0xcf,0xea,0x41,0x41,0x40,0xde,0x5d,0xae,0x22,0x23,
           0xb0,0x03,0x61,0xa3,0x96,0x17,0x7a,0x9c,0xb4,0x10,0xff,0x61,0xf2,0x00,0x15,0xad}) return 1;
   cfd_ancf::Model model;
-  model.include_gravity = false; model.include_buoyancy = false;
   model.top_tension_N = 0.0;
   model.newton_tolerance = 1.0e-4;
   auto state = cfd_ancf::make_reference_state(model);
@@ -69,10 +68,26 @@ int main() {
   invalid_mass_rule.mass_gauss_order = 7;
   try { cfd_ancf::validate_model(invalid_mass_rule); return 2; }
   catch (const std::invalid_argument&) {}
+  auto invalid_physics_switch = explicit_contract;
+  invalid_physics_switch.include_gravity = false;
+  try {
+    cfd_ancf::validate_model(invalid_physics_switch);
+    return 2;
+  } catch (const std::invalid_argument&) {
+    // The wire contract cannot represent disabling an owned physics term.
+  }
   auto invalid_boundary = explicit_contract;
   invalid_boundary.fixed_dof[1] = invalid_boundary.fixed_dof[0];
   try { cfd_ancf::validate_model(invalid_boundary); return 2; }
   catch (const std::invalid_argument&) {}
+  auto mismatched_boundary_semantics = explicit_contract;
+  mismatched_boundary_semantics.prescribed_values.back() = 1.0;
+  try {
+    cfd_ancf::validate_model(mismatched_boundary_semantics);
+    return 2;
+  } catch (const std::invalid_argument&) {
+    // The canonical boundary identity is bound to the five zero values.
+  }
   auto diagnostics = cfd_ancf::advance(state, model, force);
   if (!diagnostics.converged || !cfd_ancf::finite(state) || state.step != 1 || !std::isfinite(state.residual)) return 2;
   force[1] = 1.0e-3;

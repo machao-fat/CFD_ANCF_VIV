@@ -1,6 +1,7 @@
 #include "ancf_kernel.hpp"
 #include "sha256.hpp"
 
+#include <algorithm>
 #include <array>
 #include <cmath>
 #include <cstdint>
@@ -30,6 +31,7 @@ constexpr std::uint32_t SCHEMA = 1;
 constexpr std::uint32_t PROTOCOL = 1;
 constexpr std::uint32_t STEP_REQUEST = 5;
 constexpr std::uint32_t STEP_RESPONSE = 6;
+constexpr std::uint32_t INITIALIZE_ACK = 7;
 constexpr std::size_t ID_RUN = 64;
 constexpr std::size_t ID_CASE = 64;
 constexpr std::size_t ID_ENDPOINT = 32;
@@ -37,6 +39,7 @@ constexpr std::size_t ID_BOUNDARY = 64;
 constexpr std::int32_t EXTENDED_LAYOUT_MARKER = 0x314C5845;
 constexpr char REQUEST_PRODUCER[] = "python_scheduler";
 constexpr char REQUEST_CONSUMER[] = "cpp_ancf_kernel_worker";
+constexpr char WORKER_ROLE[] = "cfd_ancf_kernel_worker_v1";
 
 template <class T>
 bool take(const std::vector<char>& payload, std::size_t& offset, T& value) {
@@ -72,6 +75,23 @@ bool valid_c_string(const char* value, std::size_t size) {
   return terminated;
 }
 
+bool decode_sha256_hex(const char* text, std::array<unsigned char, 32>& digest) {
+  if (text == nullptr || std::strlen(text) != 64) return false;
+  auto nibble = [](char value) -> int {
+    if (value >= '0' && value <= '9') return value - '0';
+    if (value >= 'a' && value <= 'f') return value - 'a' + 10;
+    if (value >= 'A' && value <= 'F') return value - 'A' + 10;
+    return -1;
+  };
+  for (std::size_t index = 0; index < digest.size(); ++index) {
+    const int high = nibble(text[2 * index]);
+    const int low = nibble(text[2 * index + 1]);
+    if (high < 0 || low < 0) return false;
+    digest[index] = static_cast<unsigned char>((high << 4) | low);
+  }
+  return true;
+}
+
 std::string string_value(const char* value, std::size_t size) {
   std::size_t length = 0;
   while (length < size && value[length] != '\0') ++length;
@@ -97,11 +117,24 @@ bool next_tick(std::uint64_t previous, double dt_s, std::uint64_t& result) {
   if (!std::isfinite(dt_s) || dt_s <= 0.0) return false;
   const long double raw = static_cast<long double>(dt_s) * 1000000000.0L;
   if (!std::isfinite(static_cast<double>(raw)) || raw < 0.0L ||
-      raw > static_cast<long double>((std::numeric_limits<std::uint64_t>::max)())) return false;
+      raw > static_cast<long double>((std::numeric_limits<long long>::max)())) return false;
   const auto delta = static_cast<std::uint64_t>(std::llround(raw));
-  if (delta == 0u || std::abs(raw - static_cast<long double>(delta)) > 1.0e-9L) return false;
+  if (delta == 0u || std::abs(raw - static_cast<long double>(delta)) > 1.0e-12L) return false;
   if (previous > (std::numeric_limits<std::uint64_t>::max)() - delta) return false;
   result = previous + delta;
+  return true;
+}
+
+bool canonical_time_tick(double time_s, std::uint64_t& result) {
+  if (!std::isfinite(time_s) || time_s < 0.0) return false;
+  const long double raw = static_cast<long double>(time_s) * 1000000000.0L;
+  // std::llround returns signed long long; reject values outside that domain
+  // before conversion instead of relying on implementation-defined behavior.
+  if (!std::isfinite(static_cast<double>(raw)) ||
+      raw > static_cast<long double>((std::numeric_limits<long long>::max)())) return false;
+  const auto rounded = std::llround(raw);
+  if (rounded < 0 || std::abs(raw - static_cast<long double>(rounded)) > 1.0e-12L) return false;
+  result = static_cast<std::uint64_t>(rounded);
   return true;
 }
 
@@ -156,6 +189,8 @@ int process_step(const std::vector<char>& payload, std::vector<char>& response,
                  std::int32_t& expected_slices,
                  std::array<unsigned char, 32>& expected_model_digest,
                  int& lineage_mode,
+                 std::array<unsigned char, 32>& expected_full_contract_digest,
+                 const std::array<unsigned char, 32>* external_contract_digest,
                  std::unordered_set<std::uint64_t>& seen_request_ids,
                  std::unordered_set<std::uint64_t>& seen_transaction_ids) {
   std::size_t offset = 0;
@@ -176,11 +211,15 @@ int process_step(const std::vector<char>& payload, std::vector<char>& response,
       gauss_order != 3 && gauss_order != 5 || max_newton <= 0 || dt_s <= 0.0 || !std::isfinite(time_s) ||
       !std::isfinite(dt_s) || n != 6 * (elements + 1)) return 3;
   if (time_s < 0.0 || time_s > 1.0e9) return 3;
-  const auto request_tick = static_cast<std::uint64_t>(std::llround(time_s * 1.0e9));
-  if (global_step <= 0 || bridge_step <= 0 || integer_tick != request_tick || time_s < dt_s ||
+  std::uint64_t request_tick = 0;
+  if (!canonical_time_tick(time_s, request_tick) ||
+      global_step <= 0 || bridge_step <= 0 || integer_tick != request_tick || time_s < dt_s ||
       (expected_sequence == 1 && bridge_step != 1)) return 3;
   if (request_id == 0 || transaction_id == 0 || seen_request_ids.count(request_id) != 0 ||
       seen_transaction_ids.count(transaction_id) != 0) return 18;
+  constexpr std::size_t max_seen_identities = 100000;
+  if (seen_request_ids.size() >= max_seen_identities ||
+      seen_transaction_ids.size() >= max_seen_identities) return 19;
 
   const std::size_t model_start = offset;
   cfd_ancf::Model model;
@@ -201,18 +240,26 @@ int process_step(const std::vector<char>& payload, std::vector<char>& response,
   bool explicit_contract = false;
   std::int32_t layout_marker = 0;
   constexpr std::size_t extension_header = sizeof(layout_marker) + sizeof(mass_gauss_order) + sizeof(fixed_count) + ID_BOUNDARY;
+  if (offset <= payload.size() && sizeof(layout_marker) <= payload.size() - offset) {
+    std::memcpy(&layout_marker, payload.data() + offset, sizeof(layout_marker));
+    if (layout_marker == EXTENDED_LAYOUT_MARKER &&
+        (extension_header > payload.size() - offset)) return 4;
+  }
   if (offset <= payload.size() && extension_header <= payload.size() - offset) {
     std::memcpy(&layout_marker, payload.data() + offset, sizeof(layout_marker));
-    const std::size_t extension_offset = layout_marker == EXTENDED_LAYOUT_MARKER ? offset + sizeof(layout_marker) : offset;
+    const bool marker_present = layout_marker == EXTENDED_LAYOUT_MARKER;
+    const std::size_t extension_offset = marker_present ? offset + sizeof(layout_marker) : offset;
     const std::size_t legacy_header = sizeof(mass_gauss_order) + sizeof(fixed_count) + ID_BOUNDARY;
     if (extension_offset <= payload.size() && legacy_header <= payload.size() - extension_offset) {
       std::memcpy(&mass_gauss_order, payload.data() + extension_offset, sizeof(mass_gauss_order));
       std::memcpy(&fixed_count, payload.data() + extension_offset + sizeof(mass_gauss_order), sizeof(fixed_count));
       std::memcpy(boundary_id.data(), payload.data() + extension_offset + sizeof(mass_gauss_order) + sizeof(fixed_count), boundary_id.size());
-      explicit_contract = (layout_marker == EXTENDED_LAYOUT_MARKER ||
-                           ((mass_gauss_order == 3 || mass_gauss_order == 5) && fixed_count > 0 && fixed_count <= n &&
-                            valid_c_string(boundary_id.data(), boundary_id.size())));
-      if (explicit_contract && layout_marker == EXTENDED_LAYOUT_MARKER) offset += sizeof(layout_marker);
+      const bool fields_valid = (mass_gauss_order == 3 || mass_gauss_order == 5) &&
+                                fixed_count > 0 && fixed_count <= n &&
+                                valid_c_string(boundary_id.data(), boundary_id.size());
+      if (marker_present && !fields_valid) return 4;
+      explicit_contract = marker_present || fields_valid;
+      if (marker_present) offset += sizeof(layout_marker);
     }
   }
   if (explicit_contract) {
@@ -320,7 +367,7 @@ int process_step(const std::vector<char>& payload, std::vector<char>& response,
       if (global_step == expected_global_step + 1 && bridge_step == expected_bridge_step + 1 &&
           next_tick(expected_tick, expected_dt_s, expected_next_tick) &&
           integer_tick == expected_next_tick &&
-          integer_tick == static_cast<std::uint64_t>(std::llround(time_s * 1.0e9)) &&
+           canonical_time_tick(time_s, request_tick) && integer_tick == request_tick &&
           std::abs(time_s - (expected_time_s + expected_dt_s)) <= 1.0e-12 &&
           std::abs(dt_s - expected_dt_s) <= 1.0e-15) {
         lineage_mode = 1;
@@ -337,7 +384,7 @@ int process_step(const std::vector<char>& payload, std::vector<char>& response,
     if (global_step != expected_global_step + 1 || bridge_step != expected_bridge_step + 1 ||
         !next_tick(expected_tick, expected_dt_s, expected_next_tick) ||
         integer_tick != expected_next_tick ||
-        integer_tick != static_cast<std::uint64_t>(std::llround(time_s * 1.0e9)) ||
+         !canonical_time_tick(time_s, request_tick) || integer_tick != request_tick ||
         std::abs(time_s - (expected_time_s + expected_dt_s)) > 1.0e-12 ||
         std::abs(dt_s - expected_dt_s) > 1.0e-15) {
       std::cerr << "worker identity continuity mismatch at sequence " << sequence << '\n';
@@ -371,6 +418,21 @@ int process_step(const std::vector<char>& payload, std::vector<char>& response,
       payload.begin() + static_cast<std::ptrdiff_t>(model_end));
   std::array<unsigned char, 32> model_digest{};
   if (!cfd_ancf::wire::sha256_bytes(model_bytes, model_digest)) return 15;
+  if (mass_n == 0 && external_contract_digest != nullptr) return 15;
+  const std::size_t mass_count_for_hash = mass_n == 0 ? 0u : static_cast<std::size_t>(mass_n) * static_cast<std::size_t>(mass_n);
+  const std::size_t mass_offset = 4u * static_cast<std::size_t>(n);
+  if (mass_offset > input.size() || mass_count_for_hash > input.size() - mass_offset) return 15;
+  std::vector<unsigned char> contract_bytes = model_bytes;
+  if (mass_count_for_hash != 0u) {
+    const auto* mass_begin = reinterpret_cast<const unsigned char*>(input.data() + mass_offset);
+    contract_bytes.insert(contract_bytes.end(), mass_begin,
+                          mass_begin + mass_count_for_hash * sizeof(double));
+  }
+  std::array<unsigned char, 32> contract_digest{};
+  if (!cfd_ancf::wire::sha256_bytes(contract_bytes, contract_digest)) return 15;
+  if (expected_sequence == 1) expected_full_contract_digest = contract_digest;
+  else if (contract_digest != expected_full_contract_digest) return 16;
+  if (external_contract_digest != nullptr && contract_digest != *external_contract_digest) return 15;
   if (expected_sequence == 1) expected_model_digest = model_digest;
   else if (model_digest != expected_model_digest) {
     std::cerr << "worker model digest mismatch at sequence " << sequence << '\n';
@@ -487,6 +549,28 @@ int main() {
   std::int32_t expected_n = 0, expected_elements = 0, expected_slices = 0;
   int lineage_mode = 0;
   std::array<unsigned char, 32> expected_model_digest{};
+  std::array<unsigned char, 32> expected_full_contract_digest{};
+  std::array<unsigned char, 32> expected_contract_digest{};
+  std::string expected_contract_text;
+  bool has_expected_contract = false;
+#ifdef _WIN32
+  char* raw_expected_contract = nullptr;
+  std::size_t raw_expected_contract_size = 0;
+  if (_dupenv_s(&raw_expected_contract, &raw_expected_contract_size,
+                "CFD_ANCF_EXPECTED_MODEL_CONTRACT_SHA256") != 0) return 25;
+  if (raw_expected_contract != nullptr) {
+    has_expected_contract = true;
+    expected_contract_text.assign(raw_expected_contract);
+    std::free(raw_expected_contract);
+  }
+#else
+  const char* raw_expected_contract = std::getenv("CFD_ANCF_EXPECTED_MODEL_CONTRACT_SHA256");
+  if (raw_expected_contract != nullptr) {
+    has_expected_contract = true;
+    expected_contract_text.assign(raw_expected_contract);
+  }
+#endif
+  if (has_expected_contract && !decode_sha256_hex(expected_contract_text.c_str(), expected_contract_digest)) return 25;
   std::unordered_set<std::uint64_t> seen_request_ids, seen_transaction_ids;
   bool initialized = false;
   while (true) {
@@ -501,6 +585,23 @@ int main() {
     if (message_type == 4) {
       if (length != 0 || initialized) return 4;
       initialized = true;
+      // Explicitly identify the full ANCF worker before any step is accepted.
+      // This prevents the legacy transport-only executable from being used by
+      // the production coordinator while retaining the direct-worker legacy
+      // entry point for low-level protocol tests.
+      std::array<char, 32> role{};
+      std::memcpy(role.data(), WORKER_ROLE,
+                  (std::min)(std::strlen(WORKER_ROLE), role.size() - 1));
+      std::vector<char> hello;
+      append(hello, SCHEMA); append(hello, PROTOCOL); append(hello, INITIALIZE_ACK);
+      hello.insert(hello.end(), role.begin(), role.end());
+      const auto hello_length = static_cast<std::uint32_t>(hello.size());
+      std::cout.write(MAGIC.data(), MAGIC.size());
+      std::cout.write(reinterpret_cast<const char*>(&hello_length), sizeof(hello_length));
+      std::cout.write(reinterpret_cast<const char*>(&INITIALIZE_ACK), sizeof(INITIALIZE_ACK));
+      std::cout.write(hello.data(), static_cast<std::streamsize>(hello.size()));
+      std::cout.flush();
+      if (!std::cout) return OUTPUT_WRITE_FAILURE;
       continue;
     }
     if (message_type != STEP_REQUEST) return 5;
@@ -516,6 +617,8 @@ int main() {
                             expected_global_step, expected_bridge_step, expected_tick,
                             expected_time_s, expected_dt_s, expected_n, expected_elements,
                             expected_slices, expected_model_digest, lineage_mode,
+                            expected_full_contract_digest,
+                            has_expected_contract ? &expected_contract_digest : nullptr,
                             seen_request_ids, seen_transaction_ids);
     } catch (const std::exception& error) {
       std::cerr << "worker exception: " << error.what() << '\n';

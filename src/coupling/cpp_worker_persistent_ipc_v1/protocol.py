@@ -16,6 +16,9 @@ MESSAGE_STEP_REQUEST = 1
 MESSAGE_STEP_RESPONSE = 2
 MESSAGE_SHUTDOWN = 3
 MESSAGE_INITIALIZE = 4
+MESSAGE_INITIALIZE_ACK = 7
+WORKER_ROLE = "cfd_ancf_kernel_worker_v1"
+INITIALIZE_ACK = struct.Struct("<III32s")
 ID_RUN = 64
 ID_CASE = 64
 ID_ENDPOINT = 32
@@ -52,14 +55,22 @@ def canonical_integer_tick(time_s: float) -> int:
 
 
 def canonical_tick_delta(dt_s: float) -> int:
-    """Return one wire tick and reject sub-nanosecond step ambiguity."""
+    """Return the C++ ``llround(dt_s * 1e9)`` wire delta.
+
+    The wire conversion itself preserves the full llround domain, including
+    fractional-nanosecond inputs used by contract tests.  Callers that model
+    a progressing lineage must additionally require a strictly positive
+    result; a zero delta is not a valid advancing simulation step.
+    """
     _finite(dt_s, "dt_s")
     if dt_s <= 0.0:
         raise FrameError("dt_s must be positive")
     raw = float(dt_s) * 1.0e9
+    if not math.isfinite(raw) or raw < 0.0 or raw > float(MAX_UINT64):
+        raise FrameError("dt_s is outside integer_tick range")
     delta = int(math.floor(raw + 0.5))
-    if abs(raw - float(delta)) > 1.0e-9 or delta <= 0 or delta > MAX_UINT64:
-        raise FrameError("dt_s does not map to an unambiguous integer tick")
+    if delta < 0 or delta > MAX_UINT64:
+        raise FrameError("dt_s does not map to an integer tick")
     return delta
 
 

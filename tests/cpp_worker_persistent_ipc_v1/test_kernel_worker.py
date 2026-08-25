@@ -2,6 +2,7 @@ from __future__ import annotations
 
 import subprocess
 import struct
+import os
 import unittest
 from pathlib import Path
 
@@ -9,6 +10,7 @@ from coupling.cpp_worker_persistent_ipc_v1.kernel_protocol import (
     HEADER, KernelModel, KernelStepRequest, decode_kernel_response,
     encode_kernel_request, validate_kernel_response,
 )
+from coupling.cpp_worker_confirm_v1.cpp_adapter import _model_contract_sha256
 from coupling.cpp_worker_persistent_ipc_v1.protocol import FrameError, encode_control, MESSAGE_SHUTDOWN
 
 
@@ -38,6 +40,42 @@ def request(sequence: int, global_step: int) -> KernelStepRequest:
 
 
 class KernelWorkerTests(unittest.TestCase):
+    def test_external_model_contract_lock_is_enforced(self) -> None:
+        model = KernelModel(elements=1, slices=1, newton_tolerance=1.0e-4)
+        n = model.ndof
+        q = [0.0] * n
+        for node in range(model.elements + 1):
+            q[6 * node + 2] = node * model.length_m / model.elements
+            q[6 * node + 5] = 1.0
+        mass = tuple(1.0 if row == col else 0.0 for row in range(n) for col in range(n))
+        value = KernelStepRequest(
+            sequence=1, global_step=1, case_local_bridge_step=1,
+            integer_tick=1_000_000, time_s=0.001, dt_s=0.001,
+            request_id=1, transaction_id=2, run_id="lock_run", case_id="lock_case",
+            model=model, q=tuple(q), qdot=(0.0,) * n, qddot=(0.0,) * n,
+            base_load=(0.0,) * n, slice_force=(0.0,) * 3, mass_matrix=mass)
+        expected = _model_contract_sha256(model, mass)
+        process = subprocess.Popen(
+            [str(WORKER)], stdin=subprocess.PIPE, stdout=subprocess.PIPE, stderr=subprocess.PIPE,
+            env={**os.environ, "CFD_ANCF_EXPECTED_MODEL_CONTRACT_SHA256": expected},
+        )
+        try:
+            assert process.stdin is not None and process.stdout is not None
+            process.stdin.write(encode_kernel_request(value)); process.stdin.flush()
+            header = process.stdout.read(HEADER.size)
+            body = process.stdout.read(HEADER.unpack(header)[1])
+            response = decode_kernel_response(header + body)
+            validate_kernel_response(value, response)
+            process.stdin.write(encode_control(MESSAGE_SHUTDOWN)); process.stdin.flush()
+            process.stdin.close(); process.wait(timeout=5)
+            self.assertEqual(process.returncode, 0)
+        finally:
+            if process.poll() is None:
+                process.terminate(); process.wait(timeout=5)
+            for stream in (process.stdin, process.stdout, process.stderr):
+                if stream is not None and not stream.closed:
+                    stream.close()
+
     def test_persistent_kernel_worker_processes_two_steps(self) -> None:
         self.assertTrue(WORKER.is_file(), "kernel worker must be built before this test")
         process = subprocess.Popen([str(WORKER)], stdin=subprocess.PIPE, stdout=subprocess.PIPE, stderr=subprocess.PIPE)

@@ -65,7 +65,53 @@ class CppConfirmTests(unittest.TestCase):
         with self.assertRaises(ConfirmError):
             worker.step(request)
         self.assertEqual(worker.audit["failure_classification"], "worker_timeout")
+        self.assertIsNone(worker.process)
+        self.assertEqual(worker.audit["owned_residual"], 0)
         stream.release.set()
+
+    def test_production_worker_rejects_transport_only_executable(self) -> None:
+        executable = (Path(__file__).resolve().parents[2] / "runtime" /
+                      "cpp_worker_persistent_ipc_v1" / "build-release" /
+                      "cfd_ancf_cpp_worker.exe")
+        worker = KernelWorker(executable, Path(tempfile.mkdtemp()), "run", "case")
+        with self.assertRaises(ConfirmError):
+            worker.start()
+        self.assertIsNone(worker.process)
+
+    def test_protocol_error_aborts_owned_process(self) -> None:
+        class Stream:
+            def __init__(self, data=b""):
+                self.data = data
+            def write(self, _value): return None
+            def flush(self): return None
+            def read(self, size):
+                value, self.data = self.data[:size], self.data[size:]
+                return value
+            def close(self): return None
+
+        class Process:
+            def __init__(self):
+                self.stdin = Stream(); self.stdout = Stream(b"BADMAGIC" + b"\0" * 8)
+                self.stderr = Stream(); self.pid = 12346; self.returncode = -1; self.ended = False
+            def poll(self): return self.returncode if self.ended else None
+            def terminate(self): self.ended = True
+            def wait(self, timeout=None): self.ended = True; return self.returncode
+            def kill(self): self.ended = True
+
+        worker = KernelWorker(Path(__file__), Path(tempfile.mkdtemp()), "run", "case")
+        process = Process(); worker.process = process
+        model, q, qdot, qddot, base_load = _fixture()
+        request = KernelStepRequest(
+            sequence=1, global_step=560, case_local_bridge_step=1,
+            integer_tick=2_208_750_000, time_s=2.20875, dt_s=0.00125,
+            request_id=1, transaction_id=2, run_id="run", case_id="case",
+            model=model, q=q, qdot=qdot, qddot=qddot, base_load=base_load,
+            slice_force=(0.0,) * (3 * model.slices),
+        )
+        with self.assertRaises(ConfirmError):
+            worker.step(request)
+        self.assertIsNone(worker.process)
+        self.assertEqual(worker.audit["owned_residual"], 0)
 
     def test_mock_confirm_has_one_worker_and_three_slice_starts(self) -> None:
         with tempfile.TemporaryDirectory() as directory:

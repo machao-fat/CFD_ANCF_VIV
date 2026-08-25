@@ -14,6 +14,7 @@ using Vec4 = std::array<double, 4>;
 using Mat3 = std::array<double, 9>;
 constexpr double EPS = 1.0e-24;
 constexpr double PI = 3.141592653589793238462643383279502884;
+constexpr char CANONICAL_BOUNDARY_CONTRACT_ID[] = "ancf_v1_bottom_top_xy_zero";
 
 Vec3 add(Vec3 a, const Vec3& b) { for (int i=0;i<3;++i) a[i] += b[i]; return a; }
 Vec3 scale(Vec3 a, double s) { for (double& x : a) x *= s; return a; }
@@ -221,6 +222,7 @@ void validate_model(const Model& model) {
       model.gamma <= 0.0 || model.max_newton == 0 || model.max_newton > MAX_NEWTON ||
        model.gauss_order != 3 && model.gauss_order != 5 ||
        model.mass_gauss_order != 3 && model.mass_gauss_order != 5 ||
+       !model.include_gravity || !model.include_buoyancy ||
        model.damping_alpha != 0.0 || model.damping_beta != 0.0) {
     throw std::invalid_argument("invalid ANCF model dimensions or numerical contract");
   }
@@ -250,6 +252,14 @@ void validate_model(const Model& model) {
           !finite(model.prescribed_values[i])) {
         throw std::invalid_argument("ANCF boundary fields are invalid");
       }
+    }
+  }
+  if (model.boundary_contract_id == CANONICAL_BOUNDARY_CONTRACT_ID) {
+    const auto canonical = canonical_boundary(model);
+    const auto& fixed = model.fixed_dof.empty() ? canonical.first : model.fixed_dof;
+    const auto& prescribed = model.prescribed_values.empty() ? canonical.second : model.prescribed_values;
+    if (fixed != canonical.first || prescribed != canonical.second) {
+      throw std::invalid_argument("canonical boundary contract does not match fixed DOF or prescribed values");
     }
   }
   if (!model.slice_positions_m.empty()) {

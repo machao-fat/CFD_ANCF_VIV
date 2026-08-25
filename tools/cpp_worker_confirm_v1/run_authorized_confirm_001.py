@@ -54,6 +54,9 @@ DOCS = PROJECT / "docs/121_cpp_worker_persistent_ipc_confirm_v4"
 SOURCE = PROJECT / "cases/openfoam/stage4f_d_e5_b_bounded_campaign_attempt3/block_3/checkpoints/checkpoint_step00000559_22277fd2c60d.json"
 SOURCE_SHA256 = "341b9ccf21e0436791456333a6c3baccfde69c3735f717763d576952dba0a226"
 MASS_MATRIX_SOURCE = PROJECT / "runtime/cpp_worker_persistent_ipc_v1/matlab_dual_011/accepted_step559_seed.mat"
+# Protected Stage187 model + source-mass contract digest.  A mismatch is a
+# preflight failure; it must never be regenerated from the live request.
+EXPECTED_MODEL_CONTRACT_SHA256 = "bfcbaeaece12a04e304cbdfa9afbe7f2625af12e33a53e0aae942e61e960ea65"
 LIBRARY = PROJECT / "runtime/cpp_worker_persistent_ipc_v1/fresh_library_build_004/lib/libancfFileMotion.so"
 WORKER_EXE = PROJECT / "runtime/cpp_worker_persistent_ipc_v1/build-release/cfd_ancf_ancf_kernel_worker.exe"
 TEMPLATE_ROOT = PROJECT / "cases/openfoam/cpp_worker_persistent_ipc_v1/real_confirm_001"
@@ -262,12 +265,14 @@ def main() -> int:
     model, _q, _qdot, _qddot, base_load = _fixture()
     model = normalize_model(model)
     mass_matrix = _source_mass_matrix()
-    worker = KernelWorker(WORKER_EXE, RUNTIME / "process", RUN_ID, CASE_ID)
+    worker = KernelWorker(WORKER_EXE, RUNTIME / "process", RUN_ID, CASE_ID,
+                          expected_model_contract_sha256=EXPECTED_MODEL_CONTRACT_SHA256)
     worker_adapter = CppKernelCampaignAdapter.from_checkpoint(
         worker=worker, model=model, request_factory=KernelStepRequest,
         checkpoint=SOURCE, expected_sha256=SOURCE_SHA256, run_id=RUN_ID,
         case_id=CASE_ID, dt_s=0.00125, base_load=base_load, slice_count=3,
-        mass_matrix=mass_matrix)
+        mass_matrix=mass_matrix,
+        expected_model_contract_sha256=EXPECTED_MODEL_CONTRACT_SHA256)
     source = json.loads(SOURCE.read_text(encoding="utf-8"))
     # The accepted MATLAB contract advances from the committed applied load.
     # previous_slice_forces_N is raw observation data and must not seed ANCF.

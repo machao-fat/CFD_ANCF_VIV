@@ -7,7 +7,7 @@ import threading
 from typing import BinaryIO
 
 from .protocol import (HEADER, FrameError, StepRequest, StepResponse, decode_response,
-                       encode_control, encode_request, validate_response,
+                       canonical_tick_delta, encode_control, encode_request, validate_response,
                        MESSAGE_INITIALIZE, MESSAGE_SHUTDOWN)
 
 
@@ -23,6 +23,11 @@ class PersistentCppWorkerClient:
         self.writer = writer
         self.timeout_s = float(timeout_s)
         self.last_sequence = 0
+        self.last_global_step: int | None = None
+        self.last_bridge_step: int | None = None
+        self.last_tick: int | None = None
+        self.last_time_s: float | None = None
+        self.last_dt_s: float | None = None
         self.closed = False
         self.initialized = False
         self.seen_request_ids: set[int] = set()
@@ -33,6 +38,19 @@ class PersistentCppWorkerClient:
             raise FrameError("worker client is closed or sequence is not monotonic")
         if value.request_id in self.seen_request_ids or value.transaction_id in self.seen_transaction_ids:
             raise FrameError("request_id or transaction_id was already used")
+        if self.last_global_step is not None:
+            tick_delta = canonical_tick_delta(self.last_dt_s)
+            if tick_delta <= 0:
+                self.closed = True
+                raise FrameError("worker client dt does not advance an integer tick")
+            expected_tick = self.last_tick + tick_delta
+            if (value.global_step != self.last_global_step + 1 or
+                    value.case_local_bridge_step != self.last_bridge_step + 1 or
+                    value.integer_tick != expected_tick or
+                    abs(value.time_s - (self.last_time_s + self.last_dt_s)) > 1.0e-12 or
+                    abs(value.dt_s - self.last_dt_s) > 1.0e-15):
+                self.closed = True
+                raise FrameError("worker client step/time lineage is not continuous")
         try:
             frame = encode_request(value)
             self.writer.write(frame); self.writer.flush()
@@ -40,13 +58,24 @@ class PersistentCppWorkerClient:
 
             def read_frame() -> None:
                 try:
-                    header = self.reader.read(HEADER.size)
+                    def read_exact(size: int) -> bytes:
+                        chunks: list[bytes] = []
+                        remaining = size
+                        while remaining:
+                            chunk = self.reader.read(remaining)
+                            if not chunk:
+                                break
+                            chunks.append(chunk)
+                            remaining -= len(chunk)
+                        return b"".join(chunks)
+
+                    header = read_exact(HEADER.size)
                     if len(header) != HEADER.size:
                         raise FrameError("worker disconnected before response header")
                     magic, length, count = HEADER.unpack(header)
                     if magic != b"CFDANCF1" or length > 64 * 1024 * 1024 or count != 2:
                         raise FrameError("response magic/length/count is invalid")
-                    body = self.reader.read(length)
+                    body = read_exact(length)
                     if len(body) != length:
                         raise FrameError("worker disconnected during response")
                     result.put((header + body, None))
@@ -72,6 +101,11 @@ class PersistentCppWorkerClient:
             self.closed = True
             raise FrameError("worker identity replay window exhausted")
         self.last_sequence = value.sequence
+        self.last_global_step = value.global_step
+        self.last_bridge_step = value.case_local_bridge_step
+        self.last_tick = value.integer_tick
+        self.last_time_s = value.time_s
+        self.last_dt_s = value.dt_s
         self.seen_request_ids.add(value.request_id)
         self.seen_transaction_ids.add(value.transaction_id)
         return response

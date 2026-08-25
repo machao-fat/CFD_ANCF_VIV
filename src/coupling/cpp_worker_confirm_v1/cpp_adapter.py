@@ -14,7 +14,7 @@ from typing import Any, Mapping, Sequence
 
 from .contracts import ContractError, load_source_checkpoint
 from coupling.cpp_worker_persistent_ipc_v1.mapping_contract import SourceMapping
-from coupling.cpp_worker_persistent_ipc_v1.protocol import canonical_tick_delta
+from coupling.cpp_worker_persistent_ipc_v1.protocol import canonical_integer_tick, canonical_tick_delta
 
 
 class CppAdapterError(RuntimeError):
@@ -88,9 +88,13 @@ class CppKernelCampaignAdapter:
                  source_time_s: float, source_tick: int, dt_s: float,
                  q: Sequence[float], qdot: Sequence[float], qddot: Sequence[float],
                  base_load: Sequence[float], slice_count: int = 3,
-                 mass_matrix: Sequence[float] = ()) -> None:
+                 mass_matrix: Sequence[float] = (),
+                 strict_numerical_contract: bool = False,
+                 expected_model_contract_sha256: str | None = None) -> None:
         if isinstance(slice_count, bool) or not isinstance(slice_count, int) or slice_count != 3:
             raise CppAdapterError("C++ confirm requires exactly three slices")
+        if not isinstance(strict_numerical_contract, bool):
+            raise CppAdapterError("strict_numerical_contract must be boolean")
         if not isinstance(run_id, str) or not run_id or any(ord(char) < 0x20 for char in run_id):
             raise CppAdapterError("run_id is invalid")
         if not isinstance(case_id, str) or not case_id or any(ord(char) < 0x20 for char in case_id):
@@ -105,7 +109,7 @@ class CppKernelCampaignAdapter:
             raise CppAdapterError("source_time_s is negative")
         if isinstance(dt_s, bool) or not isinstance(dt_s, Real) or not math.isfinite(float(dt_s)) or float(dt_s) <= 0.0:
             raise CppAdapterError("dt_s is invalid")
-        if int(source_tick) != int(round(float(source_time_s) * 1.0e9)):
+        if int(source_tick) != canonical_integer_tick(float(source_time_s)):
             raise CppAdapterError("source time/tick identity is inconsistent")
         self.worker = worker
         self.model = model
@@ -143,6 +147,22 @@ class CppKernelCampaignAdapter:
                         for row in range(model.ndof) for col in range(row + 1, model.ndof)):
             raise CppAdapterError("source mass_matrix must be exactly symmetric")
         self.mass_matrix = mass
+        self.strict_numerical_contract = strict_numerical_contract
+        if strict_numerical_contract and not mass:
+            raise CppAdapterError("strict C++ numerical contract requires source mass_matrix")
+        if strict_numerical_contract:
+            if (getattr(self.model, "gauss_order", None) != 3 or
+                    getattr(self.model, "mass_gauss_order", None) != 5 or
+                    getattr(self.model, "max_newton", None) != 40 or
+                    getattr(self.model, "boundary_contract_id", None) != "ancf_v1_bottom_top_xy_zero" or
+                    getattr(self.model, "include_gravity", True) is not True or
+                    getattr(self.model, "include_buoyancy", True) is not True):
+                raise CppAdapterError("strict C++ numerical contract parameters do not match the protected Stage187 contract")
+        if expected_model_contract_sha256 is not None:
+            if (not isinstance(expected_model_contract_sha256, str) or
+                    len(expected_model_contract_sha256) != 64 or
+                    any(char not in "0123456789abcdefABCDEF" for char in expected_model_contract_sha256)):
+                raise CppAdapterError("expected model contract hash is invalid")
         try:
             self._source_mapping = SourceMapping(
                 source_global_step=int(source_global_step), source_time_s=float(source_time_s),
@@ -151,6 +171,15 @@ class CppKernelCampaignAdapter:
         except Exception as exc:
             raise CppAdapterError("source mapping contract is invalid") from exc
         self.model_contract_sha256 = _model_contract_sha256(self.model, self.mass_matrix)
+        if strict_numerical_contract and self.model_contract_sha256 is None:
+            raise CppAdapterError("strict C++ numerical contract requires serializable model")
+        if strict_numerical_contract and expected_model_contract_sha256 is None:
+            raise CppAdapterError("strict C++ numerical contract requires an external model hash")
+        if (expected_model_contract_sha256 is not None and
+                self.model_contract_sha256 != expected_model_contract_sha256.lower()):
+            raise CppAdapterError("model contract hash does not match the protected golden contract")
+        self.expected_model_contract_sha256 = (expected_model_contract_sha256.lower()
+                                               if expected_model_contract_sha256 is not None else None)
         self.pending_kind: str | None = None
         self.pending_step: int | None = None
         self.pending_time_s: float | None = None
@@ -170,7 +199,8 @@ class CppKernelCampaignAdapter:
                         checkpoint: Path, expected_sha256: str,
                         run_id: str, case_id: str, dt_s: float,
                         base_load: Sequence[float], slice_count: int = 3,
-                        mass_matrix: Sequence[float] = ()) -> "CppKernelCampaignAdapter":
+                        mass_matrix: Sequence[float] = (),
+                        expected_model_contract_sha256: str | None = None) -> "CppKernelCampaignAdapter":
         value = load_source_checkpoint(checkpoint, expected_sha256)
         structure = value.get("structure")
         if not isinstance(structure, Mapping):
@@ -189,7 +219,8 @@ class CppKernelCampaignAdapter:
                    source_time_s=2.2075, source_tick=2_207_500_000, dt_s=dt_s,
                    q=structure["q"], qdot=structure["qdot"], qddot=structure["qddot"],
                    base_load=base_load, slice_count=slice_count,
-                   mass_matrix=mass_matrix)
+                   mass_matrix=mass_matrix, strict_numerical_contract=True,
+                   expected_model_contract_sha256=expected_model_contract_sha256)
 
     def _identity(self, step: int, time_s: float) -> tuple[int, int]:
         if isinstance(step, bool) or not isinstance(step, int):
@@ -212,6 +243,9 @@ class CppKernelCampaignAdapter:
     def start(self) -> None:
         if self._started or self._terminal:
             raise CppAdapterError("C++ worker duplicate start")
+        if self.strict_numerical_contract and getattr(self.worker, "expected_model_contract_sha256", None) != self.expected_model_contract_sha256:
+            self._terminal = True
+            raise CppAdapterError("C++ worker is not locked to the protected model contract")
         self.worker.start()
         self.start_count = 1
         self._started = True
@@ -366,6 +400,8 @@ class CppKernelCampaignAdapter:
             "run_id": self.run_id,
             "case_id": self.case_id,
             "model_contract_sha256": self.model_contract_sha256,
+            "expected_model_contract_sha256": self.expected_model_contract_sha256,
+            "strict_numerical_contract": self.strict_numerical_contract,
             "mass_gauss_order": int(getattr(self.model, "mass_gauss_order", 5)),
             "fixed_dof": list(getattr(self.model, "fixed_dof", ()) or
                                (0, 1, 2, 6 * (int(getattr(self.model, "elements", 0))),
@@ -420,6 +456,10 @@ class CppKernelCampaignAdapter:
             stored_model_hash = value.get("model_contract_sha256")
             if self.model_contract_sha256 is not None and stored_model_hash != self.model_contract_sha256:
                 raise CppAdapterError("C++ checkpoint model contract mismatch")
+            if self.strict_numerical_contract and value.get("expected_model_contract_sha256") != self.expected_model_contract_sha256:
+                raise CppAdapterError("C++ checkpoint external model contract lock mismatch")
+            if self.strict_numerical_contract and value.get("strict_numerical_contract") is not True:
+                raise CppAdapterError("C++ checkpoint is not marked as strict numerical contract")
             if value.get("mass_gauss_order") != int(getattr(self.model, "mass_gauss_order", 5)):
                 raise CppAdapterError("C++ checkpoint mass quadrature contract mismatch")
             expected_fixed = list(getattr(self.model, "fixed_dof", ()) or
@@ -436,7 +476,7 @@ class CppKernelCampaignAdapter:
             if (committed_step < self.source_global_step or
                     not math.isfinite(committed_time) or
                     abs(committed_time - (self.source_time_s + bridge * self.dt_s)) > 1e-12 or
-                    committed_tick != self.source_tick + bridge * round(self.dt_s * 1e9)):
+                    committed_tick != self.source_tick + bridge * canonical_tick_delta(self.dt_s)):
                 raise CppAdapterError("C++ checkpoint committed identity is invalid")
             state = value["state_view"]
             if not isinstance(state, Mapping) or set(state) != {"q", "qdot", "qddot"}:

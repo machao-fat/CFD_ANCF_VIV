@@ -5,7 +5,7 @@ from __future__ import annotations
 from dataclasses import dataclass
 import math
 
-from .protocol import FrameError, canonical_tick_delta
+from .protocol import FrameError, canonical_integer_tick, canonical_tick_delta
 
 
 @dataclass(frozen=True)
@@ -32,9 +32,13 @@ class SourceMapping:
         if (isinstance(self.source_tick, bool) or not isinstance(self.source_tick, int) or
                 self.source_tick < 0 or self.source_tick > 0xFFFFFFFFFFFFFFFF):
             raise FrameError("source mapping tick is invalid")
-        if self.source_tick != round(float(self.source_time_s) * 1.0e9):
+        if self.source_tick != canonical_integer_tick(float(self.source_time_s)):
             raise FrameError("source mapping tick does not match source time")
-        canonical_tick_delta(float(self.dt_s))
+        raw_tick = float(self.dt_s) * 1.0e9
+        if math.isfinite(raw_tick) and 0.0 <= raw_tick <= float(0xFFFFFFFFFFFFFFFF):
+            rounded_tick = canonical_tick_delta(float(self.dt_s))
+            if rounded_tick <= 0 or abs(raw_tick - float(rounded_tick)) > 1.0e-12:
+                raise FrameError("source mapping dt is not an exact integer-tick step")
 
     def target(self, *, global_step: int, case_local_bridge_step: int,
                time_s: float, integer_tick: int) -> tuple[int, int]:
@@ -55,7 +59,10 @@ class SourceMapping:
             raise FrameError("global step and case-local bridge step are inconsistent")
         try:
             expected_time = float(self.source_time_s) + bridge_delta * float(self.dt_s)
-            tick_delta = bridge_delta * canonical_tick_delta(float(self.dt_s))
+            one_tick = canonical_tick_delta(float(self.dt_s))
+            if one_tick <= 0:
+                raise FrameError("source mapping dt does not advance an integer tick")
+            tick_delta = bridge_delta * one_tick
         except (OverflowError, ValueError) as exc:
             raise FrameError("target mapping exceeds numeric range") from exc
         expected_tick = self.source_tick + tick_delta
@@ -64,7 +71,7 @@ class SourceMapping:
         if not math.isfinite(expected_time) or not math.isclose(
                 float(time_s), expected_time, rel_tol=0.0, abs_tol=1.0e-12):
             raise FrameError("target time does not match source mapping")
-        if integer_tick != expected_tick or integer_tick != round(float(time_s) * 1.0e9):
+        if integer_tick != expected_tick or integer_tick != canonical_integer_tick(float(time_s)):
             raise FrameError("target tick does not match source mapping")
         return bridge_delta, expected_tick
 

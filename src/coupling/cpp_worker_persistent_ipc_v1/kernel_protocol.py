@@ -21,6 +21,7 @@ REQUEST_CONSUMER = "cpp_ancf_kernel_worker"
 MAX_NDOF = 2048
 MAX_NEWTON = 1000
 EXTENDED_LAYOUT_MARKER = 0x314C5845  # "EXL1", little-endian
+CANONICAL_BOUNDARY_CONTRACT_ID = "ancf_v1_bottom_top_xy_zero"
 
 # v1 is a positional response schema without per-field wire labels. Preserve
 # the historical MATLAB golden-record meaning explicitly: both force slots
@@ -109,7 +110,8 @@ class KernelModel:
 
     def validate(self, dt_s: float) -> None:
         for name, value in (("elements", self.elements), ("slices", self.slices),
-                            ("gauss_order", self.gauss_order), ("max_newton", self.max_newton)):
+                            ("gauss_order", self.gauss_order), ("mass_gauss_order", self.mass_gauss_order),
+                            ("max_newton", self.max_newton)):
             if isinstance(value, bool) or not isinstance(value, int):
                 raise FrameError(f"kernel model {name} is not an integer")
         if (self.elements < 1 or self.elements > 10000 or self.slices < 1 or
@@ -158,6 +160,10 @@ class KernelModel:
                 any(isinstance(value, bool) or not isinstance(value, Real) or not math.isfinite(float(value))
                     for value in prescribed)):
             raise FrameError("kernel boundary contract is invalid")
+        canonical_fixed = (0, 1, 2, 6 * self.elements, 6 * self.elements + 1)
+        if self.boundary_contract_id == CANONICAL_BOUNDARY_CONTRACT_ID and (
+                tuple(fixed) != canonical_fixed or any(float(value) != 0.0 for value in prescribed)):
+            raise FrameError("canonical boundary contract does not match fixed DOF or prescribed values")
         _fixed(self.boundary_contract_id, _BOUNDARY_ID, "boundary_contract_id")
 
     def bytes(self) -> bytes:
@@ -175,7 +181,7 @@ class KernelModel:
         # previously built offline workers remain readable.  Any non-default
         # boundary or mass rule is forced onto the explicit extension layout.
         explicit = bool(self.fixed_dof or self.prescribed_values or self.mass_gauss_order != 5 or
-                        self.boundary_contract_id != "ancf_v1_bottom_top_xy_zero")
+                        self.boundary_contract_id != CANONICAL_BOUNDARY_CONTRACT_ID)
         if not explicit:
             return base + struct.pack("<" + "d" * self.slices, *positions)
         return base + struct.pack("<Iii", EXTENDED_LAYOUT_MARKER, self.mass_gauss_order, len(fixed)) + boundary + \

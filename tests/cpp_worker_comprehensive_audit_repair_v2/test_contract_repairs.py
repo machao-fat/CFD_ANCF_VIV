@@ -11,7 +11,7 @@ from types import SimpleNamespace
 ROOT = Path(__file__).resolve().parents[2]
 sys.path.insert(0, str(ROOT / "src"))
 
-from coupling.cpp_worker_confirm_v1.cpp_adapter import CppAdapterError, CppKernelCampaignAdapter
+from coupling.cpp_worker_confirm_v1.cpp_adapter import CppAdapterError, CppKernelCampaignAdapter, _model_contract_sha256
 from coupling.cpp_worker_persistent_ipc_v1.kernel_protocol import (
     FrameError, KernelModel, KernelStepRequest, RESPONSE_FIELD_SEMANTICS,
 )
@@ -50,9 +50,59 @@ class ContractRepairTests(unittest.TestCase):
             client.request(value)
         self.assertTrue(client.closed)
 
+    def test_low_level_client_rejects_step_lineage_gap_before_write(self):
+        client = PersistentCppWorkerClient(io.BytesIO(), io.BytesIO(), timeout_s=0.2)
+        client.initialized = True
+        # Supply a valid response frame only for the first request is not
+        # needed here; the first call must fail at the transport EOF and poison
+        # the client, so use the state fields directly to exercise the guard.
+        client.last_sequence = 1
+        client.last_global_step = 1
+        client.last_bridge_step = 1
+        client.last_tick = 1_250_000
+        client.last_time_s = 0.00125
+        client.last_dt_s = 0.00125
+        with self.assertRaises(TransportFrameError):
+            client.request(StepRequest(
+                sequence=2, global_step=3, case_local_bridge_step=3,
+                integer_tick=3_750_000, time_s=0.00375, dt_s=0.00125,
+                request_id=3, transaction_id=4, run_id="run", case_id="case",
+                q=(0.0,), qdot=(0.0,), force=(0.0,),
+            ))
+        self.assertTrue(client.closed)
+
     def test_mapping_rejects_subnanosecond_step_ambiguity(self):
         with self.assertRaises(TransportFrameError):
-            SourceMapping(0, 0.0, 0, 1.5e-9)
+            SourceMapping(0, 0.0, 0, 1.0000000005e-9)
+
+    def test_canonical_boundary_identity_is_bound_to_values(self):
+        model = KernelModel(elements=1, slices=1, fixed_dof=(0, 1, 2, 6, 7),
+                            prescribed_values=(0.0, 0.0, 0.0, 0.0, 1.0))
+        with self.assertRaises(FrameError):
+            model.validate(0.00125)
+
+    def test_strict_adapter_requires_mass_and_external_contract_hash(self):
+        class Worker:
+            def start(self) -> None: pass
+            def stop(self) -> None: pass
+        model = KernelModel(elements=1, slices=1)
+        n = model.ndof
+        kwargs = dict(worker=Worker(), model=model, request_factory=lambda **value: SimpleNamespace(**value),
+                      run_id="strict_run", case_id="strict_case", source_global_step=559,
+                      source_time_s=2.2075, source_tick=2_207_500_000, dt_s=0.00125,
+                      q=(0.0,) * n, qdot=(0.0,) * n, qddot=(0.0,) * n,
+                      base_load=(0.0,) * n, slice_count=3,
+                      strict_numerical_contract=True)
+        with self.assertRaises(CppAdapterError):
+            CppKernelCampaignAdapter(**kwargs)
+        mass = tuple(1.0 if row == col else 0.0 for row in range(n) for col in range(n))
+        expected = _model_contract_sha256(model, mass)
+        self.assertIsNotNone(expected)
+        with self.assertRaises(CppAdapterError):
+            CppKernelCampaignAdapter(**kwargs, mass_matrix=mass, expected_model_contract_sha256="0" * 64)
+        adapter = CppKernelCampaignAdapter(**kwargs, mass_matrix=mass,
+                                           expected_model_contract_sha256=expected)
+        self.assertTrue(adapter.strict_numerical_contract)
 
     def test_v1_response_force_field_semantics_are_explicit(self) -> None:
         self.assertEqual(RESPONSE_FIELD_SEMANTICS["external_force"], "total_Qext")

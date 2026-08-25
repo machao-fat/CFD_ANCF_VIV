@@ -3,7 +3,7 @@ from __future__ import annotations
 from dataclasses import dataclass
 from math import isclose, isfinite
 
-from .protocol import FrameError
+from .protocol import FrameError, canonical_tick_delta
 
 
 @dataclass(frozen=True)
@@ -36,7 +36,7 @@ class GlobalBarrierMock:
             raise FrameError("barrier step or slice identity is not monotonic")
         expected_bridge = ack.global_step - self.source_step
         expected_time = self.source_time_s + expected_bridge * self.dt_s
-        expected_tick = self.source_tick + expected_bridge * round(self.dt_s * 1e9)
+        expected_tick = self.source_tick + expected_bridge * canonical_tick_delta(self.dt_s)
         if ack.case_local_bridge_step != expected_bridge or ack.integer_tick != expected_tick:
             raise FrameError("barrier bridge step/tick mismatch")
         if not isfinite(ack.time_s) or not isclose(ack.time_s, expected_time, rel_tol=0.0, abs_tol=1e-12):
@@ -71,7 +71,7 @@ class CheckpointAudit:
         if global_step != expected or case_local_bridge_step != self.last_bridge + 1:
             raise FrameError("checkpoint lineage is not continuous")
         expected_time = self.source_time_s + case_local_bridge_step * self.dt_s
-        expected_tick = self.source_tick + case_local_bridge_step * round(self.dt_s * 1e9)
+        expected_tick = self.source_tick + case_local_bridge_step * canonical_tick_delta(self.dt_s)
         if not isfinite(time_s) or not isclose(time_s, expected_time, rel_tol=0.0, abs_tol=1e-12) or integer_tick != expected_tick:
             raise FrameError("checkpoint time/tick mismatch")
         self.committed.append({"global_step": global_step, "case_local_bridge_step": case_local_bridge_step,
