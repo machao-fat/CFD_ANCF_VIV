@@ -1,0 +1,10 @@
+{
+  "branch": "codex/cpp-worker-comprehensive-audit-repair-v1",
+  "force_push": false,
+  "head_before_commit": "3a007f38dee886a26b9024f5f68150fcee57de6e",
+  "history_rewrite": false,
+  "scoped_source": [
+    "src/coupling/cpp_worker_persistent_ipc_v1/ancf_kernel.cpp"
+  ],
+  "unrelated_user_files_excluded": true
+}

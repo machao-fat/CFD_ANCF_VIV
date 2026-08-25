@@ -17,7 +17,12 @@ constexpr double PI = 3.141592653589793238462643383279502884;
 
 Vec3 add(Vec3 a, const Vec3& b) { for (int i=0;i<3;++i) a[i] += b[i]; return a; }
 Vec3 scale(Vec3 a, double s) { for (double& x : a) x *= s; return a; }
-double dot(const Vec3& a, const Vec3& b) { return a[0]*b[0]+a[1]*b[1]+a[2]*b[2]; }
+double dot(const Vec3& a, const Vec3& b) {
+  // Match the MATLAB short-vector reduction order used by the golden
+  // diagnostic.  The parenthesized tail is intentional: changing this to a
+  // left-associated sum changes the bending force by several ulps.
+  return a[0] * b[0] + (a[1] * b[1] + a[2] * b[2]);
+}
 Vec3 cross(const Vec3& a, const Vec3& b) { return {a[1]*b[2]-a[2]*b[1], a[2]*b[0]-a[0]*b[2], a[0]*b[1]-a[1]*b[0]}; }
 Mat3 zero3() { return {0,0,0,0,0,0,0,0,0}; }
 Mat3 eye3() { return {1,0,0,0,1,0,0,0,1}; }
@@ -46,9 +51,16 @@ bool finite_matrix(const Matrix& value) {
 
 Vec4 shape(double x, double L, int derivative) {
   const double xi = x / L;
-  if (derivative == 0) return {1-3*xi*xi+2*xi*xi*xi, L*(xi-2*xi*xi+xi*xi*xi), 3*xi*xi-2*xi*xi*xi, L*(-xi*xi+xi*xi*xi)};
-  if (derivative == 1) return {(6*xi*xi-6*xi)/L, 1-4*xi+3*xi*xi, (-6*xi*xi+6*xi)/L, -2*xi+3*xi*xi};
-  if (derivative == 2) return {(12*xi-6)/(L*L), (-4+6*xi)/L, (6-12*xi)/(L*L), (-2+6*xi)/L};
+  // Match MATLAB ancf_shape.m's scalar-power contract literally.  The
+  // previous multiplication expansion is algebraically equivalent but can
+  // round differently at non-binary Gauss abscissae before the nonlinear
+  // bending derivatives amplify the perturbation.
+  const double xi2 = std::pow(xi, 2.0);
+  const double xi3 = std::pow(xi, 3.0);
+  const double L2 = std::pow(L, 2.0);
+  if (derivative == 0) return {1-3*xi2+2*xi3, L*(xi-2*xi2+xi3), 3*xi2-2*xi3, L*(-xi2+xi3)};
+  if (derivative == 1) return {(6*xi2-6*xi)/L, 1-4*xi+3*xi2, (-6*xi2+6*xi)/L, -2*xi+3*xi2};
+  if (derivative == 2) return {(12*xi-6)/L2, (-4+6*xi)/L, (6-12*xi)/L2, (-2+6*xi)/L};
   throw std::invalid_argument("ANCF derivative order");
 }
 
@@ -97,15 +109,11 @@ void element_force_tangent(const std::vector<double>& qe, double Le, double EA, 
   fe.assign(12,0.0); Ke=Matrix(12,12);
   const auto [xi,w]=gauss(ngauss);
   for(std::size_t k=0;k<xi.size();++k){double x=0.5*(xi[k]+1)*Le; Matrix B=block_matrix(shape(x,Le,1));Matrix C=block_matrix(shape(x,Le,2));Vec3 a{},b{};for(int i=0;i<3;++i){for(int j=0;j<12;++j){a[i]+=B(i,j)*qe[j];b[i]+=C(i,j)*qe[j];}}double a2=dot(a,a);if(a2<EPS)throw std::runtime_error("degenerate ANCF tangent");Vec3 v=cross(a,b);double v2=dot(v,v);Mat3 Xa=cross_matrix(a),Xb=cross_matrix(b),Xv=cross_matrix(v);
-    // The MATLAB contract uses integer negative powers.  Evaluate the
-    // reciprocal powers explicitly so the C++ path does not depend on a
-    // platform libm pow implementation or its reassociation choices.
-    const double inv_a2 = 1.0 / a2;
-    const double inv_a2_2 = inv_a2 * inv_a2;
-    const double inv_a2_3 = inv_a2_2 * inv_a2;
-    const double inv_a2_4 = inv_a2_3 * inv_a2;
-    const double inv_a2_5 = inv_a2_4 * inv_a2;
-    Vec3 ga_b=add(scale(mul3(Xb,v),inv_a2_3),scale(a,-3*v2*inv_a2_4));Vec3 gb_b=scale(mul3(Xa,v),-inv_a2_3);Mat3 Haa_b=add3(add3(add3(add3(scale3(mul3(Xb,Xb),-inv_a2_3),scale3(outer3(mul3(Xb,v),a),-6*inv_a2_4)),scale3(outer3(a,mul3(Xb,v)),-3*inv_a2_4)),scale3(outer3(a,a),24*v2*inv_a2_5)),scale3(eye3(),-3*v2*inv_a2_4));Mat3 Hab=add3(scale3(add3(scale3(Xv,-1),mul3(Xb,Xa)),inv_a2_3),scale3(outer3(a,mul3(Xa,v)),3*inv_a2_4));Mat3 Hbb=scale3(mul3(Xa,Xa),-inv_a2_3);double eps=0.5*(a2-1);Vec3 ga=add(scale(a,EA*eps),scale(ga_b,EI));Vec3 gb=scale(gb_b,EI);Mat3 Haa=add3(scale3(add3(outer3(a,a),scale3(eye3(),eps)),EA),scale3(Haa_b,EI));Mat3 HabS=scale3(Hab,EI),HbbS=scale3(Hbb,EI);double wt=w[k]*Le/2;
+    // Match MATLAB's literal a2^(-n) scalar-power expressions.
+    const double inv_a2_3 = std::pow(a2, -3.0);
+    const double inv_a2_4 = std::pow(a2, -4.0);
+    const double inv_a2_5 = std::pow(a2, -5.0);
+    Vec3 ga_b=add(scale(mul3(Xb,v),inv_a2_3),scale(a,-3*v2*inv_a2_4));Vec3 gb_b=scale(mul3(Xa,v),-inv_a2_3);Mat3 Haa_b=add3(add3(add3(add3(scale3(mul3(Xb,Xb),-inv_a2_3),scale3(outer3(mul3(Xb,v),a),-6*inv_a2_4)),scale3(outer3(a,mul3(Xb,v)),-3*inv_a2_4)),scale3(outer3(a,a),24*v2*inv_a2_5)),scale3(eye3(),-3*v2*inv_a2_4));Mat3 Hab=add3(scale3(add3(scale3(Xv,-1),mul3(Xb,Xa)),inv_a2_3),scale3(outer3(a,mul3(Xa,v)),3*inv_a2_4));Mat3 Hbb=scale3(mul3(Xa,Xa),-inv_a2_3);double eps=0.5*(a2-1);Vec3 ga=add(scale(a,EA*eps),scale(ga_b,EI));Vec3 gb=scale(gb_b,EI);Mat3 Haa=add3(scale3(add3(outer3(a,a),scale3(eye3(),eps)),EA),scale3(Haa_b,EI));Mat3 HabS=scale3(Hab,EI),HbbS=scale3(Hbb,EI);
     // Keep the force assembly in the same staged order as MATLAB:
     // compute B.'*ga and C.'*gb independently, add them, then apply the
     // quadrature weight.  Folding the weight and both products into one
@@ -118,8 +126,14 @@ void element_force_tangent(const std::vector<double>& qe, double Le, double EA, 
         bga[static_cast<std::size_t>(i)] += B(c, i) * ga[c];
         cgb[static_cast<std::size_t>(i)] += C(c, i) * gb[c];
       }
-      fe[static_cast<std::size_t>(i)] += (bga[static_cast<std::size_t>(i)] +
-                                           cgb[static_cast<std::size_t>(i)]) * wt;
+      // MATLAB evaluates this as term * w(k) * Le / 2; preserve the same
+      // left-to-right rounding points instead of precomputing the weight.
+      double term = bga[static_cast<std::size_t>(i)] +
+                    cgb[static_cast<std::size_t>(i)];
+      term *= w[k];
+      term *= Le;
+      term /= 2.0;
+      fe[static_cast<std::size_t>(i)] += term;
       for (int j = 0; j < 12; ++j) {
         double value = 0;
         for (int r = 0; r < 3; ++r)
@@ -128,7 +142,11 @@ void element_force_tangent(const std::vector<double>& qe, double Le, double EA, 
                      B(r, i) * HabS[3 * r + s] * C(s, j) +
                      C(r, i) * HabS[3 * s + r] * B(s, j) +
                      C(r, i) * HbbS[3 * r + s] * C(s, j);
-        Ke(i, j) += wt * value;
+        double weighted = value;
+        weighted *= w[k];
+        weighted *= Le;
+        weighted /= 2.0;
+        Ke(i, j) += weighted;
       }
     }
   }
@@ -138,15 +156,16 @@ void element_force_tangent(const std::vector<double>& qe, double Le, double EA, 
 double Model::area() const { return PI*(diameter_m*diameter_m-inner_diameter_m*inner_diameter_m)/4.0; }
 double Model::displaced_area() const { return PI*diameter_m*diameter_m/4.0; }
 double Model::EA() const { return youngs_modulus_Pa*area(); }
-// Preserve the MATLAB material contract literally: MATLAB evaluates this
-// scalar expression as E*pi*(D^4-d^4)/64.  Replacing each fourth power with
-// (D*D)*(D*D) changes EI by a few ulps for non-binary diameters; bending-force
-// cancellation can amplify that difference in small generalized-force
-// components.
+// Match the scalar multiplication path used by the MATLAB material fixture.
+// The shape-function power path is handled explicitly above; retaining the
+// original product order here is an independent A/B variable for the
+// MATLAB/C++ forensic comparison.
 double Model::EI() const {
-  return youngs_modulus_Pa * PI *
-         (std::pow(diameter_m, 4.0) - std::pow(inner_diameter_m, 4.0)) /
-         64.0;
+  const double diameter_squared = diameter_m * diameter_m;
+  const double inner_squared = inner_diameter_m * inner_diameter_m;
+  const double diameter_fourth = diameter_squared * diameter_squared;
+  const double inner_fourth = inner_squared * inner_squared;
+  return youngs_modulus_Pa * PI * (diameter_fourth - inner_fourth) / 64.0;
 }
 
 void validate_model(const Model& model) {

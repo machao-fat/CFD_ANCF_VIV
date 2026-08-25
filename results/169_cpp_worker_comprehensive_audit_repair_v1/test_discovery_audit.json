@@ -1,0 +1,22 @@
+{
+  "compileall": {
+    "command": "python -m compileall -q src tools tests",
+    "status": "pass"
+  },
+  "focused_unittest": {
+    "status": "pass",
+    "tests": 39
+  },
+  "real_process_starts": {
+    "CFD": 0,
+    "MATLAB": 0,
+    "OpenFOAM": 0,
+    "WSL": 0
+  },
+  "root_unittest": {
+    "command": "$env:PYTHONPATH='src'; python -m unittest discover -s tests -t . -p 'test_*.py'",
+    "skipped": 1,
+    "status": "pass",
+    "tests": 1163
+  }
+}

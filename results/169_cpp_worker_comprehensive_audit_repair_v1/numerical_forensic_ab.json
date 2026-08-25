@@ -1,0 +1,39 @@
+{
+  "case_id": "cpp_worker_comprehensive_audit_stage169_case_001",
+  "confirmed_change": "right-associated three-term Vec3 dot reduction plus MATLAB left-to-right quadrature scaling",
+  "no_physics_or_threshold_change": true,
+  "run_id": "cpp_worker_comprehensive_audit_repair_169_001",
+  "same_target_q_direct_result": {
+    "left_at_max": -11849.289180885127,
+    "max_abs": 2.9103830456733704e-11,
+    "max_index_zero_based": 21,
+    "max_relative": 7.011164017474959e-13,
+    "max_relative_index_zero_based": 51,
+    "max_relative_left": -20.755348458667868,
+    "max_relative_right": -20.75534845868242,
+    "right_at_max": -11849.289180885156
+  },
+  "source_step": 559,
+  "stage_id": "stage4f_d_cpp_worker_comprehensive_audit_repair_v1_stage169",
+  "target_step": 560,
+  "variants": {
+    "dot_right_associated": {
+      "left_at_max": -11849.289180885127,
+      "max_abs": 2.9103830456733704e-11,
+      "max_index_zero_based": 21,
+      "max_relative": 7.011164017474959e-13,
+      "max_relative_index_zero_based": 51,
+      "max_relative_left": -20.755348458667868,
+      "max_relative_right": -20.75534845868242,
+      "right_at_max": -11849.289180885156
+    },
+    "quadrature_left_to_right": {
+      "max_abs": 4.700268618762493e-08,
+      "max_relative": 8.085281467320277e-09
+    },
+    "shape_scalar_pow": {
+      "max_abs": 4.715184331871569e-08,
+      "max_relative": 8.085281467320277e-09
+    }
+  }
+}
