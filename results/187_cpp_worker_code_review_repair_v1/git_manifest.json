@@ -1,8 +1,9 @@
 {
-  "status": "pre_commit_manifest",
+  "status": "complete",
   "branch": "codex/cpp-worker-comprehensive-audit-repair-v1",
-  "head_before_commit": "e7de81c19fd7cde521bd66ebbecdb7c6281968d1",
-  "commit_and_tag": "created after evidence review",
+  "commit": "229f072",
+  "tag": "cfd-ancf-viv-cpp-worker-code-review-repair-v1-stage187",
+  "commit_and_tag": "created locally; no force push",
   "tracked_scope": [
     "src/coupling/cpp_worker_confirm_v1/cpp_adapter.py",
     "src/coupling/cpp_worker_persistent_ipc_v1/ancf_kernel.cpp",
