@@ -1,8 +1,8 @@
 {
   "branch": "codex/cpp-worker-comprehensive-audit-repair-v1",
   "force_push": false,
-  "head_before_commit": "e354e9fdbcd7b6e42e5aa7c41917b8838b12ae80",
+  "head_before_commit": "624ad9b3fc04e98c7a59f1b6783f3ea93cac427d",
   "history_rewrite": false,
-  "scoped_status": "M  src/coupling/cpp_physics_ownership_v1/physics_ownership_worker_main.cpp\nMM src/coupling/cpp_worker_persistent_ipc_v1/ancf_worker_main.cpp\nM  tests/cpp_worker_comprehensive_audit_repair_v1/test_ownership_worker.py\nM  tests/cpp_worker_comprehensive_audit_repair_v1/test_protocol_lifecycle_and_pair_lineage.py\nA  tools/cpp_worker_comprehensive_audit_repair_v1/generate_stage177_evidence.py",
+  "scoped_status": "",
   "unrelated_user_files_excluded": true
 }

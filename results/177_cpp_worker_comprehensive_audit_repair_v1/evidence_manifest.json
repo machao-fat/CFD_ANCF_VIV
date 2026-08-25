@@ -3,8 +3,9 @@
   "files": {
     "results\\177_cpp_worker_comprehensive_audit_repair_v1\\build_and_test_audit.json": "7362d9fea1d8358c47dccb10a9418b7fa57ea2643bb89aae9758e1f44f64bae3",
     "results\\177_cpp_worker_comprehensive_audit_repair_v1\\changed_file_hashes.json": "9d9f3fdaf83dac7b4749b76480db7f2d8491e3c08e3b06ba393edb15db67dcb0",
-    "results\\177_cpp_worker_comprehensive_audit_repair_v1\\git_preflight.json": "60f2230b103e73775679f9f9eb7bc7046f7e63e773167dcc73a3b521e35a8921",
-    "results\\177_cpp_worker_comprehensive_audit_repair_v1\\independent_gate.json": "18248ffe404993316c5436474855016f0ad8008fe64f30a5625873e44ba25947",
+    "results\\177_cpp_worker_comprehensive_audit_repair_v1\\git_manifest.json": "bfefa9aeb27e60a98f5da78cbdfac449b4a0f643fd79ca14ae022fe3d6675083",
+    "results\\177_cpp_worker_comprehensive_audit_repair_v1\\git_preflight.json": "0a45c5971e1d8796be0af6b922c08033edc770f450ac12a51d891aa4dacada02",
+    "results\\177_cpp_worker_comprehensive_audit_repair_v1\\independent_gate.json": "d557ad642ed648978ef53a43ea6d8e5010720c7510342ef211f667785317c25e",
     "results\\177_cpp_worker_comprehensive_audit_repair_v1\\numerical_equivalence_report.json": "eb836092a111041a225f8158c2b8dbb1f55d97518070e3c5a637f7b3c977cab8",
     "results\\177_cpp_worker_comprehensive_audit_repair_v1\\process_cleanup_audit.json": "5303bf912b2be75b63f693c4f1d53f1b1972ca922f798609fa59334027007cb6",
     "results\\177_cpp_worker_comprehensive_audit_repair_v1\\protection_manifest.json": "4209c19c7e23e5a3ff30b71b344f79de9557862590108e54f69bd4f10ec2eee7",
