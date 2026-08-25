@@ -1,0 +1,9 @@
+{
+  "stage_id": "stage4f_d_cpp_worker_matlab_intermediate_trace_repair_v1",
+  "status": "not_started",
+  "first_difference_confirmed": false,
+  "cpp_files_modified": [],
+  "physics_parameters_modified": false,
+  "thresholds_modified": false,
+  "matlab_reference_modified": false
+}

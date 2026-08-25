@@ -1,0 +1,15 @@
+{
+  "stage_id": "stage4f_d_cpp_worker_matlab_intermediate_trace_repair_v1",
+  "matlab_start_count": 1,
+  "matlab_os_processes_cleaned": [
+    32604,
+    38900
+  ],
+  "openfoam_start_count": 0,
+  "wsl_start_count": 0,
+  "cfd_start_count": 0,
+  "owned_worker_start_count": 0,
+  "owned_residual": 0,
+  "cleanup_status": "pass",
+  "unowned_existing_processes_untouched": true
+}

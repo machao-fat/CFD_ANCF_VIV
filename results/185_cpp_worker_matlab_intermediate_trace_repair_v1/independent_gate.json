@@ -1,0 +1,18 @@
+{
+  "stage_id": "stage4f_d_cpp_worker_matlab_intermediate_trace_repair_v1",
+  "run_id": "cpp_worker_matlab_intermediate_trace_001",
+  "case_id": "cpp_worker_matlab_intermediate_trace_case_001",
+  "gate": "STAGE4F_D_CPP_WORKER_MATLAB_INTERMEDIATE_TRACE_REPAIR_V1_GATE: do_not_pass",
+  "C++_ANCF_NUMERICAL_CORE_STATUS": "not_completed",
+  "reason": "MATLAB source checkpoint for exact step559 contract is unavailable; first difference cannot be established",
+  "real_process_starts": {
+    "MATLAB": 1,
+    "OpenFOAM": 0,
+    "WSL": 0,
+    "CFD": 0
+  },
+  "owned_residual": 0,
+  "old_evidence_modified": false,
+  "old_runtime_reused": false,
+  "cfd_started": false
+}

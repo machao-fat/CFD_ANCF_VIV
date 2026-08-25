@@ -1,0 +1,17 @@
+{
+  "algorithm": "SHA256",
+  "stage_id": "stage4f_d_cpp_worker_matlab_intermediate_trace_repair_v1",
+  "files": {
+    "results/185_cpp_worker_matlab_intermediate_trace_repair_v1/cpp_step560_trace_manifest.json": "4e26743cd1c13314e005bf983c19cef2f06deea62971e46a1102b2da4c34be50",
+    "results/185_cpp_worker_matlab_intermediate_trace_repair_v1/independent_gate.json": "c0e7ff8da36bcbd4ffcf3873f8245d24f0fd23cc36032f1e35795ca447631d6d",
+    "results/185_cpp_worker_matlab_intermediate_trace_repair_v1/internal_force_forensic_comparison.json": "50f1a36e682335177a7ba8ccbd33563f8972f3e9cd7957d44e3598d8952b797d",
+    "results/185_cpp_worker_matlab_intermediate_trace_repair_v1/matlab_step560_trace_manifest.json": "f8902beb34ee43242be975ba9e11e8e81e4fd7530f2bde309a6b5f14831530c0",
+    "results/185_cpp_worker_matlab_intermediate_trace_repair_v1/numerical_contract_manifest.json": "efa31f1bca9808212f1b60ae93a3b3771cb0af1029f268019f6e1259121369f9",
+    "results/185_cpp_worker_matlab_intermediate_trace_repair_v1/numerical_repair_manifest.json": "fd76d56580099bbf98c3b1e28205974d8ecc1bf8fe3c1e37474120dbbfd53c8a",
+    "results/185_cpp_worker_matlab_intermediate_trace_repair_v1/process_cleanup_audit.json": "9b28e7644049572be14956d43dcf10e1871f8f33eab299569c781a91beccba3f",
+    "results/185_cpp_worker_matlab_intermediate_trace_repair_v1/replay_10step_audit.json": "2e9f89fe10e34725933571a519a8041317cea683250aec27e3f0dcdb033eac94",
+    "results/185_cpp_worker_matlab_intermediate_trace_repair_v1/replay_40step_audit.json": "9e5e5714f575033b2e1dbfd48eb7ada82e2502a33ca045c505eda7236929f13e",
+    "results/185_cpp_worker_matlab_intermediate_trace_repair_v1/step560_first_difference_audit.json": "74bee1db0a80842d9066722d9324d666914d9b2360876220dd520257dbb608cd",
+    "results/185_cpp_worker_matlab_intermediate_trace_repair_v1/test_and_build_audit.json": "34660f51f326dfdce51e67570b17c34b2f05b3849148cb29a37338e515b782f1"
+  }
+}

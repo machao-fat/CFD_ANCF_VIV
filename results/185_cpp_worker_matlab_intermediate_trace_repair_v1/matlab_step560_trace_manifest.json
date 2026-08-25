@@ -1,0 +1,13 @@
+{
+  "stage_id": "stage4f_d_cpp_worker_matlab_intermediate_trace_repair_v1",
+  "status": "do_not_pass",
+  "matlab_export_attempted": true,
+  "matlab_start_count": 1,
+  "export_script": "tools/cpp_worker_matlab_intermediate_trace_repair_v1/export_step560_matlab_intermediate_trace.m",
+  "failure_classification": "source_checkpoint_not_found",
+  "raw_error": "expected exactly one matching source, found 0",
+  "candidate_committed_mat_count": 20,
+  "matching_step559_contract_count": 0,
+  "trace_written": false,
+  "matlab_process_cleanup": "completed"
+}

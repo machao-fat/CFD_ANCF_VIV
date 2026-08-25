@@ -1,0 +1,11 @@
+{
+  "stage_id": "stage4f_d_cpp_worker_matlab_intermediate_trace_repair_v1",
+  "status": "not_evaluable",
+  "comparison_performed": false,
+  "reason": "no same-schema MATLAB Gauss trace",
+  "old_stage184_observation": {
+    "internal_force_abs_error": 4.866160452365875e-07,
+    "internal_force_relative_error": 4.891825378743019e-08,
+    "source": "read-only Stage184 evidence"
+  }
+}
