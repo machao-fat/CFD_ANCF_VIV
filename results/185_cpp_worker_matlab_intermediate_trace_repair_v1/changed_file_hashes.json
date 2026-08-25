@@ -2,16 +2,19 @@
   "algorithm": "SHA256",
   "stage_id": "stage4f_d_cpp_worker_matlab_intermediate_trace_repair_v1",
   "files": {
+    "docs/185_cpp_worker_matlab_intermediate_trace_repair_v1/report_zh.md": "54d43ec63bdf2bfd0d818b18277c8ff1ab41691e1cf83d9592d46eed33252fb3",
+    "tools/cpp_worker_matlab_intermediate_trace_repair_v1/export_step560_matlab_intermediate_trace.m": "20390992a98c36ef63e5f013cff817424dcbc4c7371efdc70dd562e0655eff21",
     "results/185_cpp_worker_matlab_intermediate_trace_repair_v1/cpp_step560_trace_manifest.json": "4e26743cd1c13314e005bf983c19cef2f06deea62971e46a1102b2da4c34be50",
-    "results/185_cpp_worker_matlab_intermediate_trace_repair_v1/independent_gate.json": "c0e7ff8da36bcbd4ffcf3873f8245d24f0fd23cc36032f1e35795ca447631d6d",
+    "results/185_cpp_worker_matlab_intermediate_trace_repair_v1/independent_gate.json": "60f7f84eb104301969fb48a7cceb5e051516309beb3e2cc6f46145521f8c0cfa",
     "results/185_cpp_worker_matlab_intermediate_trace_repair_v1/internal_force_forensic_comparison.json": "50f1a36e682335177a7ba8ccbd33563f8972f3e9cd7957d44e3598d8952b797d",
-    "results/185_cpp_worker_matlab_intermediate_trace_repair_v1/matlab_step560_trace_manifest.json": "f8902beb34ee43242be975ba9e11e8e81e4fd7530f2bde309a6b5f14831530c0",
+    "results/185_cpp_worker_matlab_intermediate_trace_repair_v1/matlab_step560_trace_manifest.json": "68dbb6925d7751adbb90473b682042432e31d6cff5ad1060b685a415433bc5bd",
     "results/185_cpp_worker_matlab_intermediate_trace_repair_v1/numerical_contract_manifest.json": "efa31f1bca9808212f1b60ae93a3b3771cb0af1029f268019f6e1259121369f9",
     "results/185_cpp_worker_matlab_intermediate_trace_repair_v1/numerical_repair_manifest.json": "fd76d56580099bbf98c3b1e28205974d8ecc1bf8fe3c1e37474120dbbfd53c8a",
     "results/185_cpp_worker_matlab_intermediate_trace_repair_v1/process_cleanup_audit.json": "9b28e7644049572be14956d43dcf10e1871f8f33eab299569c781a91beccba3f",
     "results/185_cpp_worker_matlab_intermediate_trace_repair_v1/replay_10step_audit.json": "2e9f89fe10e34725933571a519a8041317cea683250aec27e3f0dcdb033eac94",
     "results/185_cpp_worker_matlab_intermediate_trace_repair_v1/replay_40step_audit.json": "9e5e5714f575033b2e1dbfd48eb7ada82e2502a33ca045c505eda7236929f13e",
-    "results/185_cpp_worker_matlab_intermediate_trace_repair_v1/step560_first_difference_audit.json": "74bee1db0a80842d9066722d9324d666914d9b2360876220dd520257dbb608cd",
-    "results/185_cpp_worker_matlab_intermediate_trace_repair_v1/test_and_build_audit.json": "34660f51f326dfdce51e67570b17c34b2f05b3849148cb29a37338e515b782f1"
+    "results/185_cpp_worker_matlab_intermediate_trace_repair_v1/source_candidate_audit.json": "d730a8e898d01d33bebbfa7b0d50124a037bdc15845a6daa22babce077c61a20",
+    "results/185_cpp_worker_matlab_intermediate_trace_repair_v1/step560_first_difference_audit.json": "ae6d092289ea52d1ca02b8728d803723f4d535fe5ee49f9a5389a1ca241db9ac",
+    "results/185_cpp_worker_matlab_intermediate_trace_repair_v1/test_and_build_audit.json": "a0b1908b960d577fa41c7be7eca170957fe32930431135ecb5f622c861d1d7de"
   }
-}
+}\n

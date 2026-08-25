@@ -2,9 +2,9 @@
 
 ## 结论
 
-MATLAB trace 导出未成功，阶段按 fail-closed 停止。唯一一次 MATLAB 启动执行了独立导出脚本，脚本在源 checkpoint 合同检查处返回：`expected exactly one matching source, found 0`。
+MATLAB trace 尚未生成，阶段继续按 fail-closed 停止。唯一一次 MATLAB 启动执行了独立导出脚本；该脚本只扫描 `results/**/committed.mat`，因此返回：`expected exactly one matching source, found 0`。
 
-仓库只读扫描发现 20 个 `committed.mat`，其状态为 step 0--3 或 step 20；没有 step 559、time=2.2075 s、Gauss=5、max_newton=50、dt=0.00125 s 的可加载 MATLAB state。因此不能用旧 JSON fixture 冒充 MATLAB 中间量，也没有执行 C++ 对照或代码修复。
+随后只读解析确认受保护旧 runtime 中存在合法源：`runtime/cpp_worker_persistent_ipc_v1/matlab_dual_011/accepted_step559_seed.mat`。其 MAT 合同为 step=559、time=2.2075 s、tick=2207500000、dt=0.00125 s、Gauss=5、max_newton=50、q size=102；旧 process manifest 还记录该 seed 曾成功生成 MATLAB 黄金输出。Stage185 导出器已修正为显式验证该受保护 seed，但本阶段“MATLAB 最多启动 1 次”的额度已用完，所以没有第二次启动，也没有 C++ 中间量对照或代码修复。
 
 ## 进程与保护
 
@@ -12,6 +12,7 @@ MATLAB trace 导出未成功，阶段按 fail-closed 停止。唯一一次 MATLA
 - OpenFOAM=0，WSL=0，CFD=0；owned residual=0。
 - Stage1--184 旧证据、旧 runtime、MATLAB 参考实现、物理参数和阈值未修改。
 - Stage184 的 `do_not_pass` 状态保持不变。
+- Stage185 新工具目录的 Python `compileall`：通过。
 
 ## Gate
 
@@ -19,4 +20,4 @@ MATLAB trace 导出未成功，阶段按 fail-closed 停止。唯一一次 MATLA
 
 `C++_ANCF_NUMERICAL_CORE_STATUS=not_completed`
 
-需要新的合法 step559 MATLAB source checkpoint（或新的明确 MATLAB 导出授权/输入合同）后，才能再次进行同 schema 中间量导出。当前不具备 CFD confirm 申请资格。
+需要新的明确 MATLAB 导出授权（允许在修正后的导出器上重新执行一次）后，才能进行同 schema 中间量导出。当前不具备 C++ 数值修复或 CFD confirm 申请资格。

@@ -11,12 +11,23 @@ output_json = char(output_json);
 project_root = fileparts(fileparts(fileparts(mfilename('fullpath'))));
 addpath(genpath(fullfile(project_root, 'src', 'structure_ancf_matlab')));
 
-% Locate an exact immutable source. More than one match is ambiguous and is
-% deliberately rejected instead of guessing between physical histories.
+% Locate an exact immutable source. The accepted step-559 seed is stored in
+% the protected persistent-worker runtime rather than results/**. It was the
+% source recorded by the earlier authorized MATLAB golden export. Include it
+% explicitly, then retain the committed-checkpoint scan for future stages.
+seed_candidate = fullfile(project_root, 'runtime', 'cpp_worker_persistent_ipc_v1', ...
+    'matlab_dual_011', 'accepted_step559_seed.mat');
 files = dir(fullfile(project_root, 'results', '**', 'committed.mat'));
-matches = {};
+candidates = {};
+if isfile(seed_candidate)
+    candidates{end+1} = seed_candidate; %#ok<AGROW>
+end
 for k = 1:numel(files)
-    candidate = fullfile(files(k).folder, files(k).name);
+    candidates{end+1} = fullfile(files(k).folder, files(k).name); %#ok<AGROW>
+end
+matches = {};
+for k = 1:numel(candidates)
+    candidate = candidates{k};
     try
         loaded = load(candidate, 'state');
         if ~isfield(loaded, 'state'), continue; end

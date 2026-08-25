@@ -1,7 +1,7 @@
 {
   "stage_id": "stage4f_d_cpp_worker_matlab_intermediate_trace_repair_v1",
   "status": "not_started_after_fail_closed_export",
-  "compileall": "not_run",
+  "compileall": "pass (tools/cpp_worker_matlab_intermediate_trace_repair_v1)",
   "cmake_release": "not_run",
   "w4": "not_run",
   "analyze": "not_run",

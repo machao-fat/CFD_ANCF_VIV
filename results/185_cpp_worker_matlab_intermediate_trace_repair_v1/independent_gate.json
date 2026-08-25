@@ -4,7 +4,7 @@
   "case_id": "cpp_worker_matlab_intermediate_trace_case_001",
   "gate": "STAGE4F_D_CPP_WORKER_MATLAB_INTERMEDIATE_TRACE_REPAIR_V1_GATE: do_not_pass",
   "C++_ANCF_NUMERICAL_CORE_STATUS": "not_completed",
-  "reason": "MATLAB source checkpoint for exact step559 contract is unavailable; first difference cannot be established",
+  "reason": "A valid protected step559 seed is verified, but Stage185 MATLAB trace was not produced because the only allowed launch failed in the old source discovery path; corrected exporter awaits new explicit MATLAB authorization",
   "real_process_starts": {
     "MATLAB": 1,
     "OpenFOAM": 0,
@@ -14,5 +14,6 @@
   "owned_residual": 0,
   "old_evidence_modified": false,
   "old_runtime_reused": false,
+  "protected_seed_read_only": true,
   "cfd_started": false
 }
