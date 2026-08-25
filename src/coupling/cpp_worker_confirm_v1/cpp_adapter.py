@@ -365,6 +365,12 @@ class CppKernelCampaignAdapter:
             "run_id": self.run_id,
             "case_id": self.case_id,
             "model_contract_sha256": self.model_contract_sha256,
+            "mass_gauss_order": int(getattr(self.model, "mass_gauss_order", 5)),
+            "fixed_dof": list(getattr(self.model, "fixed_dof", ()) or
+                               (0, 1, 2, 6 * (int(getattr(self.model, "elements", 0))),
+                                6 * (int(getattr(self.model, "elements", 0))) + 1)),
+            "prescribed_values": list(getattr(self.model, "prescribed_values", ()) or (0.0, 0.0, 0.0, 0.0, 0.0)),
+            "boundary_contract_id": str(getattr(self.model, "boundary_contract_id", "ancf_v1_bottom_top_xy_zero")),
             "committed_global_step": self._committed_step,
             "committed_time_s": self._committed_time_s,
             "committed_tick": self._committed_tick,
@@ -413,6 +419,15 @@ class CppKernelCampaignAdapter:
             stored_model_hash = value.get("model_contract_sha256")
             if self.model_contract_sha256 is not None and stored_model_hash != self.model_contract_sha256:
                 raise CppAdapterError("C++ checkpoint model contract mismatch")
+            if value.get("mass_gauss_order") != int(getattr(self.model, "mass_gauss_order", 5)):
+                raise CppAdapterError("C++ checkpoint mass quadrature contract mismatch")
+            expected_fixed = list(getattr(self.model, "fixed_dof", ()) or
+                                  (0, 1, 2, 6 * int(getattr(self.model, "elements", 0)),
+                                   6 * int(getattr(self.model, "elements", 0)) + 1))
+            expected_values = list(getattr(self.model, "prescribed_values", ()) or (0.0, 0.0, 0.0, 0.0, 0.0))
+            if value.get("fixed_dof") != expected_fixed or value.get("prescribed_values") != expected_values or \
+                    value.get("boundary_contract_id") != str(getattr(self.model, "boundary_contract_id", "ancf_v1_bottom_top_xy_zero")):
+                raise CppAdapterError("C++ checkpoint boundary contract mismatch")
             committed_step = checkpoint_int("committed_global_step")
             committed_time = checkpoint_float("committed_time_s")
             committed_tick = checkpoint_int("committed_tick")

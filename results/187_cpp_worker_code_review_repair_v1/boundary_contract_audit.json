@@ -1,0 +1,16 @@
+{
+  "status": "pass",
+  "boundary_contract_id": "ancf_v1_bottom_top_xy_zero",
+  "default_fixed_dof": "[0,1,2,6*elements,6*elements+1]",
+  "prescribed_values": "five zeros",
+  "invalid_cases": [
+    "duplicate",
+    "non-increasing",
+    "out-of-range",
+    "dimension mismatch",
+    "non-finite prescribed value"
+  ],
+  "invalid_cases_fail_closed": true,
+  "checkpoint_contract_recorded": true,
+  "physical_boundary_semantics_changed": false
+}

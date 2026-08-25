@@ -1,0 +1,9 @@
+{
+  "status": "pass",
+  "mass_gauss_order": 5,
+  "internal_force_gauss_order": 3,
+  "rules_independent": true,
+  "invalid_order_rejected": true,
+  "legacy_wire_layout_preserved_for_canonical_contract": true,
+  "extended_layout_for_non_default_contract": true
+}

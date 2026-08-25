@@ -40,6 +40,28 @@ int main() {
   double rotated_force_max = 0.0;
   for (double value : internal) rotated_force_max = std::max(rotated_force_max, std::abs(value));
   if (rotated_force_max > 1.0e-4) return 2;  // rigid rotation invariance
+  cfd_ancf::AssemblyTrace production_trace;
+  std::vector<double> traced_force;
+  cfd_ancf::Matrix traced_tangent;
+  cfd_ancf::internal_force_tangent(state.q, model, traced_force, traced_tangent, &production_trace);
+  const auto forensic = cfd_ancf::internal_force_forensic(state.q, model);
+  if (production_trace.points.size() != model.elements * model.gauss_order ||
+      traced_force != forensic.force || traced_tangent.data != forensic.tangent.data ||
+      production_trace.points.size() != forensic.points.size()) return 2;
+  auto explicit_contract = model;
+  explicit_contract.mass_gauss_order = 5;
+  explicit_contract.fixed_dof = {0u, 1u, 2u, 6u * model.elements, 6u * model.elements + 1u};
+  explicit_contract.prescribed_values = {0.0, 0.0, 0.0, 0.0, 0.0};
+  explicit_contract.boundary_contract_id = "ancf_v1_bottom_top_xy_zero";
+  cfd_ancf::validate_model(explicit_contract);
+  auto invalid_mass_rule = explicit_contract;
+  invalid_mass_rule.mass_gauss_order = 7;
+  try { cfd_ancf::validate_model(invalid_mass_rule); return 2; }
+  catch (const std::invalid_argument&) {}
+  auto invalid_boundary = explicit_contract;
+  invalid_boundary.fixed_dof[1] = invalid_boundary.fixed_dof[0];
+  try { cfd_ancf::validate_model(invalid_boundary); return 2; }
+  catch (const std::invalid_argument&) {}
   auto diagnostics = cfd_ancf::advance(state, model, force);
   if (!diagnostics.converged || !cfd_ancf::finite(state) || state.step != 1 || !std::isfinite(state.residual)) return 2;
   force[1] = 1.0e-3;

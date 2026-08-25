@@ -3,6 +3,8 @@
 #include <cstddef>
 #include <array>
 #include <limits>
+#include <string>
+#include <utility>
 #include <vector>
 
 namespace cfd_ancf {
@@ -47,6 +49,13 @@ struct Model {
   double damping_alpha = 0.0;
   double damping_beta = 0.0;
   std::size_t gauss_order = 3;
+  // The mass quadrature is an independent part of the MATLAB contract.
+  std::size_t mass_gauss_order = 5;
+  // Empty vectors select the v1 canonical boundary contract.  Wire requests
+  // and checkpoints should populate them explicitly.
+  std::vector<std::size_t> fixed_dof;
+  std::vector<double> prescribed_values;
+  std::string boundary_contract_id = "ancf_v1_bottom_top_xy_zero";
   double area() const;
   double displaced_area() const;
   double EA() const;
@@ -118,6 +127,7 @@ struct ForensicPoint {
   std::array<double, 12> bga{};
   std::array<double, 12> cgb{};
   std::array<double, 12> contribution{};
+  std::array<double, 144> tangent_contribution{};
 };
 
 struct ForensicResult {
@@ -126,12 +136,21 @@ struct ForensicResult {
   Matrix tangent;
 };
 
+// Production assembly may optionally emit this trace.  The callback is
+// intentionally data-only: enabling it cannot select a second formula or
+// change the arithmetic used by the solver.
+struct AssemblyTrace {
+  std::vector<ForensicPoint> points;
+};
+
 State make_reference_state(const Model& model);
 void validate_model(const Model& model);
 void symmetrize_mass(State& state);
 StepDiagnostics advance(State& state, const Model& model, const std::vector<double>& slice_force,
                         std::vector<NewtonIterationTrace>* trace = nullptr);
 void internal_force_tangent(const std::vector<double>& q, const Model& model, std::vector<double>& force, Matrix& tangent);
+void internal_force_tangent(const std::vector<double>& q, const Model& model, std::vector<double>& force,
+                            Matrix& tangent, AssemblyTrace* trace);
 ForensicResult internal_force_forensic(const std::vector<double>& q, const Model& model);
 std::vector<double> external_force(const Model& model, const std::vector<double>& slice_force);
 Matrix mapping_H3(const Model& model);

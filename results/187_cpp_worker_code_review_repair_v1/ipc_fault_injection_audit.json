@@ -1,0 +1,20 @@
+{
+  "status": "pass",
+  "covered": [
+    "stale",
+    "duplicate",
+    "out-of-order",
+    "timeout",
+    "disconnect",
+    "hash",
+    "identity",
+    "tick/time/step",
+    "NaN/Inf",
+    "dimension",
+    "non-zero return",
+    "boundary/quadrature contract"
+  ],
+  "fail_closed": true,
+  "same_runtime_auto_retry": false,
+  "source": "root unittest and C++ self-tests"
+}

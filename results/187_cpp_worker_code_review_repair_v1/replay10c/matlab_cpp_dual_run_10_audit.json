@@ -1,0 +1,77 @@
+{
+  "status": "pass_with_engineering_tolerance",
+  "requested_steps": 10,
+  "processed_steps": 10,
+  "strict_pass_steps": 10,
+  "engineering_pass_steps": 10,
+  "worker_start_count": 1,
+  "matlab_start_count": 0,
+  "openfoam_start_count": 0,
+  "wsl_start_count": 0,
+  "owned_residual": 0,
+  "engineering_tolerances": {
+    "q": 0.0001,
+    "qdot": 0.005,
+    "qddot": 1.0,
+    "internal_force": 500.0,
+    "external_force": 1e-08,
+    "generalized_force": 1e-08,
+    "predictor": 0.0001,
+    "corrector": 0.0001,
+    "residual": 0.02
+  },
+  "max_error_by_field": {
+    "q": {
+      "max_abs": 3.7269449679189215e-20,
+      "max_relative": 3.7269449679189215e-20
+    },
+    "qdot": {
+      "max_abs": 1.6263032587282567e-17,
+      "max_relative": 1.6263032587282567e-17
+    },
+    "qddot": {
+      "max_abs": 8.673617379884035e-15,
+      "max_relative": 8.673617379884035e-15
+    },
+    "internal_force": {
+      "max_abs": 4.3655745685100555e-11,
+      "max_relative": 3.183231456205249e-12
+    },
+    "external_force": {
+      "max_abs": 0.0,
+      "max_relative": 0.0
+    },
+    "generalized_force": {
+      "max_abs": 0.0,
+      "max_relative": 0.0
+    },
+    "predictor": {
+      "max_abs": 4.0657581468206416e-20,
+      "max_relative": 4.0657581468206416e-20
+    },
+    "corrector": {
+      "max_abs": 3.7269449679189215e-20,
+      "max_relative": 3.7269449679189215e-20
+    },
+    "residual": {
+      "max_abs": 5.329070518200751e-15,
+      "max_relative": 5.329070518200751e-15
+    }
+  },
+  "strict_failure_count": 0,
+  "worker_process_audit": {
+    "pid": 17564,
+    "parent_pid": 17812,
+    "creation_time_ns": 1787678438111950000,
+    "command_line": [
+      "D:\\研二文件\\开题准备\\CFD_ANCF_VIV\\runtime\\cpp_worker_code_review_repair_v1\\build-analyze\\Release\\cfd_ancf_ancf_kernel_worker.exe"
+    ],
+    "cwd": "D:\\研二文件\\开题准备\\CFD_ANCF_VIV\\results\\187_cpp_worker_code_review_repair_v1\\replay10c",
+    "owned": true,
+    "end_time_ns": 1787678438266545300,
+    "return_code": 0,
+    "cleanup_result": "closed"
+  },
+  "worker_return_code": 0,
+  "stderr": ""
+}

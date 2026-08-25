@@ -35,6 +35,7 @@ RESPONSE_FIELD_SEMANTICS = {
 
 _PREFIX = struct.Struct("<IIIiiQddiiiiiQQ")
 _MODEL = struct.Struct("<13dii")
+_BOUNDARY_ID = 64
 _RESPONSE_PREFIX = struct.Struct("<IIIiiQdiiidQQI")
 
 
@@ -88,8 +89,12 @@ class KernelModel:
     damping_alpha: float = 0.0
     damping_beta: float = 0.0
     gauss_order: int = 3
+    mass_gauss_order: int = 5
     max_newton: int = 40
     slice_positions_m: tuple[float, ...] = ()
+    fixed_dof: tuple[int, ...] = ()
+    prescribed_values: tuple[float, ...] = ()
+    boundary_contract_id: str = "ancf_v1_bottom_top_xy_zero"
     # Kept explicit in the model object even though the v1 wire layout
     # intentionally requires both owned components to be enabled.
     include_gravity: bool = True
@@ -107,7 +112,8 @@ class KernelModel:
             if isinstance(value, bool) or not isinstance(value, int):
                 raise FrameError(f"kernel model {name} is not an integer")
         if (self.elements < 1 or self.elements > 10000 or self.slices < 1 or
-                self.slices > 1000 or self.ndof > MAX_NDOF or self.gauss_order not in (3, 5)):
+                self.slices > 1000 or self.ndof > MAX_NDOF or self.gauss_order not in (3, 5) or
+                self.mass_gauss_order not in (3, 5)):
             raise FrameError("kernel model dimensions or quadrature order are invalid")
         if self.max_newton <= 0 or self.max_newton > MAX_NEWTON or self.newton_tolerance <= 0.0:
             raise FrameError("kernel Newton contract is invalid")
@@ -142,15 +148,38 @@ class KernelModel:
                                        any(self.slice_positions_m[i] <= self.slice_positions_m[i - 1]
                                            for i in range(1, len(self.slice_positions_m)))):
             raise FrameError("kernel slice positions are invalid")
+        fixed = self.fixed_dof or (0, 1, 2, 6 * self.elements, 6 * self.elements + 1)
+        prescribed = self.prescribed_values or (0.0,) * len(fixed)
+        if (len(fixed) != len(prescribed) or not fixed or
+                any(isinstance(index, bool) or not isinstance(index, int) or index < 0 or index >= self.ndof
+                    for index in fixed) or
+                any(fixed[index] <= fixed[index - 1] for index in range(1, len(fixed))) or
+                any(isinstance(value, bool) or not isinstance(value, Real) or not math.isfinite(float(value))
+                    for value in prescribed)):
+            raise FrameError("kernel boundary contract is invalid")
+        _fixed(self.boundary_contract_id, _BOUNDARY_ID, "boundary_contract_id")
 
     def bytes(self) -> bytes:
         self.validate(1.0)
         positions = self.slice_positions_m or tuple(self.length_m * k / max(1, self.slices - 1) for k in range(self.slices))
-        return _MODEL.pack(self.length_m, self.diameter_m, self.inner_diameter_m,
+        fixed = self.fixed_dof or (0, 1, 2, 6 * self.elements, 6 * self.elements + 1)
+        prescribed = self.prescribed_values or (0.0,) * len(fixed)
+        boundary = _fixed(self.boundary_contract_id, _BOUNDARY_ID, "boundary_contract_id")
+        base = _MODEL.pack(self.length_m, self.diameter_m, self.inner_diameter_m,
                            self.top_tension_N, self.youngs_modulus_Pa, self.material_density,
                            self.fluid_density, self.gravity, self.beta, self.gamma,
                            self.newton_tolerance, self.damping_alpha, self.damping_beta,
-                           self.gauss_order, self.max_newton) + struct.pack("<" + "d" * self.slices, *positions)
+                           self.gauss_order, self.max_newton)
+        # Preserve the v1 legacy byte layout for the canonical contract so
+        # previously built offline workers remain readable.  Any non-default
+        # boundary or mass rule is forced onto the explicit extension layout.
+        explicit = bool(self.fixed_dof or self.prescribed_values or self.mass_gauss_order != 5 or
+                        self.boundary_contract_id != "ancf_v1_bottom_top_xy_zero")
+        if not explicit:
+            return base + struct.pack("<" + "d" * self.slices, *positions)
+        return base + struct.pack("<ii", self.mass_gauss_order, len(fixed)) + boundary + \
+            struct.pack("<" + "i" * len(fixed), *fixed) + struct.pack("<" + "d" * len(prescribed), *prescribed) + \
+            struct.pack("<" + "d" * self.slices, *positions)
 
 
 @dataclass(frozen=True)

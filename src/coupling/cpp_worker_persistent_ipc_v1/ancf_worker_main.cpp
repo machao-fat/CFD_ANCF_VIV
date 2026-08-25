@@ -32,6 +32,7 @@ constexpr std::uint32_t STEP_RESPONSE = 6;
 constexpr std::size_t ID_RUN = 64;
 constexpr std::size_t ID_CASE = 64;
 constexpr std::size_t ID_ENDPOINT = 32;
+constexpr std::size_t ID_BOUNDARY = 64;
 constexpr char REQUEST_PRODUCER[] = "python_scheduler";
 constexpr char REQUEST_CONSUMER[] = "cpp_ancf_kernel_worker";
 
@@ -216,11 +217,44 @@ int process_step(const std::vector<char>& payload, std::vector<char>& response,
       model_gauss_order != gauss_order || model_max_newton != max_newton) return 4;
   model.gauss_order = static_cast<std::size_t>(model_gauss_order);
   model.max_newton = static_cast<std::size_t>(model_max_newton);
+  std::int32_t mass_gauss_order = 0, fixed_count = 0;
+  std::array<char, ID_BOUNDARY> boundary_id{};
+  bool explicit_contract = false;
+  if (offset + sizeof(mass_gauss_order) + sizeof(fixed_count) + boundary_id.size() <= payload.size()) {
+    std::memcpy(&mass_gauss_order, payload.data() + offset, sizeof(mass_gauss_order));
+    std::memcpy(&fixed_count, payload.data() + offset + sizeof(mass_gauss_order), sizeof(fixed_count));
+    std::memcpy(boundary_id.data(), payload.data() + offset + sizeof(mass_gauss_order) + sizeof(fixed_count), boundary_id.size());
+    explicit_contract = (mass_gauss_order == 3 || mass_gauss_order == 5) && fixed_count > 0 && fixed_count <= n &&
+                        valid_c_string(boundary_id.data(), boundary_id.size());
+  }
+  if (explicit_contract) {
+    offset += sizeof(mass_gauss_order) + sizeof(fixed_count) + boundary_id.size();
+    model.mass_gauss_order = static_cast<std::size_t>(mass_gauss_order);
+    model.boundary_contract_id = string_value(boundary_id.data(), boundary_id.size());
+    model.fixed_dof.resize(static_cast<std::size_t>(fixed_count));
+    model.prescribed_values.resize(static_cast<std::size_t>(fixed_count));
+    for (std::size_t index = 0; index < model.fixed_dof.size(); ++index) {
+      std::int32_t value = -1;
+      if (!take(payload, offset, value) || value < 0) return 4;
+      model.fixed_dof[index] = static_cast<std::size_t>(value);
+    }
+    for (double& value : model.prescribed_values) if (!take(payload, offset, value)) return 4;
+  } else {
+    // Canonical v1 requests retain the historical model byte layout.  Fill
+    // the explicit contract from the protected defaults after dimensions are
+    // assigned below.
+    model.mass_gauss_order = 5;
+    model.boundary_contract_id = "ancf_v1_bottom_top_xy_zero";
+  }
   model.slice_positions_m.resize(static_cast<std::size_t>(slices));
   for (double& position : model.slice_positions_m) if (!take(payload, offset, position)) return 4;
   const std::size_t model_end = offset;
   model.elements = static_cast<std::size_t>(elements);
   model.slices = static_cast<std::size_t>(slices);
+  if (!explicit_contract) {
+    model.fixed_dof = {0u, 1u, 2u, 6u * model.elements, 6u * model.elements + 1u};
+    model.prescribed_values = {0.0, 0.0, 0.0, 0.0, 0.0};
+  }
   model.dt_s = dt_s;
   try {
     cfd_ancf::validate_model(model);
