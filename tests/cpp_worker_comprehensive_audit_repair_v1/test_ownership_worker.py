@@ -294,6 +294,33 @@ class OwnershipWorkerRepairTests(unittest.TestCase):
                 if stream is not None and not stream.closed:
                     stream.close()
 
+    def test_tick_jump_at_float_rounding_boundary_is_fail_closed(self):
+        value = model()
+        base = request(value, expected_base(value))
+        first = replace(base, time_s=2.0000000001743263, integer_tick=2_000_000_000,
+                        dt_s=0.0012500005)
+        second = replace(first, sequence=2, global_step=561, case_local_bridge_step=2,
+                         time_s=first.time_s + first.dt_s, integer_tick=2_001_250_001,
+                         request_id=153202, transaction_id=10153202)
+        process = subprocess.Popen([str(WORKER)], stdin=subprocess.PIPE, stdout=subprocess.PIPE,
+                                   stderr=subprocess.PIPE, cwd=str(ROOT), bufsize=0)
+        assert process.stdin is not None and process.stdout is not None
+        try:
+            process.stdin.write(encode_kernel_request(first)); process.stdin.flush()
+            header = process.stdout.read(HEADER.size)
+            self.assertEqual(len(header), HEADER.size)
+            body = process.stdout.read(HEADER.unpack(header)[1])
+            validate_kernel_response(first, decode_kernel_response(header + body))
+            process.stdin.write(encode_kernel_request(second)); process.stdin.flush()
+            process.stdin.close(); process.wait(timeout=10)
+            self.assertNotEqual(process.returncode, 0)
+        finally:
+            if process.poll() is None:
+                process.kill(); process.wait(timeout=10)
+            for stream in (process.stdout, process.stderr):
+                if stream is not None and not stream.closed:
+                    stream.close()
+
 
 if __name__ == "__main__":
     unittest.main()

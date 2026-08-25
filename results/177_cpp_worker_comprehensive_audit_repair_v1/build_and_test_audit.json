@@ -1,0 +1,61 @@
+{
+  "architecture": "x64",
+  "build_log": "runtime\\cpp_worker_comprehensive_audit_repair_v1\\stage177_tick_lineage_tests\\logs\\cmake_build.log",
+  "cmake": "3.31.6",
+  "compileall_log": "runtime\\cpp_worker_comprehensive_audit_repair_v1\\stage177_tick_lineage_tests\\logs\\compileall.log",
+  "compiler": "MSVC 19.44.35228.0 / Visual Studio 2022 BuildTools",
+  "configuration": "Release",
+  "configure_log": "runtime\\cpp_worker_comprehensive_audit_repair_v1\\stage177_tick_lineage_tests\\logs\\cmake_configure.log",
+  "focused_tests": {
+    "cpp_physics_ownership_v1": {
+      "errors": 0,
+      "failures": 0,
+      "log": "runtime\\cpp_worker_comprehensive_audit_repair_v1\\stage177_tick_lineage_tests\\logs\\ownership.log",
+      "skipped": 0,
+      "status": "pass",
+      "tests": 6
+    },
+    "cpp_worker_comprehensive_audit_repair_v1": {
+      "errors": 0,
+      "failures": 0,
+      "log": "runtime\\cpp_worker_comprehensive_audit_repair_v1\\stage177_tick_lineage_tests\\logs\\comprehensive.log",
+      "skipped": 0,
+      "status": "pass",
+      "tests": 50
+    },
+    "cpp_worker_persistent_ipc_v1": {
+      "errors": 0,
+      "failures": 0,
+      "log": "runtime\\cpp_worker_comprehensive_audit_repair_v1\\stage177_tick_lineage_tests\\logs\\persistent_ipc.log",
+      "skipped": 0,
+      "status": "pass",
+      "tests": 18
+    },
+    "root_unittest": {
+      "errors": 0,
+      "failures": 0,
+      "log": "runtime\\cpp_worker_comprehensive_audit_repair_v1\\stage177_tick_lineage_tests\\logs\\root_unittest.log",
+      "skipped": 1,
+      "status": "pass",
+      "tests": 1174
+    }
+  },
+  "generator": "Visual Studio 17 2022",
+  "real_process_starts": {
+    "CFD": 0,
+    "MATLAB": 0,
+    "OpenFOAM": 0,
+    "WSL": 0
+  },
+  "selftests": {
+    "ancf_kernel": {
+      "log": "runtime\\cpp_worker_comprehensive_audit_repair_v1\\stage177_tick_lineage_tests\\logs\\ancf_selftest.log",
+      "status": "pass"
+    },
+    "physics_ownership": {
+      "log": "runtime\\cpp_worker_comprehensive_audit_repair_v1\\stage177_tick_lineage_tests\\logs\\ownership_selftest.log",
+      "status": "pass"
+    }
+  },
+  "status": "pass"
+}

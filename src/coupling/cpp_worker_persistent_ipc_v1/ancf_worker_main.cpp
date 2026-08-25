@@ -7,6 +7,7 @@
 #include <cstdlib>
 #include <fstream>
 #include <iostream>
+#include <limits>
 #include <stdexcept>
 #include <string>
 #include <unordered_set>
@@ -77,6 +78,18 @@ bool finite_values(const std::vector<double>& values) {
   for (double value : values) if (!std::isfinite(value)) return false;
   return true;
 }
+
+bool next_tick(std::uint64_t previous, double dt_s, std::uint64_t& result) {
+  if (!std::isfinite(dt_s) || dt_s <= 0.0) return false;
+  const long double raw = static_cast<long double>(dt_s) * 1000000000.0L;
+  if (!std::isfinite(static_cast<double>(raw)) || raw < 0.0L ||
+      raw > static_cast<long double>((std::numeric_limits<std::uint64_t>::max)())) return false;
+  const auto delta = static_cast<std::uint64_t>(std::llround(raw));
+  if (previous > (std::numeric_limits<std::uint64_t>::max)() - delta) return false;
+  result = previous + delta;
+  return true;
+}
+
 bool little_endian() {
   const std::uint16_t marker = 1;
   return *reinterpret_cast<const std::uint8_t*>(&marker) == 1;
@@ -268,20 +281,28 @@ int process_step(const std::vector<char>& payload, std::vector<char>& response,
         integer_tick == expected_tick && std::abs(time_s - expected_time_s) <= 1.0e-12 &&
         std::abs(dt_s - expected_dt_s) <= 1.0e-15) {
       lineage_mode = 2;
-    } else if (global_step == expected_global_step + 1 && bridge_step == expected_bridge_step + 1 &&
-               integer_tick == static_cast<std::uint64_t>(std::llround(time_s * 1.0e9)) &&
-               std::abs(time_s - (expected_time_s + expected_dt_s)) <= 1.0e-12 &&
-               std::abs(dt_s - expected_dt_s) <= 1.0e-15) {
-      lineage_mode = 1;
     } else {
-      return 16;
+      std::uint64_t expected_next_tick = 0;
+      if (global_step == expected_global_step + 1 && bridge_step == expected_bridge_step + 1 &&
+          next_tick(expected_tick, expected_dt_s, expected_next_tick) &&
+          integer_tick == expected_next_tick &&
+          integer_tick == static_cast<std::uint64_t>(std::llround(time_s * 1.0e9)) &&
+          std::abs(time_s - (expected_time_s + expected_dt_s)) <= 1.0e-12 &&
+          std::abs(dt_s - expected_dt_s) <= 1.0e-15) {
+        lineage_mode = 1;
+      } else {
+        return 16;
+      }
     }
   } else if (lineage_mode == 2 && expected_sequence % 2 == 0) {
     if (global_step != expected_global_step || bridge_step != expected_bridge_step ||
         integer_tick != expected_tick || std::abs(time_s - expected_time_s) > 1.0e-12 ||
         std::abs(dt_s - expected_dt_s) > 1.0e-15) return 16;
   } else {
+    std::uint64_t expected_next_tick = 0;
     if (global_step != expected_global_step + 1 || bridge_step != expected_bridge_step + 1 ||
+        !next_tick(expected_tick, expected_dt_s, expected_next_tick) ||
+        integer_tick != expected_next_tick ||
         integer_tick != static_cast<std::uint64_t>(std::llround(time_s * 1.0e9)) ||
         std::abs(time_s - (expected_time_s + expected_dt_s)) > 1.0e-12 ||
         std::abs(dt_s - expected_dt_s) > 1.0e-15) {

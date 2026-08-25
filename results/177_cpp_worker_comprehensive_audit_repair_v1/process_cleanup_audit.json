@@ -1,0 +1,29 @@
+{
+  "cleanup_scope": "only Stage177 test-owned fake_tree processes were cleaned by exact PID",
+  "owned_residual": 0,
+  "preexisting_non_owned_processes_detected": [
+    {
+      "executable": "MATLAB.exe",
+      "pid": 32604,
+      "runtime": "runtime/stage4e_b1_v3_1_2",
+      "session_id": 1,
+      "touched": false
+    },
+    {
+      "executable": "matlab.exe",
+      "pid": 38900,
+      "runtime": "runtime/stage4e_b1_v3_1_2",
+      "session_id": 1,
+      "touched": false
+    }
+  ],
+  "real_process_starts": {
+    "CFD": 0,
+    "MATLAB": 0,
+    "OpenFOAM": 0,
+    "WSL": 0
+  },
+  "status": "pass",
+  "test_owned_residual": 0,
+  "worker_start_count": 1
+}
