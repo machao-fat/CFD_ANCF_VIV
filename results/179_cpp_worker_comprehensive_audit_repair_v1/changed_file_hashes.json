@@ -1,0 +1,9 @@
+{
+  "src/coupling/cpp_physics_ownership_v1/physics_ownership.cpp": "4a00aba7626dd6d5e1f33057bd538eb3a61c29385cf1dc1cc739cfb452fe9597",
+  "src/coupling/cpp_physics_ownership_v1/physics_ownership_selftest.cpp": "ab909274a495d38219abff219c48b84119302dd13aa99b2fb5eb23e91b1761a6",
+  "src/coupling/cpp_worker_persistent_ipc_v1/CMakeLists.txt": "5ea7445adb4d847765bf29261a3d35903741f5e27a3da3d815f5a3421d8b3a55",
+  "src/coupling/cpp_worker_persistent_ipc_v1/ancf_kernel.cpp": "21407a7d55e60609f780d7e4566c1ff68d9e165091e7ba04002b7fcc6223fbcb",
+  "tests/cpp_worker_comprehensive_audit_repair_v1/test_stage179_mass_contract.py": "9512293b868de69c5d0b4d38c60e8e56d8f50b7da98203b3bf9583a7e5021d6f",
+  "tools/cpp_worker_comprehensive_audit_repair_v1/generate_stage179_evidence.py": "a0d6ff33ed605c967b457696057635cd8d8d167777437b084fec9ccde1820e4d",
+  "tools/cpp_worker_confirm_v1/run_fresh_library_build.py": "9a5c1611cdf55fed4769a4c5b34db986ad40fa910f60ccdb64411727cc53bd4e"
+}

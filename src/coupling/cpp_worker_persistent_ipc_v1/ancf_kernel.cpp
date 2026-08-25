@@ -90,14 +90,14 @@ std::vector<double> solve(Matrix a, std::vector<double> b) {
   const std::size_t n=a.rows;
 #ifdef CFD_ANCF_USE_DOUBLE_SOLVE
   std::vector<double> aa = a.data, bb = std::move(b);
-  for(std::size_t k=0;k<n;++k){ std::size_t pivot=k; for(std::size_t i=k+1;i<n;++i)if(std::abs(aa[i*n+k])>std::abs(aa[pivot*n+k]))pivot=i; if(std::abs(aa[pivot*n+k])<1e-24)throw std::runtime_error("singular ANCF tangent"); if(pivot!=k){for(std::size_t j=k;j<n;++j)std::swap(aa[k*n+j],aa[pivot*n+j]);std::swap(bb[k],bb[pivot]);} for(std::size_t i=k+1;i<n;++i){double f=aa[i*n+k]/aa[k*n+k];aa[i*n+k]=0;for(std::size_t j=k+1;j<n;++j)aa[i*n+j]-=f*aa[k*n+j];bb[i]-=f*bb[k];}}
+  for(std::size_t k=0;k<n;++k){ std::size_t pivot=k; for(std::size_t i=k+1;i<n;++i)if(std::abs(aa[i*n+k])>std::abs(aa[pivot*n+k]))pivot=i; if(std::abs(aa[pivot*n+k])<1e-24)throw std::runtime_error("singular ANCF tangent"); if(pivot!=k){for(std::size_t j=0;j<n;++j)std::swap(aa[k*n+j],aa[pivot*n+j]);std::swap(bb[k],bb[pivot]);} for(std::size_t i=k+1;i<n;++i){double f=aa[i*n+k]/aa[k*n+k];aa[i*n+k]=0;for(std::size_t j=k+1;j<n;++j)aa[i*n+j]-=f*aa[k*n+j];bb[i]-=f*bb[k];}}
   std::vector<double> xx(n); for(std::size_t ii=0;ii<n;++ii){std::size_t i=n-1-ii;double s=bb[i];for(std::size_t j=i+1;j<n;++j)s-=aa[i*n+j]*xx[j];xx[i]=s/aa[i*n+i];}
   if (!finite_vector(xx)) throw std::runtime_error("linear solve output contains NaN/Inf");
   return xx;
 #else
   std::vector<long double> aa(n*n), bb(n);
   for(std::size_t i=0;i<n;++i){bb[i]=static_cast<long double>(b[i]);for(std::size_t j=0;j<n;++j)aa[i*n+j]=static_cast<long double>(a(i,j));}
-  for(std::size_t k=0;k<n;++k){ std::size_t pivot=k; for(std::size_t i=k+1;i<n;++i)if(std::abs(aa[i*n+k])>std::abs(aa[pivot*n+k]))pivot=i; if(std::abs(aa[pivot*n+k])<1e-24L)throw std::runtime_error("singular ANCF tangent"); if(pivot!=k){for(std::size_t j=k;j<n;++j)std::swap(aa[k*n+j],aa[pivot*n+j]);std::swap(bb[k],bb[pivot]);} for(std::size_t i=k+1;i<n;++i){long double f=aa[i*n+k]/aa[k*n+k];aa[i*n+k]=0;for(std::size_t j=k+1;j<n;++j)aa[i*n+j]-=f*aa[k*n+j];bb[i]-=f*bb[k];}}
+  for(std::size_t k=0;k<n;++k){ std::size_t pivot=k; for(std::size_t i=k+1;i<n;++i)if(std::abs(aa[i*n+k])>std::abs(aa[pivot*n+k]))pivot=i; if(std::abs(aa[pivot*n+k])<1e-24L)throw std::runtime_error("singular ANCF tangent"); if(pivot!=k){for(std::size_t j=0;j<n;++j)std::swap(aa[k*n+j],aa[pivot*n+j]);std::swap(bb[k],bb[pivot]);} for(std::size_t i=k+1;i<n;++i){long double f=aa[i*n+k]/aa[k*n+k];aa[i*n+k]=0;for(std::size_t j=k+1;j<n;++j)aa[i*n+j]-=f*aa[k*n+j];bb[i]-=f*bb[k];}}
   std::vector<long double> xx(n); for(std::size_t ii=0;ii<n;++ii){std::size_t i=n-1-ii;long double s=bb[i];for(std::size_t j=i+1;j<n;++j)s-=aa[i*n+j]*xx[j];xx[i]=s/aa[i*n+i];}
   std::vector<double>x(n); for(std::size_t i=0;i<n;++i)x[i]=static_cast<double>(xx[i]);
   if (!finite_vector(x)) throw std::runtime_error("linear solve output contains NaN/Inf");
@@ -253,7 +253,12 @@ void internal_force_tangent(const std::vector<double>& q, const Model& model, st
 
 State make_reference_state(const Model& model) {
   validate_model(model);
-  State state;state.q.assign(model.ndof(),0);state.qdot.assign(model.ndof(),0);state.qddot.assign(model.ndof(),0);double Le=model.length_m/model.elements;for(std::size_t node=0;node<=model.elements;++node){std::size_t base=6*node;double s=node*Le;state.q[base+2]=s;state.q[base+5]=1.0;}state.mass=Matrix(model.ndof(),model.ndof());auto [xi,w]=gauss(model.gauss_order);double rhoA=model.material_density*model.area();for(std::size_t e=0;e<model.elements;++e){Matrix Me(12,12);for(std::size_t k=0;k<xi.size();++k){double x=0.5*(xi[k]+1)*Le;Matrix N=block_matrix(shape(x,Le,0));Matrix Nt=transpose(N);Matrix local=multiply(Nt,N);for(std::size_t i=0;i<12;++i)for(std::size_t j=0;j<12;++j)Me(i,j)+=w[k]*local(i,j)*Le/2*rhoA;}for(int i=0;i<12;++i)for(int j=0;j<12;++j)state.mass(6*e+i,6*e+j)+=Me(i,j);}state.damping=Matrix(model.ndof(),model.ndof());state.base_load.assign(model.ndof(),0);return state;
+  State state;state.q.assign(model.ndof(),0);state.qdot.assign(model.ndof(),0);state.qddot.assign(model.ndof(),0);double Le=model.length_m/model.elements;for(std::size_t node=0;node<=model.elements;++node){std::size_t base=6*node;double s=node*Le;state.q[base+2]=s;state.q[base+5]=1.0;}state.mass=Matrix(model.ndof(),model.ndof());
+  // MATLAB ancf_mass_matrix.m deliberately uses a fixed five-point rule,
+  // independent of the internal-force quadrature order.  Keep the mass
+  // contract separate so a valid gauss_order=3 request cannot silently
+  // change inertia while the MATLAB baseline remains unchanged.
+  auto [xi,w]=gauss(5);double rhoA=model.material_density*model.area();for(std::size_t e=0;e<model.elements;++e){Matrix Me(12,12);for(std::size_t k=0;k<xi.size();++k){double x=0.5*(xi[k]+1)*Le;Matrix N=block_matrix(shape(x,Le,0));Matrix Nt=transpose(N);Matrix local=multiply(Nt,N);for(std::size_t i=0;i<12;++i)for(std::size_t j=0;j<12;++j)Me(i,j)+=w[k]*local(i,j)*Le/2*rhoA;}for(int i=0;i<12;++i)for(int j=0;j<12;++j)state.mass(6*e+i,6*e+j)+=Me(i,j);}state.damping=Matrix(model.ndof(),model.ndof());state.base_load.assign(model.ndof(),0);return state;
 }
 
 void symmetrize_mass(State& state) {
@@ -344,11 +349,23 @@ StepDiagnostics advance(State& state, const Model& model, const std::vector<doub
       throw std::runtime_error("ANCF Newton assembly contains NaN/Inf");
     const auto assembly_end = Clock::now();
     d.matrix_assembly_s += std::chrono::duration<double>(assembly_end - assembly_start).count();
+    // Keep the residual stages separate, matching MATLAB's
+    // M*qdd + C*qd + Qint - Qext expression.  Combining the two matrix-vector
+    // products and subtracting Qext inside the same accumulation changes
+    // cancellation order and can perturb a later Newton increment.
+    std::vector<double> inertia(model.ndof());
+    std::vector<double> damping_force(model.ndof());
+    for (std::size_t i = 0; i < model.ndof(); ++i) {
+      for (std::size_t j = 0; j < model.ndof(); ++j) {
+        inertia[i] += state.mass(i, j) * qdd[j];
+        damping_force[i] += state.damping(i, j) * qd[j];
+      }
+    }
     std::vector<double> R(model.ndof());
     for (std::size_t i = 0; i < model.ndof(); ++i) {
-      R[i] = 0.0;
-      for (std::size_t j = 0; j < model.ndof(); ++j) R[i] += state.mass(i, j) * qdd[j] + state.damping(i, j) * qd[j];
-      R[i] += qi[i] - Qext[i];
+      R[i] = inertia[i] + damping_force[i];
+      R[i] += qi[i];
+      R[i] -= Qext[i];
       if (fixed[i]) R[i] = 0.0;
     }
     if (!finite_vector(R)) throw std::runtime_error("ANCF residual contains NaN/Inf");
@@ -363,11 +380,21 @@ StepDiagnostics advance(State& state, const Model& model, const std::vector<doub
       state.qdot = qd;
       break;
     }
-    Matrix Keff = K;
+    // Preserve MATLAB's expression and addition order exactly:
+    // M/(beta*dt^2) + C*gamma/(beta*dt) + Kint.  Starting from Kint and
+    // adding the inertial terms changes the last bits of Keff, which changes
+    // the Newton increment and is amplified by the high-stiffness internal
+    // force in the strict MATLAB/C++ dual run.
+    Matrix Keff(model.ndof(), model.ndof());
+    const double inv_beta_dt2 = 1.0 / (model.beta * model.dt_s * model.dt_s);
+    const double inv_beta_dt = 1.0 / (model.beta * model.dt_s);
     for (std::size_t i = 0; i < model.ndof(); ++i)
-      for (std::size_t j = 0; j < model.ndof(); ++j)
-        Keff(i, j) += state.mass(i, j) / (model.beta * model.dt_s * model.dt_s) +
-                      state.damping(i, j) * model.gamma / (model.beta * model.dt_s);
+      for (std::size_t j = 0; j < model.ndof(); ++j) {
+        const double mass_term = state.mass(i, j) * inv_beta_dt2;
+        const double damping_term = state.damping(i, j) * model.gamma * inv_beta_dt;
+        Keff(i, j) = mass_term + damping_term;
+        Keff(i, j) += K(i, j);
+      }
     if (!finite_matrix(Keff)) throw std::runtime_error("ANCF effective tangent contains NaN/Inf");
     std::vector<std::size_t> free;
     for (std::size_t i = 0; i < model.ndof(); ++i) if (!fixed[i]) free.push_back(i);

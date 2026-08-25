@@ -1,0 +1,12 @@
+{
+  "cleanup_scope": "Stage179-owned offline test processes only",
+  "owned_residual": 0,
+  "real_process_starts": {
+    "CFD": 0,
+    "MATLAB": 0,
+    "OpenFOAM": 0,
+    "WSL": 0
+  },
+  "status": "pass",
+  "worker_start_count": 1
+}

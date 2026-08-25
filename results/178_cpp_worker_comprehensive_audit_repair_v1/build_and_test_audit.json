@@ -1,0 +1,58 @@
+{
+  "architecture": "x64",
+  "cmake": "3.31.6",
+  "compiler": "MSVC 19.44.35228.0 / Visual Studio 2022 BuildTools",
+  "configuration": "Release",
+  "focused_tests": {
+    "comprehensive": {
+      "errors": 0,
+      "failures": 0,
+      "log": "runtime\\cpp_worker_comprehensive_audit_repair_v1\\stage178_tests\\logs\\comprehensive.log",
+      "status": "pass",
+      "tests": 51
+    },
+    "ownership": {
+      "errors": 0,
+      "failures": 0,
+      "log": "runtime\\cpp_worker_comprehensive_audit_repair_v1\\stage178_tests\\logs\\ownership.log",
+      "status": "pass",
+      "tests": 6
+    },
+    "persistent_ipc": {
+      "errors": 0,
+      "failures": 0,
+      "log": "runtime\\cpp_worker_comprehensive_audit_repair_v1\\stage178_tests\\logs\\persistent_ipc.log",
+      "status": "pass",
+      "tests": 18
+    },
+    "root_unittest": {
+      "errors": 0,
+      "failures": 0,
+      "log": "runtime\\cpp_worker_comprehensive_audit_repair_v1\\stage178_tests\\logs\\root_unittest.log",
+      "status": "pass",
+      "tests": 1175
+    }
+  },
+  "generator": "Visual Studio 17 2022",
+  "real_process_starts": {
+    "CFD": 0,
+    "MATLAB": 0,
+    "OpenFOAM": 0,
+    "WSL": 0
+  },
+  "selftests": {
+    "ancf_kernel": {
+      "log": "runtime\\cpp_worker_comprehensive_audit_repair_v1\\stage178_tests\\logs\\ancf_selftest.log",
+      "status": "pass"
+    },
+    "dense_solver_second_pivot": {
+      "log": "runtime\\cpp_worker_comprehensive_audit_repair_v1\\stage178_tests\\logs\\dense_solver_selftest.log",
+      "status": "pass"
+    },
+    "physics_ownership": {
+      "log": "runtime\\cpp_worker_comprehensive_audit_repair_v1\\stage178_tests\\logs\\ownership_selftest.log",
+      "status": "pass"
+    }
+  },
+  "status": "pass"
+}

@@ -395,7 +395,9 @@ int main() {
     const auto mass5 = cfd_ancf::physics_ownership::assemble_mass_matrix(order5);
     const auto kernel_mass3 = cfd_ancf::make_reference_state(order3).mass;
     const auto kernel_mass5 = cfd_ancf::make_reference_state(order5).mass;
-    const auto expected_mass3 = independently_integrated_mass(order3, 3);
+    // MATLAB ancf_mass_matrix.m always uses five-point quadrature; the
+    // model gauss_order applies to nonlinear force/tangent integration only.
+    const auto expected_mass3 = independently_integrated_mass(order3, 5);
     const auto expected_mass5 = independently_integrated_mass(order5, 5);
     const double mass_order3_error = norm_inf(difference(mass3.data, expected_mass3.data));
     const double mass_order5_error = norm_inf(difference(mass5.data, expected_mass5.data));
@@ -410,7 +412,7 @@ int main() {
         mass_order5_error <= 1.0e-14 * mass_order_scale &&
         kernel_mass_order3_error <= 1.0e-14 * mass_order_scale &&
         kernel_mass_order5_error <= 1.0e-14 * mass_order_scale &&
-        mass_order_difference > 1.0e-12 * mass_order_scale;
+        mass_order_difference <= 1.0e-14 * mass_order_scale;
     bool invalid_gauss_rejected = false;
     try {
       Model invalid = value;
@@ -465,6 +467,7 @@ int main() {
               << ",\"kernel_mass_order3_error\":" << kernel_mass_order3_error
               << ",\"kernel_mass_order5_error\":" << kernel_mass_order5_error
               << ",\"mass_order_difference\":" << mass_order_difference
+              << ",\"mass_order_scale\":" << mass_order_scale
               << ",\"top_tension_global_z_contract\":"
               << (top_tension_global_z_contract ? "true" : "false")
               << ",\"bent_state_does_not_rotate_top_tension\":"

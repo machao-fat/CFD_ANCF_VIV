@@ -1,0 +1,19 @@
+{
+  "case_id": "cpp_worker_comprehensive_audit_stage179_mass_contract_case_001",
+  "files": {
+    "results\\179_cpp_worker_comprehensive_audit_repair_v1\\build_and_test_audit.json": "b1b8c6cdf94c83cb83274f79645c4ab0d4b830af026b9a86ef90653f5ee2eb95",
+    "results\\179_cpp_worker_comprehensive_audit_repair_v1\\changed_file_hashes.json": "764e4d090ecbf945f680082ac36f05be6c6e2dce2c9221a5d2c86e35bbda1611",
+    "results\\179_cpp_worker_comprehensive_audit_repair_v1\\git_preflight.json": "56e3d62f63766d2327736fa892460a61cd15333f5effb7ec13ec9d581b163c1b",
+    "results\\179_cpp_worker_comprehensive_audit_repair_v1\\independent_gate.json": "9b9df959a3ba8158218ca6be9384c333aa3e1858a0629bf30ab89de4e88c4277",
+    "results\\179_cpp_worker_comprehensive_audit_repair_v1\\mass_contract_audit.json": "02472828ffaea3bac2793c256d94e20a8ae9fd556b04f5939f4225d131eb788a",
+    "results\\179_cpp_worker_comprehensive_audit_repair_v1\\physics_ownership_selftest.json": "f328c9198fc9961561009f3a44be146e1fe567244baae305619ea43c649001a4",
+    "results\\179_cpp_worker_comprehensive_audit_repair_v1\\process_cleanup_audit.json": "40e4244044e493e0e75fe1cde2cc422527e6670f4d50295f7a1031e5c931666b",
+    "results\\179_cpp_worker_comprehensive_audit_repair_v1\\protection_manifest.json": "6c7238fa68c9872f06635a591d1896821045d10402f492625913459f8ce1b91d",
+    "results\\179_cpp_worker_comprehensive_audit_repair_v1\\repair_manifest.json": "4eadc685a1a7afdaeb299e178fa8e18745d52132fb0e5397d74f63f95781e1d5"
+  },
+  "report": {
+    "docs\\179_cpp_worker_comprehensive_audit_repair_v1\\最终报告_中文.md": "cdd6c9e57deb67ee6611aa16b8bb0df58478b7d1f891019853bc95a3e1f7d1e9"
+  },
+  "run_id": "cpp_worker_comprehensive_audit_repair_179_001",
+  "stage_id": "stage4f_d_cpp_worker_comprehensive_audit_repair_v1_stage179"
+}

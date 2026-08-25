@@ -16,13 +16,16 @@ import sys
 import time
 from pathlib import Path
 
+# This entry point is executed as a file by PowerShell and the test suite;
+# make the repository's Python packages importable before importing guards.
+PROJECT = Path(__file__).resolve().parents[2]
+sys.path.insert(0, str(PROJECT / "src"))
+
 from coupling.cpp_worker_confirm_v1.contracts import REAL_AUTHORIZATION_TOKEN, ContractError
 from coupling.cpp_worker_confirm_v1.library_build_guard import (
     LibraryBuildError, require_build_authorization, validate_build_output,
 )
 
-
-PROJECT = Path(__file__).resolve().parents[2]
 DEFAULT_RUNTIME = PROJECT / "runtime/cpp_worker_persistent_ipc_v1/fresh_library_build_004"
 DEFAULT_RESULTS = PROJECT / "results/110_cpp_worker_library_build_v1"
 

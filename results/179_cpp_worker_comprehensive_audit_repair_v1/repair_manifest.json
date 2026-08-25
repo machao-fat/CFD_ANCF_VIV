@@ -1,0 +1,26 @@
+{
+  "case_id": "cpp_worker_comprehensive_audit_stage179_mass_contract_case_001",
+  "formal_protocol_semantics_modified": false,
+  "physics_or_thresholds_modified": false,
+  "repairs": [
+    {
+      "files": [
+        "src/coupling/cpp_worker_persistent_ipc_v1/ancf_kernel.cpp",
+        "src/coupling/cpp_physics_ownership_v1/physics_ownership.cpp",
+        "src/coupling/cpp_physics_ownership_v1/physics_ownership_selftest.cpp"
+      ],
+      "id": "MATLAB_FIXED_FIVE_POINT_MASS_RULE",
+      "rule": "ancf_mass_matrix uses five-point Gauss quadrature regardless of nonlinear gauss_order",
+      "status": "fixed_and_tested"
+    },
+    {
+      "file": "src/coupling/cpp_worker_persistent_ipc_v1/CMakeLists.txt",
+      "id": "HIGH_WARNING_TARGET_COVERAGE",
+      "rule": "all C++ targets receive the configured warning set",
+      "status": "fixed"
+    }
+  ],
+  "run_id": "cpp_worker_comprehensive_audit_repair_179_001",
+  "stage_id": "stage4f_d_cpp_worker_comprehensive_audit_repair_v1_stage179",
+  "status": "fixed_and_tested"
+}

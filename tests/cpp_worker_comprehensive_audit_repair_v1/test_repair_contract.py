@@ -1,12 +1,19 @@
 from __future__ import annotations
 
 import unittest
+import os
+import subprocess
 from dataclasses import replace
 from pathlib import Path
 import sys
 
 ROOT = Path(__file__).resolve().parents[2]
 sys.path.insert(0, str(ROOT / "src"))
+BUILD_ROOT = Path(os.environ.get(
+    "CFD_ANCF_STAGE_BUILD",
+    str(ROOT / "runtime" / "cpp_worker_comprehensive_audit_repair_v1" / "build-release"),
+))
+SOLVER_SELFTEST = BUILD_ROOT / "Release" / "cfd_ancf_dense_solver_selftest.exe"
 
 from coupling.cpp_worker_persistent_ipc_v1.kernel_protocol import (
     FrameError, KernelModel, KernelStepRequest,
@@ -85,6 +92,13 @@ class RepairContractTests(unittest.TestCase):
         root = ROOT
         self.assertTrue((root / "tools" / "cpp_worker_comprehensive_audit_repair_v1" /
                          "run_ownership_nonzero_base_dual.py").is_file())
+
+    def test_dense_solver_second_pivot_regression(self):
+        self.assertTrue(SOLVER_SELFTEST.is_file(), "dense solver selftest must be built before this test")
+        completed = subprocess.run([str(SOLVER_SELFTEST)], capture_output=True, text=True,
+                                   encoding="utf-8", errors="replace", check=False)
+        self.assertEqual(completed.returncode, 0, completed.stderr)
+        self.assertIn("second_pivot=1", completed.stdout)
 
 
 if __name__ == "__main__":

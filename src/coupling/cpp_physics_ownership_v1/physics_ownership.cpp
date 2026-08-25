@@ -113,7 +113,11 @@ void validate_model(const Model& model) {
 Matrix assemble_mass_matrix(const Model& model) {
   physics_ownership::validate_model(model);
   Matrix result(model.ndof(), model.ndof());
-  const auto [points, weights] = gauss(model.gauss_order);
+  // MATLAB ancf_mass_matrix.m deliberately uses a fixed five-point rule,
+  // independent of the internal-force quadrature order.  Keep this mass
+  // contract separate so a valid gauss_order=3 request cannot silently
+  // change inertia while the MATLAB baseline remains unchanged.
+  const auto [points, weights] = gauss(5);
   const double element_length = model.length_m / static_cast<double>(model.elements);
   const double rho_area = model.material_density * model.area();
   for (std::size_t element = 0; element < model.elements; ++element) {

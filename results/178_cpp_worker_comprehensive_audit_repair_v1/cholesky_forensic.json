@@ -1,0 +1,112 @@
+{
+  "stage_id": "stage4f_d_cpp_worker_comprehensive_audit_repair_v1_stage160",
+  "run_id": "cpp_worker_comprehensive_audit_repair_160_forensic_001",
+  "case_id": "cpp_worker_comprehensive_audit_stage160_forensic_case_001",
+  "source_step": 559,
+  "target_step": 560,
+  "target_q_direct_internal_force": {
+    "max_abs": 2.9103830456733704e-11,
+    "max_relative": 7.011164017474959e-13,
+    "max_relative_index_zero_based": 51,
+    "max_relative_left": -20.755348458667868,
+    "max_relative_right": -20.75534845868242,
+    "max_index_zero_based": 21,
+    "left_at_max": -11849.289180885127,
+    "right_at_max": -11849.289180885156
+  },
+  "worker_first_step": {
+    "q": {
+      "max_abs": 1.7763568394002505e-15,
+      "max_relative": 2.2168683206839193e-16,
+      "max_relative_index_zero_based": 17,
+      "max_relative_left": 1.001613866070895,
+      "max_relative_right": 1.0016138660708949,
+      "max_index_zero_based": 32,
+      "left_at_max": 15.652143513161604,
+      "right_at_max": 15.652143513161603
+    },
+    "qdot": {
+      "max_abs": 3.552713678800501e-13,
+      "max_relative": 3.552713678800501e-13,
+      "max_relative_index_zero_based": 23,
+      "max_relative_left": -2.3786325176189393e-05,
+      "max_relative_right": -2.378632553146076e-05,
+      "max_index_zero_based": 23,
+      "left_at_max": -2.3786325176189393e-05,
+      "right_at_max": -2.378632553146076e-05
+    },
+    "qddot": {
+      "max_abs": 5.684341886080801e-10,
+      "max_relative": 5.684341886080801e-10,
+      "max_relative_index_zero_based": 23,
+      "max_relative_left": 0.0005184909923627856,
+      "max_relative_right": 0.000518490423928597,
+      "max_index_zero_based": 23,
+      "left_at_max": 0.0005184909923627856,
+      "right_at_max": 0.000518490423928597
+    },
+    "internal_force": {
+      "max_abs": 4.866160452365875e-07,
+      "max_relative": 4.891825378743019e-08,
+      "max_relative_index_zero_based": 29,
+      "max_relative_left": -1.600410767707217,
+      "max_relative_right": -1.600410845996521,
+      "max_index_zero_based": 32,
+      "left_at_max": -96278.43094476941,
+      "right_at_max": -96278.43094525603
+    },
+    "external_force": {
+      "max_abs": 0.0,
+      "max_relative": 0.0,
+      "max_relative_index_zero_based": 0,
+      "max_relative_left": 0.0,
+      "max_relative_right": 0.0,
+      "max_index_zero_based": 0,
+      "left_at_max": 0.0,
+      "right_at_max": 0.0
+    },
+    "generalized_force": {
+      "max_abs": 0.0,
+      "max_relative": 0.0,
+      "max_relative_index_zero_based": 0,
+      "max_relative_left": 0.0,
+      "max_relative_right": 0.0,
+      "max_index_zero_based": 0,
+      "left_at_max": 0.0,
+      "right_at_max": 0.0
+    },
+    "predictor": {
+      "max_abs": 0.0,
+      "max_relative": 0.0,
+      "max_relative_index_zero_based": 0,
+      "max_relative_left": 0.0,
+      "max_relative_right": 0.0,
+      "max_index_zero_based": 0,
+      "left_at_max": 0.0,
+      "right_at_max": 0.0
+    },
+    "corrector": {
+      "max_abs": 1.7763568394002505e-15,
+      "max_relative": 2.2168683206839193e-16,
+      "max_relative_index_zero_based": 17,
+      "max_relative_left": 1.001613866070895,
+      "max_relative_right": 1.0016138660708949,
+      "max_index_zero_based": 32,
+      "left_at_max": 15.652143513161604,
+      "right_at_max": 15.652143513161603
+    },
+    "worker_return_code": 0
+  },
+  "real_process_starts": {
+    "MATLAB": 0,
+    "OpenFOAM": 0,
+    "WSL": 0,
+    "CFD": 0
+  },
+  "owned_residual": 0,
+  "interpretation": {
+    "target_q_direct_test": "C++ internal force evaluated at MATLAB golden target q",
+    "newton_or_transport_error": "not_applicable_to_direct_test",
+    "no_threshold_or_physics_change": true
+  }
+}
