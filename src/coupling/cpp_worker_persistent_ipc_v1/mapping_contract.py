@@ -5,7 +5,7 @@ from __future__ import annotations
 from dataclasses import dataclass
 import math
 
-from .protocol import FrameError
+from .protocol import FrameError, canonical_tick_delta
 
 
 @dataclass(frozen=True)
@@ -34,6 +34,7 @@ class SourceMapping:
             raise FrameError("source mapping tick is invalid")
         if self.source_tick != round(float(self.source_time_s) * 1.0e9):
             raise FrameError("source mapping tick does not match source time")
+        canonical_tick_delta(float(self.dt_s))
 
     def target(self, *, global_step: int, case_local_bridge_step: int,
                time_s: float, integer_tick: int) -> tuple[int, int]:
@@ -54,7 +55,7 @@ class SourceMapping:
             raise FrameError("global step and case-local bridge step are inconsistent")
         try:
             expected_time = float(self.source_time_s) + bridge_delta * float(self.dt_s)
-            tick_delta = round(bridge_delta * float(self.dt_s) * 1.0e9)
+            tick_delta = bridge_delta * canonical_tick_delta(float(self.dt_s))
         except (OverflowError, ValueError) as exc:
             raise FrameError("target mapping exceeds numeric range") from exc
         expected_tick = self.source_tick + tick_delta

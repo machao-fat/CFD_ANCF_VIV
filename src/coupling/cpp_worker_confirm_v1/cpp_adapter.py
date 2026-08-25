@@ -14,6 +14,7 @@ from typing import Any, Mapping, Sequence
 
 from .contracts import ContractError, load_source_checkpoint
 from coupling.cpp_worker_persistent_ipc_v1.mapping_contract import SourceMapping
+from coupling.cpp_worker_persistent_ipc_v1.protocol import canonical_tick_delta
 
 
 class CppAdapterError(RuntimeError):
@@ -197,7 +198,7 @@ class CppKernelCampaignAdapter:
                 not math.isfinite(float(time_s))):
             raise CppAdapterError("time_s is not finite")
         bridge = step - self.source_global_step
-        expected_tick = self.source_tick + bridge * round(self.dt_s * 1.0e9)
+        expected_tick = self.source_tick + bridge * canonical_tick_delta(self.dt_s)
         try:
             return self._source_mapping.target(
                 global_step=step, case_local_bridge_step=bridge,

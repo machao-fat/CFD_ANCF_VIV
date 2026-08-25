@@ -134,6 +134,10 @@ struct ForensicResult {
   std::vector<ForensicPoint> points;
   std::vector<double> force;
   Matrix tangent;
+  std::vector<std::vector<double>> element_force;
+  std::vector<Matrix> element_tangent;
+  std::vector<std::vector<double>> global_force_after_element;
+  std::vector<Matrix> global_tangent_after_element;
 };
 
 // Production assembly may optionally emit this trace.  The callback is
@@ -141,6 +145,10 @@ struct ForensicResult {
 // change the arithmetic used by the solver.
 struct AssemblyTrace {
   std::vector<ForensicPoint> points;
+  std::vector<std::vector<double>> element_force;
+  std::vector<Matrix> element_tangent;
+  std::vector<std::vector<double>> global_force_after_element;
+  std::vector<Matrix> global_tangent_after_element;
 };
 
 State make_reference_state(const Model& model);

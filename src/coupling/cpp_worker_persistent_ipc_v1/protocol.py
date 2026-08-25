@@ -51,6 +51,18 @@ def canonical_integer_tick(time_s: float) -> int:
     return tick
 
 
+def canonical_tick_delta(dt_s: float) -> int:
+    """Return one wire tick and reject sub-nanosecond step ambiguity."""
+    _finite(dt_s, "dt_s")
+    if dt_s <= 0.0:
+        raise FrameError("dt_s must be positive")
+    raw = float(dt_s) * 1.0e9
+    delta = int(math.floor(raw + 0.5))
+    if abs(raw - float(delta)) > 1.0e-9 or delta <= 0 or delta > MAX_UINT64:
+        raise FrameError("dt_s does not map to an unambiguous integer tick")
+    return delta
+
+
 def _fixed(value: str, size: int, name: str) -> bytes:
     if not isinstance(value, str) or not value or any(ord(char) < 0x20 for char in value):
         raise FrameError(f"{name} is missing or contains a control character")
@@ -110,6 +122,7 @@ class StepRequest:
         _finite(self.time_s, "time_s"); _finite(self.dt_s, "dt_s")
         if self.dt_s <= 0.0:
             raise FrameError("dt_s must be positive")
+        canonical_tick_delta(self.dt_s)
         expected_tick = canonical_integer_tick(self.time_s)
         if (self.time_s < self.dt_s or self.time_s > 1.0e9 or expected_tick < 0 or
                 expected_tick > 0xFFFFFFFFFFFFFFFF or self.integer_tick != expected_tick):

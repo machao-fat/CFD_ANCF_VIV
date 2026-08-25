@@ -1,4 +1,5 @@
 #include "ancf_kernel.hpp"
+#include "sha256.hpp"
 
 #include <array>
 #include <cmath>
@@ -33,12 +34,13 @@ constexpr std::size_t ID_RUN = 64;
 constexpr std::size_t ID_CASE = 64;
 constexpr std::size_t ID_ENDPOINT = 32;
 constexpr std::size_t ID_BOUNDARY = 64;
+constexpr std::int32_t EXTENDED_LAYOUT_MARKER = 0x314C5845;
 constexpr char REQUEST_PRODUCER[] = "python_scheduler";
 constexpr char REQUEST_CONSUMER[] = "cpp_ancf_kernel_worker";
 
 template <class T>
 bool take(const std::vector<char>& payload, std::size_t& offset, T& value) {
-  if (offset + sizeof(T) > payload.size()) return false;
+  if (offset > payload.size() || sizeof(T) > payload.size() - offset) return false;
   std::memcpy(&value, payload.data() + offset, sizeof(T));
   offset += sizeof(T);
   return true;
@@ -97,6 +99,7 @@ bool next_tick(std::uint64_t previous, double dt_s, std::uint64_t& result) {
   if (!std::isfinite(static_cast<double>(raw)) || raw < 0.0L ||
       raw > static_cast<long double>((std::numeric_limits<std::uint64_t>::max)())) return false;
   const auto delta = static_cast<std::uint64_t>(std::llround(raw));
+  if (delta == 0u || std::abs(raw - static_cast<long double>(delta)) > 1.0e-9L) return false;
   if (previous > (std::numeric_limits<std::uint64_t>::max)() - delta) return false;
   result = previous + delta;
   return true;
@@ -107,34 +110,10 @@ bool little_endian() {
   return *reinterpret_cast<const std::uint8_t*>(&marker) == 1;
 }
 
-bool sha256_bytes(const std::vector<unsigned char>& bytes, std::array<unsigned char, 32>& digest) {
-#ifdef _WIN32
-  BCRYPT_ALG_HANDLE algorithm = nullptr;
-  BCRYPT_HASH_HANDLE hash = nullptr;
-  DWORD object_length = 0;
-  DWORD bytes_written = 0;
-  if (BCryptOpenAlgorithmProvider(&algorithm, BCRYPT_SHA256_ALGORITHM, nullptr, 0) != 0) return false;
-  bool ok = BCryptGetProperty(algorithm, BCRYPT_OBJECT_LENGTH,
-                              reinterpret_cast<PUCHAR>(&object_length), sizeof(object_length),
-                              &bytes_written, 0) == 0;
-  std::vector<unsigned char> object(object_length);
-  if (ok) ok = BCryptCreateHash(algorithm, &hash, object.data(), object_length, nullptr, 0, 0) == 0;
-  if (ok && !bytes.empty()) ok = BCryptHashData(hash, const_cast<PUCHAR>(bytes.data()),
-                                                static_cast<ULONG>(bytes.size()), 0) == 0;
-  if (ok) ok = BCryptFinishHash(hash, digest.data(), static_cast<ULONG>(digest.size()), 0) == 0;
-  if (hash != nullptr) BCryptDestroyHash(hash);
-  if (algorithm != nullptr) BCryptCloseAlgorithmProvider(algorithm, 0);
-  return ok;
-#else
-  (void)bytes; (void)digest;
-  return false;
-#endif
-}
-
 bool append_array_hash(const std::vector<double>& values, std::array<unsigned char, 32>& digest) {
   std::vector<unsigned char> bytes(values.size() * sizeof(double));
   if (!bytes.empty()) std::memcpy(bytes.data(), values.data(), bytes.size());
-  return sha256_bytes(bytes, digest);
+  return cfd_ancf::wire::sha256_bytes(bytes, digest);
 }
 
 bool append_profile(std::int32_t global_step, std::uint32_t sequence,
@@ -220,12 +199,21 @@ int process_step(const std::vector<char>& payload, std::vector<char>& response,
   std::int32_t mass_gauss_order = 0, fixed_count = 0;
   std::array<char, ID_BOUNDARY> boundary_id{};
   bool explicit_contract = false;
-  if (offset + sizeof(mass_gauss_order) + sizeof(fixed_count) + boundary_id.size() <= payload.size()) {
-    std::memcpy(&mass_gauss_order, payload.data() + offset, sizeof(mass_gauss_order));
-    std::memcpy(&fixed_count, payload.data() + offset + sizeof(mass_gauss_order), sizeof(fixed_count));
-    std::memcpy(boundary_id.data(), payload.data() + offset + sizeof(mass_gauss_order) + sizeof(fixed_count), boundary_id.size());
-    explicit_contract = (mass_gauss_order == 3 || mass_gauss_order == 5) && fixed_count > 0 && fixed_count <= n &&
-                        valid_c_string(boundary_id.data(), boundary_id.size());
+  std::int32_t layout_marker = 0;
+  constexpr std::size_t extension_header = sizeof(layout_marker) + sizeof(mass_gauss_order) + sizeof(fixed_count) + ID_BOUNDARY;
+  if (offset <= payload.size() && extension_header <= payload.size() - offset) {
+    std::memcpy(&layout_marker, payload.data() + offset, sizeof(layout_marker));
+    const std::size_t extension_offset = layout_marker == EXTENDED_LAYOUT_MARKER ? offset + sizeof(layout_marker) : offset;
+    const std::size_t legacy_header = sizeof(mass_gauss_order) + sizeof(fixed_count) + ID_BOUNDARY;
+    if (extension_offset <= payload.size() && legacy_header <= payload.size() - extension_offset) {
+      std::memcpy(&mass_gauss_order, payload.data() + extension_offset, sizeof(mass_gauss_order));
+      std::memcpy(&fixed_count, payload.data() + extension_offset + sizeof(mass_gauss_order), sizeof(fixed_count));
+      std::memcpy(boundary_id.data(), payload.data() + extension_offset + sizeof(mass_gauss_order) + sizeof(fixed_count), boundary_id.size());
+      explicit_contract = (layout_marker == EXTENDED_LAYOUT_MARKER ||
+                           ((mass_gauss_order == 3 || mass_gauss_order == 5) && fixed_count > 0 && fixed_count <= n &&
+                            valid_c_string(boundary_id.data(), boundary_id.size())));
+      if (explicit_contract && layout_marker == EXTENDED_LAYOUT_MARKER) offset += sizeof(layout_marker);
+    }
   }
   if (explicit_contract) {
     offset += sizeof(mass_gauss_order) + sizeof(fixed_count) + boundary_id.size();
@@ -282,7 +270,8 @@ int process_step(const std::vector<char>& payload, std::vector<char>& response,
   }
 
   char run_id[ID_RUN]{}, case_id[ID_CASE]{}, producer[ID_ENDPOINT]{}, consumer[ID_ENDPOINT]{};
-  if (offset + ID_RUN + ID_CASE + ID_ENDPOINT + ID_ENDPOINT + 32 > payload.size()) return 6;
+  constexpr std::size_t identity_suffix = ID_RUN + ID_CASE + ID_ENDPOINT + ID_ENDPOINT + 32;
+  if (offset > payload.size() || identity_suffix > payload.size() - offset) return 6;
   std::memcpy(run_id, payload.data() + offset, ID_RUN); offset += ID_RUN;
   std::memcpy(case_id, payload.data() + offset, ID_CASE); offset += ID_CASE;
   std::memcpy(producer, payload.data() + offset, ID_ENDPOINT); offset += ID_ENDPOINT;
@@ -365,7 +354,8 @@ int process_step(const std::vector<char>& payload, std::vector<char>& response,
 
   const std::size_t mass_count = mass_n == 0 ? 0u : static_cast<std::size_t>(mass_n) * static_cast<std::size_t>(mass_n);
   const std::size_t array_count = static_cast<std::size_t>(4 * n) + mass_count + static_cast<std::size_t>(force_n);
-  if (offset + array_count * sizeof(double) != payload.size()) return 8;
+  if (array_count > (std::numeric_limits<std::size_t>::max)() / sizeof(double) ||
+      offset > payload.size() || array_count * sizeof(double) != payload.size() - offset) return 8;
   std::vector<double> input(array_count);
   std::memcpy(input.data(), payload.data() + offset, input.size() * sizeof(double));
   std::vector<unsigned char> request_hash_bytes;
@@ -374,13 +364,13 @@ int process_step(const std::vector<char>& payload, std::vector<char>& response,
   request_hash_bytes.insert(request_hash_bytes.end(), reinterpret_cast<unsigned char*>(input.data()),
                             reinterpret_cast<unsigned char*>(input.data()) + input.size() * sizeof(double));
   std::array<unsigned char, 32> calculated_request_digest{};
-  if (!sha256_bytes(request_hash_bytes, calculated_request_digest) || calculated_request_digest != request_digest ||
+  if (!cfd_ancf::wire::sha256_bytes(request_hash_bytes, calculated_request_digest) || calculated_request_digest != request_digest ||
       !finite_values(input)) return 9;
   std::vector<unsigned char> model_bytes(
       payload.begin() + static_cast<std::ptrdiff_t>(model_start),
       payload.begin() + static_cast<std::ptrdiff_t>(model_end));
   std::array<unsigned char, 32> model_digest{};
-  if (!sha256_bytes(model_bytes, model_digest)) return 15;
+  if (!cfd_ancf::wire::sha256_bytes(model_bytes, model_digest)) return 15;
   if (expected_sequence == 1) expected_model_digest = model_digest;
   else if (model_digest != expected_model_digest) {
     std::cerr << "worker model digest mismatch at sequence " << sequence << '\n';

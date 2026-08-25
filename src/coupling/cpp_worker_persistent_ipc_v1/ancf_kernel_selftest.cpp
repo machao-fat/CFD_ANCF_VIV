@@ -1,4 +1,5 @@
 #include "ancf_kernel.hpp"
+#include "sha256.hpp"
 
 #include <algorithm>
 #include <cmath>
@@ -7,6 +8,12 @@
 #include <stdexcept>
 
 int main() {
+  const std::vector<unsigned char> sha_probe{'a', 'b', 'c'};
+  std::array<unsigned char, 32> sha_digest{};
+  if (!cfd_ancf::wire::sha256_bytes(sha_probe, sha_digest) ||
+      sha_digest != std::array<unsigned char, 32>{
+          0xba,0x78,0x16,0xbf,0x8f,0x01,0xcf,0xea,0x41,0x41,0x40,0xde,0x5d,0xae,0x22,0x23,
+          0xb0,0x03,0x61,0xa3,0x96,0x17,0x7a,0x9c,0xb4,0x10,0xff,0x61,0xf2,0x00,0x15,0xad}) return 1;
   cfd_ancf::Model model;
   model.include_gravity = false; model.include_buoyancy = false;
   model.top_tension_N = 0.0;
@@ -47,7 +54,11 @@ int main() {
   const auto forensic = cfd_ancf::internal_force_forensic(state.q, model);
   if (production_trace.points.size() != model.elements * model.gauss_order ||
       traced_force != forensic.force || traced_tangent.data != forensic.tangent.data ||
-      production_trace.points.size() != forensic.points.size()) return 2;
+      production_trace.points.size() != forensic.points.size() ||
+      production_trace.element_force != forensic.element_force ||
+      production_trace.global_force_after_element != forensic.global_force_after_element ||
+      production_trace.element_tangent.size() != model.elements ||
+      forensic.global_tangent_after_element.size() != model.elements) return 2;
   auto explicit_contract = model;
   explicit_contract.mass_gauss_order = 5;
   explicit_contract.fixed_dof = {0u, 1u, 2u, 6u * model.elements, 6u * model.elements + 1u};

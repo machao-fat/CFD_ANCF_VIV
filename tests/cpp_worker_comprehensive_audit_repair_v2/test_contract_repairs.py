@@ -2,6 +2,8 @@ from __future__ import annotations
 
 import json
 import sys
+import io
+import time
 import unittest
 from pathlib import Path
 from types import SimpleNamespace
@@ -14,9 +16,44 @@ from coupling.cpp_worker_persistent_ipc_v1.kernel_protocol import (
     FrameError, KernelModel, KernelStepRequest, RESPONSE_FIELD_SEMANTICS,
 )
 from coupling.cpp_worker_persistent_ipc_v1.protocol import FrameError as TransportFrameError, StepRequest
+from coupling.cpp_worker_persistent_ipc_v1.mapping_contract import SourceMapping
+from coupling.cpp_worker_persistent_ipc_v1.worker_client import PersistentCppWorkerClient
 
 
 class ContractRepairTests(unittest.TestCase):
+    def _transport_request(self) -> StepRequest:
+        return StepRequest(
+            sequence=1, global_step=1, case_local_bridge_step=1,
+            integer_tick=1_250_000, time_s=0.00125, dt_s=0.00125,
+            request_id=1, transaction_id=2, run_id="run", case_id="case",
+            q=(0.0,), qdot=(0.0,), force=(0.0,),
+        )
+
+    def test_low_level_client_times_out_and_becomes_terminal(self):
+        class BlockingReader:
+            def read(self, _size: int) -> bytes:
+                time.sleep(0.2)
+                return b""
+
+        client = PersistentCppWorkerClient(BlockingReader(), io.BytesIO(), timeout_s=0.01)
+        client.initialized = True
+        with self.assertRaises(TransportFrameError):
+            client.request(self._transport_request())
+        self.assertTrue(client.closed)
+
+    def test_low_level_client_rejects_response_magic_before_decode(self):
+        value = self._transport_request()
+        bad = b"BADMAGIC" + (0).to_bytes(4, "little") + (2).to_bytes(4, "little")
+        client = PersistentCppWorkerClient(io.BytesIO(bad), io.BytesIO(), timeout_s=0.2)
+        client.initialized = True
+        with self.assertRaises(TransportFrameError):
+            client.request(value)
+        self.assertTrue(client.closed)
+
+    def test_mapping_rejects_subnanosecond_step_ambiguity(self):
+        with self.assertRaises(TransportFrameError):
+            SourceMapping(0, 0.0, 0, 1.5e-9)
+
     def test_v1_response_force_field_semantics_are_explicit(self) -> None:
         self.assertEqual(RESPONSE_FIELD_SEMANTICS["external_force"], "total_Qext")
         self.assertEqual(RESPONSE_FIELD_SEMANTICS["generalized_force"], "total_Qext_alias")

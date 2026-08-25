@@ -314,6 +314,12 @@ void internal_force_tangent(const std::vector<double>& q, const Model& model, st
     if (!finite_vector(fe) || !finite_matrix(Ke))
       throw std::runtime_error("ANCF internal force or tangent contains NaN/Inf");
     for(int i=0;i<12;++i){force[6*e+i]+=fe[i];for(int j=0;j<12;++j)tangent(6*e+i,6*e+j)+=Ke(i,j);}
+    if (trace != nullptr) {
+      trace->element_force.push_back(fe);
+      trace->element_tangent.push_back(Ke);
+      trace->global_force_after_element.push_back(force);
+      trace->global_tangent_after_element.push_back(tangent);
+    }
   }
   for(std::size_t i=0;i<model.ndof();++i)for(std::size_t j=i+1;j<model.ndof();++j){double v=0.5*(tangent(i,j)+tangent(j,i));tangent(i,j)=tangent(j,i)=v;}
   if (!finite_vector(force) || !finite_matrix(tangent))
@@ -330,6 +336,10 @@ ForensicResult internal_force_forensic(const std::vector<double>& q, const Model
   AssemblyTrace trace;
   internal_force_tangent(q, model, result.force, result.tangent, &trace);
   result.points = std::move(trace.points);
+  result.element_force = std::move(trace.element_force);
+  result.element_tangent = std::move(trace.element_tangent);
+  result.global_force_after_element = std::move(trace.global_force_after_element);
+  result.global_tangent_after_element = std::move(trace.global_tangent_after_element);
   return result;
 }
 

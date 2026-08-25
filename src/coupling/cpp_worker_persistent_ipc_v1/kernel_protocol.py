@@ -8,7 +8,7 @@ from dataclasses import dataclass
 from typing import BinaryIO, Sequence
 
 from .protocol import (FrameError, HEADER, MAGIC, SCHEMA_VERSION,
-                       PROTOCOL_VERSION, canonical_integer_tick)
+                       PROTOCOL_VERSION, canonical_integer_tick, canonical_tick_delta)
 
 
 MESSAGE_KERNEL_STEP_REQUEST = 5
@@ -20,6 +20,7 @@ REQUEST_PRODUCER = "python_scheduler"
 REQUEST_CONSUMER = "cpp_ancf_kernel_worker"
 MAX_NDOF = 2048
 MAX_NEWTON = 1000
+EXTENDED_LAYOUT_MARKER = 0x314C5845  # "EXL1", little-endian
 
 # v1 is a positional response schema without per-field wire labels. Preserve
 # the historical MATLAB golden-record meaning explicitly: both force slots
@@ -177,7 +178,7 @@ class KernelModel:
                         self.boundary_contract_id != "ancf_v1_bottom_top_xy_zero")
         if not explicit:
             return base + struct.pack("<" + "d" * self.slices, *positions)
-        return base + struct.pack("<ii", self.mass_gauss_order, len(fixed)) + boundary + \
+        return base + struct.pack("<Iii", EXTENDED_LAYOUT_MARKER, self.mass_gauss_order, len(fixed)) + boundary + \
             struct.pack("<" + "i" * len(fixed), *fixed) + struct.pack("<" + "d" * len(prescribed), *prescribed) + \
             struct.pack("<" + "d" * self.slices, *positions)
 
@@ -248,6 +249,7 @@ class KernelStepRequest:
             raise FrameError("kernel time is NaN/Inf")
         if self.dt_s <= 0.0:
             raise FrameError("kernel dt_s must be positive")
+        canonical_tick_delta(self.dt_s)
         expected_tick = canonical_integer_tick(self.time_s)
         if (self.time_s < self.dt_s or self.time_s > 1.0e9 or
                 expected_tick < 0 or expected_tick > 0xFFFFFFFFFFFFFFFF or

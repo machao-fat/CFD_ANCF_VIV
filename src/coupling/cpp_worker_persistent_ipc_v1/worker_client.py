@@ -1,7 +1,9 @@
 from __future__ import annotations
 
 import hashlib
+import queue
 import struct
+import threading
 from typing import BinaryIO
 
 from .protocol import (HEADER, FrameError, StepRequest, StepResponse, decode_response,
@@ -12,9 +14,14 @@ from .protocol import (HEADER, FrameError, StepRequest, StepResponse, decode_res
 class PersistentCppWorkerClient:
     """One persistent framed connection; no retry or reconnect is permitted."""
 
-    def __init__(self, reader: BinaryIO, writer: BinaryIO) -> None:
+    MAX_SEEN_IDENTITIES = 100_000
+
+    def __init__(self, reader: BinaryIO, writer: BinaryIO, *, timeout_s: float = 30.0) -> None:
+        if isinstance(timeout_s, bool) or not isinstance(timeout_s, (int, float)) or timeout_s <= 0:
+            raise FrameError("worker timeout must be positive")
         self.reader = reader
         self.writer = writer
+        self.timeout_s = float(timeout_s)
         self.last_sequence = 0
         self.closed = False
         self.initialized = False
@@ -29,20 +36,41 @@ class PersistentCppWorkerClient:
         try:
             frame = encode_request(value)
             self.writer.write(frame); self.writer.flush()
-            header = self.reader.read(HEADER.size)
-            if len(header) != HEADER.size:
-                raise FrameError("worker disconnected before response header")
-            _magic, length, count = HEADER.unpack(header)
-            if length > 64 * 1024 * 1024 or count != 1:
-                raise FrameError("response length/count is invalid")
-            body = self.reader.read(length)
-            if len(body) != length:
-                raise FrameError("worker disconnected during response")
-            response = decode_response(header + body)
+            result: queue.Queue[tuple[bytes | None, BaseException | None]] = queue.Queue(maxsize=1)
+
+            def read_frame() -> None:
+                try:
+                    header = self.reader.read(HEADER.size)
+                    if len(header) != HEADER.size:
+                        raise FrameError("worker disconnected before response header")
+                    magic, length, count = HEADER.unpack(header)
+                    if magic != b"CFDANCF1" or length > 64 * 1024 * 1024 or count != 2:
+                        raise FrameError("response magic/length/count is invalid")
+                    body = self.reader.read(length)
+                    if len(body) != length:
+                        raise FrameError("worker disconnected during response")
+                    result.put((header + body, None))
+                except BaseException as exc:
+                    result.put((None, exc))
+
+            threading.Thread(target=read_frame, name="cpp-worker-response-reader", daemon=True).start()
+            try:
+                frame, error = result.get(timeout=self.timeout_s)
+            except queue.Empty as exc:
+                raise FrameError(f"worker response exceeded {self.timeout_s:g}s") from exc
+            if error is not None:
+                raise error
+            if frame is None:
+                raise FrameError("worker response frame is missing")
+            response = decode_response(frame)
             validate_response(value, response)
         except Exception:
             self.closed = True
             raise
+        if (len(self.seen_request_ids) >= self.MAX_SEEN_IDENTITIES or
+                len(self.seen_transaction_ids) >= self.MAX_SEEN_IDENTITIES):
+            self.closed = True
+            raise FrameError("worker identity replay window exhausted")
         self.last_sequence = value.sequence
         self.seen_request_ids.add(value.request_id)
         self.seen_transaction_ids.add(value.transaction_id)
