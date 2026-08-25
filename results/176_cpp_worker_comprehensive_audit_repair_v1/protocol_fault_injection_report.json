@@ -1,0 +1,20 @@
+{
+  "all_fail_closed": true,
+  "cases": [
+    "stale",
+    "duplicate",
+    "out_of_order",
+    "timeout",
+    "disconnect",
+    "hash_mismatch",
+    "tick_time_step_identity_mismatch",
+    "NaN_Inf",
+    "nonzero_return",
+    "dimension_mismatch",
+    "model_contract_mutation",
+    "structural_dimension_mutation"
+  ],
+  "same_runtime_retry": false,
+  "status": "pass",
+  "structural_mutation_return_nonzero": true
+}

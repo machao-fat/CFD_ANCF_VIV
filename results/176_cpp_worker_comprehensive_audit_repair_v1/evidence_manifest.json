@@ -1,0 +1,21 @@
+{
+  "case_id": "cpp_worker_comprehensive_audit_stage176_case_001",
+  "files": {
+    "results\\176_cpp_worker_comprehensive_audit_repair_v1\\build_and_test_audit.json": "4f47eb8783bc60f62c4fcfd28e09e4f90e0a641f2f7d76c2944b926f3eaa9749",
+    "results\\176_cpp_worker_comprehensive_audit_repair_v1\\changed_file_hashes.json": "98df0e182250db0619edbfeb791fdf98e9e52ced1017f6a2fef309c64db0162d",
+    "results\\176_cpp_worker_comprehensive_audit_repair_v1\\evidence_manifest.json": "9a714d5bdbf0cc46484240fb4a8fdceb62770e36523ccf02103722ed7cc18232",
+    "results\\176_cpp_worker_comprehensive_audit_repair_v1\\git_preflight.json": "c438a9b0bfd9a22f00be52f7a5db3489a294ba69dd52fb9e57d1d458100c80ec",
+    "results\\176_cpp_worker_comprehensive_audit_repair_v1\\independent_gate.json": "2438ae32e6e62014a4e4860acdeb0a2c8488c1bef3050a9662e56a4220e4cc97",
+    "results\\176_cpp_worker_comprehensive_audit_repair_v1\\numerical_equivalence_report.json": "eb836092a111041a225f8158c2b8dbb1f55d97518070e3c5a637f7b3c977cab8",
+    "results\\176_cpp_worker_comprehensive_audit_repair_v1\\process_cleanup_audit.json": "13731eb26983a7005f8ed896dc9ac8ae7dd195b00688fd94d43808c9a6eeb7c0",
+    "results\\176_cpp_worker_comprehensive_audit_repair_v1\\protection_manifest.json": "cbf3e967b03a8651af1decfaff5d50295dcbfc6837e769e32f9ae40bc339f239",
+    "results\\176_cpp_worker_comprehensive_audit_repair_v1\\protocol_fault_injection_report.json": "2e9cc005d497d1840b625723a7cda2607425bed73e840129c77c01708508112c",
+    "results\\176_cpp_worker_comprehensive_audit_repair_v1\\repair_manifest.json": "03fba0ebb2128d5ffba18565700982d8dc3568ad79cb59b151c10d133b521bdb",
+    "results\\176_cpp_worker_comprehensive_audit_repair_v1\\stop_gate_audit.json": "388fb913a51d029d33af288083b133a6749d7a6e0ec637a7661d62043176d6e9"
+  },
+  "report": {
+    "docs\\176_cpp_worker_comprehensive_audit_repair_v1\\最终报告_中文.md": "c5967a18d1e70b006640b6d18fb78f49014c70007ba60c1a9db15060dae914d3"
+  },
+  "run_id": "cpp_worker_comprehensive_audit_repair_176_001",
+  "stage_id": "stage4f_d_cpp_worker_comprehensive_audit_repair_v1_stage176"
+}

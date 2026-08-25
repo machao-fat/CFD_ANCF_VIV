@@ -160,6 +160,8 @@ int process_step(const std::vector<char>& payload, std::vector<char>& response,
                  std::string& expected_case, std::int32_t& expected_global_step,
                  std::int32_t& expected_bridge_step, std::uint64_t& expected_tick,
                  double& expected_time_s, double& expected_dt_s,
+                 std::int32_t& expected_n, std::int32_t& expected_elements,
+                 std::int32_t& expected_slices,
                  std::array<unsigned char, 32>& expected_model_digest,
                  std::unordered_set<std::uint64_t>& seen_request_ids,
                  std::unordered_set<std::uint64_t>& seen_transaction_ids) {
@@ -242,6 +244,17 @@ int process_step(const std::vector<char>& payload, std::vector<char>& response,
   if (string_value(producer, ID_ENDPOINT) != REQUEST_PRODUCER ||
       string_value(consumer, ID_ENDPOINT) != REQUEST_CONSUMER) return 14;
   if (sequence != expected_sequence) return 13;
+  // Structural dimensions are outside the historical model-byte digest.
+  // Pin them explicitly for the lifetime of this worker segment so a later
+  // frame cannot mutate ndof/elements/slices under an unchanged physical
+  // model digest.
+  if (expected_sequence == 1) {
+    expected_n = n;
+    expected_elements = elements;
+    expected_slices = slices;
+  } else if (n != expected_n || elements != expected_elements || slices != expected_slices) {
+    return 16;
+  }
   const std::string run_value = string_value(run_id, ID_RUN);
   const std::string case_value = string_value(case_id, ID_CASE);
   if (expected_run.empty()) {
@@ -390,6 +403,9 @@ int main() {
   std::uint64_t expected_tick = 0;
   double expected_time_s = 0.0;
   double expected_dt_s = 0.0;
+  std::int32_t expected_n = 0;
+  std::int32_t expected_elements = 0;
+  std::int32_t expected_slices = 0;
   std::array<unsigned char, 32> expected_model_digest{};
   std::unordered_set<std::uint64_t> seen_request_ids, seen_transaction_ids;
   while (true) {
@@ -410,7 +426,8 @@ int main() {
     try {
       result = process_step(payload, response, last_sequence + 1, expected_run, expected_case,
                             expected_global_step, expected_bridge_step, expected_tick,
-                            expected_time_s, expected_dt_s, expected_model_digest,
+                            expected_time_s, expected_dt_s, expected_n, expected_elements,
+                            expected_slices, expected_model_digest,
                             seen_request_ids, seen_transaction_ids);
     } catch (const std::exception& error) {
       std::cerr << "ownership worker exception: " << error.what() << '\n';

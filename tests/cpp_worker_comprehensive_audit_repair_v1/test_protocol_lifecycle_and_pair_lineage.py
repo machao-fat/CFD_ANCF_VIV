@@ -68,6 +68,23 @@ def _kernel_request(sequence: int, global_step: int, bridge: int, time_s: float,
     )
 
 
+def _kernel_request_with_model(model: KernelModel, sequence: int, global_step: int,
+                               bridge: int, time_s: float, tick: int,
+                               request_id: int) -> KernelStepRequest:
+    q = [0.0] * model.ndof
+    for node in range(model.elements + 1):
+        q[6 * node + 2] = node * model.length_m / model.elements
+        q[6 * node + 5] = 1.0
+    return KernelStepRequest(
+        sequence=sequence, global_step=global_step, case_local_bridge_step=bridge,
+        integer_tick=tick, time_s=time_s, dt_s=0.00125,
+        request_id=request_id, transaction_id=request_id + 10000,
+        run_id="dimension_lineage_run", case_id="dimension_lineage_case", model=model,
+        q=tuple(q), qdot=(0.0,) * model.ndof, qddot=(0.0,) * model.ndof,
+        base_load=(0.0,) * model.ndof, slice_force=(0.0,) * (3 * model.slices),
+    )
+
+
 class ProtocolLifecycleAndPairLineageTests(unittest.TestCase):
     def test_kernel_model_rejects_unrepresentable_physics_switches(self) -> None:
         value = _kernel_request(1, 560, 1, 2.20875, 2_208_750_000)
@@ -308,6 +325,43 @@ class ProtocolLifecycleAndPairLineageTests(unittest.TestCase):
             process.stdin.close()
             process.wait(timeout=10)
             self.assertEqual(process.returncode, 0)
+        finally:
+            if process.poll() is None:
+                process.kill()
+                process.wait(timeout=10)
+            if process.stdout is not None and not process.stdout.closed:
+                process.stdout.close()
+            if process.stderr is not None and not process.stderr.closed:
+                process.stderr.close()
+
+    @unittest.skipUnless(WORKER.is_file(), "Stage-local C++ kernel worker has not been built")
+    def test_kernel_worker_rejects_structural_dimension_mutation(self) -> None:
+        process = subprocess.Popen(
+            [str(WORKER)], stdin=subprocess.PIPE, stdout=subprocess.PIPE,
+            stderr=subprocess.PIPE, cwd=str(ROOT), bufsize=0,
+        )
+        assert process.stdin is not None and process.stdout is not None
+        try:
+            base_model = _kernel_request(1, 560, 1, 2.20875, 2_208_750_000).model
+            first = _kernel_request_with_model(base_model, 1, 560, 1, 2.20875,
+                                               2_208_750_000, 3001)
+            # The physical model bytes and slice positions remain unchanged;
+            # only elements/ndof change. The worker must reject this segment
+            # contract mutation before attempting the second solve.
+            changed = replace(base_model, elements=3)
+            second = _kernel_request_with_model(changed, 2, 561, 2, 2.21000,
+                                                2_210_000_000, 3002)
+            process.stdin.write(encode_kernel_request(first))
+            process.stdin.flush()
+            header = process.stdout.read(KERNEL_HEADER.size)
+            self.assertEqual(len(header), KERNEL_HEADER.size)
+            body = process.stdout.read(KERNEL_HEADER.unpack(header)[1])
+            validate_kernel_response(first, decode_kernel_response(header + body))
+            process.stdin.write(encode_kernel_request(second))
+            process.stdin.flush()
+            process.stdin.close()
+            process.wait(timeout=10)
+            self.assertNotEqual(process.returncode, 0)
         finally:
             if process.poll() is None:
                 process.kill()

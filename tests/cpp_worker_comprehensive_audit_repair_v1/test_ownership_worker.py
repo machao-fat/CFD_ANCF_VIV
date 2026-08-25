@@ -53,6 +53,24 @@ def request(value: KernelModel, base: tuple[float, ...], bridge: int = 1) -> Ker
     )
 
 
+def request_for_model(value: KernelModel, base: tuple[float, ...], sequence: int,
+                      global_step: int, bridge: int, request_id: int) -> KernelStepRequest:
+    q = [0.0] * value.ndof
+    for node in range(value.elements + 1):
+        q[6 * node + 2] = node * value.length_m / value.elements
+        q[6 * node + 5] = 1.0
+    return KernelStepRequest(
+        sequence=sequence, global_step=global_step, case_local_bridge_step=bridge,
+        integer_tick=2_208_750_000 + (sequence - 1) * 1_250_000,
+        time_s=2.20875 + (sequence - 1) * 0.00125, dt_s=0.00125,
+        request_id=request_id, transaction_id=request_id + 10_000_000,
+        run_id="stage153_dimension_lineage_run", case_id="stage153_dimension_lineage_case",
+        model=value, q=tuple(q), qdot=(0.0,) * value.ndof,
+        qddot=(0.0,) * value.ndof, base_load=base,
+        slice_force=(0.0,) * (3 * value.slices),
+    )
+
+
 def exchange(value: KernelStepRequest):
     process = subprocess.Popen([str(WORKER)], stdin=subprocess.PIPE, stdout=subprocess.PIPE,
                                stderr=subprocess.PIPE, cwd=str(ROOT), bufsize=0)
@@ -244,6 +262,30 @@ class OwnershipWorkerRepairTests(unittest.TestCase):
             process.stdin.write(encode_kernel_request(request(value, base))); process.stdin.flush()
             process.stdin.close()
             process.wait(timeout=10)
+            self.assertNotEqual(process.returncode, 0)
+        finally:
+            if process.poll() is None:
+                process.kill(); process.wait(timeout=10)
+            for stream in (process.stdout, process.stderr):
+                if stream is not None and not stream.closed:
+                    stream.close()
+
+    def test_structural_dimension_mutation_is_fail_closed(self):
+        value = model()
+        first = request_for_model(value, expected_base(value), 1, 560, 1, 153200)
+        changed = replace(value, elements=3)
+        second = request_for_model(changed, expected_base(changed), 2, 561, 2, 153201)
+        process = subprocess.Popen([str(WORKER)], stdin=subprocess.PIPE, stdout=subprocess.PIPE,
+                                   stderr=subprocess.PIPE, cwd=str(ROOT), bufsize=0)
+        assert process.stdin is not None and process.stdout is not None
+        try:
+            process.stdin.write(encode_kernel_request(first)); process.stdin.flush()
+            header = process.stdout.read(HEADER.size)
+            self.assertEqual(len(header), HEADER.size)
+            body = process.stdout.read(HEADER.unpack(header)[1])
+            validate_kernel_response(first, decode_kernel_response(header + body))
+            process.stdin.write(encode_kernel_request(second)); process.stdin.flush()
+            process.stdin.close(); process.wait(timeout=10)
             self.assertNotEqual(process.returncode, 0)
         finally:
             if process.poll() is None:
