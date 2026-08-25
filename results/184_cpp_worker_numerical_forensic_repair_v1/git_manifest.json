@@ -1,0 +1,53 @@
+{
+  "stage_id": "stage4f_d_cpp_worker_numerical_forensic_repair_v1_stage184",
+  "branch": "codex/cpp-worker-comprehensive-audit-repair-v1",
+  "parent_commit": "794bca8",
+  "implementation_commit": "e1266c1680fa4d2278b2727550887e9a90a0ac9a",
+  "tag": "cfd-ancf-viv-cpp-worker-numerical-forensic-repair-v1-stage184",
+  "remote": "origin",
+  "remote_url": "https://github.com/machao-fat/CFD_ANCF_VIV.git",
+  "push": {
+    "branch": "pending",
+    "tag": "pending",
+    "force_push": false,
+    "history_rewrite": false
+  },
+  "scoped_files": [
+    "docs/184_cpp_worker_numerical_forensic_repair_v1/report_zh.md",
+    "results/184_cpp_worker_numerical_forensic_repair_v1",
+    "src/coupling/cpp_worker_persistent_ipc_v1/CMakeLists.txt",
+    "src/coupling/cpp_worker_persistent_ipc_v1/ancf_forensic_diagnostic.cpp",
+    "src/coupling/cpp_worker_persistent_ipc_v1/ancf_kernel.cpp",
+    "src/coupling/cpp_worker_persistent_ipc_v1/ancf_kernel.hpp",
+    "src/coupling/cpp_worker_persistent_ipc_v1/ancf_kernel_selftest.cpp",
+    "tests/cpp_worker_numerical_forensic_repair_v1",
+    "tools/cpp_worker_numerical_forensic_repair_v1/run_stage184_forensic.py"
+  ],
+  "excluded_user_files": [
+    "cases/",
+    "references/",
+    "FAKE_PROCESS_SUMMARY.json",
+    "unrelated existing tools and docs"
+  ],
+  "verification": {
+    "cmake_msvc_x64_release": "pass",
+    "warning_level_W4": "pass",
+    "analyze": "pass",
+    "compileall": "pass",
+    "persistent_ipc_tests": "18 passed",
+    "stage183_related_tests": "51 passed, 1 skipped",
+    "numerical_equivalence_tests": "9 passed",
+    "stage184_forensic_tests": "3 passed",
+    "root_unittest": "1179 passed, 2 skipped",
+    "worker_replay": "40/40",
+    "real_process_starts": {
+      "MATLAB": 0,
+      "OpenFOAM": 0,
+      "WSL": 0,
+      "CFD": 0
+    },
+    "owned_residual": 0,
+    "gate": "STAGE4F_D_CPP_WORKER_NUMERICAL_FORENSIC_REPAIR_V1_GATE: do_not_pass",
+    "C++_ANCF_NUMERICAL_CORE_STATUS": "not_completed"
+  }
+}
