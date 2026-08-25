@@ -3,6 +3,7 @@ from __future__ import annotations
 import io
 import hashlib
 import json
+import os
 import struct
 import subprocess
 import unittest
@@ -30,7 +31,11 @@ from coupling.cpp_worker_confirm_v1.cpp_adapter import CppAdapterError, CppKerne
 
 
 ROOT = Path(__file__).resolve().parents[2]
-WORKER = ROOT / "runtime" / "cpp_worker_comprehensive_audit_repair_v1" / "build-release" / "Release" / "cfd_ancf_ancf_kernel_worker.exe"
+_BUILD_ROOT = Path(os.environ.get(
+    "CFD_ANCF_STAGE_BUILD",
+    str(ROOT / "runtime" / "cpp_worker_comprehensive_audit_repair_v1" / "build-release"),
+))
+WORKER = _BUILD_ROOT / "Release" / "cfd_ancf_ancf_kernel_worker.exe"
 
 
 def _transport_request() -> StepRequest:
@@ -69,6 +74,25 @@ class ProtocolLifecycleAndPairLineageTests(unittest.TestCase):
             replace(value, model=replace(value.model, include_gravity=False)).payload()
         with self.assertRaises(FrameError):
             replace(value, model=replace(value.model, top_tension_N="2000")).payload()
+
+    @unittest.skipUnless(WORKER.is_file(), "Stage-local C++ kernel worker has not been built")
+    def test_kernel_worker_input_eof_without_shutdown_is_fail_closed(self) -> None:
+        process = subprocess.Popen(
+            [str(WORKER)], stdin=subprocess.PIPE, stdout=subprocess.PIPE,
+            stderr=subprocess.PIPE, cwd=str(ROOT), bufsize=0,
+        )
+        assert process.stdin is not None
+        try:
+            process.stdin.close()
+            process.wait(timeout=10)
+            self.assertEqual(process.returncode, 22)
+        finally:
+            if process.poll() is None:
+                process.kill(); process.wait(timeout=10)
+            if process.stdout is not None and not process.stdout.closed:
+                process.stdout.close()
+            if process.stderr is not None and not process.stderr.closed:
+                process.stderr.close()
 
     def test_kernel_request_rejects_non_numeric_state_and_identity_controls(self) -> None:
         value = _kernel_request(1, 560, 1, 2.20875, 2_208_750_000)
@@ -232,6 +256,8 @@ class ProtocolLifecycleAndPairLineageTests(unittest.TestCase):
                 body = process.stdout.read(length)
                 response = decode_kernel_response(header + body)
                 validate_kernel_response(request, response)
+            process.stdin.write(KERNEL_HEADER.pack(b"CFDANCF1", 0, 3))
+            process.stdin.flush()
             process.stdin.close()
             process.wait(timeout=10)
             self.assertEqual(process.returncode, 0)

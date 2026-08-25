@@ -1,0 +1,15 @@
+{
+  "generated_at_utc": "2026-08-25T02:48:43.610361+00:00",
+  "sha256": {
+    "audit_findings.json": "4a2c14cf6db3135308d3dcf57be9644b6d58fb52d1fa07e2a56607b010fe73a7",
+    "build_and_test_audit.json": "37ad0127a555c43fd4ac23d39884c34f95037e8ea01324b9f15cf89101a7deb1",
+    "independent_gate.json": "bbbac4a7ae81483f347c523c6c6a07ceb85952c81fde19c9f9aa1a22f7a42623",
+    "ipc_fault_injection_report.json": "09cef8dc0165202a61d0c0d71e05992e01f0c4fad3be29dfa49fae2339eb0366",
+    "numerical_equivalence_report.json": "2e0c4a963cca8e2f645fcc9632457e908b0263cc31b5227013251def52861770",
+    "performance_audit.json": "9a6f45595085a8fe247cc862ed902e9bc6a929917c15f9404dbff91fe012bf76",
+    "process_cleanup_audit.json": "24d00a008f528c0b90ec07e72ae88e1891559be934f2087881169bd738150daa",
+    "repair_manifest.json": "0dd74d474dcc24a4ff3c254711fa8ce1bdd86a12bbd9cb94d2dd5c049b542d60",
+    "test_discovery_audit.json": "684550f432c1cbc0c2482794c0400fed19b17caaa92de71113e15a4db094184d"
+  },
+  "stage_id": "stage4f_d_cpp_worker_comprehensive_audit_repair_v1_stage170"
+}

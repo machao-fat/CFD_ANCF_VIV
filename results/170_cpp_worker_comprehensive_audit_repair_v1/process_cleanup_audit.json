@@ -1,0 +1,12 @@
+{
+  "cleanup": "pass",
+  "owned_residual": 0,
+  "physical_process_starts": {
+    "CFD": 0,
+    "MATLAB": 0,
+    "OpenFOAM": 0,
+    "WSL": 0
+  },
+  "stage_id": "stage4f_d_cpp_worker_comprehensive_audit_repair_v1_stage170",
+  "worker_start_count": 1
+}

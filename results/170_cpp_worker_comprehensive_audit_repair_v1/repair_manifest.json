@@ -1,0 +1,40 @@
+{
+  "forbidden_changes": [
+    "physical parameters",
+    "numerical thresholds",
+    "ANCF/EB core semantics",
+    "formal 0.2.1 protocol",
+    "old evidence/runtime"
+  ],
+  "repairs": [
+    {
+      "change": "fail closed on implicit EOF",
+      "file": "src/coupling/cpp_worker_persistent_ipc_v1/worker_main.cpp"
+    },
+    {
+      "change": "fail closed on implicit EOF",
+      "file": "src/coupling/cpp_worker_persistent_ipc_v1/ancf_worker_main.cpp"
+    },
+    {
+      "change": "fail closed on implicit EOF",
+      "file": "src/coupling/cpp_physics_ownership_v1/physics_ownership_worker_main.cpp"
+    },
+    {
+      "change": "legacy EOF regression and stage-local build selection",
+      "file": "tests/cpp_worker_comprehensive_audit_repair_v1/test_transport_worker_hardening.py"
+    },
+    {
+      "change": "ownership EOF regression and stage-local build selection",
+      "file": "tests/cpp_worker_comprehensive_audit_repair_v1/test_ownership_worker.py"
+    },
+    {
+      "change": "kernel EOF regression and explicit shutdown in clean lifecycle",
+      "file": "tests/cpp_worker_comprehensive_audit_repair_v1/test_protocol_lifecycle_and_pair_lineage.py"
+    },
+    {
+      "change": "nonzero base_load ownership replay with formal external_force semantics",
+      "file": "tools/cpp_worker_comprehensive_audit_repair_v1/run_stage170_ownership_replay.py"
+    }
+  ],
+  "stage_id": "stage4f_d_cpp_worker_comprehensive_audit_repair_v1_stage170"
+}

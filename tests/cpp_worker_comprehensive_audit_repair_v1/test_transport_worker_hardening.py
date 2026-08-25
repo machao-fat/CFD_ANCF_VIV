@@ -4,6 +4,7 @@ import subprocess
 import unittest
 from dataclasses import replace
 from pathlib import Path
+import os
 import sys
 
 ROOT = Path(__file__).resolve().parents[2]
@@ -14,7 +15,11 @@ from coupling.cpp_worker_persistent_ipc_v1.protocol import (
     encode_request, validate_response,
 )
 
-WORKER = ROOT / "runtime" / "cpp_worker_comprehensive_audit_repair_v1" / "build-release" / "Release" / "cfd_ancf_cpp_worker.exe"
+_BUILD_ROOT = Path(os.environ.get(
+    "CFD_ANCF_STAGE_BUILD",
+    str(ROOT / "runtime" / "cpp_worker_comprehensive_audit_repair_v1" / "build-release"),
+))
+WORKER = _BUILD_ROOT / "Release" / "cfd_ancf_cpp_worker.exe"
 
 
 def request(index: int, *, request_id: int | None = None, transaction_id: int | None = None) -> StepRequest:
@@ -46,6 +51,21 @@ class TransportWorkerHardeningTests(unittest.TestCase):
             process.stdin.write(encode_request(duplicate)); process.stdin.flush()
             process.stdin.close(); process.wait(timeout=10)
             self.assertNotEqual(process.returncode, 0)
+        finally:
+            if process.poll() is None:
+                process.kill(); process.wait(timeout=10)
+            for stream in (process.stdout, process.stderr):
+                if stream is not None and not stream.closed:
+                    stream.close()
+
+    def test_input_eof_without_shutdown_is_fail_closed(self) -> None:
+        process = subprocess.Popen([str(WORKER)], stdin=subprocess.PIPE, stdout=subprocess.PIPE,
+                                   stderr=subprocess.PIPE, cwd=str(ROOT), bufsize=0)
+        assert process.stdin is not None
+        try:
+            process.stdin.close()
+            process.wait(timeout=10)
+            self.assertEqual(process.returncode, 22)
         finally:
             if process.poll() is None:
                 process.kill(); process.wait(timeout=10)

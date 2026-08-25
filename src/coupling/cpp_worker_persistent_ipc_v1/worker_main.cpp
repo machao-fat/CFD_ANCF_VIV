@@ -15,6 +15,7 @@
 
 namespace {
 constexpr std::array<char, 8> MAGIC{'C','F','D','A','N','C','F','1'};
+constexpr int UNEXPECTED_EOF = 22;
 constexpr std::uint32_t SCHEMA = 1;
 constexpr std::uint32_t PROTOCOL = 1;
 constexpr std::size_t ID_RUN=64, ID_CASE=64, ID_ENDPOINT=32;
@@ -76,7 +77,9 @@ int main() {
   std::unordered_set<std::uint64_t> seen_request_ids, seen_transaction_ids;
   while (true) {
     std::array<char, 8> magic{}; std::uint32_t length=0, count=0;
-    if (!read_bytes(std::cin, magic.data(), magic.size())) return 0;
+    // A clean worker exit requires the explicit SHUTDOWN control frame.  EOF
+    // before that frame is an owner disconnect and must fail closed.
+    if (!read_bytes(std::cin, magic.data(), magic.size())) return UNEXPECTED_EOF;
     if (!read(std::cin, length) || !read(std::cin, count) || magic != MAGIC || length > 64u*1024u*1024u) return 2;
     if (count == 3) { if (length != 0) return 2; return 0; }
     if (count == 4) { if (length != 0) return 2; continue; }

@@ -1,0 +1,4 @@
+{
+  "reason": "this repair stage measures correctness/lifecycle, not a new real CFD performance confirm",
+  "status": "not_evaluable"
+}

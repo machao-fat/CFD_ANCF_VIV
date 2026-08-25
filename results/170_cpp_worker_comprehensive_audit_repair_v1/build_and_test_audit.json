@@ -1,0 +1,26 @@
+{
+  "architecture": "x64",
+  "build": "pass",
+  "cmake": "3.31.6",
+  "compileall": "pass",
+  "compiler": "MSVC 19.44.35228.0",
+  "configuration": "Release",
+  "cpp_selftests": {
+    "cfd_ancf_ancf_kernel_selftest": "pass",
+    "cfd_ancf_physics_ownership_selftest": "pass"
+  },
+  "focused_tests": {
+    "count": 28,
+    "status": "pass"
+  },
+  "generator": "Visual Studio 17 2022",
+  "root_unittest": {
+    "count": 1166,
+    "errors": 0,
+    "failures": 0,
+    "skipped": 1,
+    "status": "pass"
+  },
+  "stage_id": "stage4f_d_cpp_worker_comprehensive_audit_repair_v1_stage170",
+  "warning_level": "/W4"
+}

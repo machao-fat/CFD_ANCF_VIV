@@ -1,0 +1,26 @@
+{
+  "blocking_reason": "strict MATLAB/C++ independent Newton/internal-force equivalence is not completed; no CFD qualification",
+  "case_id": "cpp_worker_comprehensive_audit_stage170_case_001",
+  "conditions": {
+    "cmake_release_build": true,
+    "compileall": true,
+    "eof_fail_closed_repaired": true,
+    "fault_injection": true,
+    "focused_tests": true,
+    "full_matlab_cpp_numerical_equivalence": false,
+    "nonzero_base_load_40step": true,
+    "owned_residual_zero": true,
+    "physical_process_starts_zero": true,
+    "root_unittest": true
+  },
+  "formal_status": {
+    "FORMAL_STROUHAL_STATUS": "not_completed",
+    "LOCK_IN_CLAIM": "not_completed",
+    "STABLE_VIV_RESPONSE_CLAIM": "not_completed"
+  },
+  "gate": "STAGE4F_D_CPP_WORKER_COMPREHENSIVE_AUDIT_REPAIR_V1_GATE: do_not_pass",
+  "generated_at_utc": "2026-08-25T02:48:43.610361+00:00",
+  "run_id": "cpp_worker_comprehensive_audit_repair_170_001",
+  "stage_id": "stage4f_d_cpp_worker_comprehensive_audit_repair_v1_stage170",
+  "status": "do_not_pass"
+}
