@@ -1,0 +1,17 @@
+{
+  "stage_id": "stage4f_d_cpp_worker_numerical_forensic_repair_v1_stage184",
+  "cmake": "3.31.6",
+  "compiler": "MSVC 19.44.35228.0",
+  "configuration": "Release x64",
+  "warnings": "/W4",
+  "analyze": "/analyze",
+  "compileall": "pass",
+  "fresh_build": "pass",
+  "analyze_build": "pass",
+  "cpp_kernel_selftest": "pass",
+  "forensic_trace_tests": "pass",
+  "persistent_ipc_tests": {"passed": 18, "failed": 0},
+  "root_unittest": {"passed": 1179, "failed": 0, "skipped": 2, "status": "pass", "command": "python -m unittest discover -s tests -t . -p test_*.py"},
+  "real_process_starts": {"MATLAB": 0, "OpenFOAM": 0, "WSL": 0, "CFD": 0},
+  "owned_residual": 0
+}

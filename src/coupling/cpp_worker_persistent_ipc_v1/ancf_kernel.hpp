@@ -1,6 +1,7 @@
 #pragma once
 
 #include <cstddef>
+#include <array>
 #include <limits>
 #include <vector>
 
@@ -81,11 +82,40 @@ struct StepDiagnostics {
   double residual_scale = 0.0;
 };
 
+// Offline-only trace for MATLAB/C++ forensic comparison.  This is deliberately
+// separate from the wire response so diagnostics cannot alter production IPC.
+struct ForensicPoint {
+  std::size_t element = 0;
+  std::size_t gauss_index = 0;
+  double xi = 0.0;
+  double x = 0.0;
+  std::array<double, 3> a{};
+  std::array<double, 3> b{};
+  std::array<double, 3> v{};
+  double a2 = 0.0;
+  double v2 = 0.0;
+  double eps = 0.0;
+  std::array<double, 3> ga_b{};
+  std::array<double, 3> gb_b{};
+  std::array<double, 3> ga{};
+  std::array<double, 3> gb{};
+  std::array<double, 12> bga{};
+  std::array<double, 12> cgb{};
+  std::array<double, 12> contribution{};
+};
+
+struct ForensicResult {
+  std::vector<ForensicPoint> points;
+  std::vector<double> force;
+  Matrix tangent;
+};
+
 State make_reference_state(const Model& model);
 void validate_model(const Model& model);
 void symmetrize_mass(State& state);
 StepDiagnostics advance(State& state, const Model& model, const std::vector<double>& slice_force);
 void internal_force_tangent(const std::vector<double>& q, const Model& model, std::vector<double>& force, Matrix& tangent);
+ForensicResult internal_force_forensic(const std::vector<double>& q, const Model& model);
 std::vector<double> external_force(const Model& model, const std::vector<double>& slice_force);
 Matrix mapping_H3(const Model& model);
 bool finite(const State& state);

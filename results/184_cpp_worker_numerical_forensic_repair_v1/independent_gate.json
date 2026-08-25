@@ -1,0 +1,14 @@
+{
+  "stage_id": "stage4f_d_cpp_worker_numerical_forensic_repair_v1_stage184",
+  "gate": "STAGE4F_D_CPP_WORKER_NUMERICAL_FORENSIC_REPAIR_V1_GATE: do_not_pass",
+  "C++_ANCF_NUMERICAL_CORE_STATUS": "not_completed",
+  "reason": "first intermediate MATLAB/C++ difference is not proven; strict equivalence remains unvalidated",
+  "replay_40_steps_processed": 40,
+  "real_process_starts": {
+    "MATLAB": 0,
+    "OpenFOAM": 0,
+    "WSL": 0,
+    "CFD": 0
+  },
+  "owned_residual": 0
+}

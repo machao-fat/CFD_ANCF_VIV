@@ -251,6 +251,84 @@ void internal_force_tangent(const std::vector<double>& q, const Model& model, st
     throw std::runtime_error("ANCF assembled force or tangent contains NaN/Inf");
 }
 
+ForensicResult internal_force_forensic(const std::vector<double>& q, const Model& model) {
+  validate_model(model);
+  if (q.size() != model.ndof() || !finite_vector(q))
+    throw std::invalid_argument("q dimensions or values are invalid");
+  ForensicResult result;
+  result.force.assign(model.ndof(), 0.0);
+  result.tangent = Matrix(model.ndof(), model.ndof());
+  const double Le = model.length_m / model.elements;
+  const auto [xi, weights] = gauss(model.gauss_order);
+  result.points.reserve(model.elements * xi.size());
+  for (std::size_t e = 0; e < model.elements; ++e) {
+    const std::vector<double> qe(q.begin() + static_cast<std::ptrdiff_t>(6 * e),
+                                 q.begin() + static_cast<std::ptrdiff_t>(6 * e + 12));
+    std::vector<double> element_force;
+    Matrix element_tangent;
+    element_force_tangent(qe, Le, model.EA(), model.EI(), model.gauss_order,
+                          element_force, element_tangent);
+    for (int i = 0; i < 12; ++i) {
+      result.force[6 * e + static_cast<std::size_t>(i)] += element_force[static_cast<std::size_t>(i)];
+      for (int j = 0; j < 12; ++j)
+        result.tangent(6 * e + static_cast<std::size_t>(i),
+                       6 * e + static_cast<std::size_t>(j)) += element_tangent(i, j);
+    }
+    for (std::size_t k = 0; k < xi.size(); ++k) {
+      ForensicPoint point;
+      point.element = e;
+      point.gauss_index = k;
+      point.xi = xi[k];
+      point.x = 0.5 * (xi[k] + 1.0) * Le;
+      const Matrix B = block_matrix(shape(point.x, Le, 1));
+      const Matrix C = block_matrix(shape(point.x, Le, 2));
+      Vec3 a{};
+      Vec3 b{};
+      for (int i = 0; i < 3; ++i) {
+        for (int j = 0; j < 12; ++j) {
+          a[static_cast<std::size_t>(i)] += B(i, j) * qe[static_cast<std::size_t>(j)];
+          b[static_cast<std::size_t>(i)] += C(i, j) * qe[static_cast<std::size_t>(j)];
+        }
+      }
+      point.a = a;
+      point.b = b;
+      point.a2 = dot(a, a);
+      point.v = cross(a, b);
+      point.v2 = dot(point.v, point.v);
+      point.eps = 0.5 * (point.a2 - 1.0);
+      if (point.a2 < EPS) throw std::runtime_error("degenerate ANCF tangent");
+      const Mat3 Xa = cross_matrix(a);
+      const Mat3 Xb = cross_matrix(b);
+      const double inv_a2_3 = std::pow(point.a2, -3.0);
+      const double inv_a2_4 = std::pow(point.a2, -4.0);
+      point.ga_b = add(scale(mul3(Xb, point.v), inv_a2_3),
+                       scale(a, -3.0 * point.v2 * inv_a2_4));
+      point.gb_b = scale(mul3(Xa, point.v), -inv_a2_3);
+      point.ga = add(scale(a, model.EA() * point.eps), scale(point.ga_b, model.EI()));
+      point.gb = scale(point.gb_b, model.EI());
+      for (int i = 0; i < 12; ++i) {
+        for (int c = 0; c < 3; ++c) {
+          point.bga[static_cast<std::size_t>(i)] += B(c, i) * point.ga[static_cast<std::size_t>(c)];
+          point.cgb[static_cast<std::size_t>(i)] += C(c, i) * point.gb[static_cast<std::size_t>(c)];
+        }
+        double value = point.bga[static_cast<std::size_t>(i)] + point.cgb[static_cast<std::size_t>(i)];
+        value *= weights[k];
+        value *= Le;
+        value /= 2.0;
+        point.contribution[static_cast<std::size_t>(i)] = value;
+      }
+      result.points.push_back(point);
+    }
+  }
+  for (std::size_t i = 0; i < model.ndof(); ++i)
+    for (std::size_t j = i + 1; j < model.ndof(); ++j) {
+      const double value = 0.5 * (result.tangent(i, j) + result.tangent(j, i));
+      result.tangent(i, j) = value;
+      result.tangent(j, i) = value;
+    }
+  return result;
+}
+
 State make_reference_state(const Model& model) {
   validate_model(model);
   State state;state.q.assign(model.ndof(),0);state.qdot.assign(model.ndof(),0);state.qddot.assign(model.ndof(),0);double Le=model.length_m/model.elements;for(std::size_t node=0;node<=model.elements;++node){std::size_t base=6*node;double s=node*Le;state.q[base+2]=s;state.q[base+5]=1.0;}state.mass=Matrix(model.ndof(),model.ndof());
@@ -320,9 +398,15 @@ StepDiagnostics advance(State& state, const Model& model, const std::vector<doub
   // they must not be inherited from a possibly corrupted restart state.
   const auto fixed_value = []() { return 0.0; };
   const auto predictor_start = Clock::now();
+  // Keep the Newmark scalar products as named temporaries. MATLAB evaluates
+  // dt^2 once for both prediction and correction; recomputing a left-associative
+  // beta*dt*dt expression at the output can move qddot by several ulps.
+  const double dt2 = model.dt_s * model.dt_s;
+  const double beta_dt2 = model.beta * dt2;
+  const double gamma_dt = model.gamma * model.dt_s;
   std::vector<double> qpred = state.q, qdpred = state.qdot;
   for (std::size_t i = 0; i < model.ndof(); ++i) {
-    qpred[i] += model.dt_s * state.qdot[i] + model.dt_s * model.dt_s * (0.5 - model.beta) * state.qddot[i];
+    qpred[i] += model.dt_s * state.qdot[i] + dt2 * (0.5 - model.beta) * state.qddot[i];
     qdpred[i] += model.dt_s * (1 - model.gamma) * state.qddot[i];
   }
   const auto predictor_end = Clock::now();
@@ -338,8 +422,8 @@ StepDiagnostics advance(State& state, const Model& model, const std::vector<doub
   for (std::size_t iter = 1; iter <= model.max_newton; ++iter) {
     std::vector<double> qdd(model.ndof()), qd(model.ndof());
     for (std::size_t i = 0; i < model.ndof(); ++i) {
-      qdd[i] = (q[i] - qpred[i]) / (model.beta * model.dt_s * model.dt_s);
-      qd[i] = qdpred[i] + model.gamma * model.dt_s * qdd[i];
+      qdd[i] = (q[i] - qpred[i]) / beta_dt2;
+      qd[i] = qdpred[i] + gamma_dt * qdd[i];
     }
     std::vector<double> qi;
     Matrix K;
@@ -386,7 +470,7 @@ StepDiagnostics advance(State& state, const Model& model, const std::vector<doub
     // the Newton increment and is amplified by the high-stiffness internal
     // force in the strict MATLAB/C++ dual run.
     Matrix Keff(model.ndof(), model.ndof());
-    const double inv_beta_dt2 = 1.0 / (model.beta * model.dt_s * model.dt_s);
+    const double inv_beta_dt2 = 1.0 / beta_dt2;
     const double inv_beta_dt = 1.0 / (model.beta * model.dt_s);
     for (std::size_t i = 0; i < model.ndof(); ++i)
       for (std::size_t j = 0; j < model.ndof(); ++j) {
@@ -413,8 +497,18 @@ StepDiagnostics advance(State& state, const Model& model, const std::vector<doub
     for (std::size_t i = 0; i < model.ndof(); ++i) if (fixed[i]) q[i] = fixed_value();
   }
   if (!d.converged) throw std::runtime_error("ANCF Newton did not converge");
+  // MATLAB recomputes the accepted acceleration and velocity after Newton
+  // exits. Do the same from the final q, rather than retaining the values
+  // calculated before the convergence check.
+  std::vector<double> final_qdd(model.ndof()), final_qd(model.ndof());
+  for (std::size_t i = 0; i < model.ndof(); ++i) {
+    final_qdd[i] = (q[i] - qpred[i]) / beta_dt2;
+    final_qd[i] = qdpred[i] + gamma_dt * final_qdd[i];
+  }
   const auto update_start = Clock::now();
   state.q = q;
+  state.qddot = std::move(final_qdd);
+  state.qdot = std::move(final_qd);
   state.time_s += model.dt_s;
   ++state.step;
   state.residual = d.residual;

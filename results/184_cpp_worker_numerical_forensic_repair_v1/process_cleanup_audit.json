@@ -1,0 +1,11 @@
+{
+  "stage_id": "stage4f_d_cpp_worker_numerical_forensic_repair_v1_stage184",
+  "worker_start_count": 1,
+  "worker_return_code": 0,
+  "owned_residual": 0,
+  "cleanup": "closed",
+  "MATLAB": 0,
+  "OpenFOAM": 0,
+  "WSL": 0,
+  "CFD": 0
+}

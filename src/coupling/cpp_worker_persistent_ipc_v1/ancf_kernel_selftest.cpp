@@ -1,5 +1,6 @@
 #include "ancf_kernel.hpp"
 
+#include <algorithm>
 #include <cmath>
 #include <iostream>
 #include <limits>
@@ -15,6 +16,30 @@ int main() {
   std::vector<double> internal;
   cfd_ancf::Matrix tangent;
   cfd_ancf::internal_force_tangent(state.q, model, internal, tangent);
+  double reference_force_max = 0.0;
+  for (double value : internal) reference_force_max = std::max(reference_force_max, std::abs(value));
+  if (reference_force_max > 1.0e-5) return 2;  // zero strain/curvature
+  auto translated = state.q;
+  for (std::size_t node = 0; node <= model.elements; ++node) translated[6 * node] += 0.37;
+  cfd_ancf::internal_force_tangent(translated, model, internal, tangent);
+  double translated_force_max = 0.0;
+  for (double value : internal) translated_force_max = std::max(translated_force_max, std::abs(value));
+  if (translated_force_max > 1.0e-5) return 2;  // rigid translation invariance
+  auto rotated = state.q;
+  const double angle = 0.31;
+  const double sine = std::sin(angle), cosine = std::cos(angle);
+  for (std::size_t node = 0; node <= model.elements; ++node) {
+    const std::size_t base = 6 * node;
+    const double s = state.q[base + 2];
+    rotated[base] = sine * s;
+    rotated[base + 2] = cosine * s;
+    rotated[base + 3] = sine;
+    rotated[base + 5] = cosine;
+  }
+  cfd_ancf::internal_force_tangent(rotated, model, internal, tangent);
+  double rotated_force_max = 0.0;
+  for (double value : internal) rotated_force_max = std::max(rotated_force_max, std::abs(value));
+  if (rotated_force_max > 1.0e-4) return 2;  // rigid rotation invariance
   auto diagnostics = cfd_ancf::advance(state, model, force);
   if (!diagnostics.converged || !cfd_ancf::finite(state) || state.step != 1 || !std::isfinite(state.residual)) return 2;
   force[1] = 1.0e-3;

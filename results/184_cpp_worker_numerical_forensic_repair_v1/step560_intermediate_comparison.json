@@ -1,0 +1,67 @@
+{
+  "source_step": 559,
+  "target_step": 560,
+  "cpp_trace_sha256": "0b07d085ec4bee9cd9da134b1a78aee2ccfdd756c998cc1bdd2633da3b76f799",
+  "matlab_intermediate_comparison": "not_evaluable_without_existing_matlab_intermediate_fixture",
+  "target_q_aggregate_reference": "Stage169 read-only evidence reports max_abs=2.9103830456733704e-11",
+  "worker_replay_step560": {
+    "step": 560,
+    "fields": {
+      "q": {
+        "max_abs": 1.7763568394002505e-15,
+        "max_relative": 2.2168683206839193e-16,
+        "max_abs_index_zero_based": 32,
+        "max_relative_index_zero_based": 17
+      },
+      "qdot": {
+        "max_abs": 3.552713678800501e-13,
+        "max_relative": 3.552713678800501e-13,
+        "max_abs_index_zero_based": 23,
+        "max_relative_index_zero_based": 23
+      },
+      "qddot": {
+        "max_abs": 5.684341886080801e-10,
+        "max_relative": 5.684341886080801e-10,
+        "max_abs_index_zero_based": 23,
+        "max_relative_index_zero_based": 23
+      },
+      "internal_force": {
+        "max_abs": 4.866160452365875e-07,
+        "max_relative": 4.891825378743019e-08,
+        "max_abs_index_zero_based": 32,
+        "max_relative_index_zero_based": 29
+      },
+      "external_force": {
+        "max_abs": 0.0,
+        "max_relative": 0.0,
+        "max_abs_index_zero_based": 0,
+        "max_relative_index_zero_based": 0
+      },
+      "generalized_force": {
+        "max_abs": 0.0,
+        "max_relative": 0.0,
+        "max_abs_index_zero_based": 0,
+        "max_relative_index_zero_based": 0
+      },
+      "predictor": {
+        "max_abs": 0.0,
+        "max_relative": 0.0,
+        "max_abs_index_zero_based": 0,
+        "max_relative_index_zero_based": 0
+      },
+      "corrector": {
+        "max_abs": 1.7763568394002505e-15,
+        "max_relative": 2.2168683206839193e-16,
+        "max_abs_index_zero_based": 32,
+        "max_relative_index_zero_based": 17
+      },
+      "residual": {
+        "max_abs": 1.352161635548299e-06,
+        "max_relative": 1.352161635548299e-06,
+        "max_abs_index_zero_based": 0,
+        "max_relative_index_zero_based": 0
+      }
+    },
+    "iterations": 2
+  }
+}

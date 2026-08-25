@@ -1,0 +1,30 @@
+{
+  "algorithm": "SHA256",
+  "stage_id": "stage4f_d_cpp_worker_numerical_forensic_repair_v1_stage184",
+  "files": {
+    "docs/184_cpp_worker_numerical_forensic_repair_v1/report_zh.md": "04cb7363eda13581905eaadba5f0a6fc54160b772d7dc608dbE308f707438b31",
+    "results/184_cpp_worker_numerical_forensic_repair_v1/independent_gate.json": "0a6d36a75a0b2ac21f0a30ae71b267353799287bd9267ad56fdabd5e39574e09",
+    "results/184_cpp_worker_numerical_forensic_repair_v1/internal_force_forensic_audit.json": "023b0b13c17e385d64cdbA33fb133d74f95b3969a9fa109902725f9c535d93a3",
+    "results/184_cpp_worker_numerical_forensic_repair_v1/numerical_contract_manifest.json": "7ad7b5c46b692b18e551f80046d2790600d982160eb6378c2a881cf0e9dcaf25",
+    "results/184_cpp_worker_numerical_forensic_repair_v1/numerical_repair_manifest.json": "7585dc36bdd9d4b735620284c7b31a127488491cefa6c8e879387cfdaa13516f",
+    "results/184_cpp_worker_numerical_forensic_repair_v1/process_cleanup_audit.json": "b0b24b8381ed52ca15baF2546bc2f008c2d2b08ead198dfc0de8617af9497248",
+    "results/184_cpp_worker_numerical_forensic_repair_v1/replay_10step_audit.json": "2cdbc529986449efd2a811314ed21e41c5d2def993f77eb90460ddab4f4a1ddd",
+    "results/184_cpp_worker_numerical_forensic_repair_v1/replay_40step_audit.json": "6d16cab94766d5e4f0c41b0104de344818e864598f634cf10b02b12c8c383504",
+    "results/184_cpp_worker_numerical_forensic_repair_v1/step560_intermediate_comparison.json": "a620d513cab6a75dc88b5e70a218027d3e5afbd90078ca33afa16c0d65100240",
+    "results/184_cpp_worker_numerical_forensic_repair_v1/test_and_build_audit.json": "d0f91cd1c597293b128651c3642fa71b4d5f75d6056999378b539a1cc3d9f4bb",
+    "src/coupling/cpp_worker_persistent_ipc_v1/CMakeLists.txt": "36148c45b2e209393c8328a8f009250df5602c2b7fe1744d6e01b83b1e0459ff",
+    "src/coupling/cpp_worker_persistent_ipc_v1/ancf_forensic_diagnostic.cpp": "821d3b2d6f34a2813f8f36e9c9dafaf6e6c8d3b71d8fb899cd9f47f8ee6aaf11",
+    "src/coupling/cpp_worker_persistent_ipc_v1/ancf_kernel.cpp": "b9d7097acca39f3ff1561307905e276620b1cc0307c568357692aec4f00b996a",
+    "src/coupling/cpp_worker_persistent_ipc_v1/ancf_kernel.hpp": "a3fb95adc2b89d82c647db0c2f679edea97e19dd37ee4a04c0e601c6f33dfea3",
+    "src/coupling/cpp_worker_persistent_ipc_v1/ancf_kernel_selftest.cpp": "438c0ceb554415b5f02608a6d0541089137149f8a26f4184fa57be77dc4404ed",
+    "tests/cpp_worker_numerical_forensic_repair_v1/__init__.py": "854b61d57b39b2a95ba51215226cb1d0498bf6ccce9295bbf3a89ff9a032f599",
+    "tests/cpp_worker_numerical_forensic_repair_v1/test_forensic_trace.py": "6cfde330d7ec6b42ae44aee930abfa484be9fa777215e9e28c59304770a2d0d0",
+    "tools/cpp_worker_numerical_forensic_repair_v1/run_stage184_forensic.py": "8649abdf3455b06680a5871e61bbcbda0eb3ec54068e13f7f6d9feabd6bb85cf"
+  },
+  "excluded_user_files": [
+    "cases/",
+    "references/",
+    "FAKE_PROCESS_SUMMARY.json",
+    "unrelated existing tools and docs"
+  ]
+}
