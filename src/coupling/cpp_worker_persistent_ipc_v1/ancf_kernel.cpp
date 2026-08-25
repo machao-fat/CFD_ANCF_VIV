@@ -33,6 +33,13 @@ Mat3 mul3(const Mat3& a, const Mat3& b) { Mat3 c=zero3(); for(int i=0;i<3;++i)fo
 Vec3 mul3(const Mat3& a, const Vec3& b) { return {a[0]*b[0]+a[1]*b[1]+a[2]*b[2], a[3]*b[0]+a[4]*b[1]+a[5]*b[2], a[6]*b[0]+a[7]*b[1]+a[8]*b[2]}; }
 Mat3 outer3(const Vec3& a, const Vec3& b) { Mat3 c{}; for(int i=0;i<3;++i)for(int j=0;j<3;++j)c[3*i+j]=a[i]*b[j]; return c; }
 Mat3 cross_matrix(const Vec3& a) { return {0,-a[2],a[1],a[2],0,-a[0],-a[1],a[0],0}; }
+Matrix matrix_from_mat3(const Mat3& value) {
+  Matrix result(3, 3);
+  for (std::size_t row = 0; row < 3; ++row)
+    for (std::size_t col = 0; col < 3; ++col)
+      result(row, col) = value[3 * row + col];
+  return result;
+}
 
 bool finite_vector(const std::vector<double>& values) {
   return !values.empty() && std::all_of(values.begin(), values.end(),
@@ -134,14 +141,21 @@ void element_force_tangent(const std::vector<double>& qe, double Le, double EA, 
       term *= Le;
       term /= 2.0;
       fe[static_cast<std::size_t>(i)] += term;
+      // MATLAB evaluates each product as an independent matrix multiplication
+      // and only then adds the four 12x12 terms.  The previous scalar
+      // r/s reduction interleaved all four products, changing the rounding
+      // path of the effective Newton tangent by several ulps.
+      const Matrix B_t = transpose(B);
+      const Matrix C_t = transpose(C);
+      const Matrix term_bhaa_b = multiply(multiply(B_t, matrix_from_mat3(Haa)), B);
+      const Matrix term_bhab_c = multiply(multiply(B_t, matrix_from_mat3(HabS)), C);
+      const Matrix term_chab_b = multiply(multiply(C_t, matrix_from_mat3(transpose3(HabS))), B);
+      const Matrix term_chbb_c = multiply(multiply(C_t, matrix_from_mat3(HbbS)), C);
       for (int j = 0; j < 12; ++j) {
-        double value = 0;
-        for (int r = 0; r < 3; ++r)
-          for (int s = 0; s < 3; ++s)
-            value += B(r, i) * Haa[3 * r + s] * B(s, j) +
-                     B(r, i) * HabS[3 * r + s] * C(s, j) +
-                     C(r, i) * HabS[3 * s + r] * B(s, j) +
-                     C(r, i) * HbbS[3 * r + s] * C(s, j);
+        double value = term_bhaa_b(i, j);
+        value += term_bhab_c(i, j);
+        value += term_chab_b(i, j);
+        value += term_chbb_c(i, j);
         double weighted = value;
         weighted *= w[k];
         weighted *= Le;
@@ -357,7 +371,8 @@ void symmetrize_mass(State& state) {
   }
 }
 
-StepDiagnostics advance(State& state, const Model& model, const std::vector<double>& slice_force) {
+StepDiagnostics advance(State& state, const Model& model, const std::vector<double>& slice_force,
+                        std::vector<NewtonIterationTrace>* trace) {
   validate_model(model);
   using Clock = std::chrono::steady_clock;
   const auto total_start = Clock::now();
@@ -401,13 +416,27 @@ StepDiagnostics advance(State& state, const Model& model, const std::vector<doub
   // Keep the Newmark scalar products as named temporaries. MATLAB evaluates
   // dt^2 once for both prediction and correction; recomputing a left-associative
   // beta*dt*dt expression at the output can move qddot by several ulps.
-  const double dt2 = model.dt_s * model.dt_s;
+  // MATLAB's dt^2 uses the scalar power operation. Keep the same operation
+  // in the Newton predictor; a one-ulp predictor change is amplified by the
+  // high-stiffness ANCF internal force.
+  const double dt2 = std::pow(model.dt_s, 2.0);
   const double beta_dt2 = model.beta * dt2;
   const double gamma_dt = model.gamma * model.dt_s;
   std::vector<double> qpred = state.q, qdpred = state.qdot;
   for (std::size_t i = 0; i < model.ndof(); ++i) {
-    qpred[i] += model.dt_s * state.qdot[i] + dt2 * (0.5 - model.beta) * state.qddot[i];
-    qdpred[i] += model.dt_s * (1 - model.gamma) * state.qddot[i];
+    // Force the same two rounded vector additions MATLAB performs.  Keeping
+    // the intermediates volatile prevents MSVC from contracting the three
+    // terms into an FMA under optimized builds.
+    volatile double position = qpred[i];
+    volatile double velocity_term = model.dt_s * state.qdot[i];
+    volatile double acceleration_term = dt2 * (0.5 - model.beta) * state.qddot[i];
+    position += velocity_term;
+    position += acceleration_term;
+    qpred[i] = position;
+    volatile double velocity = qdpred[i];
+    volatile double acceleration_velocity = model.dt_s * (1 - model.gamma) * state.qddot[i];
+    velocity += acceleration_velocity;
+    qdpred[i] = velocity;
   }
   const auto predictor_end = Clock::now();
   std::vector<double> q = qpred;
@@ -458,8 +487,23 @@ StepDiagnostics advance(State& state, const Model& model, const std::vector<doub
     if (iter == 1) d.initial_residual = norm;
     d.residual = norm;
     d.iterations = iter;
+    NewtonIterationTrace iteration_trace;
+    if (trace != nullptr) {
+      iteration_trace.iteration = iter;
+      iteration_trace.q = q;
+      iteration_trace.qdot = qd;
+      iteration_trace.qddot = qdd;
+      iteration_trace.internal_force = qi;
+      iteration_trace.residual = R;
+      iteration_trace.tangent = K;
+      iteration_trace.residual_norm = norm;
+    }
     if (norm <= model.newton_tolerance * scale_value) {
       d.converged = true;
+      if (trace != nullptr) {
+        iteration_trace.converged = true;
+        trace->push_back(std::move(iteration_trace));
+      }
       state.qddot = qdd;
       state.qdot = qd;
       break;
@@ -491,6 +535,12 @@ StepDiagnostics advance(State& state, const Model& model, const std::vector<doub
     const auto solve_start = Clock::now();
     auto dq = solve(Kff, Rf);
     if (!finite_vector(dq)) throw std::runtime_error("ANCF Newton increment contains NaN/Inf");
+    if (trace != nullptr) {
+      iteration_trace.increment.assign(model.ndof(), 0.0);
+      for (std::size_t i = 0; i < free.size(); ++i)
+        iteration_trace.increment[free[i]] = -dq[i];
+      trace->push_back(std::move(iteration_trace));
+    }
     const auto solve_end = Clock::now();
     d.linear_solve_s += std::chrono::duration<double>(solve_end - solve_start).count();
     for (std::size_t i = 0; i < free.size(); ++i) q[free[i]] -= dq[i];

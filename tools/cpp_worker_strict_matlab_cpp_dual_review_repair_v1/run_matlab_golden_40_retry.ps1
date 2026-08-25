@@ -1,0 +1,4 @@
+$ErrorActionPreference='Continue'
+$root=(Resolve-Path (Join-Path $PSScriptRoot '..\..')).Path
+$runtime=Join-Path $root 'runtime\cpp_worker_strict_matlab_cpp_dual_review_repair_v1_retry_001\golden_40_matlab_001'; New-Item -ItemType Directory -Force -Path $runtime | Out-Null
+$out=Join-Path $runtime 'matlab_golden_40.jsonl'; $stdout=Join-Path $runtime 'stdout.log'; $stderr=Join-Path $runtime 'stderr.log'; $seed=Join-Path $root 'runtime\cpp_worker_persistent_ipc_v1\matlab_dual_011\accepted_step559_seed.mat'; $tool=Join-Path $root 'tools\cpp_worker_numerical_equivalence_v1'; $matlab='D:\Program Files\MATLAB\R2021b\bin\matlab.exe'; $expr="addpath('$tool'); export_step559_matlab_golden('$seed','$out');"; & $matlab -batch $expr 1> $stdout 2> $stderr; $code=$LASTEXITCODE; [ordered]@{exit_code=$code;output=$out;exists=(Test-Path $out);stdout=$stdout;stderr=$stderr}|ConvertTo-Json; exit 0

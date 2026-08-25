@@ -65,5 +65,8 @@ int main(int argc, char** argv) {
   output << "force " << trace.force.size();
   for (double value : trace.force) output << ' ' << value;
   output << '\n';
+  output << "tangent " << trace.tangent.rows << ' ' << trace.tangent.cols;
+  for (double value : trace.tangent.data) output << ' ' << value;
+  output << '\n';
   return output ? 0 : 5;
 }

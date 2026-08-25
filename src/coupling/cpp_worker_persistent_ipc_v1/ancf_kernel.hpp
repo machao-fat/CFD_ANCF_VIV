@@ -82,6 +82,22 @@ struct StepDiagnostics {
   double residual_scale = 0.0;
 };
 
+// Offline-only Newton trace. The default production advance path does not
+// allocate or populate this record; diagnostics may pass a vector to capture
+// the exact production residual/tangent path for MATLAB comparison.
+struct NewtonIterationTrace {
+  std::size_t iteration = 0;
+  std::vector<double> q;
+  std::vector<double> qdot;
+  std::vector<double> qddot;
+  std::vector<double> internal_force;
+  std::vector<double> residual;
+  Matrix tangent;
+  std::vector<double> increment;
+  double residual_norm = 0.0;
+  bool converged = false;
+};
+
 // Offline-only trace for MATLAB/C++ forensic comparison.  This is deliberately
 // separate from the wire response so diagnostics cannot alter production IPC.
 struct ForensicPoint {
@@ -113,7 +129,8 @@ struct ForensicResult {
 State make_reference_state(const Model& model);
 void validate_model(const Model& model);
 void symmetrize_mass(State& state);
-StepDiagnostics advance(State& state, const Model& model, const std::vector<double>& slice_force);
+StepDiagnostics advance(State& state, const Model& model, const std::vector<double>& slice_force,
+                        std::vector<NewtonIterationTrace>* trace = nullptr);
 void internal_force_tangent(const std::vector<double>& q, const Model& model, std::vector<double>& force, Matrix& tangent);
 ForensicResult internal_force_forensic(const std::vector<double>& q, const Model& model);
 std::vector<double> external_force(const Model& model, const std::vector<double>& slice_force);
