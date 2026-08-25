@@ -7,7 +7,8 @@ import struct
 from dataclasses import dataclass
 from typing import BinaryIO, Sequence
 
-from .protocol import FrameError, HEADER, MAGIC, SCHEMA_VERSION, PROTOCOL_VERSION
+from .protocol import (FrameError, HEADER, MAGIC, SCHEMA_VERSION,
+                       PROTOCOL_VERSION, canonical_integer_tick)
 
 
 MESSAGE_KERNEL_STEP_REQUEST = 5
@@ -218,7 +219,7 @@ class KernelStepRequest:
             raise FrameError("kernel time is NaN/Inf")
         if self.dt_s <= 0.0:
             raise FrameError("kernel dt_s must be positive")
-        expected_tick = int(round(self.time_s * 1.0e9))
+        expected_tick = canonical_integer_tick(self.time_s)
         if (self.time_s < self.dt_s or self.time_s > 1.0e9 or
                 expected_tick < 0 or expected_tick > 0xFFFFFFFFFFFFFFFF or
                 self.integer_tick != expected_tick):

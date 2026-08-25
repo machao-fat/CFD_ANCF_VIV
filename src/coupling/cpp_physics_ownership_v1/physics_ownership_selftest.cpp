@@ -356,6 +356,20 @@ int main() {
     } catch (const std::invalid_argument&) {
       invalid_line_weight_rejected = true;
     }
+    bool unknown_representation_rejected = false;
+    try {
+      (void)cfd_ancf::physics_ownership::assemble_cfd_load(
+          value, line_force, static_cast<ForceRepresentation>(99));
+    } catch (const std::invalid_argument&) {
+      unknown_representation_rejected = true;
+    }
+    bool unknown_representation_name_rejected = false;
+    try {
+      (void)cfd_ancf::physics_ownership::representation_name(
+          static_cast<ForceRepresentation>(99));
+    } catch (const std::invalid_argument&) {
+      unknown_representation_name_rejected = true;
+    }
 
     const auto reference = cfd_ancf::make_reference_state(value);
     // The frozen MATLAB contract applies top tension in the global +z
@@ -444,6 +458,8 @@ int main() {
                       invalid_representation_rejected && invalid_line_weight_rejected &&
                       mass_symmetric && mass_positive && mass_assembly_matches_kernel &&
                       mass_order_contract && invalid_gauss_rejected &&
+                      unknown_representation_rejected &&
+                      unknown_representation_name_rejected &&
                       top_tension_global_z_contract && bent_state_does_not_rotate_top_tension;
     const auto loads_hash = [](const std::vector<double>& values) {
       return cfd_ancf::physics_ownership::sha256_vector(values);
@@ -488,6 +504,10 @@ int main() {
               << (invalid_representation_rejected ? "true" : "false")
               << ",\"invalid_line_weight_rejected\":"
               << (invalid_line_weight_rejected ? "true" : "false")
+              << ",\"unknown_representation_rejected\":"
+              << (unknown_representation_rejected ? "true" : "false")
+              << ",\"unknown_representation_name_rejected\":"
+              << (unknown_representation_name_rejected ? "true" : "false")
               << ",\"gravity_sum\":" << gravity_sum
               << ",\"buoyancy_sum\":" << buoyancy_sum
               << ",\"tangent_error\":" << tangent_error

@@ -178,6 +178,13 @@ CfdLoadBreakdown assemble_cfd_load(const Model& model,
                                    ForceRepresentation representation,
                                    const std::vector<double>& slice_weights_m) {
   physics_ownership::validate_model(model);
+  // ForceRepresentation is an external contract value, not an open-ended
+  // enum.  Treat unknown values as malformed input instead of silently
+  // selecting the line-force branch (or labelling an unknown value as one).
+  if (representation != ForceRepresentation::integrated_N &&
+      representation != ForceRepresentation::line_Npm) {
+    throw std::invalid_argument("unsupported force representation");
+  }
   if (slice_force.size() != 3 * model.slices) {
     throw std::invalid_argument("slice force dimension mismatch");
   }
@@ -250,7 +257,16 @@ std::string sha256_vector(const std::vector<double>& values) {
 }
 
 const char* representation_name(ForceRepresentation representation) {
-  return representation == ForceRepresentation::integrated_N ? "integrated_N" : "line_Npm";
+  switch (representation) {
+    case ForceRepresentation::integrated_N:
+      return "integrated_N";
+    case ForceRepresentation::line_Npm:
+      return "line_Npm";
+    default:
+      // This value crosses the protocol boundary.  Never relabel an unknown
+      // enum as a valid force representation in audit output.
+      throw std::invalid_argument("unsupported force representation");
+  }
 }
 
 }  // namespace cfd_ancf::physics_ownership

@@ -1,0 +1,32 @@
+{
+  "case_id": "cpp_worker_comprehensive_audit_stage182_offline_case_001",
+  "formal_protocol_semantics_modified": false,
+  "physics_or_thresholds_modified": false,
+  "repairs": [
+    {
+      "evidence": "ownership selftest reports unknown_representation_rejected=true",
+      "files": [
+        "src/coupling/cpp_physics_ownership_v1/physics_ownership.cpp",
+        "src/coupling/cpp_physics_ownership_v1/physics_ownership_selftest.cpp"
+      ],
+      "id": "UNKNOWN_FORCE_REPRESENTATION_FAIL_CLOSED",
+      "rule": "Reject enum values outside integrated_N and line_Npm before load mapping.",
+      "severity": "high",
+      "status": "fixed_and_tested"
+    },
+    {
+      "evidence": "Stage182 source-contract regression plus 60 focused tests",
+      "files": [
+        "src/coupling/cpp_worker_persistent_ipc_v1/ancf_worker_main.cpp",
+        "src/coupling/cpp_physics_ownership_v1/physics_ownership_worker_main.cpp"
+      ],
+      "id": "NUMERICAL_STATE_IDENTITY_ECHO_GUARD",
+      "rule": "Verify committed state.step and state.time_s before emitting checkpoint identity.",
+      "severity": "high",
+      "status": "fixed_and_tested"
+    }
+  ],
+  "run_id": "cpp_worker_comprehensive_audit_repair_182_001",
+  "stage_id": "stage4f_d_cpp_worker_comprehensive_audit_repair_v1_stage182",
+  "status": "confirmed_repairs_tested"
+}

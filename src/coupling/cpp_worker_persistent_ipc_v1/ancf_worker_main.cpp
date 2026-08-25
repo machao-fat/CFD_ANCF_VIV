@@ -395,6 +395,14 @@ int process_step(const std::vector<char>& payload, std::vector<char>& response,
   } catch (const std::exception&) {
     return 12;
   }
+  // Do not report the request identity as a checkpoint unless the numerical
+  // state reached the same step and time.  This closes a masking path where a
+  // rounding or state-update defect could be hidden by echoing request fields.
+  if (state.step != static_cast<std::size_t>(global_step) ||
+      !std::isfinite(state.time_s) ||
+      std::abs(state.time_s - time_s) > 1.0e-12) {
+    return 16;
+  }
   if (!append_profile(global_step, sequence, diagnostics)) return 19;
   std::vector<double> internal_after; cfd_ancf::internal_force_tangent(state.q, model, internal_after, tangent);
   const std::vector<double> corrector = state.q;

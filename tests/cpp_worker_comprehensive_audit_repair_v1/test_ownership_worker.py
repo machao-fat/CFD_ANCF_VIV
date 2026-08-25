@@ -21,10 +21,12 @@ from coupling.cpp_worker_persistent_ipc_v1.protocol import (
 
 
 ROOT = Path(__file__).resolve().parents[2]
-_BUILD_ROOT = Path(os.environ.get(
-    "CFD_ANCF_STAGE_BUILD",
-    str(ROOT / "runtime" / "cpp_worker_comprehensive_audit_repair_v1" / "stage158_build"),
-))
+# Never silently exercise an arbitrary stale build left by an earlier stage.
+# The C++ binary is selected explicitly by the build/audit command through
+# CFD_ANCF_STAGE_BUILD; without it these process-level tests are skipped.
+_BUILD_ROOT = Path(os.environ["CFD_ANCF_STAGE_BUILD"]) if "CFD_ANCF_STAGE_BUILD" in os.environ else (
+    ROOT / "runtime" / "cpp_worker_comprehensive_audit_repair_v1" / "_explicit_build_required"
+)
 WORKER = _BUILD_ROOT / "Release" / "cfd_ancf_physics_ownership_worker.exe"
 
 

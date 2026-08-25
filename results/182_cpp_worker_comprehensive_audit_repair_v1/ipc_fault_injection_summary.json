@@ -1,0 +1,17 @@
+{
+  "covered": [
+    "stale",
+    "duplicate",
+    "out_of_order",
+    "tick_time_step_mismatch",
+    "dimension_mutation",
+    "hash_mismatch",
+    "NaN_Inf",
+    "disconnect",
+    "timeout",
+    "duplicate_initialize",
+    "unknown_force_representation"
+  ],
+  "same_runtime_retry": false,
+  "status": "pass"
+}

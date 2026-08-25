@@ -22,6 +22,7 @@ ID_ENDPOINT = 32
 REQUEST_PRODUCER = "python_scheduler"
 REQUEST_CONSUMER = "cpp_ancf_worker"
 MAX_NDOF = 2048
+MAX_UINT64 = (1 << 64) - 1
 # schema, sequence, global_step, bridge_step, tick, time, dt, n, request token,
 # transaction token, run_id, case_id, producer, consumer
 REQUEST = struct.Struct("<IIIiiQddiQQ64s64s32s32s32s")
@@ -31,6 +32,23 @@ RESPONSE = struct.Struct("<IIIiiQdii32sQQI64s64s32s32s")
 
 class FrameError(ValueError):
     """Persistent IPC frame is malformed or violates identity rules."""
+
+
+def canonical_integer_tick(time_s: float) -> int:
+    """Return the non-negative C++ ``llround(time_s * 1e9)`` result.
+
+    Python's built-in ``round`` uses ties-to-even, while C++ ``llround``
+    rounds halfway cases away from zero.  The wire contract is shared by both
+    implementations, so the conversion must be explicit and centralized.
+    """
+    _finite(time_s, "time_s")
+    raw = float(time_s) * 1.0e9
+    if raw < 0.0 or raw > float(MAX_UINT64):
+        raise FrameError("time_s is outside integer_tick range")
+    tick = int(math.floor(raw + 0.5))
+    if tick < 0 or tick > MAX_UINT64:
+        raise FrameError("integer_tick is outside wire range")
+    return tick
 
 
 def _fixed(value: str, size: int, name: str) -> bytes:
@@ -92,7 +110,7 @@ class StepRequest:
         _finite(self.time_s, "time_s"); _finite(self.dt_s, "dt_s")
         if self.dt_s <= 0.0:
             raise FrameError("dt_s must be positive")
-        expected_tick = int(round(self.time_s * 1.0e9))
+        expected_tick = canonical_integer_tick(self.time_s)
         if (self.time_s < self.dt_s or self.time_s > 1.0e9 or expected_tick < 0 or
                 expected_tick > 0xFFFFFFFFFFFFFFFF or self.integer_tick != expected_tick):
             raise FrameError("time_s and integer_tick are inconsistent")

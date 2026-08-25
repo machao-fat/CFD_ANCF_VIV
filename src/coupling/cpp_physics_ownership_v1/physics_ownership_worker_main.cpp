@@ -366,6 +366,13 @@ int process_step(const std::vector<char>& payload, std::vector<char>& response,
   } catch (const std::exception&) {
     return 12;
   }
+  // The checkpoint identity must come from the committed numerical state,
+  // not merely from the request echo.  Fail closed on any step/time drift.
+  if (state.step != static_cast<std::size_t>(global_step) ||
+      !std::isfinite(state.time_s) ||
+      std::abs(state.time_s - time_s) > 1.0e-12) {
+    return 16;
+  }
   if (!append_profile(global_step, sequence, diagnostics)) return 19;
   std::vector<double> internal_after; cfd_ancf::internal_force_tangent(state.q, model, internal_after, tangent);
   const std::vector<double> corrector = state.q;
