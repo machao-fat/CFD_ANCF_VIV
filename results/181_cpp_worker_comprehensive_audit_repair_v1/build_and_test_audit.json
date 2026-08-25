@@ -1,0 +1,54 @@
+{
+  "architecture": "x64",
+  "build_directory": "runtime/cpp_worker_comprehensive_audit_repair_v1/stage181_analyze_build",
+  "cmake": "3.31.6",
+  "compileall": {
+    "command": "python -m compileall -q src tests tools",
+    "status": "pass"
+  },
+  "compiler": "MSVC 19.44.35228.0 / Visual Studio 2022 BuildTools",
+  "configuration": "Release",
+  "cpp_selftests": {
+    "count": 3,
+    "status": "pass"
+  },
+  "focused_comprehensive_tests": {
+    "failed": 0,
+    "passed": 58
+  },
+  "focused_confirm_tests": {
+    "failed": 0,
+    "passed": 53
+  },
+  "generator": "Visual Studio 17 2022",
+  "nonzero_base_load_dual": {
+    "status": "pass",
+    "steps": "40/40",
+    "worker_start_count": 1
+  },
+  "owned_residual": 0,
+  "persistent_ipc_tests": {
+    "failed": 0,
+    "passed": 18
+  },
+  "real_process_starts": {
+    "CFD": 0,
+    "MATLAB": 0,
+    "OpenFOAM": 0,
+    "WSL": 0
+  },
+  "root_unittest": {
+    "failed": 0,
+    "passed": 1183,
+    "skipped": 1
+  },
+  "static_analysis": {
+    "c4530_ehsc_warning": "resolved",
+    "flags": [
+      "/analyze",
+      "/W4"
+    ],
+    "status": "pass"
+  },
+  "status": "pass"
+}

@@ -1,0 +1,35 @@
+{
+  "C++_ANCF_NUMERICAL_CORE_STATUS": "not_completed",
+  "FORMAL_STROUHAL_STATUS": "not_completed",
+  "LOCK_IN_CLAIM": "not_completed",
+  "STABLE_VIV_RESPONSE_CLAIM": "not_completed",
+  "case_id": "cpp_worker_comprehensive_audit_stage181_build_case_001",
+  "conditions": {
+    "cmake_msvc_release_build": true,
+    "code_review_and_confirmed_repairs": true,
+    "compileall": true,
+    "cpp_selftests": true,
+    "focused_tests": true,
+    "ipc_fault_injection": true,
+    "msvc_analyze_w4": true,
+    "nonzero_base_load_ownership_dual": true,
+    "owned_residual_zero": true,
+    "physical_process_starts_zero": true,
+    "protected_artifacts_unmodified": true,
+    "root_unittest": true,
+    "strict_matlab_cpp_numerical_equivalence": false
+  },
+  "gate": "STAGE4F_D_CPP_WORKER_COMPREHENSIVE_AUDIT_REPAIR_V1_GATE: do_not_pass",
+  "generated_at_utc": "2026-08-25T08:00:41.109489+00:00",
+  "new_real_cfd_authorization_required": true,
+  "owned_residual": 0,
+  "real_process_starts": {
+    "CFD": 0,
+    "MATLAB": 0,
+    "OpenFOAM": 0,
+    "WSL": 0
+  },
+  "run_id": "cpp_worker_comprehensive_audit_repair_181_001",
+  "stage_id": "stage4f_d_cpp_worker_comprehensive_audit_repair_v1_stage181",
+  "status": "do_not_pass"
+}
