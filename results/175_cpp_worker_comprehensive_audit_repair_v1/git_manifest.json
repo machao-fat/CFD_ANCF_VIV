@@ -32,5 +32,10 @@
   "gate": "STAGE4F_D_CPP_WORKER_COMPREHENSIVE_AUDIT_REPAIR_V1_GATE: do_not_pass",
   "numerical_status": "C++_ANCF_NUMERICAL_CORE_STATUS=not_completed",
   "evidence_manifest": "results/175_cpp_worker_comprehensive_audit_repair_v1/evidence_manifest.json",
-  "remote_push": "pending"
+  "remote_push": {
+    "status": "pushed",
+    "branch_ref": "45a452a43ba4a1b63513a125fcd4227e7829fb10",
+    "tag_ref": "8f12c700a28af2770b23e978fcdd0f13a30dff3d",
+    "force_push": false
+  }
 }
