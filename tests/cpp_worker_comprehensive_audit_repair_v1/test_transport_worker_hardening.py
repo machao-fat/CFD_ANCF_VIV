@@ -73,6 +73,21 @@ class TransportWorkerHardeningTests(unittest.TestCase):
                 if stream is not None and not stream.closed:
                     stream.close()
 
+    def test_output_disconnect_is_fail_closed(self) -> None:
+        process = subprocess.Popen([str(WORKER)], stdin=subprocess.PIPE, stdout=subprocess.PIPE,
+                                   stderr=subprocess.PIPE, cwd=str(ROOT), bufsize=0)
+        assert process.stdin is not None and process.stdout is not None
+        try:
+            process.stdout.close()
+            process.stdin.write(encode_request(request(1))); process.stdin.flush()
+            process.stdin.close(); process.wait(timeout=10)
+            self.assertEqual(process.returncode, 23)
+        finally:
+            if process.poll() is None:
+                process.kill(); process.wait(timeout=10)
+            if process.stderr is not None and not process.stderr.closed:
+                process.stderr.close()
+
     def test_time_tick_mismatch_is_rejected_before_frame(self) -> None:
         bad = replace(request(2), integer_tick=2209000000)
         with self.assertRaises(FrameError):

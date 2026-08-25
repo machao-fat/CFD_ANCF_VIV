@@ -16,6 +16,7 @@
 namespace {
 constexpr std::array<char, 8> MAGIC{'C','F','D','A','N','C','F','1'};
 constexpr int UNEXPECTED_EOF = 22;
+constexpr int OUTPUT_WRITE_FAILURE = 23;
 constexpr std::uint32_t SCHEMA = 1;
 constexpr std::uint32_t PROTOCOL = 1;
 constexpr std::size_t ID_RUN=64, ID_CASE=64, ID_ENDPOINT=32;
@@ -147,6 +148,7 @@ int main() {
     const std::uint32_t response_length = static_cast<std::uint32_t>(response.size());
     const std::uint32_t response_type = 2;
     std::cout.write(MAGIC.data(), MAGIC.size()); std::cout.write(reinterpret_cast<const char*>(&response_length), sizeof(response_length)); std::cout.write(reinterpret_cast<const char*>(&response_type), sizeof(response_type)); std::cout.write(response.data(), static_cast<std::streamsize>(response.size())); std::cout.flush();
+    if (!std::cout) return OUTPUT_WRITE_FAILURE;
     last_sequence = sequence;
   }
 }

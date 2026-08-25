@@ -1,0 +1,27 @@
+{
+  "architecture": "x64",
+  "cmake": "3.31.6",
+  "compileall": "pass",
+  "compiler": "MSVC 19.44.35228.0",
+  "configuration": "Release",
+  "cpp_selftests": {
+    "ancf_kernel": "pass",
+    "physics_ownership": "pass"
+  },
+  "focused_tests": {
+    "errors": 0,
+    "failures": 0,
+    "status": "pass",
+    "tests": 45
+  },
+  "generator": "Visual Studio 17 2022",
+  "root_unittest": {
+    "errors": 0,
+    "failures": 0,
+    "skipped": 1,
+    "status": "pass",
+    "tests": 1169
+  },
+  "status": "pass",
+  "warning_level": "/W4"
+}

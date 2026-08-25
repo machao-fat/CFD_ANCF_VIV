@@ -23,6 +23,7 @@
 namespace {
 constexpr std::array<char, 8> MAGIC{'C', 'F', 'D', 'A', 'N', 'C', 'F', '1'};
 constexpr int UNEXPECTED_EOF = 22;
+constexpr int OUTPUT_WRITE_FAILURE = 23;
 constexpr std::uint32_t SCHEMA = 1;
 constexpr std::uint32_t PROTOCOL = 1;
 constexpr std::uint32_t STEP_REQUEST = 5;
@@ -422,6 +423,7 @@ int main() {
     std::cout.write(reinterpret_cast<const char*>(&STEP_RESPONSE), sizeof(STEP_RESPONSE));
     std::cout.write(response.data(), static_cast<std::streamsize>(response.size()));
     std::cout.flush();
+    if (!std::cout) return OUTPUT_WRITE_FAILURE;
     ++last_sequence;
   }
 }

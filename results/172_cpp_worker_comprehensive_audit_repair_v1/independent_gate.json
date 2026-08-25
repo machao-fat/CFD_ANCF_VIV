@@ -1,0 +1,28 @@
+{
+  "blocking_reason": "Strict independent MATLAB/C++ Newton/internal-force equivalence remains incomplete; no threshold relaxation or CFD qualification.",
+  "case_id": "cpp_worker_comprehensive_audit_stage172_case_001",
+  "conditions": {
+    "cmake_release_build": true,
+    "compileall": true,
+    "engineering_replay_40_of_40": true,
+    "eof_fail_closed": true,
+    "focused_tests": true,
+    "old_evidence_read_only": true,
+    "output_disconnect_fail_closed": true,
+    "owned_residual_zero": true,
+    "physical_process_starts_zero": true,
+    "root_unittest": true,
+    "strict_matlab_cpp_equivalence": false
+  },
+  "formal_status": {
+    "C++_ANCF_NUMERICAL_CORE_STATUS": "not_completed",
+    "FORMAL_STROUHAL_STATUS": "not_completed",
+    "LOCK_IN_CLAIM": "not_completed",
+    "STABLE_VIV_RESPONSE_CLAIM": "not_completed"
+  },
+  "gate": "STAGE4F_D_CPP_WORKER_COMPREHENSIVE_AUDIT_REPAIR_V1_GATE: do_not_pass",
+  "generated_at_utc": "2026-08-25T03:25:27.043238+00:00",
+  "run_id": "cpp_worker_comprehensive_audit_repair_172_001",
+  "stage_id": "stage4f_d_cpp_worker_comprehensive_audit_repair_v1_stage172",
+  "status": "do_not_pass"
+}

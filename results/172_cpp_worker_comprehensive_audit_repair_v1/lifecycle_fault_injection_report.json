@@ -1,0 +1,30 @@
+{
+  "cases": [
+    {
+      "fail_closed": true,
+      "fault": "consumer_output_disconnect",
+      "return_code": 23,
+      "worker": "legacy_transport"
+    },
+    {
+      "fail_closed": true,
+      "fault": "consumer_output_disconnect",
+      "return_code": 23,
+      "worker": "ancf_kernel"
+    },
+    {
+      "fail_closed": true,
+      "fault": "consumer_output_disconnect",
+      "return_code": 23,
+      "worker": "physics_ownership"
+    },
+    {
+      "fail_closed": true,
+      "fault": "input_eof_before_shutdown",
+      "return_code": 22,
+      "worker": "all"
+    }
+  ],
+  "same_runtime_retry": false,
+  "status": "pass"
+}

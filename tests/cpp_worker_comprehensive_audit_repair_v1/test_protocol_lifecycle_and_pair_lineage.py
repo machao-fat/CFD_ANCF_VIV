@@ -94,6 +94,30 @@ class ProtocolLifecycleAndPairLineageTests(unittest.TestCase):
             if process.stderr is not None and not process.stderr.closed:
                 process.stderr.close()
 
+    @unittest.skipUnless(WORKER.is_file(), "Stage-local C++ kernel worker has not been built")
+    def test_kernel_worker_output_disconnect_is_fail_closed(self) -> None:
+        process = subprocess.Popen(
+            [str(WORKER)], stdin=subprocess.PIPE, stdout=subprocess.PIPE,
+            stderr=subprocess.PIPE, cwd=str(ROOT), bufsize=0,
+        )
+        assert process.stdin is not None and process.stdout is not None
+        try:
+            # Close the consumer side before sending a valid request. The
+            # worker must observe the failed response write and terminate with
+            # the dedicated lifecycle code instead of continuing the session.
+            process.stdout.close()
+            process.stdin.write(encode_kernel_request(
+                _kernel_request(1, 560, 1, 2.20875, 2_208_750_000)))
+            process.stdin.flush()
+            process.stdin.close()
+            process.wait(timeout=10)
+            self.assertEqual(process.returncode, 23)
+        finally:
+            if process.poll() is None:
+                process.kill(); process.wait(timeout=10)
+            if process.stderr is not None and not process.stderr.closed:
+                process.stderr.close()
+
     def test_kernel_request_rejects_non_numeric_state_and_identity_controls(self) -> None:
         value = _kernel_request(1, 560, 1, 2.20875, 2_208_750_000)
         with self.assertRaises(FrameError):
