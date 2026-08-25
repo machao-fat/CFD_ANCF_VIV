@@ -29,6 +29,26 @@ WORKER = BUILD_ROOT / "Release" / "cfd_ancf_ancf_kernel_worker.exe"
 
 
 class RepairContractTests(unittest.TestCase):
+    def test_windows_binary_stream_setup_is_checked_and_exceptions_unwind(self):
+        project = ROOT / "src" / "coupling"
+        sources = (
+            project / "cpp_worker_persistent_ipc_v1" / "worker_main.cpp",
+            project / "cpp_worker_persistent_ipc_v1" / "ancf_worker_main.cpp",
+            project / "cpp_physics_ownership_v1" / "physics_ownership_worker_main.cpp",
+        )
+        for source in sources:
+            text = source.read_text(encoding="utf-8")
+            self.assertIn("_setmode(_fileno(stdin), _O_BINARY) == -1", text)
+            self.assertIn("_setmode(_fileno(stdout), _O_BINARY) == -1", text)
+        cmake = (project / "cpp_worker_persistent_ipc_v1" / "CMakeLists.txt").read_text(encoding="utf-8")
+        self.assertIn("add_compile_options(/EHsc)", cmake)
+        option_line = next(index for index, line in enumerate(cmake.splitlines())
+                           if line.strip().startswith("add_compile_options(/EHsc)"))
+        target_line = next(index for index, line in enumerate(cmake.splitlines())
+                           if line.strip().startswith("add_executable("))
+        self.assertLess(option_line, target_line,
+                        "/EHsc must be a directory option before targets are declared")
+
     def model(self) -> KernelModel:
         return KernelModel(elements=2, slices=3, gauss_order=5, max_newton=50,
                            slice_positions_m=(0.0, 5.0, 10.0))

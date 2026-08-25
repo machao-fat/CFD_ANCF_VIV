@@ -24,6 +24,7 @@ namespace {
 constexpr std::array<char, 8> MAGIC{'C', 'F', 'D', 'A', 'N', 'C', 'F', '1'};
 constexpr int UNEXPECTED_EOF = 22;
 constexpr int OUTPUT_WRITE_FAILURE = 23;
+constexpr int BINARY_MODE_FAILURE = 24;
 constexpr std::uint32_t SCHEMA = 1;
 constexpr std::uint32_t PROTOCOL = 1;
 constexpr std::uint32_t STEP_REQUEST = 5;
@@ -439,8 +440,11 @@ int process_step(const std::vector<char>& payload, std::vector<char>& response,
 int main() {
   if (!little_endian()) return 21;
 #ifdef _WIN32
-  _setmode(_fileno(stdin), _O_BINARY);
-  _setmode(_fileno(stdout), _O_BINARY);
+  if (_setmode(_fileno(stdin), _O_BINARY) == -1 ||
+      _setmode(_fileno(stdout), _O_BINARY) == -1) {
+    std::cerr << "failed to set stdin/stdout binary mode\n";
+    return BINARY_MODE_FAILURE;
+  }
 #endif
   std::uint32_t last_sequence = 0;
   std::string expected_run;

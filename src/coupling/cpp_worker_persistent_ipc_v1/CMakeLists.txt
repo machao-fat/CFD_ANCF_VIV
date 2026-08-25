@@ -2,6 +2,12 @@ cmake_minimum_required(VERSION 3.20)
 project(cfd_ancf_cpp_worker LANGUAGES CXX)
 set(CMAKE_CXX_STANDARD 17)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
+if (MSVC)
+  # Apply exception unwinding semantics to every target, including targets
+  # declared below.  Placing this directory option after add_executable()
+  # leaves existing targets without /EHsc under Visual Studio.
+  add_compile_options(/EHsc)
+endif()
 add_executable(cfd_ancf_cpp_worker worker_main.cpp)
 add_executable(cfd_ancf_ancf_kernel_selftest ancf_kernel.cpp ancf_kernel_selftest.cpp)
 add_executable(cfd_ancf_dense_solver_selftest ancf_solver_selftest.cpp)
