@@ -29,3 +29,11 @@
 `C++_ANCF_NUMERICAL_CORE_STATUS=not_completed`
 
 下一步需要在新的明确 MATLAB 授权下导出与 C++ trace 同 schema 的 MATLAB step560 中间量；在该对照找到首个分歧并修复前，不具备新的 CFD confirm 资格。
+
+## Git 版本记录
+
+- 实现/证据提交：`e1266c1680fa4d2278b2727550887e9a90a0ac9a`。
+- Git manifest 提交：`698cc09`；推送审计修订提交：`8e39297`。
+- annotated tag：`cfd-ancf-viv-cpp-worker-numerical-forensic-repair-v1-stage184`。
+- 分支 `codex/cpp-worker-comprehensive-audit-repair-v1` 和上述 tag 均已成功推送到 `origin`。
+- `cases/`、`references/`、`FAKE_PROCESS_SUMMARY.json` 及其他无关用户文件未提交。
