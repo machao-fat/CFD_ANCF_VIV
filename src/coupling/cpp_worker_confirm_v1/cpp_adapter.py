@@ -13,6 +13,7 @@ from pathlib import Path
 from typing import Any, Mapping, Sequence
 
 from .contracts import ContractError, load_source_checkpoint
+from coupling.cpp_worker_persistent_ipc_v1.mapping_contract import SourceMapping
 
 
 class CppAdapterError(RuntimeError):
@@ -137,7 +138,17 @@ class CppKernelCampaignAdapter:
         if mass and (len(mass) != model.ndof * model.ndof or
                      any(not math.isfinite(value) for value in mass)):
             raise CppAdapterError("source mass_matrix is invalid")
+        if mass and any(mass[row * model.ndof + col] != mass[col * model.ndof + row]
+                        for row in range(model.ndof) for col in range(row + 1, model.ndof)):
+            raise CppAdapterError("source mass_matrix must be exactly symmetric")
         self.mass_matrix = mass
+        try:
+            self._source_mapping = SourceMapping(
+                source_global_step=int(source_global_step), source_time_s=float(source_time_s),
+                source_tick=int(source_tick), dt_s=float(dt_s), source_bridge_step=0,
+            )
+        except Exception as exc:
+            raise CppAdapterError("source mapping contract is invalid") from exc
         self.model_contract_sha256 = _model_contract_sha256(self.model, self.mass_matrix)
         self.pending_kind: str | None = None
         self.pending_step: int | None = None
@@ -182,15 +193,20 @@ class CppKernelCampaignAdapter:
     def _identity(self, step: int, time_s: float) -> tuple[int, int]:
         if isinstance(step, bool) or not isinstance(step, int):
             raise CppAdapterError("global step is not an integer")
-        if isinstance(time_s, bool) or not isinstance(time_s, (int, float)) or not math.isfinite(float(time_s)):
+        if (isinstance(time_s, bool) or not isinstance(time_s, (int, float)) or
+                not math.isfinite(float(time_s))):
             raise CppAdapterError("time_s is not finite")
-        bridge = int(step) - self.source_global_step
-        expected_time = self.source_time_s + bridge * self.dt_s
-        expected_tick = self.source_tick + bridge * round(self.dt_s * 1e9)
-        if (bridge <= 0 or expected_tick < 0 or expected_tick > 0xFFFFFFFFFFFFFFFF or
-                abs(float(time_s) - expected_time) > 1e-12):
-            raise CppAdapterError("global step/time does not match source mapping")
-        return bridge, expected_tick
+        bridge = step - self.source_global_step
+        expected_tick = self.source_tick + bridge * round(self.dt_s * 1.0e9)
+        try:
+            return self._source_mapping.target(
+                global_step=step, case_local_bridge_step=bridge,
+                time_s=time_s, integer_tick=expected_tick,
+            )
+        except (TypeError, ValueError, OverflowError) as exc:
+            raise CppAdapterError("global step/time does not match source mapping") from exc
+        except Exception as exc:
+            raise CppAdapterError("global step/time does not match source mapping") from exc
 
     def start(self) -> None:
         if self._started or self._terminal:

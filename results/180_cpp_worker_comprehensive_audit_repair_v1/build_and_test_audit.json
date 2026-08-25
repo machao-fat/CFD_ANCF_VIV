@@ -1,0 +1,34 @@
+{
+  "architecture": "x64",
+  "cmake": "3.31.6",
+  "commands": [
+    "cmake --build runtime/cpp_worker_comprehensive_audit_repair_v1/build-release --config Release --parallel 2",
+    "python -m compileall -q src tests tools",
+    "python -m unittest discover -s tests/cpp_worker_comprehensive_audit_repair_v1 -t . -p test_*.py",
+    "python -m unittest discover -s tests/cpp_worker_confirm_v1 -t . -p test_*.py",
+    "python -m unittest discover -s tests -t . -p test_*.py"
+  ],
+  "compiler": "MSVC 19.44.35228.0 / Visual Studio 2022 BuildTools",
+  "configuration": "Release",
+  "confirm_tests": {
+    "failed": 0,
+    "passed": 53
+  },
+  "focused_tests": {
+    "failed": 0,
+    "passed": 57
+  },
+  "generator": "Visual Studio 17 2022",
+  "real_process_starts": {
+    "CFD": 0,
+    "MATLAB": 0,
+    "OpenFOAM": 0,
+    "WSL": 0
+  },
+  "root_unittest": {
+    "failed": 0,
+    "passed": 1181,
+    "skipped": 1
+  },
+  "status": "pass"
+}

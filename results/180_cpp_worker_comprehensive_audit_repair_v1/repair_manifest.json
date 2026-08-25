@@ -1,0 +1,42 @@
+{
+  "case_id": "cpp_worker_comprehensive_audit_stage180_protocol_case_001",
+  "formal_protocol_semantics_modified": false,
+  "physics_or_thresholds_modified": false,
+  "repairs": [
+    {
+      "files": [
+        "src/coupling/cpp_worker_persistent_ipc_v1/kernel_protocol.py",
+        "src/coupling/cpp_worker_persistent_ipc_v1/worker_main.cpp",
+        "src/coupling/cpp_worker_confirm_v1/cpp_adapter.py"
+      ],
+      "id": "ASYMMETRIC_MASS_FAIL_CLOSED",
+      "rule": "reject non-symmetric source mass before Newton or hash acceptance",
+      "status": "fixed_and_tested"
+    },
+    {
+      "files": [
+        "src/coupling/cpp_physics_ownership_v1/physics_ownership_worker_main.cpp",
+        "src/coupling/cpp_worker_persistent_ipc_v1/ancf_worker_main.cpp",
+        "src/coupling/cpp_worker_persistent_ipc_v1/worker_main.cpp",
+        "tests/cpp_worker_comprehensive_audit_repair_v1/test_ownership_worker.py"
+      ],
+      "id": "DUPLICATE_INITIALIZE_FAIL_CLOSED",
+      "rule": "reject a second control initialize after worker initialization",
+      "status": "fixed_and_tested"
+    },
+    {
+      "files": [
+        "src/coupling/cpp_worker_comprehensive_audit_repair_v1/mapping_contract.py",
+        "src/coupling/cpp_worker_persistent_ipc_v1/mapping_contract.py",
+        "src/coupling/cpp_worker_confirm_v1/cpp_adapter.py",
+        "tests/cpp_worker_comprehensive_audit_repair_v1/test_mapping_contract.py"
+      ],
+      "id": "CANONICAL_STEP_TIME_TICK_MAPPING",
+      "rule": "share one source-to-target mapping contract across adapter and scheduler",
+      "status": "fixed_and_tested"
+    }
+  ],
+  "run_id": "cpp_worker_comprehensive_audit_repair_180_001",
+  "stage_id": "stage4f_d_cpp_worker_comprehensive_audit_repair_v1_stage180",
+  "status": "protocol_repairs_tested"
+}

@@ -1,0 +1,17 @@
+{
+  "engineering_replay": {
+    "steps_passed": 40,
+    "steps_total": 40
+  },
+  "interpretation": "transport and engineering replay pass do not establish MATLAB/C++ numerical equivalence",
+  "status": "do_not_pass",
+  "strict_dual_run": {
+    "first_failed_step": 560,
+    "steps_passed": 0,
+    "steps_total": 40
+  },
+  "target_q_direct_internal_force_max_abs": 2.91e-11,
+  "thresholds_modified": false,
+  "worker_first_step_q_max_abs": 1.78e-15,
+  "worker_first_step_qddot_max_abs": 5.68e-10
+}

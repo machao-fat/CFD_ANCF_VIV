@@ -200,6 +200,12 @@ class KernelStepRequest:
             raise FrameError("mass_matrix dimension is inconsistent with model")
         if any(not math.isfinite(value) for value in mass):
             raise FrameError("mass_matrix contains NaN/Inf")
+        # MATLAB's exported mass contract is explicitly symmetrized before it
+        # reaches the worker. Reject a mutated asymmetric matrix instead of
+        # silently changing the matrix used by Newton after hashing.
+        if mass and any(mass[row * n + col] != mass[col * n + row]
+                        for row in range(n) for col in range(row + 1, n)):
+            raise FrameError("mass_matrix must be exactly symmetric")
         if any(len(values) != n for values in (q, qdot, qddot, base)) or len(force) != 3 * self.model.slices:
             raise FrameError("kernel state/force dimensions are inconsistent with model")
         _bounded_int(self.sequence, "sequence", 1, 0xFFFFFFFF)

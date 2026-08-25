@@ -15,6 +15,9 @@ from coupling.cpp_worker_persistent_ipc_v1.kernel_protocol import (
     HEADER, MAGIC, MESSAGE_KERNEL_STEP_RESPONSE, KernelModel, KernelStepRequest,
     decode_kernel_response, encode_kernel_request, validate_kernel_response,
 )
+from coupling.cpp_worker_persistent_ipc_v1.protocol import (
+    MESSAGE_INITIALIZE, encode_control,
+)
 
 
 ROOT = Path(__file__).resolve().parents[2]
@@ -123,6 +126,24 @@ class OwnershipWorkerRepairTests(unittest.TestCase):
             process.stdin.close()
             process.wait(timeout=10)
             self.assertEqual(process.returncode, 22)
+        finally:
+            if process.poll() is None:
+                process.kill(); process.wait(timeout=10)
+            for stream in (process.stdout, process.stderr):
+                if stream is not None and not stream.closed:
+                    stream.close()
+
+    def test_duplicate_initialize_control_is_fail_closed(self):
+        process = subprocess.Popen([str(WORKER)], stdin=subprocess.PIPE, stdout=subprocess.PIPE,
+                                   stderr=subprocess.PIPE, cwd=str(ROOT), bufsize=0)
+        assert process.stdin is not None
+        try:
+            process.stdin.write(encode_control(MESSAGE_INITIALIZE))
+            process.stdin.write(encode_control(MESSAGE_INITIALIZE))
+            process.stdin.flush()
+            process.stdin.close()
+            process.wait(timeout=10)
+            self.assertNotEqual(process.returncode, 0)
         finally:
             if process.poll() is None:
                 process.kill(); process.wait(timeout=10)

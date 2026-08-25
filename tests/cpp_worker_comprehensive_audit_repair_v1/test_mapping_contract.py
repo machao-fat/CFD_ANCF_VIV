@@ -40,6 +40,12 @@ class MappingContractTests(unittest.TestCase):
         with self.assertRaises(FrameError):
             SourceMapping(559, 2.2075, 2207500001, 0.00125)
 
+    def test_target_mapping_numeric_overflow_fails_closed(self) -> None:
+        mapping = SourceMapping(0, 0.0, 0, 1.0e308)
+        with self.assertRaises(FrameError):
+            mapping.target(global_step=10**308, case_local_bridge_step=10**308,
+                           time_s=1.0, integer_tick=1)
+
 
 if __name__ == "__main__":
     unittest.main()

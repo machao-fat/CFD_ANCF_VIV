@@ -3,6 +3,8 @@ from __future__ import annotations
 import unittest
 import os
 import subprocess
+import hashlib
+import struct
 from dataclasses import replace
 from pathlib import Path
 import sys
@@ -16,9 +18,14 @@ BUILD_ROOT = Path(os.environ.get(
 SOLVER_SELFTEST = BUILD_ROOT / "Release" / "cfd_ancf_dense_solver_selftest.exe"
 
 from coupling.cpp_worker_persistent_ipc_v1.kernel_protocol import (
-    FrameError, KernelModel, KernelStepRequest,
+    FrameError, KernelModel, KernelStepRequest, encode_kernel_request,
 )
-from coupling.cpp_worker_persistent_ipc_v1.protocol import StepRequest
+from coupling.cpp_worker_persistent_ipc_v1 import kernel_protocol
+from coupling.cpp_worker_persistent_ipc_v1.protocol import (
+    MESSAGE_INITIALIZE, StepRequest, encode_control,
+)
+
+WORKER = BUILD_ROOT / "Release" / "cfd_ancf_ancf_kernel_worker.exe"
 
 
 class RepairContractTests(unittest.TestCase):
@@ -87,6 +94,76 @@ class RepairContractTests(unittest.TestCase):
         request = self.request()
         with self.assertRaises(FrameError):
             replace(request, integer_tick=request.integer_tick + 1).payload()
+
+    def test_asymmetric_mass_matrix_is_rejected_before_frame(self):
+        request = self.request()
+        n = request.model.ndof
+        mass = [0.0] * (n * n)
+        for index in range(n):
+            mass[index * n + index] = 1.0
+        mass[1] = 1.0e-12
+        with self.assertRaises(FrameError):
+            replace(request, mass_matrix=tuple(mass)).payload()
+
+    @unittest.skipUnless(WORKER.is_file(), "Stage-local C++ kernel worker has not been built")
+    def test_cpp_worker_rejects_tampered_asymmetric_mass_matrix(self):
+        request = self.request()
+        n = request.model.ndof
+        mass = [0.0] * (n * n)
+        for index in range(n):
+            mass[index * n + index] = 1.0
+        frame = bytearray(encode_kernel_request(replace(request, mass_matrix=tuple(mass))))
+        payload_offset = kernel_protocol.HEADER.size
+        model_size = kernel_protocol._MODEL.size + 8 * request.model.slices
+        model_offset = payload_offset + kernel_protocol._PREFIX.size
+        sizes_offset = model_offset + model_size
+        ids_size = (kernel_protocol.ID_RUN + kernel_protocol.ID_CASE +
+                    2 * kernel_protocol.ID_ENDPOINT)
+        digest_offset = sizes_offset + 12 + ids_size
+        arrays_offset = digest_offset + 32
+        mass_offset = arrays_offset + 4 * n * 8
+        struct.pack_into("<d", frame, mass_offset + 8, 1.0e-12)
+        model_bytes = bytes(frame[model_offset:sizes_offset])
+        arrays = bytes(frame[arrays_offset:])
+        frame[digest_offset:digest_offset + 32] = hashlib.sha256(model_bytes + arrays).digest()
+        process = subprocess.Popen([str(WORKER)], stdin=subprocess.PIPE,
+                                   stdout=subprocess.PIPE, stderr=subprocess.PIPE,
+                                   cwd=str(ROOT), bufsize=0)
+        assert process.stdin is not None
+        try:
+            process.stdin.write(frame)
+            process.stdin.flush()
+            process.stdin.close()
+            process.wait(timeout=10)
+            self.assertNotEqual(process.returncode, 0)
+        finally:
+            if process.poll() is None:
+                process.kill()
+                process.wait(timeout=10)
+            for stream in (process.stdout, process.stderr):
+                if stream is not None and not stream.closed:
+                    stream.close()
+
+    @unittest.skipUnless(WORKER.is_file(), "Stage-local C++ kernel worker has not been built")
+    def test_cpp_worker_rejects_duplicate_initialize_control(self):
+        process = subprocess.Popen([str(WORKER)], stdin=subprocess.PIPE,
+                                   stdout=subprocess.PIPE, stderr=subprocess.PIPE,
+                                   cwd=str(ROOT), bufsize=0)
+        assert process.stdin is not None
+        try:
+            process.stdin.write(encode_control(MESSAGE_INITIALIZE))
+            process.stdin.write(encode_control(MESSAGE_INITIALIZE))
+            process.stdin.flush()
+            process.stdin.close()
+            process.wait(timeout=10)
+            self.assertNotEqual(process.returncode, 0)
+        finally:
+            if process.poll() is None:
+                process.kill()
+                process.wait(timeout=10)
+            for stream in (process.stdout, process.stderr):
+                if stream is not None and not stream.closed:
+                    stream.close()
 
     def test_repair_tool_exists_in_stage_local_directory(self):
         root = ROOT

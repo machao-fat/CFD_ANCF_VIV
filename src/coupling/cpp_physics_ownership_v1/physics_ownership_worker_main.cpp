@@ -424,6 +424,7 @@ int main() {
   std::int32_t expected_slices = 0;
   std::array<unsigned char, 32> expected_model_digest{};
   std::unordered_set<std::uint64_t> seen_request_ids, seen_transaction_ids;
+  bool initialized = false;
   while (true) {
     std::array<char, 8> magic{}; std::uint32_t length = 0, message_type = 0;
     // A clean worker exit requires the explicit SHUTDOWN control frame.  EOF
@@ -433,8 +434,13 @@ int main() {
         !read_bytes(std::cin, reinterpret_cast<char*>(&message_type), sizeof(message_type)) || magic != MAGIC) return 2;
     if (length > 64u * 1024u * 1024u) return 3;
     if (message_type == 3) { if (length != 0) return 4; return 0; }
-    if (message_type == 4) { if (length != 0) return 4; continue; }
+    if (message_type == 4) {
+      if (length != 0 || initialized) return 4;
+      initialized = true;
+      continue;
+    }
     if (message_type != STEP_REQUEST) return 5;
+    initialized = true;
     std::vector<char> payload(length);
     if (!read_bytes(std::cin, payload.data(), payload.size())) return 6;
     std::vector<char> response;

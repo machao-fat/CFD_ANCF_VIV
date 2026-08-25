@@ -79,6 +79,16 @@ bool finite_values(const std::vector<double>& values) {
   return true;
 }
 
+bool exactly_symmetric(const cfd_ancf::Matrix& matrix) {
+  if (matrix.rows != matrix.cols || matrix.data.size() != matrix.rows * matrix.cols) return false;
+  for (std::size_t row = 0; row < matrix.rows; ++row) {
+    for (std::size_t col = row + 1; col < matrix.cols; ++col) {
+      if (matrix(row, col) != matrix(col, row)) return false;
+    }
+  }
+  return true;
+}
+
 bool next_tick(std::uint64_t previous, double dt_s, std::uint64_t& result) {
   if (!std::isfinite(dt_s) || dt_s <= 0.0) return false;
   const long double raw = static_cast<long double>(dt_s) * 1000000000.0L;
@@ -364,6 +374,10 @@ int process_step(const std::vector<char>& payload, std::vector<char>& response,
         state.mass(row, col) = input[input_offset++];
       }
     }
+    // The source MATLAB mass matrix is symmetrized before export. Reject a
+    // mutated asymmetric matrix instead of changing the numerical contract
+    // or feeding a non-symmetric inertia matrix into Newton.
+    if (!exactly_symmetric(state.mass)) return 17;
   }
   const std::vector<double> slice_force(input.begin() + static_cast<std::ptrdiff_t>(input_offset), input.end());
   state.q = q; state.qdot = qdot; state.qddot = qddot; state.base_load = base_load;
@@ -438,6 +452,7 @@ int main() {
   int lineage_mode = 0;
   std::array<unsigned char, 32> expected_model_digest{};
   std::unordered_set<std::uint64_t> seen_request_ids, seen_transaction_ids;
+  bool initialized = false;
   while (true) {
     std::array<char, 8> magic{}; std::uint32_t length = 0, message_type = 0;
     // A clean worker exit requires the explicit SHUTDOWN control frame.  EOF
@@ -447,8 +462,15 @@ int main() {
         !read_bytes(std::cin, reinterpret_cast<char*>(&message_type), sizeof(message_type)) || magic != MAGIC) return 2;
     if (length > 64u * 1024u * 1024u) return 3;
     if (message_type == 3) { if (length != 0) return 4; return 0; }
-    if (message_type == 4) { if (length != 0) return 4; continue; }
+    if (message_type == 4) {
+      if (length != 0 || initialized) return 4;
+      initialized = true;
+      continue;
+    }
     if (message_type != STEP_REQUEST) return 5;
+    // Preserve the legacy direct-worker entry point: a first STEP_REQUEST
+    // implicitly initializes a worker that did not receive a control frame.
+    initialized = true;
     std::vector<char> payload(length);
     if (!read_bytes(std::cin, payload.data(), payload.size())) return 6;
     std::vector<char> response;

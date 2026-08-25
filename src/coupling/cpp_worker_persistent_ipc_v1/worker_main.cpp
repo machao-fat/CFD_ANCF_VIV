@@ -76,6 +76,7 @@ int main() {
   std::uint64_t expected_tick = 0;
   double expected_time_s = 0.0, expected_dt_s = 0.0;
   std::unordered_set<std::uint64_t> seen_request_ids, seen_transaction_ids;
+  bool initialized = false;
   while (true) {
     std::array<char, 8> magic{}; std::uint32_t length=0, count=0;
     // A clean worker exit requires the explicit SHUTDOWN control frame.  EOF
@@ -83,8 +84,13 @@ int main() {
     if (!read_bytes(std::cin, magic.data(), magic.size())) return UNEXPECTED_EOF;
     if (!read(std::cin, length) || !read(std::cin, count) || magic != MAGIC || length > 64u*1024u*1024u) return 2;
     if (count == 3) { if (length != 0) return 2; return 0; }
-    if (count == 4) { if (length != 0) return 2; continue; }
+    if (count == 4) {
+      if (length != 0 || initialized) return 2;
+      initialized = true;
+      continue;
+    }
     if (count != 1) return 2;
+    initialized = true;
     std::vector<char> payload(length);
     if (!read_bytes(std::cin, payload.data(), payload.size())) return 3;
     if (payload.size() < 288) return 4;

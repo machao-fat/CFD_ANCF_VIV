@@ -94,15 +94,30 @@ class CppAdapterTests(unittest.TestCase):
 
     def test_source_mass_matrix_is_forwarded_on_every_request(self):
         worker = FakeWorker()
+        mass = (1.0, 0.1, 0.2,
+                0.1, 2.0, 0.3,
+                0.2, 0.3, 3.0)
         adapter = CppKernelCampaignAdapter(worker=worker, model=SimpleNamespace(ndof=3), request_factory=factory,
             run_id="run", case_id="case", source_global_step=559, source_time_s=2.2075,
             source_tick=2_207_500_000, dt_s=0.00125, q=(0.0, 0.0, 0.0),
             qdot=(0.0, 0.0, 0.0), qddot=(0.0, 0.0, 0.0), base_load=(0.0, 0.0, 0.0),
-            slice_count=3, mass_matrix=tuple(float(index) for index in range(9)))
+            slice_count=3, mass_matrix=mass)
         adapter.start()
         adapter.predict(560, 2.20875, ((0.0, 0.0, 0.0),) * 3)
-        self.assertEqual(worker.requests[0].mass_matrix, tuple(float(index) for index in range(9)))
+        self.assertEqual(worker.requests[0].mass_matrix, mass)
         adapter.shutdown()
+
+    def test_source_mass_matrix_rejects_asymmetry(self):
+        with self.assertRaises(CppAdapterError):
+            CppKernelCampaignAdapter(worker=FakeWorker(), model=SimpleNamespace(ndof=3),
+                request_factory=factory, run_id="run", case_id="case",
+                source_global_step=559, source_time_s=2.2075,
+                source_tick=2_207_500_000, dt_s=0.00125,
+                q=(0.0, 0.0, 0.0), qdot=(0.0, 0.0, 0.0), qddot=(0.0, 0.0, 0.0),
+                base_load=(0.0, 0.0, 0.0), slice_count=3,
+                mass_matrix=(1.0, 0.1, 0.0,
+                             0.2, 1.0, 0.0,
+                             0.0, 0.0, 1.0))
 
     def test_identity_mismatch_poisoned_fail_closed(self):
         adapter = self._adapter(); adapter.start()
