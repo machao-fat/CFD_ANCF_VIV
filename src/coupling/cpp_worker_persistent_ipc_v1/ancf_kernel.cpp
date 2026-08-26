@@ -89,13 +89,13 @@ std::pair<std::vector<double>, std::vector<double>> gauss(std::size_t n) {
   throw std::invalid_argument("ANCF gauss order");
 }
 
-void add_block(Matrix& target, std::size_t row, std::size_t col, const Matrix& block, double factor) {
+[[maybe_unused]] void add_block(Matrix& target, std::size_t row, std::size_t col, const Matrix& block, double factor) {
   for (std::size_t i=0;i<block.rows;++i) for (std::size_t j=0;j<block.cols;++j) target(row+i,col+j) += factor*block(i,j);
 }
 
 Matrix transpose(const Matrix& a) { Matrix out(a.cols,a.rows); for(std::size_t i=0;i<a.rows;++i)for(std::size_t j=0;j<a.cols;++j)out(j,i)=a(i,j); return out; }
 Matrix multiply(const Matrix& a, const Matrix& b) { Matrix out(a.rows,b.cols); for(std::size_t i=0;i<a.rows;++i)for(std::size_t k=0;k<a.cols;++k)for(std::size_t j=0;j<b.cols;++j)out(i,j)+=a(i,k)*b(k,j); return out; }
-std::vector<double> multiply(const Matrix& a, const std::vector<double>& x) { if(a.cols!=x.size())throw std::invalid_argument("matrix vector dimensions"); std::vector<double> y(a.rows); for(std::size_t i=0;i<a.rows;++i)for(std::size_t j=0;j<a.cols;++j)y[i]+=a(i,j)*x[j]; return y; }
+[[maybe_unused]] std::vector<double> multiply(const Matrix& a, const std::vector<double>& x) { if(a.cols!=x.size())throw std::invalid_argument("matrix vector dimensions"); std::vector<double> y(a.rows); for(std::size_t i=0;i<a.rows;++i)for(std::size_t j=0;j<a.cols;++j)y[i]+=a(i,j)*x[j]; return y; }
 std::vector<double> solve(Matrix a, std::vector<double> b) {
   if(a.rows!=a.cols || b.size()!=a.rows)throw std::invalid_argument("linear solve dimensions");
   if (!finite_matrix(a) || !finite_vector(b))
@@ -220,8 +220,8 @@ void validate_model(const Model& model) {
       model.length_m <= 0.0 || model.diameter_m <= model.inner_diameter_m ||
       model.inner_diameter_m < 0.0 || model.dt_s <= 0.0 || model.beta <= 0.0 ||
       model.gamma <= 0.0 || model.max_newton == 0 || model.max_newton > MAX_NEWTON ||
-       model.gauss_order != 3 && model.gauss_order != 5 ||
-       model.mass_gauss_order != 3 && model.mass_gauss_order != 5 ||
+       (model.gauss_order != 3 && model.gauss_order != 5) ||
+       (model.mass_gauss_order != 3 && model.mass_gauss_order != 5) ||
        !model.include_gravity || !model.include_buoyancy ||
        model.damping_alpha != 0.0 || model.damping_beta != 0.0) {
     throw std::invalid_argument("invalid ANCF model dimensions or numerical contract");

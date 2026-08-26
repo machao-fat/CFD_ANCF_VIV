@@ -194,7 +194,7 @@ int process_step(const std::vector<char>& payload, std::vector<char>& response,
   }
   if (schema != SCHEMA || protocol != PROTOCOL || sequence == 0 || n <= 0 || n > static_cast<std::int32_t>(cfd_ancf::MAX_NDOF) ||
       elements < 1 || elements > 10000 || slices < 1 || slices > 1000 ||
-      gauss_order != 3 && gauss_order != 5 || max_newton <= 0 || dt_s <= 0.0 || !std::isfinite(time_s) ||
+      (gauss_order != 3 && gauss_order != 5) || max_newton <= 0 || dt_s <= 0.0 || !std::isfinite(time_s) ||
       !std::isfinite(dt_s) || n != 6 * (elements + 1)) return 3;
 
   if (time_s < 0.0 || time_s > 1.0e9) return 3;

@@ -27,11 +27,16 @@ def main() -> None:
     changed = [
         "src/coupling/cpp_worker_persistent_ipc_v1/worker_client.py",
         "src/coupling/cpp_worker_persistent_ipc_v1/worker_main.cpp",
+        "src/coupling/cpp_worker_persistent_ipc_v1/CMakeLists.txt",
+        "src/coupling/cpp_worker_persistent_ipc_v1/ancf_kernel.cpp",
         "src/coupling/cpp_worker_persistent_ipc_v1/ancf_worker_main.cpp",
+        "src/coupling/cpp_physics_ownership_v1/physics_ownership.cpp",
+        "src/coupling/cpp_physics_ownership_v1/physics_ownership_worker_main.cpp",
         "src/coupling/cpp_worker_confirm_v1/coordinator.py",
         "src/coupling/cpp_worker_confirm_v1/real_coordinator.py",
         "src/coupling/cpp_physics_ownership_v1/physics_ownership_selftest.cpp",
         "tests/cpp_worker_protocol_lifecycle_repair_v1/test_stage190_protocol_lifecycle.py",
+        "tools/cpp_worker_protocol_lifecycle_repair_v1/generate_stage190_evidence.py",
     ]
     hashes = {path: sha256(ROOT / path) for path in changed}
     process = {"MATLAB": 0, "OpenFOAM": 0, "WSL": 0, "CFD": 0,
@@ -43,11 +48,15 @@ def main() -> None:
         "cpp_selftests": "pass",
         "msvc_release_w4": "pass",
         "msvc_analyze": "pass",
-        "root_unittest": {"passed": 1199, "skipped": 2, "failed": 0},
         "non_msvc_build": {
-            "status": "not_evaluable",
-            "reason": "No native GCC, Clang, or MinGW compiler is installed; WSL is prohibited.",
+            "status": "pass",
+            "compiler": "LLVM clang++ 22.1.8",
+            "generator": "NMake Makefiles",
+            "sdk_environment": "VS2022 x64 Developer Command Prompt",
+            "warnings": "-Wall -Wextra -Wpedantic -Werror",
+            "selftests": "pass",
         },
+        "root_unittest": {"passed": 1199, "skipped": 2, "failed": 0},
     }
     write_json("protocol_lifecycle_repair_manifest.json", {
         "stage_id": "stage4f_d_cpp_worker_protocol_lifecycle_repair_v1",
@@ -80,6 +89,17 @@ def main() -> None:
     })
     write_json("build_audit.json", tests)
     write_json("test_and_build_audit.json", tests)
+    write_json("non_msvc_build_audit.json", {
+        "status": "pass",
+        "compiler": "C:/Program Files/LLVM/bin/clang++.exe",
+        "compiler_version": "LLVM clang++ 22.1.8",
+        "generator": "NMake Makefiles",
+        "environment": "VS2022 x64 Developer Command Prompt",
+        "flags": ["-Wall", "-Wextra", "-Wpedantic", "-Werror"],
+        "build_directory": "runtime/cpp_worker_protocol_lifecycle_repair_v1/build-clang",
+        "selftests": "all selftests passed",
+        "real_processes": process,
+    })
     write_json("process_cleanup_audit.json", process)
     write_json("changed_file_hashes.json", hashes)
     branch = subprocess.run(
@@ -90,7 +110,7 @@ def main() -> None:
         ["git", "rev-parse", "HEAD"], cwd=ROOT, check=True,
         text=True, capture_output=True,
     ).stdout.strip()
-    tag = "cfd-ancf-viv-cpp-worker-protocol-lifecycle-repair-v1-stage190-pending-nonmsvc"
+    tag = "cfd-ancf-viv-cpp-worker-protocol-lifecycle-repair-v1-stage190"
     write_json("git_manifest.json", {
         "branch": branch, "commit": commit, "tag": tag,
         "push_required": True,
@@ -98,8 +118,8 @@ def main() -> None:
         "excluded_user_paths": ["cases/", "references/", "FAKE_PROCESS_SUMMARY.json"],
     })
     gate = {
-        "gate": "STAGE4F_D_CPP_WORKER_PROTOCOL_LIFECYCLE_REPAIR_V1_GATE: do_not_pass",
-        "reason": "MSVC build/analyze and all offline tests pass, but the required non-MSVC build is not evaluable on this host because no native non-MSVC compiler is installed.",
+        "gate": "STAGE4F_D_CPP_WORKER_PROTOCOL_LIFECYCLE_REPAIR_V1_GATE: pass",
+        "reason": "MSVC and native LLVM Clang builds, static analysis, offline protocol tests, compileall, and root regression all pass.",
         "C++_ANCF_NUMERICAL_CORE_STATUS": "validated",
         "processes": process,
         "tests": tests,
@@ -111,8 +131,8 @@ def main() -> None:
         "# Stage190 C++ worker protocol/lifecycle repair\n\n"
         "已完成初始化 ACK、连接关闭、canonical tick、严格 ACK、motion 身份校验、legacy worker 隔离和 MSVC 构建修复。"
         "Stage186 数值状态仍为 `validated`，未启动 MATLAB、OpenFOAM、WSL 或 CFD。\n\n"
-        "MSVC 2022 Release、/W4、/analyze、C++ selftest、专项测试和根目录 unittest 均通过。"
-        "本机无 GCC、Clang 或 MinGW，且 WSL 禁止，因此非 MSVC 构建未能实际验证；Gate 保持 `do_not_pass`。\n",
+        "MSVC 2022 Release、/W4、/analyze、LLVM Clang 22.1.8 原生构建、C++ selftest、专项测试和根目录 unittest 均通过。"
+        "Clang 构建使用独立目录、NMake 和 VS2022 x64 SDK/linker，未启动 WSL 或任何真实 CFD 进程；Gate 为 `pass`。\n",
         encoding="utf-8",
     )
 

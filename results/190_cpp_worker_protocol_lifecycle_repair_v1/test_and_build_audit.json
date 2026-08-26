@@ -8,8 +8,12 @@
   "msvc_analyze": "pass",
   "msvc_release_w4": "pass",
   "non_msvc_build": {
-    "reason": "No native GCC, Clang, or MinGW compiler is installed; WSL is prohibited.",
-    "status": "not_evaluable"
+    "compiler": "LLVM clang++ 22.1.8",
+    "generator": "NMake Makefiles",
+    "sdk_environment": "VS2022 x64 Developer Command Prompt",
+    "selftests": "pass",
+    "status": "pass",
+    "warnings": "-Wall -Wextra -Wpedantic -Werror"
   },
   "root_unittest": {
     "failed": 0,

@@ -66,10 +66,6 @@ bool little_endian() {
   const std::uint16_t marker = 1;
   return *reinterpret_cast<const std::uint8_t*>(&marker) == 1;
 }
-std::uint32_t rotr(std::uint32_t value, unsigned count) {
-  return (value >> count) | (value << (32u - count));
-}
-
 bool sha256(const std::vector<double>& values, std::array<unsigned char, 32>& digest) {
 #ifdef _WIN32
   BCRYPT_ALG_HANDLE algorithm = nullptr; BCRYPT_HASH_HANDLE hash = nullptr;
@@ -83,6 +79,9 @@ bool sha256(const std::vector<double>& values, std::array<unsigned char, 32>& di
   if (hash != nullptr) BCryptDestroyHash(hash); if (algorithm != nullptr) BCryptCloseAlgorithmProvider(algorithm, 0);
   return ok;
 #else
+  const auto rotr = [](std::uint32_t value, unsigned count) {
+    return (value >> count) | (value << (32u - count));
+  };
   // Keep the wire hash independent of platform crypto libraries.  The
   // worker already rejects non-little-endian hosts, so the byte view is the
   // canonical little-endian IEEE-754 representation used by Python.

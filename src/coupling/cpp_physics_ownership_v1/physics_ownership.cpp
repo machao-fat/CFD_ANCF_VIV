@@ -18,7 +18,6 @@ namespace cfd_ancf::physics_ownership {
 namespace {
 using Vec3 = std::array<double, 3>;
 using Vec4 = std::array<double, 4>;
-constexpr double PI = 3.141592653589793238462643383279502884;
 
 Vec4 shape(double x, double length) {
   const double xi = x / length;
@@ -85,7 +84,7 @@ void validate_model(const Model& model) {
       model.inner_diameter_m < 0.0 || model.elements < 1 || model.elements > 10000 ||
       model.slices < 1 || model.slices > 1000 ||
       model.dt_s <= 0.0 || model.beta <= 0.0 || model.gamma <= 0.0 ||
-      model.newton_tolerance <= 0.0 || model.gauss_order != 3 && model.gauss_order != 5 ||
+      model.newton_tolerance <= 0.0 || (model.gauss_order != 3 && model.gauss_order != 5) ||
       model.damping_alpha != 0.0 || model.damping_beta != 0.0) {
     throw std::invalid_argument("invalid physical ownership model dimensions or numerics");
   }

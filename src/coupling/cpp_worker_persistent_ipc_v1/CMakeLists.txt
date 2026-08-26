@@ -55,12 +55,20 @@ if (MSVC)
   target_compile_options(cfd_ancf_physics_ownership_worker_double_solve PRIVATE /W4 /permissive-)
   target_compile_definitions(cfd_ancf_ancf_kernel_worker_double_solve PRIVATE CFD_ANCF_USE_DOUBLE_SOLVE=1)
 else()
-  target_compile_options(cfd_ancf_cpp_worker cfd_ancf_dense_solver_selftest
-                         cfd_ancf_ancf_kernel_selftest cfd_ancf_ancf_kernel_worker
-                         cfd_ancf_ancf_kernel_diagnostic cfd_ancf_ancf_kernel_worker_double_solve
-                         cfd_ancf_ancf_forensic_diagnostic
-                         cfd_ancf_ancf_newton_trace_diagnostic
-                         cfd_ancf_physics_ownership_selftest cfd_ancf_physics_ownership_worker
-                         cfd_ancf_physics_ownership_worker_double_solve
-                         PRIVATE -Wall -Wextra -Wpedantic -Werror)
+  set(CFD_ANCF_WARNING_TARGETS
+      cfd_ancf_cpp_worker
+      cfd_ancf_dense_solver_selftest
+      cfd_ancf_ancf_kernel_selftest
+      cfd_ancf_ancf_kernel_worker
+      cfd_ancf_ancf_kernel_diagnostic
+      cfd_ancf_ancf_kernel_worker_double_solve
+      cfd_ancf_ancf_forensic_diagnostic
+      cfd_ancf_ancf_newton_trace_diagnostic
+      cfd_ancf_physics_ownership_selftest
+      cfd_ancf_physics_ownership_worker
+      cfd_ancf_physics_ownership_worker_double_solve)
+  foreach(CFD_ANCF_WARNING_TARGET IN LISTS CFD_ANCF_WARNING_TARGETS)
+    target_compile_options(${CFD_ANCF_WARNING_TARGET}
+                           PRIVATE -Wall -Wextra -Wpedantic -Werror)
+  endforeach()
 endif()
