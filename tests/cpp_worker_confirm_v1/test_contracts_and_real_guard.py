@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import hashlib
+import json
 import tempfile
 import unittest
 from pathlib import Path
@@ -70,6 +71,34 @@ class ContractAndGuardTests(unittest.TestCase):
             run = CppConfirmRun(contract, Worker(), lambda _sid, _path: None,
                                 authorization=REAL_AUTHORIZATION_TOKEN)
             with self.assertRaises(CoordinatorError): run.start()
+
+    def test_legacy_mapping_response_requires_canonical_payload_audit(self) -> None:
+        from coupling.cpp_worker_confirm_v1.real_coordinator import (
+            CoordinatorError, _validate_generic_worker_response,
+        )
+        with tempfile.TemporaryDirectory() as directory:
+            root = Path(directory)
+            contract = self._contract(root)
+            payload = {"q": [0.0], "qdot": [0.0], "qddot": [0.0], "residual": 0.0}
+            encoded = (json.dumps(payload, ensure_ascii=True, sort_keys=True,
+                                  separators=(",", ":"), allow_nan=False) + "\n").encode("utf-8")
+            response = {
+                "global_step": 560, "case_local_bridge_step": 1, "time_s": 2.20875,
+                "integer_tick": 2208750000, "run_id": contract.run_id,
+                "case_id": contract.case_id, "request_id": 1, "transaction_id": 2,
+                "return_code": 0, "finite_value_audit": True, "sequence": 1, "ack": 1,
+                "schema_version": 1, "producer": "cpp_ancf_worker", "consumer": "python_scheduler",
+                "payload": payload, "payload_hash": hashlib.sha256(encoded).hexdigest(),
+                "residual": 0.0, "iterations": 1,
+            }
+            _validate_generic_worker_response(response, contract=contract, global_step=560,
+                                              time_s=2.20875, expected_bridge=1,
+                                              expected_tick=2208750000)
+            response["payload"] = {"q": [1.0]}
+            with self.assertRaises(CoordinatorError):
+                _validate_generic_worker_response(response, contract=contract, global_step=560,
+                                                  time_s=2.20875, expected_bridge=1,
+                                                  expected_tick=2208750000)
 
     def test_source_checkpoint_loader_is_explicit_utf8_and_hash_checked(self) -> None:
         with tempfile.TemporaryDirectory() as directory:

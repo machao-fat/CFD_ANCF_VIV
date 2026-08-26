@@ -1,0 +1,10 @@
+{
+  "gate": "STAGE4F_D_CPP_WORKER_COMPREHENSIVE_AUDIT_REPAIR_V1_CONTINUATION_GATE: do_not_pass",
+  "reason": "The legacy persistent OpenFOAM backend does not implement transactional prepare_finalize_step/finalize_step/abort_step hooks. The adapter now rejects commit before finish_step instead of claiming cross-process atomicity.",
+  "resolved": ["public barrier state access", "recursive finite payload audit", "canonical envelope identity/hash audit", "strict legacy worker response audit", "checkpoint temp publication and journal startup protection", "persistent exchange timing max-vs-sum semantics"],
+  "remaining": ["implement and independently validate backend-level transactional checkpoint/prepare/commit/abort semantics"],
+  "real_process_starts": {"MATLAB": 0, "OpenFOAM": 0, "WSL": 0, "CFD": 0},
+  "owned_residual": 0,
+  "C++_ANCF_NUMERICAL_CORE_STATUS": "not_completed",
+  "formal_status": {"FORMAL_STROUHAL_STATUS": "not_completed", "STABLE_VIV_RESPONSE_CLAIM": "not_completed", "LOCK_IN_CLAIM": "not_completed"}
+}

@@ -96,5 +96,26 @@ class RealSliceAdapterTests(unittest.TestCase):
         with self.assertRaises(RealSliceAdapterError): adapter.advance(identity, motion(560, 2.20875))
         adapter.stop()
 
+    def test_invalid_motion_is_rejected_before_seed_backend_is_touched(self):
+        adapter, backend = self.make(); adapter.start()
+        identity = StepIdentity.create(run_id="run", case_id="case", source_global_step=559,
+            source_time_s=2.2075, source_tick=2207500000, global_step=560,
+            time_s=2.20875, dt_s=0.00125)
+        with self.assertRaises(Exception):
+            adapter.advance(identity, motion(561, 2.21))
+        self.assertEqual([call for call in backend.calls if call[0] == "begin_step"], [])
+        adapter.stop()
+
+    def test_backend_without_transaction_hooks_is_rejected_before_commit(self):
+        adapter, _backend = self.make(); adapter.start()
+        identity = StepIdentity.create(run_id="run", case_id="case", source_global_step=559,
+            source_time_s=2.2075, source_tick=2207500000, global_step=560,
+            time_s=2.20875, dt_s=0.00125)
+        adapter.advance(identity, motion(560, 2.20875))
+        with self.assertRaisesRegex(RealSliceAdapterError, "lacks transactional"):
+            adapter.prepare_finalize_step(identity)
+        adapter.finalize_step(identity)
+        adapter.stop()
+
 
 if __name__ == "__main__": unittest.main()

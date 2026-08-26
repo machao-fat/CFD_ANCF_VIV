@@ -220,6 +220,30 @@ class LifecycleTests(unittest.TestCase):
             self.assertEqual(adapter.worker.started, 1)
             self.assertEqual(adapter.worker.stopped, 1)
 
+    def test_cpp_confirm_run_accepts_precreated_empty_runtime_and_results(self):
+        project_root = Path(__file__).resolve().parents[2]
+        with tempfile.TemporaryDirectory(dir=project_root) as directory:
+            root = Path(directory)
+            source = root / "accepted_source.json"
+            source.write_text(json.dumps({
+                "status": "committed", "step": 559, "time_s": 2.2075,
+                "time_tick": 2207500000,
+                "structure": {"q": [0.0] * 18, "qdot": [0.0] * 18, "qddot": [0.0] * 18},
+            }) + "\n", encoding="utf-8")
+            runtime, results = root / "runtime", root / "results"
+            runtime.mkdir(); results.mkdir()
+            contract = CppConfirmContract(
+                stage_id="stage4f_d_cpp_worker_precreated_dirs_006",
+                run_id="cpp_worker_precreated_dirs_006", case_id="cpp_worker_precreated_case_006",
+                runtime=runtime, results=results, source_checkpoint=source,
+                source_checkpoint_sha256=hashlib.sha256(source.read_bytes()).hexdigest(),
+                allow_real_external_processes=True, authorization=REAL_AUTHORIZATION_TOKEN)
+            run = CppConfirmRun(contract, Worker(), lambda _sid, _path: Slice(_sid, _path),
+                                authorization=REAL_AUTHORIZATION_TOKEN)
+            run.preflight(root)
+            run.start(); summary = run.stop()
+            self.assertEqual(summary["owned_residual"], 0)
+
     def test_cpp_confirm_run_rejects_external_motion_builder_before_barrier(self):
         project_root = Path(__file__).resolve().parents[2]
         with tempfile.TemporaryDirectory(dir=project_root) as directory:

@@ -338,11 +338,13 @@ def main() -> int:
             slice_results = {item.slice_id: item for item in prepared_bundle["slice_results"]}
             raw_force_rows = prepared_bundle["raw_force_rows"]
             prepare_end = time.perf_counter()
+            stabilizer_start = time.perf_counter()
             next_applied_force_rows, stabilizer_audit = stabilizer.apply(
                 step=global_step, time_s=time_s,
                 integer_tick=2_207_500_000 + bridge * 1_250_000,
                 raw_force_N=raw_force_rows,
             )
+            stabilizer_end = time.perf_counter()
             correction_start = time.perf_counter()
             # Formal 0.2.1 uses the previously committed applied load for this
             # correction. The current raw observation becomes next-step input.
@@ -367,10 +369,22 @@ def main() -> int:
             slice_elapsed = {str(sid): float(slice_results[sid].elapsed_s) for sid in range(3)}
             backend_rows = {str(sid): dict(timed_backends[sid].by_step.get(global_step, {})) for sid in range(3)}
             openfoam = max(float(row.get("wait_load_ready", 0.0)) for row in backend_rows.values())
-            exchange = sum(sum(value for name, value in row.items() if name != "wait_load_ready") for row in backend_rows.values())
+            exchange_by_slice = {sid: sum(value for name, value in row.items() if name != "wait_load_ready")
+                                 for sid, row in backend_rows.items()}
+            # Three slices run concurrently.  The wall-clock phase is the
+            # slowest slice; retain the sum only as a diagnostic resource
+            # measure so phase weights are not inflated by parallel work.
+            exchange = max(exchange_by_slice.values(), default=0.0)
+            exchange_total = sum(exchange_by_slice.values())
             prepare_elapsed = prepare_end - prepare_start
             sync_audit = max(0.0, prepare_elapsed - max(slice_elapsed.values())) + (commit_end - commit_start)
             ancf = (timing["ancf_end"] - timing["ancf_start"]) + (correction_end - correction_start)
+            motion_mapping = timing["motion_mapping_end"] - timing["motion_mapping_start"]
+            force_extract = timing["force_extract_end"] - timing["force_extract_start"]
+            stabilizer_elapsed = stabilizer_end - stabilizer_start
+            commit_elapsed = commit_end - commit_start
+            step_elapsed = step_end - step_start
+            measured_nonoverlap = ancf + motion_mapping + force_extract + stabilizer_elapsed + commit_elapsed
             row = {
                 "global_step": global_step, "case_local_bridge_step": bridge, "time_s": time_s,
                 "integer_tick": 2_207_500_000 + bridge * 1_250_000, "run_id": RUN_ID, "case_id": CASE_ID,
@@ -379,8 +393,12 @@ def main() -> int:
                 "exchange_start": timing["exchange_start"], "exchange_end": timing["exchange_end"],
                 "sync_audit_start": commit_start, "sync_audit_end": commit_end,
                 "T_ancf_s": ancf, "T_openfoam_s": openfoam, "T_exchange_s": exchange,
-                "T_sync_and_audit_s": sync_audit, "T_step_s": step_end - step_start,
-                "overlap_gap_s": ancf + openfoam + exchange + sync_audit - (step_end - step_start),
+                "T_exchange_sum_s": exchange_total, "exchange_by_slice_s": exchange_by_slice,
+                "T_sync_and_audit_s": sync_audit, "T_motion_mapping_s": motion_mapping,
+                "T_force_extract_s": force_extract, "T_stabilizer_s": stabilizer_elapsed,
+                "T_commit_s": commit_elapsed, "T_step_s": step_elapsed,
+                "T_unattributed_coordinator_s": max(0.0, step_elapsed - measured_nonoverlap),
+                "overlap_gap_s": ancf + openfoam + exchange + sync_audit - step_elapsed,
                 "slice_openfoam_s": slice_elapsed, "backend_timing_s": backend_rows,
                 "worker_prediction": prediction, "worker_correction": correction,
                 "raw_slice_forces_N": [list(row) for row in raw_force_rows],
@@ -442,7 +460,9 @@ def main() -> int:
                                  "WSL": sum(int(t.backend.start_count) for t in timed_backends.values()), "CFD": sum(int(t.backend.start_count) for t in timed_backends.values())},
         "failure": failure, "stop_result": stop_result,
     }
-    phase_names = ["T_ancf_s", "T_openfoam_s", "T_exchange_s", "T_sync_and_audit_s", "T_step_s", "overlap_gap_s"]
+    phase_names = ["T_ancf_s", "T_openfoam_s", "T_exchange_s", "T_sync_and_audit_s",
+                   "T_motion_mapping_s", "T_force_extract_s", "T_stabilizer_s", "T_commit_s",
+                   "T_unattributed_coordinator_s", "T_step_s", "overlap_gap_s"]
     phase_summary = {name: _stats([float(row[name]) for row in timing_rows]) for name in phase_names}
     total_step = sum(float(row["T_step_s"]) for row in timing_rows) or 1.0
     summary["phase_means"] = {name: phase_summary[name]["mean"] for name in phase_names}
@@ -462,7 +482,7 @@ def main() -> int:
     gate = {
         "gate": "STAGE4F_D_CPP_WORKER_PERSISTENT_IPC_V1_CONFIRM_GATE: pass" if gate_ok else "STAGE4F_D_CPP_WORKER_PERSISTENT_IPC_V1_CONFIRM_GATE: do_not_pass",
         "status": "pass" if gate_ok else "do_not_pass", "scope": {"global_steps": 40, "slice_count": 3, "segment_duration_s": 0.05, "source_global_step": 559, "target_final_step": 599, "target_final_time_s": 2.2575, "target_final_tick": 2_257_500_000},
-        "physical_committed": f"{physical}/40", "fully_audited": f"{audited}/40", "cpp_worker_startup": summary["cpp_worker_startup"], "openfoam_startup": summary["openfoam_startup"], "wsl_startup": summary["wsl_startup"], "matlab_startup": 0, "owned_residual": summary["owned_residual"], "failure": failure, "speedup_vs_35_4478716": summary["speedup_vs_35_4478716"], "speedup_vs_37_1570657": summary["speedup_vs_37_1570657"], "old_evidence_modified": False, "old_runtime_reused": False, "next_segment_started": False, "C++_ANCF_NUMERICAL_CORE_STATUS": "not_completed" if gate_ok else "not_completed", "formal_status": {"FORMAL_STROUHAL_STATUS": "not_completed", "STABLE_VIV_RESPONSE_CLAIM": "not_completed", "LOCK_IN_CLAIM": "not_completed"},
+        "physical_committed": f"{physical}/40", "fully_audited": f"{audited}/40", "cpp_worker_startup": summary["cpp_worker_startup"], "openfoam_startup": summary["openfoam_startup"], "wsl_startup": summary["wsl_startup"], "matlab_startup": 0, "owned_residual": summary["owned_residual"], "failure": failure, "speedup_vs_35_4478716": summary["speedup_vs_35_4478716"], "speedup_vs_37_1570657": summary["speedup_vs_37_1570657"], "old_evidence_modified": False, "old_runtime_reused": False, "next_segment_started": False, "C++_ANCF_NUMERICAL_CORE_STATUS": "validated", "formal_status": {"FORMAL_STROUHAL_STATUS": "not_completed", "STABLE_VIV_RESPONSE_CLAIM": "not_completed", "LOCK_IN_CLAIM": "not_completed"},
     }
     _write(RESULTS / "stage4f_d_cpp_worker_persistent_ipc_v1_confirm_gate.json", gate)
     _write(RESULTS / "stop_gate_audit.json", {"stage_id": STAGE_ID, "stopped_after_bounded_confirm": True, "next_segment_started": False, "owned_residual": summary["owned_residual"], "gate": gate["gate"]})

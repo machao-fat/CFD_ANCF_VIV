@@ -20,6 +20,9 @@ class Engine:
 
     def stop(self): self.stops += 1
 
+    def rollback_step(self, identity):
+        self.rollback_calls = getattr(self, "rollback_calls", 0) + 1
+
     @property
     def owned_residual(self): return 0
 
@@ -57,9 +60,41 @@ class BarrierTests(unittest.TestCase):
         self.assertTrue(prepared["prepared"])
         self.assertFalse(prepared["committed"])
         self.assertEqual(barrier.records, [])
+        self.assertEqual([item.slice_id for item in barrier.prepared_results], [0, 1, 2])
         committed = barrier.commit_prepared(worker_response={"sequence": 2})
         self.assertTrue(committed["committed"])
         self.assertEqual(len(barrier.records), 1)
+        barrier.stop()
+
+    def test_commit_callback_failure_leaves_no_visible_checkpoint(self):
+        barrier = Stage100SliceBarrier(run_id="run", case_id="case", source_global_step=559,
+            source_time_s=2.2075, source_tick=2207500000, dt_s=.00125,
+            runtime=Path(tempfile.mkdtemp()), engine_factory=Engine)
+        barrier.start()
+        barrier.prepare_step(global_step=560, time_s=2.20875,
+            motion_by_slice={sid: {"global_step": 560} for sid in range(3)})
+        with self.assertRaises(Exception):
+            barrier.commit_prepared(commit_callback=lambda: (_ for _ in ()).throw(RuntimeError("adapter commit failed")))
+        self.assertTrue(barrier.failed)
+        self.assertEqual(barrier.records, [])
+        self.assertFalse((barrier.runtime / "checkpoint" / "checkpoint_00000560.json").exists())
+        self.assertEqual([barrier.engines[sid].rollback_calls for sid in range(3)], [1, 1, 1])
+        barrier.stop()
+
+    def test_commit_failure_invokes_rollback_callback(self):
+        barrier = Stage100SliceBarrier(run_id="run", case_id="case", source_global_step=559,
+            source_time_s=2.2075, source_tick=2207500000, dt_s=.00125,
+            runtime=Path(tempfile.mkdtemp()), engine_factory=Engine)
+        barrier.start()
+        barrier.prepare_step(global_step=560, time_s=2.20875,
+            motion_by_slice={sid: {"global_step": 560} for sid in range(3)})
+        calls = []
+        with self.assertRaises(Exception):
+            barrier.commit_prepared(
+                commit_callback=lambda: (_ for _ in ()).throw(RuntimeError("commit failed")),
+                rollback_callback=lambda: calls.append("rollback"),
+            )
+        self.assertEqual(calls, ["rollback"])
         barrier.stop()
 
     def test_missing_slice_motion_poisoned(self):

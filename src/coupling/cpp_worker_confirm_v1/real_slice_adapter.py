@@ -10,12 +10,14 @@ from __future__ import annotations
 
 import inspect
 import math
+import hashlib
 from pathlib import Path
 from typing import Any, Callable, Mapping
 
 from coupling.multi_slice_mapping.mapping import LoadRecord, MotionRecord, SliceManifest, RuntimeConfig
 from coupling.multi_slice_driver.contract import SliceExchangePaths
 from coupling.performance_optimization_v2.coordinator import CoordinatorError, SliceResult, StepIdentity, canonical_hash
+from .envelope import MotionEnvelope, load_envelope
 
 
 class RealSliceAdapterError(RuntimeError):
@@ -48,6 +50,7 @@ class PersistentOpenFOAMSliceAdapter:
         self._pending_time_s: float | None = None
         self.start_count = 0
         self.finalized_steps = 0
+        self._pending_envelope: MotionEnvelope | None = None
 
     def start(self) -> None:
         if self._started or self._failed:
@@ -76,6 +79,21 @@ class PersistentOpenFOAMSliceAdapter:
             raise RealSliceAdapterError("C++ worker motion payload is required")
         try:
             seed = self._next_seed
+            # Validate target identity before the seed path can launch or
+            # mutate the persistent OpenFOAM backend.
+            record = self._motion(motion_payload, identity)
+            # Bind the protected motion record to the C++ transaction without
+            # changing the formal 0.2.1 record sent to OpenFOAM.
+            def token(value: str) -> int:
+                return int.from_bytes(hashlib.sha256(value.encode("utf-8")).digest()[:8], "little") or 1
+            upstream_id = token(identity.request_id)
+            upstream_tx = token(identity.transaction_id)
+            envelope = MotionEnvelope.create(
+                identity=identity, motion=record,
+                upstream_request_id=upstream_id,
+                upstream_transaction_id=upstream_tx,
+                upstream_sequence=2 * identity.case_local_bridge_step - 1,
+            )
             if hasattr(self.backend, "begin_step"):
                 # The persistent OpenFOAM process stores bridge seeds as a
                 # mapping because it serializes them into the legacy motion
@@ -83,7 +101,6 @@ class PersistentOpenFOAMSliceAdapter:
                 # but convert it explicitly before crossing that boundary.
                 seed_payload = seed.to_dict() if isinstance(seed, MotionRecord) else seed
                 self.backend.begin_step(seed_payload, seed_step=identity.global_step - 1)
-            record = self._motion(motion_payload, identity)
             self.backend.publish_motion(record, self.paths, manifest=self.manifest,
                                         runtime_config=self.runtime_config)
             self.backend.wait_motion_consumed(identity.global_step, identity.time_s,
@@ -97,17 +114,21 @@ class PersistentOpenFOAMSliceAdapter:
             if not isinstance(load, LoadRecord):
                 load = LoadRecord.from_mapping(load, self.manifest.R_GL)
             if (load.slice_id != self.slice_id or load.step != identity.global_step or
-                    not math.isclose(load.time_s, identity.time_s, rel_tol=0.0, abs_tol=1e-12)):
+                not math.isclose(load.time_s, identity.time_s, rel_tol=0.0, abs_tol=1e-12)):
                 raise RealSliceAdapterError("OpenFOAM force identity mismatch")
+            load_audit = load_envelope(identity=identity, slice_id=self.slice_id,
+                                       load=load.to_dict(), motion=envelope)
             self.backend.publish_load_consumed(identity.global_step, identity.time_s,
                                                 paths=self.paths, manifest=self.manifest,
                                                 runtime_config=self.runtime_config)
             self._pending_step, self._pending_time_s = identity.global_step, identity.time_s
             self._next_seed = record
+            self._pending_envelope = envelope
             payload = {"slice_id": self.slice_id, "global_step": identity.global_step,
                        "case_local_bridge_step": identity.case_local_bridge_step,
                        "time_s": identity.time_s, "integer_tick": identity.integer_tick,
-                       "ack": "consumed", "load": load.to_dict()}
+                       "ack": "consumed", "load": load.to_dict(),
+                       "coupling_envelope": {"motion": envelope.audit_dict(), "load": load_audit}}
             pid = int(getattr(getattr(self.backend, "process", None), "pid", 0) or 0)
             return SliceResult(self.slice_id, identity, payload, canonical_hash(payload), 0, pid, 0.0)
         except Exception as exc:
@@ -119,13 +140,49 @@ class PersistentOpenFOAMSliceAdapter:
             raise RealSliceAdapterError("cannot finalize a failed slice")
         if self._pending_step != identity.global_step:
             raise RealSliceAdapterError("finalize identity does not match pending slice step")
-        self.backend.finish_step(identity.global_step, identity.time_s)
+        finalizer = getattr(self.backend, "finalize_step", None)
+        if callable(finalizer):
+            finalizer(identity.global_step, identity.time_s)
+        else:
+            self.backend.finish_step(identity.global_step, identity.time_s)
         self._pending_step = self._pending_time_s = None
+        self._pending_envelope = None
         self.finalized_steps += 1
+
+    def rollback_step(self, identity: StepIdentity) -> None:
+        """Best-effort compensation for an interrupted coordinator commit."""
+        if self._pending_step != identity.global_step:
+            return
+        abort = getattr(self.backend, "abort_step", None)
+        if not callable(abort):
+            raise RealSliceAdapterError("backend cannot rollback a pending step")
+        abort(identity.global_step, identity.time_s)
+        self._pending_step = self._pending_time_s = None
+        self._pending_envelope = None
+
+    def prepare_finalize_step(self, identity: StepIdentity) -> None:
+        """Require a backend-level transaction before barrier finalization.
+
+        The legacy persistent OpenFOAM process only exposes ``finish_step``;
+        it advances local bookkeeping irreversibly.  Treating that method as
+        a two-phase commit would permit a partial cross-process commit, so the
+        real adapter refuses to enter the commit phase until the backend
+        supplies prepare/finalize/abort hooks.
+        """
+        prepare = getattr(self.backend, "prepare_finalize_step", None)
+        abort = getattr(self.backend, "abort_step", None)
+        finalize = getattr(self.backend, "finalize_step", None)
+        if not (callable(prepare) and callable(finalize) and callable(abort)):
+            raise RealSliceAdapterError(
+                "OpenFOAM backend lacks transactional prepare/finalize/abort hooks")
+        prepare(identity.global_step, identity.time_s)
 
     def stop(self) -> None:
         try:
             self.backend.stop()
+        except Exception:
+            self._failed = True
+            raise
         finally:
             self._started = False
 

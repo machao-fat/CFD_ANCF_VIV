@@ -3,6 +3,8 @@ from __future__ import annotations
 import os
 import math
 import time
+import hashlib
+import json
 from dataclasses import dataclass
 from pathlib import Path
 from typing import Any, Callable, Mapping, Protocol, Sequence
@@ -34,6 +36,116 @@ def _strict_numeric_ack(value: Any) -> bool:
     barrier and are not worker ACKs.
     """
     return type(value) is int and value == 1
+
+
+def _validate_generic_worker_response(response: Mapping[str, Any], *,
+                                     contract: CppConfirmContract,
+                                     global_step: int, time_s: float,
+                                     expected_bridge: int, expected_tick: int) -> None:
+    """Validate the legacy mapping entry point with the same wire guarantees.
+
+    Production uses ``CppKernelCampaignAdapter`` for binary payload and
+    numerical checks.  The compatibility mapping path must still be safe when
+    called directly, so it requires an explicit schema, endpoints, payload
+    digest, residual and iteration audit rather than accepting a non-empty
+    hash as proof of integrity.
+    """
+    required = ("global_step", "case_local_bridge_step", "time_s", "integer_tick",
+                "run_id", "case_id", "request_id", "transaction_id", "return_code",
+                "sequence", "ack", "finite_value_audit", "schema_version", "producer",
+                "consumer", "payload", "payload_hash", "residual", "iterations")
+    missing = [key for key in required if key not in response]
+    if missing:
+        raise CoordinatorError("C++ worker response missing: " + ",".join(missing))
+    if response["schema_version"] != 1:
+        raise CoordinatorError("C++ worker response schema version is invalid")
+    if response["producer"] != "cpp_ancf_worker" or response["consumer"] != "python_scheduler":
+        raise CoordinatorError("C++ worker response endpoint identity mismatch")
+    try:
+        response_time = float(response["time_s"])
+    except (TypeError, ValueError, OverflowError) as exc:
+        raise CoordinatorError("C++ worker response time is invalid") from exc
+    if (isinstance(response["global_step"], bool) or not isinstance(response["global_step"], int) or
+            isinstance(response["case_local_bridge_step"], bool) or
+            not isinstance(response["case_local_bridge_step"], int) or
+            isinstance(response["integer_tick"], bool) or not isinstance(response["integer_tick"], int) or
+            response["global_step"] != global_step or
+            response["case_local_bridge_step"] != expected_bridge or
+            response["run_id"] != contract.run_id or response["case_id"] != contract.case_id or
+            response["integer_tick"] != expected_tick or not math.isfinite(response_time) or
+            not math.isclose(response_time, float(time_s), rel_tol=0.0, abs_tol=1e-12) or
+            type(response["return_code"]) is not int or response["return_code"] != 0 or
+            response["finite_value_audit"] is not True or
+            response["sequence"] != expected_bridge or not _strict_numeric_ack(response["ack"])):
+        raise CoordinatorError("C++ worker response identity or audit mismatch")
+    for key in ("request_id", "transaction_id"):
+        if isinstance(response[key], bool) or not isinstance(response[key], int) or response[key] <= 0:
+            raise CoordinatorError(f"C++ worker {key} is invalid")
+    payload = response["payload"]
+    try:
+        encoded = (json.dumps(payload, ensure_ascii=True, sort_keys=True,
+                              separators=(",", ":"), allow_nan=False) + "\n").encode("utf-8")
+    except (TypeError, ValueError, OverflowError) as exc:
+        raise CoordinatorError("C++ worker response payload is not canonical JSON") from exc
+    supplied_hash = response.get("payload_hash")
+    if not isinstance(supplied_hash, str) or supplied_hash.lower() != hashlib.sha256(encoded).hexdigest():
+        raise CoordinatorError("C++ worker response payload hash mismatch")
+    residual = response["residual"]
+    if (isinstance(residual, bool) or not isinstance(residual, (int, float)) or
+            not math.isfinite(float(residual)) or float(residual) < 0.0):
+        raise CoordinatorError("C++ worker response residual is invalid")
+    iterations = response["iterations"]
+    if isinstance(iterations, bool) or not isinstance(iterations, int) or iterations <= 0:
+        raise CoordinatorError("C++ worker response iteration count is invalid")
+
+
+def _validate_correction_response(response: Mapping[str, Any], *,
+                                  contract: CppConfirmContract,
+                                  identity: StepIdentity) -> None:
+    """Validate the adapter-facing correction envelope before checkpointing."""
+    for key in ("global_step", "case_local_bridge_step", "time_s", "integer_tick",
+                "run_id", "case_id", "request_id", "transaction_id", "sequence",
+                "transport_sequence", "ack", "return_code", "payload_hash",
+                "finite_value_audit", "generalized_force", "checkpoint_token"):
+        if key not in response:
+            raise CoordinatorError(f"C++ correction response missing: {key}")
+    try:
+        response_time = float(response["time_s"])
+    except (TypeError, ValueError, OverflowError) as exc:
+        raise CoordinatorError("C++ correction response time is invalid") from exc
+    if (isinstance(response["global_step"], bool) or not isinstance(response["global_step"], int) or
+            isinstance(response["case_local_bridge_step"], bool) or
+            not isinstance(response["case_local_bridge_step"], int) or
+            isinstance(response["integer_tick"], bool) or not isinstance(response["integer_tick"], int) or
+            isinstance(response["sequence"], bool) or not isinstance(response["sequence"], int) or
+            isinstance(response["transport_sequence"], bool) or not isinstance(response["transport_sequence"], int) or
+            response["global_step"] != identity.global_step or
+            response["case_local_bridge_step"] != identity.case_local_bridge_step or
+            response["run_id"] != contract.run_id or response["case_id"] != contract.case_id or
+            response["integer_tick"] != identity.integer_tick or
+            not math.isfinite(response_time) or
+            not math.isclose(response_time, identity.time_s, rel_tol=0.0, abs_tol=1e-12) or
+            response["sequence"] != response["transport_sequence"] or
+            response["sequence"] != 2 * identity.case_local_bridge_step or
+            type(response["return_code"]) is not int or response["return_code"] != 0 or
+            response["finite_value_audit"] is not True or
+            not isinstance(response["payload_hash"], str) or len(response["payload_hash"]) != 64 or
+            any(char not in "0123456789abcdefABCDEF" for char in response["payload_hash"]) or
+            not isinstance(response["checkpoint_token"], str) or len(response["checkpoint_token"]) != 64 or
+            any(char not in "0123456789abcdefABCDEF" for char in response["checkpoint_token"])):
+        raise CoordinatorError("C++ correction response identity or audit mismatch")
+    for key in ("request_id", "transaction_id"):
+        if isinstance(response[key], bool) or not isinstance(response[key], int) or response[key] <= 0:
+            raise CoordinatorError(f"C++ correction {key} is invalid")
+    forces = response["generalized_force"]
+    if isinstance(forces, (str, bytes)) or not forces:
+        raise CoordinatorError("C++ correction generalized force is missing")
+    try:
+        values = tuple(float(value) for value in forces)
+    except (TypeError, ValueError, OverflowError) as exc:
+        raise CoordinatorError("C++ correction generalized force is invalid") from exc
+    if any(not math.isfinite(value) for value in values):
+        raise CoordinatorError("C++ correction generalized force is non-finite")
 
 
 class LaunchGuard:
@@ -111,8 +223,8 @@ class CppConfirmRun:
         # This method never falls back to MATLAB and never silently launches
         # external processes. Real slice factories are injected only after
         # preflight has validated the explicit authorization token.
-        self.contract.runtime.mkdir(parents=True, exist_ok=False)
-        self.contract.results.mkdir(parents=True, exist_ok=False)
+        self.contract.runtime.mkdir(parents=True, exist_ok=True)
+        self.contract.results.mkdir(parents=True, exist_ok=True)
         self.worker.start()
         self._barrier = Stage100SliceBarrier(
             run_id=self.contract.run_id, case_id=self.contract.case_id,
@@ -159,8 +271,12 @@ class CppConfirmRun:
                     worker_response["finite_value_audit"] is not True or
                     worker_response["sequence"] != expected_bridge or
                     not _strict_numeric_ack(worker_response["ack"]) or
+                    not isinstance(worker_response["payload_hash"], str) or
                     not worker_response["payload_hash"]):
                 raise CoordinatorError("C++ worker response identity/return/finite audit mismatch")
+            _validate_generic_worker_response(worker_response, contract=self.contract,
+                                              global_step=global_step, time_s=time_s,
+                                              expected_bridge=expected_bridge, expected_tick=expected_tick)
             if motion_by_slice is None:
                 raise CoordinatorError("C++ confirm requires motion_by_slice for each real slice")
             motions = self._validate_motion_by_slice(motion_by_slice, global_step=global_step, time_s=time_s)
@@ -329,15 +445,23 @@ class CppConfirmRun:
                     not _strict_numeric_ack(prediction.get("ack")) or
                     prediction.get("finite_value_audit") is not True):
                 raise CoordinatorError("C++ predictor identity/ack/finite audit mismatch")
+            if timing is not None:
+                timing["motion_mapping_start"] = time.perf_counter()
             motions = self._canonical_motions(prediction, global_step=global_step, time_s=time_s)
+            if timing is not None:
+                timing["motion_mapping_end"] = time.perf_counter()
             if timing is not None:
                 timing["exchange_start"] = time.perf_counter()
             prepared = self._barrier.prepare_step(global_step=global_step, time_s=time_s,
                                                   motion_by_slice=motions)
             if timing is not None:
                 timing["exchange_end"] = time.perf_counter()
+            if timing is not None:
+                timing["force_extract_start"] = time.perf_counter()
             force_rows = self._force_matrix(self._barrier.last_payloads)
-            slice_results = tuple(self._barrier._prepared[1])
+            if timing is not None:
+                timing["force_extract_end"] = time.perf_counter()
+            slice_results = self._barrier.prepared_results
             return {"prediction": prediction, "prepared": prepared,
                     "raw_force_rows": force_rows, "slice_results": slice_results}
         except Exception:
@@ -352,9 +476,21 @@ class CppConfirmRun:
         if self._barrier is None or not self._started or self._terminal:
             raise CoordinatorError("C++ confirm is unavailable")
         try:
+            identity = self._barrier.prepared_results[0].identity
+            _validate_correction_response(correction, contract=self.contract, identity=identity)
+            if prediction is not None:
+                if (prediction.get("global_step") != identity.global_step or
+                        prediction.get("case_local_bridge_step") != identity.case_local_bridge_step or
+                        prediction.get("run_id") != self.contract.run_id or
+                        prediction.get("case_id") != self.contract.case_id or
+                        prediction.get("sequence") != 2 * identity.case_local_bridge_step - 1 or
+                        prediction.get("request_id") == correction.get("request_id") or
+                        prediction.get("transaction_id") == correction.get("transaction_id")):
+                    raise CoordinatorError("C++ prediction/correction transaction lineage mismatch")
             record = self._barrier.commit_prepared(
-                worker_response=correction, checkpoint_metadata=checkpoint_metadata)
-            adapter.finalize_committed()
+                worker_response=correction, checkpoint_metadata=checkpoint_metadata,
+                commit_callback=adapter.finalize_committed,
+                rollback_callback=getattr(adapter, "discard_staged", None))
             if prediction is not None:
                 record["worker_prediction"] = dict(prediction)
             record["worker_correction"] = dict(correction)

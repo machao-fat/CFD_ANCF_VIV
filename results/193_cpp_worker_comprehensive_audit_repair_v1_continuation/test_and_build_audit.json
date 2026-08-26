@@ -1,0 +1,12 @@
+{
+  "stage_id": "stage4f_d_cpp_worker_comprehensive_audit_repair_v1_continuation",
+  "run_id": "cpp_worker_comprehensive_audit_repair_v1_continuation_001",
+  "case_id": "cpp_worker_comprehensive_audit_repair_v1_continuation_case_001",
+  "offline_only": true,
+  "tests": {"cpp_worker_confirm_v1": "70 passed", "performance_phase_timing_confirm_v1": "5 passed", "compileall": "pass", "git_diff_check": "pass"},
+  "cmake_msbuild": {"generator": "Ninja", "compiler": "MSVC 19.44.35228.0", "configuration": "Release", "build": "pass", "analyze_build": "pass", "warnings": "/W4", "floating_point": "/fp:strict"},
+  "cpp_selftests": {"ancf_kernel": "pass", "dense_solver": "pass", "physics_ownership": "pass"},
+  "real_process_starts": {"MATLAB": 0, "OpenFOAM": 0, "WSL": 0, "CFD": 0},
+  "owned_residual": 0,
+  "formal_status": {"FORMAL_STROUHAL_STATUS": "not_completed", "STABLE_VIV_RESPONSE_CLAIM": "not_completed", "LOCK_IN_CLAIM": "not_completed"}
+}
