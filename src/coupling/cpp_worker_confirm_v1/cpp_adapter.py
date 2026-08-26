@@ -285,7 +285,7 @@ class CppKernelCampaignAdapter:
             # The wire schema defines ACK as the numeric value 1.  Accepting
             # display strings here would allow a non-conforming adapter to
             # commit a response that the binary protocol would reject.
-            if getattr(response, "ack", None) != 1:
+            if type(getattr(response, "ack", None)) is not int or response.ack != 1:
                 raise CppAdapterError("C++ worker response acknowledgement is invalid")
             payload_hash = getattr(response, "payload_hash", None)
             if not isinstance(payload_hash, (bytes, bytearray)) or len(payload_hash) != 32:
@@ -346,7 +346,7 @@ class CppKernelCampaignAdapter:
         return {"step": int(step), "global_step": int(step), "case_local_bridge_step": bridge,
                 "time_s": float(time_s), "integer_tick": tick, "run_id": self.run_id,
                 "case_id": self.case_id, "request_id": request_id, "transaction_id": transaction_id,
-                "sequence": 2 * bridge - 1, "ack": int(getattr(response, "ack", 1)),
+                "sequence": 2 * bridge - 1, "ack": response.ack,
                 "payload_hash": response.payload_hash.hex(), "finite_value_audit": True,
                 "predictor": list(motion_state["q"]),
                 "predictor_qdot": list(motion_state["qdot"]),
@@ -380,7 +380,7 @@ class CppKernelCampaignAdapter:
                 "case_id": self.case_id, "request_id": request_id, "transaction_id": transaction_id,
                 "sequence": int(getattr(response, "sequence", 2 * bridge)),
                 "transport_sequence": 2 * bridge,
-                "ack": int(getattr(response, "ack", 1)), "return_code": int(response.return_code),
+                "ack": response.ack, "return_code": int(response.return_code),
                 "payload_hash": response.payload_hash.hex(), "finite_value_audit": True,
                 "generalized_force": list(response.generalized_force),
                 "checkpoint_token": hashlib.sha256(_canonical(audit)).hexdigest(), "audit": audit}, []

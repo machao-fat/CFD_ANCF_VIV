@@ -22,6 +22,7 @@ from coupling.cpp_worker_persistent_ipc_v1.protocol import (
 from coupling.cpp_worker_persistent_ipc_v1.worker_client import (
     PersistentCppWorkerClient,
 )
+from coupling.cpp_worker_confirm_v1.real_coordinator import _strict_numeric_ack
 
 
 ROOT = Path(__file__).resolve().parents[2]
@@ -159,6 +160,12 @@ class Stage190ProtocolLifecycleTests(unittest.TestCase):
         with self.assertRaises(FrameError):
             client.initialize()
         client.close()
+
+    def test_coordinator_rejects_boolean_float_and_string_ack_values(self) -> None:
+        self.assertTrue(_strict_numeric_ack(1))
+        for value in (True, 1.0, "ack", "committed", None):
+            with self.subTest(value=value):
+                self.assertFalse(_strict_numeric_ack(value))
 
 
 if __name__ == "__main__":

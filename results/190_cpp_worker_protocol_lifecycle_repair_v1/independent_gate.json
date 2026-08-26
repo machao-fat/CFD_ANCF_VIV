@@ -16,7 +16,8 @@
     "cpp_selftests": "pass",
     "focused_protocol_regression": {
       "failed": 0,
-      "passed": 50
+      "passed": 52,
+      "skipped": 1
     },
     "msvc_analyze": "pass",
     "msvc_release_w4": "pass",
@@ -30,12 +31,12 @@
     },
     "root_unittest": {
       "failed": 0,
-      "passed": 1199,
+      "passed": 1200,
       "skipped": 2
     },
     "stage190_black_box": {
       "failed": 0,
-      "passed": 6
+      "passed": 7
     }
   }
 }

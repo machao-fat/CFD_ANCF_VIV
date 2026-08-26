@@ -159,11 +159,13 @@ class CppAdapterTests(unittest.TestCase):
                 response = super().step(request)
                 if self.mode == "missing":
                     del response.internal_force
+                elif self.mode == "bool_ack":
+                    response.ack = True
                 else:
                     response.ack = "committed"
                 return response
 
-        for mode in ("missing", "ack"):
+        for mode in ("missing", "ack", "bool_ack"):
             adapter = CppKernelCampaignAdapter(
                 worker=MalformedWorker(mode), model=object(), request_factory=factory,
                 run_id="run", case_id="case", source_global_step=559,

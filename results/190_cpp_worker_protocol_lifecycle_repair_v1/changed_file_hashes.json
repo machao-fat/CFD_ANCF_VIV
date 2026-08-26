@@ -3,12 +3,14 @@
   "src/coupling/cpp_physics_ownership_v1/physics_ownership_selftest.cpp": "a5f06eda8e9b883f412a079db9e543b2c38e75510872a689042898963925eea3",
   "src/coupling/cpp_physics_ownership_v1/physics_ownership_worker_main.cpp": "5fa8b3be451b8a27367ab997568662c0ce6301505a821f0af6c05bbf8a44ced2",
   "src/coupling/cpp_worker_confirm_v1/coordinator.py": "1d7ad88f3608765ea570522d6308820bc6b6d081fe2556e03fdfad8bf5f2a521",
-  "src/coupling/cpp_worker_confirm_v1/real_coordinator.py": "812bb8f7f4967afeeb1fdb092e444ef0170b6f0dee55c9efbaa829111b7d46aa",
+  "src/coupling/cpp_worker_confirm_v1/cpp_adapter.py": "adbfdd97d5d766459e6c1ffbebc036f670dc7b78d67d9faf0d2336501e2bfe40",
+  "src/coupling/cpp_worker_confirm_v1/real_coordinator.py": "a8bc88c3ae14e862d2a4e32ab0cdf864de217b7e883452a76348f3c0a48bac7c",
   "src/coupling/cpp_worker_persistent_ipc_v1/CMakeLists.txt": "8923d630abac5bb1bcd6d81e6bd874d4d265d81cb6ef9da16010eb2d5d4cb365",
   "src/coupling/cpp_worker_persistent_ipc_v1/ancf_kernel.cpp": "927892fad1331875c1e6ba6fa0ac1bbba62690d669352fd762eefa31e6f9b074",
   "src/coupling/cpp_worker_persistent_ipc_v1/ancf_worker_main.cpp": "95962800132e619deef011bc3081cec43100053bd8c05c1ee19d615085980da8",
   "src/coupling/cpp_worker_persistent_ipc_v1/worker_client.py": "04ddc224b59cb70d5de4057db0522f1e4fa6c256432bcb84a41de2f28cd18f97",
   "src/coupling/cpp_worker_persistent_ipc_v1/worker_main.cpp": "616ee9eb3f5bc1fbf1155e7c0bf2dc432fbb0f9c0d6750fb7c11a8c99531486b",
-  "tests/cpp_worker_protocol_lifecycle_repair_v1/test_stage190_protocol_lifecycle.py": "7aeb5059a34a584295ea1efc0aded51f7b3992c5fd19722f529c459bfe20d926",
-  "tools/cpp_worker_protocol_lifecycle_repair_v1/generate_stage190_evidence.py": "6cc797bf1fdfe7ac9e2df9a52f431ea32d1602ea829aa9319800b94a33284c25"
+  "tests/cpp_worker_confirm_v1/test_cpp_adapter.py": "fbc426f47cc10263618e09ddac0f2933fc464e925fbbab7b015cd17684c9749f",
+  "tests/cpp_worker_protocol_lifecycle_repair_v1/test_stage190_protocol_lifecycle.py": "70c8b91b26cbd9ad8680dc2d8653debe1dc01e6366967a6161c844b84884d7e3",
+  "tools/cpp_worker_protocol_lifecycle_repair_v1/generate_stage190_evidence.py": "540d7e245ca4f908e145baaf57696a6240b7b4f446fa6eb44796571fdd8c3514"
 }

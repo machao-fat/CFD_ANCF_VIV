@@ -24,6 +24,17 @@ class ExternalProcessSlice(Protocol):
     def stop(self) -> None: ...
 
 
+def _strict_numeric_ack(value: Any) -> bool:
+    """Accept only the wire-level integer acknowledgement ``1``.
+
+    ``bool`` is an ``int`` subclass in Python, so an equality-only check
+    would accidentally accept ``True`` from a malformed adapter mapping.
+    Slice-level ``consumed`` markers are intentionally handled by the slice
+    barrier and are not worker ACKs.
+    """
+    return type(value) is int and value == 1
+
+
 class LaunchGuard:
     """The only boundary allowed to unlock OpenFOAM/WSL/CFD launch."""
 
@@ -118,7 +129,7 @@ class CppConfirmRun:
                     worker_response["return_code"] != 0 or
                     worker_response["finite_value_audit"] is not True or
                     worker_response["sequence"] != expected_bridge or
-                    worker_response["ack"] != 1 or
+                    not _strict_numeric_ack(worker_response["ack"]) or
                     not worker_response["payload_hash"]):
                 raise CoordinatorError("C++ worker response identity/return/finite audit mismatch")
             if motion_by_slice is None:
@@ -219,7 +230,7 @@ class CppConfirmRun:
                     prediction.get("case_id") != self.contract.case_id or
                     prediction.get("integer_tick") != expected_tick or
                     abs(float(prediction.get("time_s")) - float(time_s)) > 1e-12 or
-                    prediction.get("ack") != 1 or
+                    not _strict_numeric_ack(prediction.get("ack")) or
                     prediction.get("finite_value_audit") is not True):
                 raise CoordinatorError("C++ predictor identity/ack/finite audit mismatch")
             motions = {sid: motion_builder(prediction, sid) for sid in range(3)}

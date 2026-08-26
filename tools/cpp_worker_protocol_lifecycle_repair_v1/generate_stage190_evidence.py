@@ -34,16 +34,18 @@ def main() -> None:
         "src/coupling/cpp_physics_ownership_v1/physics_ownership_worker_main.cpp",
         "src/coupling/cpp_worker_confirm_v1/coordinator.py",
         "src/coupling/cpp_worker_confirm_v1/real_coordinator.py",
+        "src/coupling/cpp_worker_confirm_v1/cpp_adapter.py",
         "src/coupling/cpp_physics_ownership_v1/physics_ownership_selftest.cpp",
         "tests/cpp_worker_protocol_lifecycle_repair_v1/test_stage190_protocol_lifecycle.py",
+        "tests/cpp_worker_confirm_v1/test_cpp_adapter.py",
         "tools/cpp_worker_protocol_lifecycle_repair_v1/generate_stage190_evidence.py",
     ]
     hashes = {path: sha256(ROOT / path) for path in changed}
     process = {"MATLAB": 0, "OpenFOAM": 0, "WSL": 0, "CFD": 0,
                "owned_residual": 0, "reader_thread_residual": 0}
     tests = {
-        "stage190_black_box": {"passed": 6, "failed": 0},
-        "focused_protocol_regression": {"passed": 50, "failed": 0},
+        "stage190_black_box": {"passed": 7, "failed": 0},
+        "focused_protocol_regression": {"passed": 52, "failed": 0, "skipped": 1},
         "compileall": "pass",
         "cpp_selftests": "pass",
         "msvc_release_w4": "pass",
@@ -56,7 +58,7 @@ def main() -> None:
             "warnings": "-Wall -Wextra -Wpedantic -Werror",
             "selftests": "pass",
         },
-        "root_unittest": {"passed": 1199, "skipped": 2, "failed": 0},
+        "root_unittest": {"passed": 1200, "skipped": 2, "failed": 0},
     }
     write_json("protocol_lifecycle_repair_manifest.json", {
         "stage_id": "stage4f_d_cpp_worker_protocol_lifecycle_repair_v1",
@@ -129,7 +131,7 @@ def main() -> None:
     DOCS.mkdir(parents=True, exist_ok=True)
     (DOCS / "report_zh.md").write_text(
         "# Stage190 C++ worker protocol/lifecycle repair\n\n"
-        "已完成初始化 ACK、连接关闭、canonical tick、严格 ACK、motion 身份校验、legacy worker 隔离和 MSVC 构建修复。"
+        "已完成初始化 ACK、连接关闭、canonical tick、严格数值 ACK（含拒绝 bool/字符串）、motion 身份校验、legacy worker 隔离和 MSVC 构建修复。"
         "Stage186 数值状态仍为 `validated`，未启动 MATLAB、OpenFOAM、WSL 或 CFD。\n\n"
         "MSVC 2022 Release、/W4、/analyze、LLVM Clang 22.1.8 原生构建、C++ selftest、专项测试和根目录 unittest 均通过。"
         "Clang 构建使用独立目录、NMake 和 VS2022 x64 SDK/linker，未启动 WSL 或任何真实 CFD 进程；Gate 为 `pass`。\n",

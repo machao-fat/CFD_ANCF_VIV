@@ -1,6 +1,6 @@
 {
   "branch": "codex/cpp-worker-comprehensive-audit-repair-v1",
-  "commit": "8efee5cb7414a2afb1e65ff4b0003bec685073ac",
+  "commit": "a32ca082e4ea724bc784c15fffe4a39c433e90f1",
   "excluded_user_paths": [
     "cases/",
     "references/",
@@ -16,8 +16,10 @@
     "src/coupling/cpp_physics_ownership_v1/physics_ownership_worker_main.cpp",
     "src/coupling/cpp_worker_confirm_v1/coordinator.py",
     "src/coupling/cpp_worker_confirm_v1/real_coordinator.py",
+    "src/coupling/cpp_worker_confirm_v1/cpp_adapter.py",
     "src/coupling/cpp_physics_ownership_v1/physics_ownership_selftest.cpp",
     "tests/cpp_worker_protocol_lifecycle_repair_v1/test_stage190_protocol_lifecycle.py",
+    "tests/cpp_worker_confirm_v1/test_cpp_adapter.py",
     "tools/cpp_worker_protocol_lifecycle_repair_v1/generate_stage190_evidence.py"
   ],
   "push_required": true,
