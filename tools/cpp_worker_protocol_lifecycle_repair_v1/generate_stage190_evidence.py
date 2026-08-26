@@ -3,6 +3,7 @@ from __future__ import annotations
 import hashlib
 import json
 from pathlib import Path
+import subprocess
 
 
 ROOT = Path(__file__).resolve().parents[2]
@@ -81,6 +82,21 @@ def main() -> None:
     write_json("test_and_build_audit.json", tests)
     write_json("process_cleanup_audit.json", process)
     write_json("changed_file_hashes.json", hashes)
+    branch = subprocess.run(
+        ["git", "branch", "--show-current"], cwd=ROOT, check=True,
+        text=True, capture_output=True,
+    ).stdout.strip()
+    commit = subprocess.run(
+        ["git", "rev-parse", "HEAD"], cwd=ROOT, check=True,
+        text=True, capture_output=True,
+    ).stdout.strip()
+    tag = "cfd-ancf-viv-cpp-worker-protocol-lifecycle-repair-v1-stage190-pending-nonmsvc"
+    write_json("git_manifest.json", {
+        "branch": branch, "commit": commit, "tag": tag,
+        "push_required": True,
+        "included_scope": changed,
+        "excluded_user_paths": ["cases/", "references/", "FAKE_PROCESS_SUMMARY.json"],
+    })
     gate = {
         "gate": "STAGE4F_D_CPP_WORKER_PROTOCOL_LIFECYCLE_REPAIR_V1_GATE: do_not_pass",
         "reason": "MSVC build/analyze and all offline tests pass, but the required non-MSVC build is not evaluable on this host because no native non-MSVC compiler is installed.",
