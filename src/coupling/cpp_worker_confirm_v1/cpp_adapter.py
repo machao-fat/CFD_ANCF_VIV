@@ -537,3 +537,18 @@ class CppKernelCampaignAdapter:
     @property
     def owned_residual(self) -> int:
         return int(getattr(self.worker, "owned_residual", 0))
+
+    @property
+    def audit(self) -> Mapping[str, Any]:
+        """Expose the supervisor's immutable process audit to the coordinator."""
+        value = getattr(self.worker, "audit", {})
+        return value if isinstance(value, Mapping) else {}
+
+    @property
+    def return_code(self) -> int | None:
+        """Expose the owned worker return code for the final Gate."""
+        value = getattr(self.worker, "return_code", None)
+        if value is None:
+            audit = getattr(self.worker, "audit", {})
+            value = audit.get("return_code") if isinstance(audit, Mapping) else None
+        return value if isinstance(value, int) and not isinstance(value, bool) else None

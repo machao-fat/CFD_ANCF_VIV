@@ -89,6 +89,7 @@ class KernelWorker:
         self.start_count = 0
         self.audit: dict[str, Any] = {}
         self._reader_threads: set[threading.Thread] = set()
+        self._terminal = False
 
     def _join_reader_threads(self, timeout_s: float = 1.0) -> None:
         """收口所有有界读取线程，并把无法收口的线程记为残留。"""
@@ -191,13 +192,14 @@ class KernelWorker:
                            "owned_residual": 0 if poll_value is not None else 1})
         self._join_reader_threads()
         self.process = None
+        self._terminal = True
 
     def _record_failure(self, classification: str, error: BaseException) -> None:
         self.audit["failure_classification"] = classification
         self.audit["last_error"] = f"{type(error).__name__}: {error}"
 
     def start(self) -> None:
-        if self.process is not None:
+        if self.process is not None or self._terminal:
             raise ConfirmError("C++ worker duplicate start")
         if not self.executable.is_file():
             raise ConfirmError(f"C++ kernel worker missing: {self.executable}")
@@ -318,6 +320,7 @@ class KernelWorker:
             if stream is not None:
                 stream.close()
         self.process = None
+        self._terminal = True
 
     @property
     def owned_residual(self) -> int:

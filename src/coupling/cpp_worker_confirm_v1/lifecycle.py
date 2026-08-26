@@ -44,11 +44,17 @@ class ResidentCppWorkerLifecycle:
     def stop(self) -> None:
         if self._stopped:
             return
-        self._stopped = True
         if not self._started:
+            self._stopped = True
             return
         shutdown = getattr(self.adapter, "shutdown", None)
-        (shutdown if callable(shutdown) else self.adapter.stop)()
+        try:
+            (shutdown if callable(shutdown) else self.adapter.stop)()
+        except Exception:
+            # Keep the wrapper retryable so a coordinator can perform one
+            # final forced cleanup and still observe any residual.
+            raise
+        self._stopped = True
         self._started = False
 
     shutdown = stop

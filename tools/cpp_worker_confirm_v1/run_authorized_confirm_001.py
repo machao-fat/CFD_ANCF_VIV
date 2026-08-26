@@ -27,7 +27,6 @@ from coupling.cpp_worker_confirm_v1.cpp_adapter import CppKernelCampaignAdapter
 from coupling.cpp_worker_confirm_v1.coordinator import KernelWorker, _fixture
 from coupling.cpp_worker_confirm_v1.real_coordinator import (
     CppConfirmRun,
-    build_predictor_motion_by_slice,
 )
 from coupling.cpp_worker_confirm_v1.real_slice_adapter import PersistentOpenFOAMSliceAdapter
 from coupling.cpp_worker_confirm_v1.numerical_contract import (
@@ -240,6 +239,26 @@ def _write_report(*, gate: dict[str, Any], summary: Mapping[str, Any]) -> None:
     (DOCS / "cpp_worker_persistent_ipc_confirm_report.md").write_text(report, encoding="utf-8")
 
 
+def _process_gate_ok(summary: Mapping[str, Any], process_rows: list[Mapping[str, Any]]) -> bool:
+    """Require one clean worker and three clean, resident slice processes."""
+    return bool(
+        len(process_rows) == 4 and
+        all(row.get("return_code") == 0 and row.get("cleanup_result") == "closed"
+            and row.get("start_count", 1) == 1 for row in process_rows) and
+        summary.get("cpp_worker_startup") == 1 and summary.get("openfoam_startup") == 3 and
+        summary.get("wsl_startup") == 3 and
+        summary.get("real_process_starts") == {"MATLAB": 0, "OpenFOAM": 3, "WSL": 3, "CFD": 3})
+
+
+def _gate_ok(summary: Mapping[str, Any], stop_result: Mapping[str, Any],
+             process_rows: list[Mapping[str, Any]], logs_end: Mapping[str, bool],
+             checkpoint_rows: list[Mapping[str, Any]]) -> bool:
+    return bool(
+        summary.get("status") == "pass" and summary.get("owned_residual") == 0 and
+        not stop_result.get("errors") and _process_gate_ok(summary, process_rows) and
+        bool(logs_end) and all(logs_end.values()) and len(checkpoint_rows) == 40)
+
+
 def main() -> int:
     for path in (RUNTIME, RESULTS, DOCS):
         if path.exists():
@@ -296,7 +315,12 @@ def main() -> int:
                             seed_records=seed_records, templates={sid: TEMPLATE_ROOT / f"slice_{sid:04d}" for sid in range(3)},
                             timed=timed_backends)
     confirm = CppConfirmRun(contract=contract, worker=worker_adapter, slice_factory=factory,
-                            authorization=REAL_AUTHORIZATION_TOKEN)
+                            authorization=REAL_AUTHORIZATION_TOKEN,
+                            motion_manifest=manifest,
+                            motion_H_by_slice_id=H,
+                            motion_reference_positions_m={
+                                sid: (0.0, 0.0, manifest.slice(sid).s_ref_m)
+                                for sid in range(3)})
     try:
         confirm.preflight(PROJECT)
         confirm.start()
@@ -304,23 +328,16 @@ def main() -> int:
             global_step = 559 + bridge
             time_s = 2.2075 + bridge * 0.00125
             step_start = time.perf_counter()
-            ancf_start = time.perf_counter()
-            prediction, _ = worker_adapter.predict(global_step, time_s, tuple(previous[sid] for sid in range(3)))
-            prediction_end = time.perf_counter()
-            motions = build_predictor_motion_by_slice(
-                prediction=prediction, manifest=manifest, H_by_slice_id=H,
-                reference_positions_m={sid: (0.0, 0.0, manifest.slice(sid).s_ref_m) for sid in range(3)},
-                global_step=global_step, time_s=time_s,
-                expected_run_id=contract.run_id,
-                source_global_step=contract.source_global_step,
-                source_time_s=contract.source_time_s,
-                source_tick=contract.source_tick,
-                dt_s=contract.global_dt_s)
             prepare_start = time.perf_counter()
-            prepared = confirm._barrier.prepare_step(global_step=global_step, time_s=time_s, motion_by_slice=motions)  # type: ignore[union-attr]
+            timing: dict[str, float] = {}
+            prepared_bundle = confirm.prepare_step_with_cpp_adapter(
+                global_step=global_step, time_s=time_s, adapter=worker_adapter,
+                previous_slice_forces=previous, timing=timing)
+            prediction = prepared_bundle["prediction"]
+            prepared = prepared_bundle["prepared"]
+            slice_results = {item.slice_id: item for item in prepared_bundle["slice_results"]}
+            raw_force_rows = prepared_bundle["raw_force_rows"]
             prepare_end = time.perf_counter()
-            slice_results = {item.slice_id: item for item in confirm._barrier._prepared[1]}  # type: ignore[union-attr]
-            raw_force_rows = confirm._force_matrix(confirm._barrier.last_payloads)  # type: ignore[union-attr]
             next_applied_force_rows, stabilizer_audit = stabilizer.apply(
                 step=global_step, time_s=time_s,
                 integer_tick=2_207_500_000 + bridge * 1_250_000,
@@ -333,8 +350,9 @@ def main() -> int:
             correction, _ = worker_adapter.correct(global_step, time_s, applied_force_rows)
             correction_end = time.perf_counter()
             commit_start = time.perf_counter()
-            record = confirm._barrier.commit_prepared(  # type: ignore[union-attr]
-                worker_response=correction,
+            record = confirm.commit_prepared_with_cpp_adapter(
+                adapter=worker_adapter, correction=correction,
+                prediction=prediction, prepared=prepared,
                 checkpoint_metadata={
                     "raw_slice_forces_N": [list(row) for row in raw_force_rows],
                     "applied_slice_forces_N": [list(row) for row in applied_force_rows],
@@ -342,10 +360,7 @@ def main() -> int:
                     "stabilizer_audit": stabilizer_audit,
                 },
             )
-            worker_adapter.finalize_committed()
             stabilizer.commit()
-            confirm._records.append(record)
-            confirm._next_global_step += 1
             commit_end = time.perf_counter()
             step_end = time.perf_counter()
             previous = {sid: tuple(float(next_applied_force_rows[sid][j]) for j in range(3)) for sid in range(3)}
@@ -355,13 +370,13 @@ def main() -> int:
             exchange = sum(sum(value for name, value in row.items() if name != "wait_load_ready") for row in backend_rows.values())
             prepare_elapsed = prepare_end - prepare_start
             sync_audit = max(0.0, prepare_elapsed - max(slice_elapsed.values())) + (commit_end - commit_start)
-            ancf = (prediction_end - ancf_start) + (correction_end - correction_start)
+            ancf = (timing["ancf_end"] - timing["ancf_start"]) + (correction_end - correction_start)
             row = {
                 "global_step": global_step, "case_local_bridge_step": bridge, "time_s": time_s,
                 "integer_tick": 2_207_500_000 + bridge * 1_250_000, "run_id": RUN_ID, "case_id": CASE_ID,
                 "step_start": step_start, "step_end": step_end,
-                "ancf_start": ancf_start, "ancf_end": correction_end,
-                "exchange_start": prepare_start, "exchange_end": prepare_end,
+                "ancf_start": timing["ancf_start"], "ancf_end": correction_end,
+                "exchange_start": timing["exchange_start"], "exchange_end": timing["exchange_end"],
                 "sync_audit_start": commit_start, "sync_audit_end": commit_end,
                 "T_ancf_s": ancf, "T_openfoam_s": openfoam, "T_exchange_s": exchange,
                 "T_sync_and_audit_s": sync_audit, "T_step_s": step_end - step_start,
@@ -443,7 +458,7 @@ def main() -> int:
     _write(RESULTS / "checkpoint_snapshot_audit.json", {"stage_id": STAGE_ID, "checkpoint_count": len(checkpoint_rows), "checkpoint_rows": checkpoint_rows, "logs_end_audit": logs_end})
     _write(RESULTS / "failure_raw.json", failure or {"status": "none"})
     _write(RESULTS / "confirm_summary.json", summary)
-    gate_ok = summary["status"] == "pass" and summary["owned_residual"] == 0 and all(logs_end.values()) and len(checkpoint_rows) == 40
+    gate_ok = _gate_ok(summary, stop_result, process_rows, logs_end, checkpoint_rows)
     gate = {
         "gate": "STAGE4F_D_CPP_WORKER_PERSISTENT_IPC_V1_CONFIRM_GATE: pass" if gate_ok else "STAGE4F_D_CPP_WORKER_PERSISTENT_IPC_V1_CONFIRM_GATE: do_not_pass",
         "status": "pass" if gate_ok else "do_not_pass", "scope": {"global_steps": 40, "slice_count": 3, "segment_duration_s": 0.05, "source_global_step": 559, "target_final_step": 599, "target_final_time_s": 2.2575, "target_final_tick": 2_257_500_000},

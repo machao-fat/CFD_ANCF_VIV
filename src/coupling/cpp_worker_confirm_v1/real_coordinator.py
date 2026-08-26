@@ -2,6 +2,7 @@ from __future__ import annotations
 
 import os
 import math
+import time
 from dataclasses import dataclass
 from pathlib import Path
 from typing import Any, Callable, Mapping, Protocol, Sequence
@@ -188,7 +189,15 @@ class CppConfirmRun:
             if not callable(stop):
                 raise CoordinatorError("worker has no stop/shutdown lifecycle method")
             stop()
-        except Exception as exc: errors.append(str(exc))
+        except Exception as exc:
+            errors.append(str(exc))
+            # A transient shutdown failure must not suppress a second,
+            # idempotent cleanup attempt.  The lifecycle wrapper remains
+            # retryable until one shutdown completes successfully.
+            try:
+                stop()
+            except Exception as retry_exc:
+                errors.append(f"cleanup retry failed: {retry_exc}")
         worker_audit = getattr(self.worker, "audit", {})
         if not isinstance(worker_audit, Mapping):
             worker_audit = {}
@@ -272,18 +281,43 @@ class CppConfirmRun:
         ``motion_builder`` is pure contract translation: it may only build the
         three canonical target motions from the predictor record and slice id.
         """
+        try:
+            prepared_bundle = self.prepare_step_with_cpp_adapter(
+                global_step=global_step, time_s=time_s, adapter=adapter,
+                previous_slice_forces=previous_slice_forces, motion_builder=motion_builder)
+            prediction = prepared_bundle["prediction"]
+            force_rows = prepared_bundle["raw_force_rows"]
+            correction, _ = adapter.correct(global_step, time_s, force_rows)
+            return self.commit_prepared_with_cpp_adapter(
+                adapter=adapter, correction=correction,
+                prediction=prediction, prepared=prepared_bundle["prepared"])
+        except Exception:
+            self._terminal = True
+            raise
+
+    def prepare_step_with_cpp_adapter(self, *, global_step: int, time_s: float,
+                                      adapter: Any,
+                                      previous_slice_forces: Mapping[int, Sequence[float]],
+                                      motion_builder: Callable[[Mapping[str, Any], int], Any] | None = None,
+                                      timing: dict[str, float] | None = None) -> dict[str, Any]:
+        """Public predict/motion/barrier phase for custom force stabilization."""
         if self._barrier is None or not self._started or self._terminal:
             raise CoordinatorError("C++ confirm is unavailable")
+        if motion_builder is not None:
+            raise CoordinatorError("external motion_builder is disabled; configure canonical motion inputs on CppConfirmRun")
         if set(previous_slice_forces) != {0, 1, 2}:
             raise CoordinatorError("previous slice force set must contain exactly three slices")
         expected_time = self.contract.source_time_s + (global_step - self.contract.source_global_step) * self.contract.global_dt_s
-        if (global_step != self._next_global_step or
-                len(self._records) >= self.contract.steps or
+        if (global_step != self._next_global_step or len(self._records) >= self.contract.steps or
                 abs(float(time_s) - expected_time) > 1e-12):
             raise CoordinatorError("C++ confirm step/time is outside the exact bounded sequence")
         previous = tuple(tuple(float(value) for value in previous_slice_forces[sid]) for sid in range(3))
         try:
+            if timing is not None:
+                timing["ancf_start"] = time.perf_counter()
             prediction, _ = adapter.predict(global_step, time_s, previous)
+            if timing is not None:
+                timing["ancf_end"] = time.perf_counter()
             expected_bridge = global_step - self.contract.source_global_step
             expected_tick = self.contract.source_tick + expected_bridge * canonical_tick_delta(self.contract.global_dt_s)
             if (prediction.get("global_step") != global_step or
@@ -295,19 +329,37 @@ class CppConfirmRun:
                     not _strict_numeric_ack(prediction.get("ack")) or
                     prediction.get("finite_value_audit") is not True):
                 raise CoordinatorError("C++ predictor identity/ack/finite audit mismatch")
-            if motion_builder is not None:
-                raise CoordinatorError(
-                    "external motion_builder is disabled; configure canonical motion inputs on CppConfirmRun")
             motions = self._canonical_motions(prediction, global_step=global_step, time_s=time_s)
+            if timing is not None:
+                timing["exchange_start"] = time.perf_counter()
             prepared = self._barrier.prepare_step(global_step=global_step, time_s=time_s,
                                                   motion_by_slice=motions)
+            if timing is not None:
+                timing["exchange_end"] = time.perf_counter()
             force_rows = self._force_matrix(self._barrier.last_payloads)
-            correction, _ = adapter.correct(global_step, time_s, force_rows)
-            record = self._barrier.commit_prepared(worker_response=correction)
+            slice_results = tuple(self._barrier._prepared[1])
+            return {"prediction": prediction, "prepared": prepared,
+                    "raw_force_rows": force_rows, "slice_results": slice_results}
+        except Exception:
+            self._terminal = True
+            raise
+
+    def commit_prepared_with_cpp_adapter(self, *, adapter: Any, correction: Mapping[str, Any],
+                                         prediction: Mapping[str, Any] | None = None,
+                                         prepared: Mapping[str, Any] | None = None,
+                                         checkpoint_metadata: Mapping[str, Any] | None = None) -> dict[str, Any]:
+        """Public commit phase paired with :meth:`prepare_step_with_cpp_adapter`."""
+        if self._barrier is None or not self._started or self._terminal:
+            raise CoordinatorError("C++ confirm is unavailable")
+        try:
+            record = self._barrier.commit_prepared(
+                worker_response=correction, checkpoint_metadata=checkpoint_metadata)
             adapter.finalize_committed()
-            record["worker_prediction"] = prediction
-            record["worker_correction"] = correction
-            record["prepared_barrier"] = prepared
+            if prediction is not None:
+                record["worker_prediction"] = dict(prediction)
+            record["worker_correction"] = dict(correction)
+            if prepared is not None:
+                record["prepared_barrier"] = dict(prepared)
             self._records.append(record)
             self._next_global_step += 1
             return record

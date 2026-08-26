@@ -148,6 +148,30 @@ class LifecycleTests(unittest.TestCase):
     def test_lifecycle_rejects_adapter_without_cleanup(self):
         with self.assertRaises(LifecycleError): ResidentCppWorkerLifecycle(object())
 
+    def test_lifecycle_allows_final_cleanup_after_shutdown_failure(self):
+        class FlakyAdapter:
+            start_count = 0
+            owned_residual = 0
+            def __init__(self): self.stop_attempts = 0
+            def start(self): self.start_count += 1
+            def shutdown(self):
+                self.stop_attempts += 1
+                if self.stop_attempts == 1:
+                    raise RuntimeError("simulated cleanup failure")
+        adapter = FlakyAdapter()
+        lifecycle = ResidentCppWorkerLifecycle(adapter)
+        lifecycle.start()
+        with self.assertRaisesRegex(RuntimeError, "cleanup failure"):
+            lifecycle.stop()
+        lifecycle.stop()
+        self.assertEqual(adapter.stop_attempts, 2)
+
+    def test_cpp_adapter_exposes_worker_audit_and_return_code(self):
+        adapter = self._adapter()
+        adapter.worker.audit = {"return_code": 23, "owned_residual": 0}
+        self.assertEqual(adapter.return_code, 23)
+        self.assertEqual(dict(adapter.audit)["return_code"], 23)
+
     def test_cpp_confirm_run_uses_wrapper_for_production_start_and_stop(self):
         project_root = Path(__file__).resolve().parents[2]
         with tempfile.TemporaryDirectory(dir=project_root) as directory:

@@ -67,6 +67,8 @@ class CppConfirmTests(unittest.TestCase):
         self.assertEqual(worker.audit["failure_classification"], "worker_timeout")
         self.assertIsNone(worker.process)
         self.assertEqual(worker.audit["owned_residual"], 0)
+        with self.assertRaises(ConfirmError):
+            worker.start()
         stream.release.set()
 
     def test_production_worker_rejects_transport_only_executable(self) -> None:
