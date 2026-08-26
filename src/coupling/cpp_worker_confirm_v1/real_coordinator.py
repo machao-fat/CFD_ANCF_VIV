@@ -52,6 +52,9 @@ class CppConfirmRun:
     worker: Any
     slice_factory: Callable[[int, Path], ExternalProcessSlice]
     authorization: str | None = None
+    motion_manifest: SliceManifest | None = None
+    motion_H_by_slice_id: Mapping[int, Any] | None = None
+    motion_reference_positions_m: Mapping[int, Sequence[float]] | None = None
 
     def __post_init__(self) -> None:
         self._barrier: Stage100SliceBarrier | None = None
@@ -60,6 +63,31 @@ class CppConfirmRun:
         self._records: list[dict[str, Any]] = []
         self._next_global_step = self.contract.source_global_step + 1
         self._preflighted = False
+
+    def _canonical_motions(self, prediction: Mapping[str, Any], *,
+                           global_step: int, time_s: float) -> dict[int, MotionRecord]:
+        if (self.motion_manifest is None or self.motion_H_by_slice_id is None or
+                self.motion_reference_positions_m is None):
+            raise CoordinatorError(
+                "production C++ confirm requires manifest, H mapping and reference positions "
+                "for build_predictor_motion_by_slice")
+        try:
+            motions = build_predictor_motion_by_slice(
+                prediction=prediction, manifest=self.motion_manifest,
+                H_by_slice_id=self.motion_H_by_slice_id,
+                reference_positions_m=self.motion_reference_positions_m,
+                global_step=global_step, time_s=time_s,
+                expected_run_id=self.contract.run_id,
+                source_global_step=self.contract.source_global_step,
+                source_time_s=self.contract.source_time_s,
+                source_tick=self.contract.source_tick,
+                dt_s=self.contract.global_dt_s,
+            )
+        except Exception as exc:
+            raise CoordinatorError(f"canonical predictor motion construction failed: {exc}") from exc
+        if set(motions) != {0, 1, 2} or any(not isinstance(item, MotionRecord) for item in motions.values()):
+            raise CoordinatorError("canonical predictor motion set is incomplete")
+        return motions
 
     def preflight(self, project_root: Path) -> None:
         self.contract.validate(project_root)
@@ -134,8 +162,9 @@ class CppConfirmRun:
                 raise CoordinatorError("C++ worker response identity/return/finite audit mismatch")
             if motion_by_slice is None:
                 raise CoordinatorError("C++ confirm requires motion_by_slice for each real slice")
+            motions = self._validate_motion_by_slice(motion_by_slice, global_step=global_step, time_s=time_s)
             record = self._barrier.advance_step(global_step=global_step, time_s=time_s,
-                                                motion_by_slice=motion_by_slice)
+                                                motion_by_slice=motions)
             if record.get("committed") is not True or record.get("barrier_passed") is not True:
                 raise CoordinatorError("global barrier did not produce a committed record")
             record["worker_response"] = worker_response
@@ -160,10 +189,22 @@ class CppConfirmRun:
                 raise CoordinatorError("worker has no stop/shutdown lifecycle method")
             stop()
         except Exception as exc: errors.append(str(exc))
+        worker_audit = getattr(self.worker, "audit", {})
+        if not isinstance(worker_audit, Mapping):
+            worker_audit = {}
+        worker_return_code = getattr(self.worker, "return_code", None)
+        if worker_return_code is None:
+            worker_return_code = worker_audit.get("return_code")
+        if worker_return_code is not None and worker_return_code != 0:
+            errors.append(f"C++ worker exited with nonzero return code: {worker_return_code}")
         self._started = False
         self._terminal = True
         residual = (self._barrier.owned_residual if self._barrier is not None else 0)
-        residual += int(getattr(self.worker, "owned_residual", 0))
+        worker_residual = getattr(self.worker, "owned_residual", None)
+        reader_residual = int(worker_audit.get("reader_thread_residual", 0) or 0)
+        if worker_residual is None:
+            worker_residual = int(worker_audit.get("owned_residual", 0) or 0) + reader_residual
+        residual += int(worker_residual or 0)
         worker_starts = int(getattr(self.worker, "start_count", 0))
         slice_starts = []
         external_starts = []
@@ -178,6 +219,8 @@ class CppConfirmRun:
                       "WSL": sum(external_starts), "CFD": sum(external_starts)}
         return {"errors": errors, "owned_residual": residual,
                 "committed_steps": len(self._records), "worker_start_count": worker_starts,
+                "worker_return_code": worker_return_code,
+                "worker_reader_thread_residual": int(reader_residual or 0),
                 "slice_start_counts": slice_starts,
                 "real_process_starts": starts,
                 "parent_pid": os.getpid()}
@@ -202,9 +245,28 @@ class CppConfirmRun:
             rows.append(values)
         return tuple(rows)
 
+    def _validate_motion_by_slice(self, motion_by_slice: Mapping[int, Any], *,
+                                  global_step: int, time_s: float) -> dict[int, MotionRecord]:
+        if set(motion_by_slice) != {0, 1, 2}:
+            raise CoordinatorError("C++ confirm requires exactly three canonical motions")
+        result: dict[int, MotionRecord] = {}
+        for sid in range(3):
+            try:
+                candidate = motion_by_slice[sid]
+                motion = (candidate if isinstance(candidate, MotionRecord)
+                          else MotionRecord.from_mapping(candidate))
+            except Exception as exc:
+                raise CoordinatorError(f"motion schema invalid for slice {sid}: {exc}") from exc
+            if (motion.slice_id != sid or motion.case_id != self.contract.case_id or
+                    motion.step != global_step or
+                    not math.isclose(motion.time_s, float(time_s), rel_tol=0.0, abs_tol=1e-12)):
+                raise CoordinatorError(f"motion identity mismatch for slice {sid}")
+            result[sid] = motion
+        return result
+
     def commit_step_with_cpp_adapter(self, *, global_step: int, time_s: float,
                                      adapter: Any, previous_slice_forces: Mapping[int, Sequence[float]],
-                                     motion_builder: Callable[[Mapping[str, Any], int], Any]) -> dict[str, Any]:
+                                     motion_builder: Callable[[Mapping[str, Any], int], Any] | None = None) -> dict[str, Any]:
         """Run the complete predict -> barrier -> correct -> commit sequence.
 
         ``motion_builder`` is pure contract translation: it may only build the
@@ -233,7 +295,10 @@ class CppConfirmRun:
                     not _strict_numeric_ack(prediction.get("ack")) or
                     prediction.get("finite_value_audit") is not True):
                 raise CoordinatorError("C++ predictor identity/ack/finite audit mismatch")
-            motions = {sid: motion_builder(prediction, sid) for sid in range(3)}
+            if motion_builder is not None:
+                raise CoordinatorError(
+                    "external motion_builder is disabled; configure canonical motion inputs on CppConfirmRun")
+            motions = self._canonical_motions(prediction, global_step=global_step, time_s=time_s)
             prepared = self._barrier.prepare_step(global_step=global_step, time_s=time_s,
                                                   motion_by_slice=motions)
             force_rows = self._force_matrix(self._barrier.last_payloads)

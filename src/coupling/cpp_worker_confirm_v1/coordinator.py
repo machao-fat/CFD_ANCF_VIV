@@ -88,6 +88,20 @@ class KernelWorker:
         self.process: subprocess.Popen[bytes] | None = None
         self.start_count = 0
         self.audit: dict[str, Any] = {}
+        self._reader_threads: set[threading.Thread] = set()
+
+    def _join_reader_threads(self, timeout_s: float = 1.0) -> None:
+        """收口所有有界读取线程，并把无法收口的线程记为残留。"""
+        current = threading.current_thread()
+        for thread in tuple(self._reader_threads):
+            if thread is current:
+                continue
+            thread.join(timeout=max(0.0, float(timeout_s)))
+            if not thread.is_alive():
+                self._reader_threads.discard(thread)
+        self.audit["reader_thread_residual"] = sum(
+            1 for thread in self._reader_threads if thread.is_alive()
+        )
 
     def _read_frame_bounded(self, expected_type: int) -> bytes:
         process = self.process
@@ -121,13 +135,18 @@ class KernelWorker:
             except BaseException as error:
                 result_queue.put((None, error))
 
-        threading.Thread(target=read_frame, name="cpp-worker-response-reader", daemon=True).start()
+        thread = threading.Thread(target=read_frame, name="cpp-worker-response-reader", daemon=True)
+        self._reader_threads.add(thread)
+        thread.start()
         try:
             frame, error = result_queue.get(timeout=self.timeout_s)
         except queue.Empty as exc:
             self._record_failure("worker_timeout", TimeoutError(
                 f"C++ worker response exceeded {self.timeout_s:g}s"))
             raise ConfirmError(f"C++ worker response exceeded {self.timeout_s:g}s") from exc
+        finally:
+            if not thread.is_alive():
+                self._reader_threads.discard(thread)
         if error is not None:
             raise error
         if frame is None:
@@ -170,6 +189,7 @@ class KernelWorker:
         self.audit.update({"end_time_ns": time.time_ns(), "return_code": getattr(process, "returncode", poll_value),
                            "cleanup_result": "aborted" if poll_value is not None else "residual",
                            "owned_residual": 0 if poll_value is not None else 1})
+        self._join_reader_threads()
         self.process = None
 
     def _record_failure(self, classification: str, error: BaseException) -> None:
@@ -293,10 +313,22 @@ class KernelWorker:
                            "cleanup_result": "closed" if process.returncode == 0 else "closed_nonzero",
                            "owned_residual": 0 if process.poll() is not None else 1,
                            "stdout": stream_text["stdout"], "stderr": stream_text["stderr"]})
+        self._join_reader_threads()
         for stream in (process.stdout, process.stderr):
             if stream is not None:
                 stream.close()
         self.process = None
+
+    @property
+    def owned_residual(self) -> int:
+        process_residual = int(self.audit.get("owned_residual", 0) or 0)
+        reader_residual = int(self.audit.get("reader_thread_residual", 0) or 0)
+        return max(process_residual, reader_residual)
+
+    @property
+    def return_code(self) -> int | None:
+        value = self.audit.get("return_code")
+        return int(value) if isinstance(value, int) and not isinstance(value, bool) else value
 
 
 class MockSlice:

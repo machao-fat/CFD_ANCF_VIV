@@ -228,6 +228,21 @@ class PersistentCppWorkerClient:
         self.initialized = False
         self._close_streams()
 
+    @property
+    def owned_residual(self) -> int:
+        """Return only residuals owned by this transport client.
+
+        The client deliberately does not own the OS process, so its process
+        return code must be audited by the process supervisor.  Reader
+        threads, however, are client-owned and must never be silently lost.
+        """
+        return sum(1 for thread in self._reader_threads if thread.is_alive())
+
+    @property
+    def return_code(self) -> None:
+        """Process return code is unavailable because this class owns streams only."""
+        return None
+
 
 def response_state_sha256(response: StepResponse) -> bytes:
     payload = struct.pack("<" + "d" * (len(response.q) * 3), *(response.q + response.qdot + response.qddot))
