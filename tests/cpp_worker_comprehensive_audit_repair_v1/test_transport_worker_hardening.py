@@ -7,6 +7,8 @@ from pathlib import Path
 import os
 import sys
 
+os.environ.setdefault("CFD_ANCF_OFFLINE_LEGACY_TRANSPORT", "1")
+
 ROOT = Path(__file__).resolve().parents[2]
 sys.path.insert(0, str(ROOT / "src"))
 

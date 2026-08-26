@@ -1,0 +1,9 @@
+{
+  "src/coupling/cpp_physics_ownership_v1/physics_ownership_selftest.cpp": "a5f06eda8e9b883f412a079db9e543b2c38e75510872a689042898963925eea3",
+  "src/coupling/cpp_worker_confirm_v1/coordinator.py": "1d7ad88f3608765ea570522d6308820bc6b6d081fe2556e03fdfad8bf5f2a521",
+  "src/coupling/cpp_worker_confirm_v1/real_coordinator.py": "812bb8f7f4967afeeb1fdb092e444ef0170b6f0dee55c9efbaa829111b7d46aa",
+  "src/coupling/cpp_worker_persistent_ipc_v1/ancf_worker_main.cpp": "e2d0635c6eaa531302c4efc367a8a552bf9cc0e588138f9af42e2156d418c996",
+  "src/coupling/cpp_worker_persistent_ipc_v1/worker_client.py": "04ddc224b59cb70d5de4057db0522f1e4fa6c256432bcb84a41de2f28cd18f97",
+  "src/coupling/cpp_worker_persistent_ipc_v1/worker_main.cpp": "9590f1bdf5ec58390fb867359209fcc42269319fcb6a92127aec7b4223cd8979",
+  "tests/cpp_worker_protocol_lifecycle_repair_v1/test_stage190_protocol_lifecycle.py": "7aeb5059a34a584295ea1efc0aded51f7b3992c5fd19722f529c459bfe20d926"
+}

@@ -1,0 +1,12 @@
+{
+  "ack_contract": "numeric ack == 1 only",
+  "canonical_mapping": "canonical_integer_tick/canonical_tick_delta",
+  "rejected": [
+    "ack",
+    "committed",
+    "stale",
+    "duplicate",
+    "out_of_order"
+  ],
+  "status": "pass"
+}

@@ -3,6 +3,9 @@ from __future__ import annotations
 import subprocess
 import unittest
 from pathlib import Path
+import os
+
+os.environ.setdefault("CFD_ANCF_OFFLINE_LEGACY_TRANSPORT", "1")
 
 from coupling.cpp_worker_persistent_ipc_v1.protocol import (
     FrameError, HEADER, MESSAGE_SHUTDOWN, StepRequest, decode_response, encode_control,

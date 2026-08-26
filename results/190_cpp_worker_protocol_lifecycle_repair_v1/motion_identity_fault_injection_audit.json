@@ -1,0 +1,11 @@
+{
+  "rejected_before_backend": [
+    "wrong bridge step",
+    "wrong tick",
+    "wrong case_id",
+    "NaN/Inf predictor",
+    "dimension mismatch",
+    "hash/identity mismatch"
+  ],
+  "status": "pass"
+}

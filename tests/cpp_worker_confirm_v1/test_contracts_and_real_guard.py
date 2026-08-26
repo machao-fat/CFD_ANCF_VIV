@@ -112,5 +112,28 @@ class ContractAndGuardTests(unittest.TestCase):
         self.assertEqual(set(motions), {0, 1, 2})
         self.assertTrue(all(item.step == 560 and item.time_s == 2.20875 for item in motions.values()))
 
+    def test_real_motion_builder_rejects_identity_and_finite_value_mutations(self) -> None:
+        from coupling.cpp_worker_confirm_v1.real_coordinator import build_predictor_motion_by_slice, CoordinatorError
+        from coupling.multi_slice_driver.contract import SliceSpec, build_slice_manifest
+        from coupling.multi_slice_mapping.mapping import SliceManifest, ancf_hermite_H
+
+        manifest = SliceManifest.from_mapping(build_slice_manifest(
+            "case", [SliceSpec(0, 1.0, 1.0), SliceSpec(1, 2.0, 1.0), SliceSpec(2, 3.0, 1.0)]))
+        base = {"global_step": 560, "case_local_bridge_step": 1, "time_s": 2.20875,
+                "integer_tick": 2208750000, "run_id": "run", "case_id": "case",
+                "predictor": [0.0] * 24, "predictor_qdot": [0.0] * 24,
+                "predictor_qddot": [0.0] * 24}
+        H = {sid: ancf_hermite_H(float(sid + 1), (0.0, 1.5, 3.0), ndof=24) for sid in range(3)}
+        refs = {sid: (0.0, 0.0, float(sid + 1)) for sid in range(3)}
+        for mutation in (
+            {"case_local_bridge_step": 2}, {"integer_tick": 2208750001},
+            {"case_id": "other"}, {"predictor": [float("nan")] * 24},
+        ):
+            prediction = dict(base); prediction.update(mutation)
+            with self.assertRaises(CoordinatorError):
+                build_predictor_motion_by_slice(prediction=prediction, manifest=manifest,
+                    H_by_slice_id=H, reference_positions_m=refs, global_step=560, time_s=2.20875,
+                    expected_run_id="run")
+
 
 if __name__ == "__main__": unittest.main()

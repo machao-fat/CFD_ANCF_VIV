@@ -8,7 +8,8 @@ from typing import BinaryIO
 
 from .protocol import (HEADER, FrameError, StepRequest, StepResponse, decode_response,
                        canonical_tick_delta, encode_control, encode_request, validate_response,
-                       MESSAGE_INITIALIZE, MESSAGE_SHUTDOWN)
+                       INITIALIZE_ACK, MESSAGE_INITIALIZE, MESSAGE_INITIALIZE_ACK,
+                       MESSAGE_SHUTDOWN, PROTOCOL_VERSION, SCHEMA_VERSION, WORKER_ROLE)
 
 
 class PersistentCppWorkerClient:
@@ -32,6 +33,125 @@ class PersistentCppWorkerClient:
         self.initialized = False
         self.seen_request_ids: set[int] = set()
         self.seen_transaction_ids: set[int] = set()
+        self._reader_threads: set[threading.Thread] = set()
+
+    def _close_streams(self) -> None:
+        errors: list[BaseException] = []
+        for stream in (self.reader, self.writer):
+            try:
+                close = getattr(stream, "close", None)
+                if callable(close):
+                    close()
+            except (OSError, AttributeError) as exc:
+                errors.append(exc)
+        current = threading.current_thread()
+        for thread in tuple(self._reader_threads):
+            if thread is not current:
+                thread.join(timeout=0.25)
+            if not thread.is_alive():
+                self._reader_threads.discard(thread)
+        if errors:
+            raise FrameError("worker stream cleanup failed") from errors[0]
+
+    def _fail_closed(self) -> None:
+        self.closed = True
+        self.initialized = False
+        try:
+            self._close_streams()
+        except FrameError:
+            pass
+
+    def _read_frame_bounded(self, expected_type: int) -> bytes:
+        result: queue.Queue[tuple[bytes | None, BaseException | None]] = queue.Queue(maxsize=1)
+
+        def read_exact(size: int) -> bytes:
+            chunks: list[bytes] = []
+            remaining = size
+            while remaining:
+                chunk = self.reader.read(remaining)
+                if not chunk:
+                    break
+                chunks.append(chunk)
+                remaining -= len(chunk)
+            return b"".join(chunks)
+
+        def read_frame() -> None:
+            try:
+                header = read_exact(HEADER.size)
+                if len(header) != HEADER.size:
+                    raise FrameError("worker disconnected before response header")
+                magic, length, message_type = HEADER.unpack(header)
+                if (magic != b"CFDANCF1" or length > 64 * 1024 * 1024 or
+                        message_type != expected_type):
+                    raise FrameError("worker response frame is invalid")
+                body = read_exact(length)
+                if len(body) != length:
+                    raise FrameError("worker disconnected during response")
+                result.put((header + body, None))
+            except BaseException as exc:
+                result.put((None, exc))
+
+        thread = threading.Thread(target=read_frame, name="cpp-worker-response-reader", daemon=True)
+        self._reader_threads.add(thread)
+        thread.start()
+        try:
+            frame, error = result.get(timeout=self.timeout_s)
+        except queue.Empty as exc:
+            self._fail_closed()
+            raise FrameError(f"worker response exceeded {self.timeout_s:g}s") from exc
+        finally:
+            if not thread.is_alive():
+                self._reader_threads.discard(thread)
+        if error is not None:
+            raise error
+        if frame is None:
+            raise FrameError("worker response frame is missing")
+        return frame
+
+    def _wait_for_eof(self) -> None:
+        result: queue.Queue[BaseException | None] = queue.Queue(maxsize=1)
+
+        def wait() -> None:
+            try:
+                marker = self.reader.read(1)
+                if marker:
+                    raise FrameError("worker emitted data after shutdown")
+                result.put(None)
+            except BaseException as exc:
+                result.put(exc)
+
+        thread = threading.Thread(target=wait, name="cpp-worker-shutdown-reader", daemon=True)
+        self._reader_threads.add(thread)
+        thread.start()
+        try:
+            error = result.get(timeout=self.timeout_s)
+        except queue.Empty as exc:
+            self._fail_closed()
+            raise FrameError(f"worker shutdown exceeded {self.timeout_s:g}s") from exc
+        finally:
+            if not thread.is_alive():
+                self._reader_threads.discard(thread)
+        if error is not None:
+            raise error
+
+    @staticmethod
+    def _validate_initialize_ack(frame: bytes) -> None:
+        body = frame[HEADER.size:]
+        if len(body) != INITIALIZE_ACK.size:
+            raise FrameError("worker initialization acknowledgement length is invalid")
+        schema, protocol, message_type, role = INITIALIZE_ACK.unpack(body)
+        if b"\0" not in role:
+            raise FrameError("worker role acknowledgement is not terminated")
+        raw_role, padding = role.split(b"\0", 1)
+        if not raw_role or any(padding):
+            raise FrameError("worker role acknowledgement padding is invalid")
+        try:
+            role_value = raw_role.decode("ascii")
+        except UnicodeDecodeError as exc:
+            raise FrameError("worker role acknowledgement is not ASCII") from exc
+        if (schema != SCHEMA_VERSION or protocol != PROTOCOL_VERSION or
+                message_type != MESSAGE_INITIALIZE_ACK or role_value != WORKER_ROLE):
+            raise FrameError("worker initialization acknowledgement is invalid")
 
     def request(self, value: StepRequest) -> StepResponse:
         if self.closed or not self.initialized or value.sequence != self.last_sequence + 1:
@@ -41,7 +161,7 @@ class PersistentCppWorkerClient:
         if self.last_global_step is not None:
             tick_delta = canonical_tick_delta(self.last_dt_s)
             if tick_delta <= 0:
-                self.closed = True
+                self._fail_closed()
                 raise FrameError("worker client dt does not advance an integer tick")
             expected_tick = self.last_tick + tick_delta
             if (value.global_step != self.last_global_step + 1 or
@@ -49,52 +169,16 @@ class PersistentCppWorkerClient:
                     value.integer_tick != expected_tick or
                     abs(value.time_s - (self.last_time_s + self.last_dt_s)) > 1.0e-12 or
                     abs(value.dt_s - self.last_dt_s) > 1.0e-15):
-                self.closed = True
+                self._fail_closed()
                 raise FrameError("worker client step/time lineage is not continuous")
         try:
             frame = encode_request(value)
             self.writer.write(frame); self.writer.flush()
-            result: queue.Queue[tuple[bytes | None, BaseException | None]] = queue.Queue(maxsize=1)
-
-            def read_frame() -> None:
-                try:
-                    def read_exact(size: int) -> bytes:
-                        chunks: list[bytes] = []
-                        remaining = size
-                        while remaining:
-                            chunk = self.reader.read(remaining)
-                            if not chunk:
-                                break
-                            chunks.append(chunk)
-                            remaining -= len(chunk)
-                        return b"".join(chunks)
-
-                    header = read_exact(HEADER.size)
-                    if len(header) != HEADER.size:
-                        raise FrameError("worker disconnected before response header")
-                    magic, length, count = HEADER.unpack(header)
-                    if magic != b"CFDANCF1" or length > 64 * 1024 * 1024 or count != 2:
-                        raise FrameError("response magic/length/count is invalid")
-                    body = read_exact(length)
-                    if len(body) != length:
-                        raise FrameError("worker disconnected during response")
-                    result.put((header + body, None))
-                except BaseException as exc:
-                    result.put((None, exc))
-
-            threading.Thread(target=read_frame, name="cpp-worker-response-reader", daemon=True).start()
-            try:
-                frame, error = result.get(timeout=self.timeout_s)
-            except queue.Empty as exc:
-                raise FrameError(f"worker response exceeded {self.timeout_s:g}s") from exc
-            if error is not None:
-                raise error
-            if frame is None:
-                raise FrameError("worker response frame is missing")
-            response = decode_response(frame)
+            response_frame = self._read_frame_bounded(2)
+            response = decode_response(response_frame)
             validate_response(value, response)
         except Exception:
-            self.closed = True
+            self._fail_closed()
             raise
         if (len(self.seen_request_ids) >= self.MAX_SEEN_IDENTITIES or
                 len(self.seen_transaction_ids) >= self.MAX_SEEN_IDENTITIES):
@@ -115,22 +199,34 @@ class PersistentCppWorkerClient:
             raise FrameError("worker client is closed")
         try:
             self.writer.write(encode_control(MESSAGE_INITIALIZE)); self.writer.flush()
+            self._validate_initialize_ack(self._read_frame_bounded(MESSAGE_INITIALIZE_ACK))
         except Exception:
-            self.closed = True
+            self._fail_closed()
             raise
         self.initialized = True
 
     def shutdown(self) -> None:
         if not self.closed:
+            if not self.initialized:
+                self._fail_closed()
+                raise FrameError("worker shutdown requires initialization")
             try:
                 self.writer.write(encode_control(MESSAGE_SHUTDOWN)); self.writer.flush()
+                # A clean worker exits after the shutdown control frame and
+                # closes its output stream. EOF is the only transport-level
+                # shutdown acknowledgement in this protocol.
+                self._wait_for_eof()
             except Exception:
-                self.closed = True
+                self._fail_closed()
                 raise
-            self.closed = True
+            self.close()
 
     def close(self) -> None:
+        if self.closed and not self.initialized and not self._reader_threads:
+            return
         self.closed = True
+        self.initialized = False
+        self._close_streams()
 
 
 def response_state_sha256(response: StepResponse) -> bytes:

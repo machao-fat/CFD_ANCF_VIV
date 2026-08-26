@@ -8,6 +8,7 @@ from typing import Any, Callable, Mapping, Protocol, Sequence
 
 from coupling.performance_optimization_v2.coordinator import CoordinatorError, SliceResult, StepIdentity
 from coupling.multi_slice_mapping.mapping import MotionRecord, SliceManifest, motion_from_ancf_state
+from coupling.cpp_worker_persistent_ipc_v1.protocol import canonical_integer_tick, canonical_tick_delta
 
 from .contracts import CppConfirmContract, ContractError, REAL_AUTHORIZATION_TOKEN
 from .barrier import Stage100SliceBarrier
@@ -107,7 +108,7 @@ class CppConfirmRun:
             if missing:
                 raise CoordinatorError("C++ worker response missing: " + ",".join(missing))
             expected_bridge = global_step - self.contract.source_global_step
-            expected_tick = self.contract.source_tick + expected_bridge * round(self.contract.global_dt_s * 1e9)
+            expected_tick = self.contract.source_tick + expected_bridge * canonical_tick_delta(self.contract.global_dt_s)
             if (worker_response["global_step"] != global_step or
                     worker_response["case_local_bridge_step"] != expected_bridge or
                     worker_response["run_id"] != self.contract.run_id or
@@ -117,7 +118,7 @@ class CppConfirmRun:
                     worker_response["return_code"] != 0 or
                     worker_response["finite_value_audit"] is not True or
                     worker_response["sequence"] != expected_bridge or
-                    worker_response["ack"] not in (1, "ack", "committed") or
+                    worker_response["ack"] != 1 or
                     not worker_response["payload_hash"]):
                 raise CoordinatorError("C++ worker response identity/return/finite audit mismatch")
             if motion_by_slice is None:
@@ -211,14 +212,14 @@ class CppConfirmRun:
         try:
             prediction, _ = adapter.predict(global_step, time_s, previous)
             expected_bridge = global_step - self.contract.source_global_step
-            expected_tick = self.contract.source_tick + expected_bridge * round(self.contract.global_dt_s * 1e9)
+            expected_tick = self.contract.source_tick + expected_bridge * canonical_tick_delta(self.contract.global_dt_s)
             if (prediction.get("global_step") != global_step or
                     prediction.get("case_local_bridge_step") != expected_bridge or
                     prediction.get("run_id") != self.contract.run_id or
                     prediction.get("case_id") != self.contract.case_id or
                     prediction.get("integer_tick") != expected_tick or
                     abs(float(prediction.get("time_s")) - float(time_s)) > 1e-12 or
-                    prediction.get("ack") not in (1, "ack", "committed") or
+                    prediction.get("ack") != 1 or
                     prediction.get("finite_value_audit") is not True):
                 raise CoordinatorError("C++ predictor identity/ack/finite audit mismatch")
             motions = {sid: motion_builder(prediction, sid) for sid in range(3)}
@@ -242,7 +243,12 @@ class CppConfirmRun:
 def build_predictor_motion_by_slice(*, prediction: Mapping[str, Any], manifest: SliceManifest,
                                     H_by_slice_id: Mapping[int, Any],
                                     reference_positions_m: Mapping[int, Sequence[float]],
-                                    global_step: int, time_s: float) -> dict[int, MotionRecord]:
+                                    global_step: int, time_s: float,
+                                    expected_run_id: str | None = None,
+                                    source_global_step: int = 559,
+                                    source_time_s: float = 2.2075,
+                                    source_tick: int = 2_207_500_000,
+                                    dt_s: float = 0.00125) -> dict[int, MotionRecord]:
     """Build all target-time motions from one explicitly audited predictor.
 
     This helper is pure contract translation.  It requires predictor q,
@@ -255,15 +261,43 @@ def build_predictor_motion_by_slice(*, prediction: Mapping[str, Any], manifest: 
     missing = [key for key in required if key not in prediction]
     if missing:
         raise CoordinatorError("predictor motion is missing: " + ",".join(missing))
-    if int(prediction["global_step"]) != int(global_step) or abs(float(prediction["time_s"]) - float(time_s)) > 1e-12:
+    if (isinstance(global_step, bool) or not isinstance(global_step, int) or
+            isinstance(prediction["global_step"], bool) or not isinstance(prediction["global_step"], int) or
+            isinstance(prediction["case_local_bridge_step"], bool) or
+            not isinstance(prediction["case_local_bridge_step"], int) or
+            isinstance(prediction["integer_tick"], bool) or not isinstance(prediction["integer_tick"], int) or
+            not isinstance(prediction["run_id"], str) or not prediction["run_id"] or
+            not isinstance(prediction["case_id"], str) or prediction["case_id"] != manifest.case_id or
+            (expected_run_id is not None and prediction["run_id"] != expected_run_id) or
+            isinstance(time_s, bool) or not isinstance(time_s, (int, float)) or
+            not math.isfinite(float(time_s)) or
+            isinstance(prediction["time_s"], bool) or not isinstance(prediction["time_s"], (int, float)) or
+            not math.isfinite(float(prediction["time_s"]))):
+        raise CoordinatorError("predictor identity fields are malformed")
+    bridge = global_step - source_global_step
+    expected_time = float(source_time_s) + bridge * float(dt_s)
+    expected_tick = int(source_tick) + bridge * canonical_tick_delta(float(dt_s))
+    if (global_step <= source_global_step or bridge <= 0 or
+            abs(float(time_s) - expected_time) > 1e-12 or
+            prediction["global_step"] != global_step or
+            prediction["case_local_bridge_step"] != bridge or
+            abs(float(prediction["time_s"]) - float(time_s)) > 1e-12 or
+            prediction["integer_tick"] != expected_tick or
+            prediction["integer_tick"] != canonical_integer_tick(float(prediction["time_s"]))):
         raise CoordinatorError("predictor motion identity does not match target step/time")
     if set(H_by_slice_id) != {item.slice_id for item in manifest.slices}:
         raise CoordinatorError("predictor H mapping does not match the manifest")
     if set(reference_positions_m) != set(H_by_slice_id):
         raise CoordinatorError("predictor reference positions do not match the manifest")
-    q = tuple(float(value) for value in prediction["predictor"])
-    qdot = tuple(float(value) for value in prediction["predictor_qdot"])
-    qddot = tuple(float(value) for value in prediction["predictor_qddot"])
+    try:
+        q = tuple(float(value) for value in prediction["predictor"])
+        qdot = tuple(float(value) for value in prediction["predictor_qdot"])
+        qddot = tuple(float(value) for value in prediction["predictor_qddot"])
+    except (TypeError, ValueError, OverflowError) as exc:
+        raise CoordinatorError("predictor state is not numeric") from exc
+    if (not q or len(q) != len(qdot) or len(q) != len(qddot) or
+            any(not math.isfinite(value) for values in (q, qdot, qddot) for value in values)):
+        raise CoordinatorError("predictor state dimensions or finite-value audit failed")
     motions: dict[int, MotionRecord] = {}
     for item in manifest.slices:
         try:

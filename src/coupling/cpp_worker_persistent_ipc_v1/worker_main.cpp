@@ -2,6 +2,7 @@
 #include <cmath>
 #include <cstdint>
 #include <cstring>
+#include <cstdlib>
 #include <iostream>
 #include <string>
 #include <unordered_set>
@@ -39,6 +40,23 @@ bool c_string_valid(const char* p, std::size_t n) {
     if (static_cast<unsigned char>(p[i]) < 0x20) return false;
   }
   return terminated;
+}
+std::size_t bounded_length(const char* p, std::size_t n) {
+  for (std::size_t i = 0; i < n; ++i) if (p[i] == '\0') return i;
+  return n;
+}
+bool environment_is_one(const char* name) {
+#ifdef _WIN32
+  char* raw = nullptr;
+  std::size_t size = 0;
+  if (_dupenv_s(&raw, &size, name) != 0) return false;
+  const bool enabled = raw != nullptr && std::string(raw) == "1";
+  std::free(raw);
+  return enabled;
+#else
+  const char* raw = std::getenv(name);
+  return raw != nullptr && std::string(raw) == "1";
+#endif
 }
 bool finite_values(const std::vector<double>& values) {
   for (double value : values) if (!std::isfinite(value)) return false;
@@ -137,6 +155,7 @@ int main() {
   double expected_time_s = 0.0, expected_dt_s = 0.0;
   std::unordered_set<std::uint64_t> seen_request_ids, seen_transaction_ids;
   bool initialized = false;
+  const bool allow_legacy_direct = environment_is_one("CFD_ANCF_OFFLINE_LEGACY_TRANSPORT");
   while (true) {
     std::array<char, 8> magic{}; std::uint32_t length=0, count=0;
     // A clean worker exit requires the explicit SHUTDOWN control frame.  EOF
@@ -150,6 +169,10 @@ int main() {
       continue;
     }
     if (count != 1) return 2;
+    // This executable is transport-only legacy code.  It is never a
+    // production worker and accepts direct step frames only for an explicit
+    // offline fixture invocation.
+    if (!initialized && !allow_legacy_direct) return 4;
     initialized = true;
     std::vector<char> payload(length);
     if (!read_bytes(std::cin, payload.data(), payload.size())) return 3;
@@ -179,10 +202,10 @@ int main() {
         seen_request_ids.count(request_id) != 0 || seen_transaction_ids.count(transaction_id) != 0 ||
         !std::isfinite(time_s) || !std::isfinite(dt_s) || !c_string_valid(run_id, ID_RUN) || !c_string_valid(case_id, ID_CASE) ||
         !c_string_valid(producer, ID_ENDPOINT) || !c_string_valid(consumer, ID_ENDPOINT) ||
-        std::string(producer, strnlen_s(producer, ID_ENDPOINT)) != REQUEST_PRODUCER ||
-        std::string(consumer, strnlen_s(consumer, ID_ENDPOINT)) != REQUEST_CONSUMER) return 6;
-    const std::string run_value(run_id, strnlen_s(run_id, ID_RUN));
-    const std::string case_value(case_id, strnlen_s(case_id, ID_CASE));
+         std::string(producer, bounded_length(producer, ID_ENDPOINT)) != REQUEST_PRODUCER ||
+         std::string(consumer, bounded_length(consumer, ID_ENDPOINT)) != REQUEST_CONSUMER) return 6;
+    const std::string run_value(run_id, bounded_length(run_id, ID_RUN));
+    const std::string case_value(case_id, bounded_length(case_id, ID_CASE));
     if (expected_run.empty()) { expected_run = run_value; expected_case = case_value; }
     if (run_value != expected_run || case_value != expected_case) return 7;
     if (sequence > 1 && (step != expected_step + 1 || bridge != expected_bridge + 1 ||

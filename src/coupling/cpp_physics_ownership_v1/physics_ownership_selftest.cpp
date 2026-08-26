@@ -121,7 +121,11 @@ Model model() {
   value.fluid_density = 1025.0;
   value.gravity = 9.81;
   value.gauss_order = 5;
+  value.mass_gauss_order = 5;
   value.max_newton = 50;
+  value.boundary_contract_id = "ancf_v1_bottom_top_xy_zero";
+  value.fixed_dof = {0u, 1u, 2u, 6u * value.elements, 6u * value.elements + 1u};
+  value.prescribed_values = {0.0, 0.0, 0.0, 0.0, 0.0};
   return value;
 }
 
@@ -245,30 +249,26 @@ int main() {
     const double axial_work_relative_error = axial_work_error / std::max(1.0, std::abs(expected_axial_work));
     const bool axial_patch = axial_work_relative_error < 1.0e-12;
 
+    // Physics ownership switches are intentionally not representable in the
+    // production model contract.  Verify that each attempted partial model is
+    // rejected instead of silently changing the owned load semantics.
+    bool component_limits = true;
     Model gravity_only = value;
     gravity_only.include_buoyancy = false;
-    gravity_only.top_tension_N = 0.0;
     Model buoyancy_only = value;
     buoyancy_only.include_gravity = false;
-    buoyancy_only.top_tension_N = 0.0;
     Model top_only = value;
     top_only.include_gravity = false;
     top_only.include_buoyancy = false;
-    const auto gravity_load = cfd_ancf::physics_ownership::assemble_base_load(gravity_only);
-    const auto buoyancy_load = cfd_ancf::physics_ownership::assemble_base_load(buoyancy_only);
-    const auto top_load = cfd_ancf::physics_ownership::assemble_base_load(top_only);
-    const bool component_limits = norm_inf(gravity_load.body_buoyancy) == 0.0 &&
-                                  norm_inf(gravity_load.top_tension) == 0.0 &&
-                                  norm_inf(buoyancy_load.body_gravity) == 0.0 &&
-                                  norm_inf(buoyancy_load.top_tension) == 0.0 &&
-                                  norm_inf(top_load.body_gravity) == 0.0 &&
-                                  norm_inf(top_load.body_buoyancy) == 0.0 &&
-                                  near(top_load.top_tension[6 * value.elements + 2], value.top_tension_N, 1e-12);
+    for (const Model& invalid : {gravity_only, buoyancy_only, top_only}) {
+      try {
+        (void)cfd_ancf::physics_ownership::assemble_base_load(invalid);
+        component_limits = false;
+      } catch (const std::invalid_argument&) {
+      }
+    }
 
     Model unloaded = value;
-    unloaded.include_gravity = false;
-    unloaded.include_buoyancy = false;
-    unloaded.top_tension_N = 0.0;
     unloaded.newton_tolerance = 1.0e-4;
     auto continuous = cfd_ancf::make_reference_state(unloaded);
     auto before_restart = cfd_ancf::make_reference_state(unloaded);
@@ -335,6 +335,9 @@ int main() {
     Model fine_grid = unloaded;
     fine_grid.elements = 4;
     fine_grid.slice_positions_m = {0.0, 5.0, 10.0};
+    fine_grid.fixed_dof = {0u, 1u, 2u, 6u * fine_grid.elements,
+                           6u * fine_grid.elements + 1u};
+    fine_grid.prescribed_values = {0.0, 0.0, 0.0, 0.0, 0.0};
     auto coarse_grid_result = run_loaded(coarse_grid, 1);
     auto fine_grid_result = run_loaded(fine_grid, 1);
     const double grid_midpoint_error = std::abs(coarse_grid_result.q[6] - fine_grid_result.q[12]);

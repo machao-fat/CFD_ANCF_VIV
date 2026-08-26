@@ -22,13 +22,16 @@ from coupling.cpp_worker_persistent_ipc_v1.kernel_protocol import (
 from coupling.cpp_worker_persistent_ipc_v1 import kernel_protocol
 from coupling.cpp_worker_persistent_ipc_v1.protocol import (
     FrameError,
-    HEADER,
+    HEADER, INITIALIZE_ACK, MESSAGE_INITIALIZE_ACK, PROTOCOL_VERSION, SCHEMA_VERSION,
     RESPONSE,
     StepRequest,
     decode_response,
+    WORKER_ROLE,
 )
 from coupling.cpp_worker_persistent_ipc_v1.worker_client import PersistentCppWorkerClient
 from coupling.cpp_worker_confirm_v1.cpp_adapter import CppAdapterError, CppKernelCampaignAdapter
+
+os.environ.setdefault("CFD_ANCF_OFFLINE_DIRECT_WORKER", "1")
 
 
 ROOT = Path(__file__).resolve().parents[2]
@@ -46,6 +49,13 @@ def _transport_request() -> StepRequest:
         request_id=1, transaction_id=2, run_id="run", case_id="case",
         q=(0.0,), qdot=(0.0,), force=(0.0,),
     )
+
+
+def _initialize_ack_frame(*, role: str = WORKER_ROLE, message_type: int = MESSAGE_INITIALIZE_ACK) -> bytes:
+    role_bytes = role.encode("ascii") + b"\0"
+    role_bytes += b"\0" * (32 - len(role_bytes))
+    body = INITIALIZE_ACK.pack(SCHEMA_VERSION, PROTOCOL_VERSION, message_type, role_bytes)
+    return HEADER.pack(b"CFDANCF1", len(body), MESSAGE_INITIALIZE_ACK) + body
 
 
 def _kernel_request(sequence: int, global_step: int, bridge: int, time_s: float, tick: int) -> KernelStepRequest:
@@ -187,7 +197,7 @@ class ProtocolLifecycleAndPairLineageTests(unittest.TestCase):
         )
 
     def test_client_requires_initialize_and_becomes_terminal_after_disconnect(self) -> None:
-        reader = io.BytesIO()
+        reader = io.BytesIO(_initialize_ack_frame())
         writer = io.BytesIO()
         client = PersistentCppWorkerClient(reader, writer)
         with self.assertRaises(FrameError):
@@ -198,10 +208,18 @@ class ProtocolLifecycleAndPairLineageTests(unittest.TestCase):
         self.assertTrue(client.closed)
 
     def test_client_rejects_duplicate_initialize(self) -> None:
-        client = PersistentCppWorkerClient(io.BytesIO(), io.BytesIO())
+        client = PersistentCppWorkerClient(io.BytesIO(_initialize_ack_frame()), io.BytesIO())
         client.initialize()
         with self.assertRaises(FrameError):
             client.initialize()
+
+    def test_client_rejects_missing_or_wrong_initialize_ack(self) -> None:
+        for payload in (b"", _initialize_ack_frame(role="wrong_worker"),
+                        _initialize_ack_frame(message_type=2)):
+            client = PersistentCppWorkerClient(io.BytesIO(payload), io.BytesIO(), timeout_s=0.2)
+            with self.assertRaises(FrameError):
+                client.initialize()
+            self.assertTrue(client.closed)
 
     def test_transport_response_requires_terminated_utf8_identity(self) -> None:
         run = b"r" * 64

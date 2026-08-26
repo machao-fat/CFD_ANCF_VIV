@@ -1,0 +1,15 @@
+{
+  "case_id": "cpp_worker_protocol_lifecycle_repair_case_001",
+  "numerical_core_status": "validated",
+  "processes": {
+    "CFD": 0,
+    "MATLAB": 0,
+    "OpenFOAM": 0,
+    "WSL": 0,
+    "owned_residual": 0,
+    "reader_thread_residual": 0
+  },
+  "run_id": "cpp_worker_protocol_lifecycle_repair_001",
+  "scope": "offline protocol/lifecycle repair only",
+  "stage_id": "stage4f_d_cpp_worker_protocol_lifecycle_repair_v1"
+}

@@ -310,7 +310,12 @@ def main() -> int:
             motions = build_predictor_motion_by_slice(
                 prediction=prediction, manifest=manifest, H_by_slice_id=H,
                 reference_positions_m={sid: (0.0, 0.0, manifest.slice(sid).s_ref_m) for sid in range(3)},
-                global_step=global_step, time_s=time_s)
+                global_step=global_step, time_s=time_s,
+                expected_run_id=contract.run_id,
+                source_global_step=contract.source_global_step,
+                source_time_s=contract.source_time_s,
+                source_tick=contract.source_tick,
+                dt_s=contract.global_dt_s)
             prepare_start = time.perf_counter()
             prepared = confirm._barrier.prepare_step(global_step=global_step, time_s=time_s, motion_by_slice=motions)  # type: ignore[union-attr]
             prepare_end = time.perf_counter()

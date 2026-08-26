@@ -102,6 +102,19 @@ bool finite_values(const std::vector<double>& values) {
   for (double value : values) if (!std::isfinite(value)) return false;
   return true;
 }
+bool environment_is_one(const char* name) {
+#ifdef _WIN32
+  char* raw = nullptr;
+  std::size_t size = 0;
+  if (_dupenv_s(&raw, &size, name) != 0) return false;
+  const bool enabled = raw != nullptr && std::string(raw) == "1";
+  std::free(raw);
+  return enabled;
+#else
+  const char* raw = std::getenv(name);
+  return raw != nullptr && std::string(raw) == "1";
+#endif
+}
 
 bool exactly_symmetric(const cfd_ancf::Matrix& matrix) {
   if (matrix.rows != matrix.cols || matrix.data.size() != matrix.rows * matrix.cols) return false;
@@ -115,11 +128,13 @@ bool exactly_symmetric(const cfd_ancf::Matrix& matrix) {
 
 bool next_tick(std::uint64_t previous, double dt_s, std::uint64_t& result) {
   if (!std::isfinite(dt_s) || dt_s <= 0.0) return false;
-  const long double raw = static_cast<long double>(dt_s) * 1000000000.0L;
-  if (!std::isfinite(static_cast<double>(raw)) || raw < 0.0L ||
-      raw > static_cast<long double>((std::numeric_limits<long long>::max)())) return false;
+  // Match Python float multiplication followed by C++ llround, including
+  // valid fractional-nanosecond deltas at the half-tick boundary.
+  const double raw = dt_s * 1.0e9;
+  if (!std::isfinite(raw) || raw < 0.0 ||
+      raw > static_cast<double>((std::numeric_limits<long long>::max)())) return false;
   const auto delta = static_cast<std::uint64_t>(std::llround(raw));
-  if (delta == 0u || std::abs(raw - static_cast<long double>(delta)) > 1.0e-12L) return false;
+  if (delta == 0u) return false;
   if (previous > (std::numeric_limits<std::uint64_t>::max)() - delta) return false;
   result = previous + delta;
   return true;
@@ -127,13 +142,13 @@ bool next_tick(std::uint64_t previous, double dt_s, std::uint64_t& result) {
 
 bool canonical_time_tick(double time_s, std::uint64_t& result) {
   if (!std::isfinite(time_s) || time_s < 0.0) return false;
-  const long double raw = static_cast<long double>(time_s) * 1000000000.0L;
+  const double raw = time_s * 1.0e9;
   // std::llround returns signed long long; reject values outside that domain
   // before conversion instead of relying on implementation-defined behavior.
-  if (!std::isfinite(static_cast<double>(raw)) ||
-      raw > static_cast<long double>((std::numeric_limits<long long>::max)())) return false;
+  if (!std::isfinite(raw) ||
+      raw > static_cast<double>((std::numeric_limits<long long>::max)())) return false;
   const auto rounded = std::llround(raw);
-  if (rounded < 0 || std::abs(raw - static_cast<long double>(rounded)) > 1.0e-12L) return false;
+  if (rounded < 0) return false;
   result = static_cast<std::uint64_t>(rounded);
   return true;
 }
@@ -573,6 +588,7 @@ int main() {
   if (has_expected_contract && !decode_sha256_hex(expected_contract_text.c_str(), expected_contract_digest)) return 25;
   std::unordered_set<std::uint64_t> seen_request_ids, seen_transaction_ids;
   bool initialized = false;
+  const bool allow_offline_direct = environment_is_one("CFD_ANCF_OFFLINE_DIRECT_WORKER");
   while (true) {
     std::array<char, 8> magic{}; std::uint32_t length = 0, message_type = 0;
     // A clean worker exit requires the explicit SHUTDOWN control frame.  EOF
@@ -605,8 +621,10 @@ int main() {
       continue;
     }
     if (message_type != STEP_REQUEST) return 5;
-    // Preserve the legacy direct-worker entry point: a first STEP_REQUEST
-    // implicitly initializes a worker that did not receive a control frame.
+    // Production sessions must complete the explicit role handshake. Direct
+    // requests are retained only for offline protocol fixtures and require an
+    // explicit environment opt-in that production coordinators never set.
+    if (!initialized && !allow_offline_direct) return 4;
     initialized = true;
     std::vector<char> payload(length);
     if (!read_bytes(std::cin, payload.data(), payload.size())) return 6;

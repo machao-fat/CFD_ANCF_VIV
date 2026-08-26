@@ -25,6 +25,7 @@ from coupling.cpp_worker_persistent_ipc_v1.protocol import (
     MESSAGE_INITIALIZE, StepRequest, encode_control,
 )
 
+os.environ.setdefault("CFD_ANCF_OFFLINE_DIRECT_WORKER", "1")
 WORKER = BUILD_ROOT / "Release" / "cfd_ancf_ancf_kernel_worker.exe"
 
 

@@ -185,6 +185,11 @@ class KernelWorker:
             raise ConfirmError("production coordinator may only launch the full ANCF kernel worker")
         self.runtime.mkdir(parents=True, exist_ok=True)
         environment = os.environ.copy()
+        # Offline direct/legacy switches are test-only controls.  Production
+        # coordinator launches must clear inherited values before spawning the
+        # full ANCF worker, even when the parent shell used a fixture.
+        environment.pop("CFD_ANCF_OFFLINE_DIRECT_WORKER", None)
+        environment.pop("CFD_ANCF_OFFLINE_LEGACY_TRANSPORT", None)
         if self.expected_model_contract_sha256 is not None:
             environment["CFD_ANCF_EXPECTED_MODEL_CONTRACT_SHA256"] = self.expected_model_contract_sha256
         else:

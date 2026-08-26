@@ -13,6 +13,8 @@ from coupling.cpp_worker_persistent_ipc_v1.kernel_protocol import (
 from coupling.cpp_worker_confirm_v1.cpp_adapter import _model_contract_sha256
 from coupling.cpp_worker_persistent_ipc_v1.protocol import FrameError, encode_control, MESSAGE_SHUTDOWN
 
+os.environ.setdefault("CFD_ANCF_OFFLINE_DIRECT_WORKER", "1")
+
 
 ROOT = Path(__file__).resolve().parents[2]
 WORKER = ROOT / "runtime" / "cpp_worker_persistent_ipc_v1" / "build-release" / "cfd_ancf_ancf_kernel_worker.exe"

@@ -1,0 +1,13 @@
+{
+  "checks": [
+    "magic",
+    "schema",
+    "protocol",
+    "message_type",
+    "worker_role",
+    "NUL termination",
+    "zero padding",
+    "missing/wrong/duplicate ACK rejection"
+  ],
+  "status": "pass"
+}

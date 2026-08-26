@@ -1,0 +1,37 @@
+{
+  "C++_ANCF_NUMERICAL_CORE_STATUS": "validated",
+  "gate": "STAGE4F_D_CPP_WORKER_PROTOCOL_LIFECYCLE_REPAIR_V1_GATE: do_not_pass",
+  "processes": {
+    "CFD": 0,
+    "MATLAB": 0,
+    "OpenFOAM": 0,
+    "WSL": 0,
+    "owned_residual": 0,
+    "reader_thread_residual": 0
+  },
+  "protected_stage186_modified": false,
+  "reason": "MSVC build/analyze and all offline tests pass, but the required non-MSVC build is not evaluable on this host because no native non-MSVC compiler is installed.",
+  "tests": {
+    "compileall": "pass",
+    "cpp_selftests": "pass",
+    "focused_protocol_regression": {
+      "failed": 0,
+      "passed": 50
+    },
+    "msvc_analyze": "pass",
+    "msvc_release_w4": "pass",
+    "non_msvc_build": {
+      "reason": "No native GCC, Clang, or MinGW compiler is installed; WSL is prohibited.",
+      "status": "not_evaluable"
+    },
+    "root_unittest": {
+      "failed": 0,
+      "passed": 1199,
+      "skipped": 2
+    },
+    "stage190_black_box": {
+      "failed": 0,
+      "passed": 6
+    }
+  }
+}

@@ -1,0 +1,23 @@
+{
+  "compileall": "pass",
+  "cpp_selftests": "pass",
+  "focused_protocol_regression": {
+    "failed": 0,
+    "passed": 50
+  },
+  "msvc_analyze": "pass",
+  "msvc_release_w4": "pass",
+  "non_msvc_build": {
+    "reason": "No native GCC, Clang, or MinGW compiler is installed; WSL is prohibited.",
+    "status": "not_evaluable"
+  },
+  "root_unittest": {
+    "failed": 0,
+    "passed": 1199,
+    "skipped": 2
+  },
+  "stage190_black_box": {
+    "failed": 0,
+    "passed": 6
+  }
+}
