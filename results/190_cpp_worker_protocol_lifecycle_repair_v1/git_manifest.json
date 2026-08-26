@@ -1,6 +1,6 @@
 {
   "branch": "codex/cpp-worker-comprehensive-audit-repair-v1",
-  "commit": "a32ca082e4ea724bc784c15fffe4a39c433e90f1",
+  "commit": "0b6196d4e8bddf4d433bd59300ac0d097b931605",
   "excluded_user_paths": [
     "cases/",
     "references/",
