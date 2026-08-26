@@ -1,0 +1,33 @@
+{
+  "schema_version": "stage195_confirm_evidence_manifest_v1",
+  "stage_id": "stage4f_d_cpp_worker_persistent_ipc_confirm_v11",
+  "run_id": "cpp_worker_persistent_ipc_confirm_011",
+  "case_id": "cpp_worker_persistent_ipc_confirm_case_011",
+  "result_files": [
+    "results/195_cpp_worker_persistent_ipc_confirm_v11/stage4f_d_cpp_worker_persistent_ipc_v1_confirm_gate.json",
+    "results/195_cpp_worker_persistent_ipc_confirm_v11/phase_timing_summary.json",
+    "results/195_cpp_worker_persistent_ipc_confirm_v11/slice_timing_summary.json",
+    "results/195_cpp_worker_persistent_ipc_confirm_v11/performance_bottleneck_attribution.json",
+    "results/195_cpp_worker_persistent_ipc_confirm_v11/process_ownership_audit.json",
+    "results/195_cpp_worker_persistent_ipc_confirm_v11/checkpoint_snapshot_audit.json"
+  ],
+  "gate": "STAGE4F_D_CPP_WORKER_PERSISTENT_IPC_V1_CONFIRM_GATE: pass",
+  "numerical_core_status": "validated",
+  "real_process_starts": {
+    "cpp_worker": 1,
+    "MATLAB": 0,
+    "OpenFOAM": 3,
+    "WSL": 3,
+    "CFD": 3
+  },
+  "owned_residual": 0,
+  "physical_committed": "40/40",
+  "fully_audited": "40/40",
+  "old_evidence_modified": false,
+  "old_runtime_reused": false,
+  "formal_status": {
+    "FORMAL_STROUHAL_STATUS": "not_completed",
+    "STABLE_VIV_RESPONSE_CLAIM": "not_completed",
+    "LOCK_IN_CLAIM": "not_completed"
+  }
+}
