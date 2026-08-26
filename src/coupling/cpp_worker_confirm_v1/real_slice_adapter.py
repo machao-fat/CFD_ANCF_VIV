@@ -150,32 +150,23 @@ class PersistentOpenFOAMSliceAdapter:
         self.finalized_steps += 1
 
     def rollback_step(self, identity: StepIdentity) -> None:
-        """Best-effort compensation for an interrupted coordinator commit."""
+        """Abandon an uncommitted step and terminally poison this adapter.
+
+        A persistent OpenFOAM solver advances as soon as it consumes target
+        motion.  Its field state cannot be rolled back without creating a new
+        process from a restored case, which is explicitly disallowed inside a
+        bounded segment.  Therefore this is not advertised as compensation:
+        an interrupted step is recorded by the barrier journal and this
+        runtime must be discarded.
+        """
         if self._pending_step != identity.global_step:
             return
         abort = getattr(self.backend, "abort_step", None)
-        if not callable(abort):
-            raise RealSliceAdapterError("backend cannot rollback a pending step")
-        abort(identity.global_step, identity.time_s)
+        if callable(abort):
+            abort(identity.global_step, identity.time_s)
         self._pending_step = self._pending_time_s = None
         self._pending_envelope = None
-
-    def prepare_finalize_step(self, identity: StepIdentity) -> None:
-        """Require a backend-level transaction before barrier finalization.
-
-        The legacy persistent OpenFOAM process only exposes ``finish_step``;
-        it advances local bookkeeping irreversibly.  Treating that method as
-        a two-phase commit would permit a partial cross-process commit, so the
-        real adapter refuses to enter the commit phase until the backend
-        supplies prepare/finalize/abort hooks.
-        """
-        prepare = getattr(self.backend, "prepare_finalize_step", None)
-        abort = getattr(self.backend, "abort_step", None)
-        finalize = getattr(self.backend, "finalize_step", None)
-        if not (callable(prepare) and callable(finalize) and callable(abort)):
-            raise RealSliceAdapterError(
-                "OpenFOAM backend lacks transactional prepare/finalize/abort hooks")
-        prepare(identity.global_step, identity.time_s)
+        self._failed = True
 
     def stop(self) -> None:
         try:

@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import json
 import tempfile
 import unittest
 from pathlib import Path
@@ -79,6 +80,9 @@ class BarrierTests(unittest.TestCase):
         self.assertEqual(barrier.records, [])
         self.assertFalse((barrier.runtime / "checkpoint" / "checkpoint_00000560.json").exists())
         self.assertEqual([barrier.engines[sid].rollback_calls for sid in range(3)], [1, 1, 1])
+        journal = json.loads((barrier.runtime / "commit_journal" / "commit_00000560.json").read_text(encoding="utf-8"))
+        self.assertEqual(journal["state"], "aborted")
+        self.assertEqual(journal["recovery"], "runtime_terminal_no_resume")
         barrier.stop()
 
     def test_commit_failure_invokes_rollback_callback(self):

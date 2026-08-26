@@ -170,9 +170,10 @@ class Stage100SliceBarrier:
             journal_path.parent.mkdir(parents=True, exist_ok=True)
             finalized: list[int] = []
             try:
-                # Persist the transaction intent before invoking callbacks or
-                # external owners.  A crash after this point leaves a durable
-                # prepared/aborted record which startup will refuse to reuse.
+                # Persist intent before callbacks or external owners.  OpenFOAM
+                # may already have advanced after target-motion consumption;
+                # this journal deliberately enforces terminal fail-closed
+                # handling rather than claiming a rollback is possible.
                 journal = {"schema_version": "stage100_commit_journal_v1", "state": "prepared",
                            "identity": {"run_id": identity.run_id, "case_id": identity.case_id,
                                         "global_step": identity.global_step,
@@ -220,9 +221,10 @@ class Stage100SliceBarrier:
                     rollback_callback()
                 except Exception as rollback_exc:
                     exc = RuntimeError(f"{exc}; rollback failed: {rollback_exc}")
-            # Compensate any slice finalizers that already returned.  Real
-            # adapters may expose an engine-specific abort; engines without
-            # one remain terminal and the aborted journal prevents reuse.
+            # Notify every participant that the global transaction is
+            # terminal.  For real persistent OpenFOAM this abandons the
+            # runtime; it is not a physical rollback and the aborted journal
+            # prevents any later resume from the partial state.
             for sid in reversed(locals().get("finalized", [])):
                 try:
                     rollback = getattr(self.engines[sid], "rollback_step", None)
@@ -233,7 +235,8 @@ class Stage100SliceBarrier:
             try:
                 failure = {"schema_version": "stage100_commit_journal_v1", "state": "aborted",
                            "error": str(exc), "finalized_slice_ids": locals().get("finalized", []),
-                           "global_step": identity.global_step}
+                           "global_step": identity.global_step,
+                           "recovery": "runtime_terminal_no_resume"}
                 journal_path.write_text(json.dumps(failure, ensure_ascii=True, sort_keys=True, allow_nan=False) + "\n", encoding="utf-8")
             except Exception:
                 pass
