@@ -59,6 +59,7 @@ class ParticipantLifecycleTests(unittest.TestCase):
         session.initialize()
         with self.assertRaises(ParticipantError):
             session.write_displacement(msg("force"))
+        self.assertEqual(session.state, ParticipantState.FAILED)
         with self.assertRaises(ParticipantError):
             session.write_displacement(make_message(
                 schema_version=1, run_id="other", case_id="case270", slice_id="slice_0000",

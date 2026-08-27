@@ -95,8 +95,11 @@ class ParticipantSession:
             raise ParticipantError(str(exc)) from exc
         expected_tick = int(round(message.time_s * 1e9))
         if (message.run_id, message.case_id, message.slice_id) != (self.run_id, self.case_id, self.slice_id):
+            self.state = ParticipantState.FAILED
             raise ParticipantError("participant identity mismatch")
         if message.global_step != self.global_step or message.case_local_bridge_step != self.local_bridge_step:
+            self.state = ParticipantState.FAILED
             raise ParticipantError("participant step mismatch")
         if message.integer_tick != expected_tick or message.kind != kind:
+            self.state = ParticipantState.FAILED
             raise ParticipantError("participant time/kind mismatch")

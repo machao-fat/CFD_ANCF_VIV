@@ -16,7 +16,7 @@ def main() -> int:
     RESULTS.mkdir(parents=True, exist_ok=True)
     env = os.environ.copy()
     env["PYTHONPATH"] = str(ROOT / "src") + os.pathsep + env.get("PYTHONPATH", "")
-    command = [sys.executable, "-m", "unittest", "tests.precice_adapter_v1.test_protocol_and_barrier", "tests.precice_adapter_v1.test_participant_lifecycle"]
+    command = [sys.executable, "-m", "unittest", "tests.precice_adapter_v1.test_protocol_and_barrier", "tests.precice_adapter_v1.test_participant_lifecycle", "tests.precice_adapter_v1.test_precice_backend"]
     run = subprocess.run(command, cwd=ROOT, env=env, capture_output=True, text=True, encoding="utf-8", errors="replace")
     compile_ok = subprocess.run([sys.executable, "-m", "compileall", "-q", "src/coupling/precice_adapter_v1", "tests/precice_adapter_v1", "tools/precice_adapter_v1"], cwd=ROOT).returncode == 0
     counts = {"matlab": 0, "openfoam": 0, "wsl_cfd": 0, "cfd": 0}
@@ -24,9 +24,9 @@ def main() -> int:
         "gate_id": "STAGE4F_D_PRECICE_PARTICIPANT_CONTRACT_V1_GATE",
         "status": "pass" if run.returncode == 0 and compile_ok and all(v == 0 for v in counts.values()) else "do_not_pass",
         "timestamp": datetime.now(timezone.utc).isoformat(),
-        "scope": "offline participant lifecycle only; no preCICE/OpenFOAM participant started",
+        "scope": "offline pyprecice backend API binding with injected fake participant; no real participant started",
         "lifecycle": ["CREATED", "INITIALIZED", "write_displacement", "advance", "read_force", "FINALIZED"],
-        "faults": ["duplicate write", "wrong step", "incomplete finalize", "identity mismatch", "time mismatch", "kind mismatch"],
+        "faults": ["duplicate write", "wrong step", "incomplete finalize", "identity mismatch", "time mismatch", "kind mismatch", "malformed XML", "backend disconnect"],
         "tests": {"return_code": run.returncode, "compileall": compile_ok, "stdout": run.stdout, "stderr": run.stderr},
         "real_process_counts": counts,
         "protected": {"historical_evidence_modified": False, "ancf_core_modified": False, "physical_parameters_modified": False, "formal_viv_validation_complete": False},
