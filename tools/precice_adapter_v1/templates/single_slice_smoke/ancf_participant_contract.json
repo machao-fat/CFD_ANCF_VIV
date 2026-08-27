@@ -1,0 +1,21 @@
+{
+  "schema_version": 1,
+  "stage_id": "stage4f_d_precice_single_slice_smoke_config_v1",
+  "run_id": "UNASSIGNED_NEW_RUN_ID",
+  "case_id": "UNASSIGNED_NEW_CASE_ID",
+  "slice_id": "slice_0000",
+  "participant": "Structure",
+  "mesh_name": "Structure-Mesh",
+  "displacement_data": "Displacement",
+  "force_data": "Force",
+  "coupling_dt_s": 0.00125,
+  "max_steps": 8,
+  "slice_count": 1,
+  "no_cfd": true,
+  "no_correction": true,
+  "no_openfoam": true,
+  "no_wsl": true,
+  "no_retry": true,
+  "requires_fresh_runtime": true,
+  "requires_explicit_authorization": true
+}

@@ -1,0 +1,28 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<precice-configuration xmlns:data="http://www.precice.org/schemas/data" xmlns:mapping="http://www.precice.org/schemas/mapping" xmlns:coupling-scheme="http://www.precice.org/schemas/coupling-scheme">
+  <data:vector name="Displacement" waveform-degree="1" />
+  <data:vector name="Force" waveform-degree="1" />
+  <mesh name="Structure-Mesh" dimensions="2" />
+  <mesh name="Fluid-Mesh" dimensions="2" />
+  <participant name="Structure">
+    <provide-mesh name="Structure-Mesh" />
+    <receive-mesh name="Fluid-Mesh" from="Fluid" />
+    <write-data name="Displacement" mesh="Structure-Mesh" />
+    <read-data name="Force" mesh="Structure-Mesh" />
+  </participant>
+  <participant name="Fluid">
+    <provide-mesh name="Fluid-Mesh" />
+    <receive-mesh name="Structure-Mesh" from="Structure" />
+    <write-data name="Force" mesh="Fluid-Mesh" />
+    <read-data name="Displacement" mesh="Structure-Mesh" />
+  </participant>
+  <mapping:nearest-neighbor direction="forward" from="Structure-Mesh" to="Fluid-Mesh" constraint="consistent" />
+  <mapping:nearest-neighbor direction="inverse" from="Fluid-Mesh" to="Structure-Mesh" constraint="conservative" />
+  <coupling-scheme:parallel-explicit>
+    <participants first="Structure" second="Fluid" />
+    <time-window-size value="0.00125" />
+    <max-time value="0.01" />
+    <exchange data="Displacement" mesh="Structure-Mesh" from="Structure" to="Fluid" />
+    <exchange data="Force" mesh="Fluid-Mesh" from="Fluid" to="Structure" />
+  </coupling-scheme:parallel-explicit>
+</precice-configuration>
