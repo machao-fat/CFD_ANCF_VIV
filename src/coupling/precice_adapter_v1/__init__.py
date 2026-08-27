@@ -4,9 +4,11 @@ from .protocol import ExchangeMessage, ProtocolError, canonical_tick, make_messa
 from .barrier import GlobalBarrier, BarrierError
 from .transports import FileTransport, PreciceTransport, TransportUnavailable
 from .guards import NoCfdViolation, validate_probe_only_contract, assert_no_processes_started
+from .participant import ParticipantError, ParticipantSession, ParticipantState
 
 __all__ = [
     "ExchangeMessage", "ProtocolError", "canonical_tick", "make_message", "GlobalBarrier",
     "BarrierError", "FileTransport", "PreciceTransport", "TransportUnavailable",
     "NoCfdViolation", "validate_probe_only_contract", "assert_no_processes_started",
+    "ParticipantError", "ParticipantSession", "ParticipantState",
 ]
