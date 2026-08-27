@@ -8,4 +8,4 @@
 - Explicitly excluded: Stage 1--268 evidence, ANCF/EB core, physical parameters, old file transport, and unrelated worktree changes.
 - Adapter LF normalization is retained only in the isolated external reference copy used for the recorded build; it is not merged into the project solver.
 
-Resulting commit: `ffadb64` (`feat(precice): add isolated single-slice adapter contract`). Use this commit together with the Gate JSON when citing Stage 269.
+The implementation was first committed as `ffadb64` and amended once to include this record. The final commit containing this file is the current Stage 269 commit shown by `git log -1`; use that hash together with the Gate JSON when citing Stage 269.
