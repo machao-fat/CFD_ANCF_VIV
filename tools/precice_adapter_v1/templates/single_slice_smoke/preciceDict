@@ -16,7 +16,7 @@ interfaces
     Interface1
     {
         mesh        Fluid-Mesh;
-        patches     (cylinder);
+        patches     (cyl);
         locations   faceNodes;
         readData    (Displacement);
         writeData   (Force);
