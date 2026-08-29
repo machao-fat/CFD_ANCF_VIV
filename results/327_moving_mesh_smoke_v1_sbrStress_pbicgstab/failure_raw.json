@@ -1,0 +1,13 @@
+{
+  "stage_id": "stage327_moving_mesh_smoke_v1_sbrStress_pbicgstab",
+  "run_id": "s327_sbrStress_pbicgstab_three_slice_smoke_v1",
+  "case_id": "c327_sbrStress_pbicgstab_three_slice_smoke_v1",
+  "mesh_method": "sbrStress",
+  "status": "do_not_pass",
+  "scope": {"steps": 8, "dt_s": 0.005, "slice_count": 3},
+  "failure_classification": "openfoam_fatal_io_invalid_symmetric_preconditioner",
+  "failure_evidence": "The SBR-stress cellDisplacement matrix is symmetric; PBiCGStab/DILU was rejected before advancing.",
+  "real_process_starts": {"matlab": 0, "openfoam": 3, "wsl": 1, "cfd": 3, "cpp_worker": 1, "precice_structure": 1},
+  "cleanup": {"owned_residual": 0, "same_runtime_retry": false},
+  "next_action": "use a fresh runtime and compatible symmetric solver for any repair"
+}

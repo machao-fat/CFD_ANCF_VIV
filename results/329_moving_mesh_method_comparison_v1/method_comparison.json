@@ -1,0 +1,99 @@
+{
+  "schema_version": 1,
+  "stage_id": "stage329_moving_mesh_method_comparison_v1",
+  "scope": {
+    "steps": 8,
+    "target_time_s": 0.04,
+    "dt_s": 0.005,
+    "slice_count": 3,
+    "profile": "optimized_audited",
+    "same_mesh_and_physics": true
+  },
+  "results": [
+    {
+      "method": "uniform",
+      "stage_id": "stage322_moving_mesh_smoke_v1_optimized_audited",
+      "status": "pass",
+      "wall_clock_s": 81.298671,
+      "mesh_motion_solves_slice0000": 80,
+      "mesh_motion_iterations_slice0000": 26486,
+      "max_relative_force_difference_vs_uniform": 0.0,
+      "runtime_bytes": 100173990
+    },
+    {
+      "method": "inverseDistance",
+      "stage_id": "stage323_moving_mesh_smoke_v1_inverseDistance",
+      "status": "pass",
+      "wall_clock_s": 21.138592,
+      "speedup_vs_uniform": 3.845294,
+      "wall_clock_reduction_fraction_vs_uniform": 0.740159,
+      "mesh_motion_solves_slice0000": 80,
+      "mesh_motion_iterations_slice0000": 14,
+      "max_relative_force_difference_vs_uniform": 0.003225259665840167,
+      "max_interface_motion_difference_m": 4.649397172817871e-09,
+      "runtime_bytes": 100174177
+    },
+    {
+      "method": "quadratic",
+      "stage_id": "stage324_moving_mesh_smoke_v1_quadratic",
+      "status": "pass",
+      "wall_clock_s": 22.041589,
+      "speedup_vs_uniform": 3.687822,
+      "wall_clock_reduction_fraction_vs_uniform": 0.728764,
+      "mesh_motion_solves_slice0000": 80,
+      "mesh_motion_iterations_slice0000": 14,
+      "max_relative_force_difference_vs_uniform": 0.010237338077922457,
+      "max_interface_motion_difference_m": 2.0320744148483172e-07,
+      "runtime_bytes": 100174381
+    },
+    {
+      "method": "exponential",
+      "stage_id": "stage325_moving_mesh_smoke_v1_exponential",
+      "status": "pass",
+      "wall_clock_s": 40.29579,
+      "speedup_vs_uniform": 2.016305,
+      "wall_clock_reduction_fraction_vs_uniform": 0.504354,
+      "mesh_motion_solves_slice0000": 80,
+      "mesh_motion_iterations_slice0000": 10339,
+      "max_relative_force_difference_vs_uniform": 0.0001537699400901348,
+      "max_interface_motion_difference_m": 8.881810537693033e-10,
+      "runtime_bytes": 100174088
+    },
+    {
+      "method": "sbrStress",
+      "stage_id": "stage326_moving_mesh_smoke_v1_sbrStress",
+      "status": "do_not_pass",
+      "failure": "sigFpe in GAMGSolver::scale near time 0.01 s",
+      "repair_attempt_stage_id": "stage328_moving_mesh_smoke_v1_sbrStress_pcg",
+      "repair_attempt_status": "do_not_pass"
+    },
+    {
+      "method": "RBFMotionSolver",
+      "status": "not_tested",
+      "reason": "The repository has no OpenFOAM 10 RBFMotionSolver implementation; the thesis implementation targets OpenFOAM 2.3.0 and cannot be represented by a native Laplacian profile. A separate port is required before a truthful smoke test."
+    }
+  ],
+  "recommendation": {
+    "production_candidate": "inverseDistance",
+    "fallback_candidate": "quadratic",
+    "reason": "Both passed the moving-mesh Gate and reduced wall clock by about 73-74%; inverseDistance had the smallest force deviation among the fast candidates."
+  },
+  "real_process_starts_total": {
+    "matlab": 0,
+    "openfoam": 18,
+    "wsl": 6,
+    "cfd": 18,
+    "cpp_worker": 6,
+    "precice_structure": 6
+  },
+  "owned_residual_all_completed_or_cleaned": 0,
+  "protected": {
+    "ancf_eb_core_modified": false,
+    "physical_parameters_modified": false,
+    "global_dt_modified": false,
+    "slice_count_modified": false,
+    "formal_protocol_modified": false,
+    "old_runtimes_reused": false
+  },
+  "gate": "STAGE4F_D_MOVING_MESH_METHOD_COMPARISON_V1_GATE: pass_with_rejected_candidates"
+}

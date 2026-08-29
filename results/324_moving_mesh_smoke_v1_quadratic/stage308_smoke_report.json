@@ -1,0 +1,198 @@
+{
+  "schema_version": 1,
+  "stage_id": "stage324_moving_mesh_smoke_v1_quadratic",
+  "run_id": "s324_quadratic_three_slice_smoke_v1",
+  "case_id": "c324_quadratic_three_slice_smoke_v1",
+  "mesh_method": "quadratic",
+  "scope": {
+    "source_step": 0,
+    "source_time_s": 0.0,
+    "target_step": 8,
+    "target_time_s": 0.04,
+    "dt_s": 0.005,
+    "slice_count": 3
+  },
+  "status": "pass",
+  "checks": {
+    "launcher_return_zero": true,
+    "structure_finalized": true,
+    "structure_records_8": true,
+    "mapping_records_8": true,
+    "returns_zero": true,
+    "fluid_end_marker_all": true,
+    "fluid_stderr_empty": true,
+    "corrected_configs_all_pass": true,
+    "point_displacement_outputs_present": true,
+    "point_displacement_cyl_compatible": true,
+    "point_displacement_cyl_nonzero_artifact": true,
+    "cell_displacement_cyl_nonzero": true,
+    "moved_mesh_points_present": true,
+    "moved_mesh_points_changed": true,
+    "slice_motion_identity_distinct": true,
+    "slice_force_identity_distinct": true,
+    "owned_residual_zero": true
+  },
+  "config_audits": [
+    {
+      "checks": {
+        "point_displacement_is_bound": true,
+        "old_unused_binding_absent": true,
+        "cell_displacement_is_bound": true,
+        "participant_identity_present": true,
+        "fluid_mesh_present": true,
+        "cyl_face_center_interface": true,
+        "displacement_read_data": true,
+        "force_write_data": true,
+        "point_cyl_fixed_value": true,
+        "velocity_cyl_moving_wall": true,
+        "dynamic_motion_solver": true,
+        "displacement_laplacian": true,
+        "field_name_matches_solver": true
+      },
+      "status": "pass",
+      "adapter_path": "faceCenters -> cellDisplacement -> pointDisplacement via primitivePatchInterpolation -> displacementLaplacian",
+      "required_postrun_evidence": [
+        "per-step received Displacement hash and finite-value audit for every slice",
+        "per-step nonzero pointDisplacement/cylinder motion hash when structure motion is nonzero",
+        "per-step moved mesh-point hash or equivalent mesh-motion diagnostic",
+        "per-slice Force hash and value identity; accidental broadcast fails closed"
+      ]
+    },
+    {
+      "checks": {
+        "point_displacement_is_bound": true,
+        "old_unused_binding_absent": true,
+        "cell_displacement_is_bound": true,
+        "participant_identity_present": true,
+        "fluid_mesh_present": true,
+        "cyl_face_center_interface": true,
+        "displacement_read_data": true,
+        "force_write_data": true,
+        "point_cyl_fixed_value": true,
+        "velocity_cyl_moving_wall": true,
+        "dynamic_motion_solver": true,
+        "displacement_laplacian": true,
+        "field_name_matches_solver": true
+      },
+      "status": "pass",
+      "adapter_path": "faceCenters -> cellDisplacement -> pointDisplacement via primitivePatchInterpolation -> displacementLaplacian",
+      "required_postrun_evidence": [
+        "per-step received Displacement hash and finite-value audit for every slice",
+        "per-step nonzero pointDisplacement/cylinder motion hash when structure motion is nonzero",
+        "per-step moved mesh-point hash or equivalent mesh-motion diagnostic",
+        "per-slice Force hash and value identity; accidental broadcast fails closed"
+      ]
+    },
+    {
+      "checks": {
+        "point_displacement_is_bound": true,
+        "old_unused_binding_absent": true,
+        "cell_displacement_is_bound": true,
+        "participant_identity_present": true,
+        "fluid_mesh_present": true,
+        "cyl_face_center_interface": true,
+        "displacement_read_data": true,
+        "force_write_data": true,
+        "point_cyl_fixed_value": true,
+        "velocity_cyl_moving_wall": true,
+        "dynamic_motion_solver": true,
+        "displacement_laplacian": true,
+        "field_name_matches_solver": true
+      },
+      "status": "pass",
+      "adapter_path": "faceCenters -> cellDisplacement -> pointDisplacement via primitivePatchInterpolation -> displacementLaplacian",
+      "required_postrun_evidence": [
+        "per-step received Displacement hash and finite-value audit for every slice",
+        "per-step nonzero pointDisplacement/cylinder motion hash when structure motion is nonzero",
+        "per-step moved mesh-point hash or equivalent mesh-motion diagnostic",
+        "per-slice Force hash and value identity; accidental broadcast fails closed"
+      ]
+    }
+  ],
+  "final_fields": [
+    {
+      "slice_id": "slice_0000",
+      "pointDisplacement": "D:\\研二文件\\开题准备\\CFD_ANCF_VIV\\runtime\\stage324_moving_mesh_smoke_v1_quadratic\\slice_0000\\0.04\\pointDisplacement",
+      "pointDisplacement_sha256": "a843bb3164aaf213d45ed2f05657045136d213a86affd11a2513433d5ccd9a13",
+      "pointDisplacement_cyl_fixedValue": true,
+      "pointDisplacement_cyl_nonzero": true,
+      "cellDisplacement": "D:\\研二文件\\开题准备\\CFD_ANCF_VIV\\runtime\\stage324_moving_mesh_smoke_v1_quadratic\\slice_0000\\0.04\\cellDisplacement",
+      "cellDisplacement_sha256": "e31111d6b9278fba111ac5bf26a680326a828de7a080be19ab72c9807a2225d6",
+      "cellDisplacement_cyl_nonzero": true,
+      "moved_mesh_points": [
+        "D:\\研二文件\\开题准备\\CFD_ANCF_VIV\\runtime\\stage324_moving_mesh_smoke_v1_quadratic\\slice_0000\\0.04\\polyMesh\\points",
+        "D:\\研二文件\\开题准备\\CFD_ANCF_VIV\\runtime\\stage324_moving_mesh_smoke_v1_quadratic\\slice_0000\\constant\\polyMesh\\points"
+      ],
+      "moved_mesh_points_present": true,
+      "initial_mesh_points_sha256": "92854370155e22e261718c205c2483d6c161bc70b80f7d3ebd95251a3f188a56",
+      "moved_mesh_points_sha256": "fcf7d4953eabeefb783e4ca0dffaf91342793bbdc64e30f7ba1966e76ec4ed8a",
+      "moved_mesh_points_changed": true
+    },
+    {
+      "slice_id": "slice_0001",
+      "pointDisplacement": "D:\\研二文件\\开题准备\\CFD_ANCF_VIV\\runtime\\stage324_moving_mesh_smoke_v1_quadratic\\slice_0001\\0.04\\pointDisplacement",
+      "pointDisplacement_sha256": "7554d5f33cca80229e2984f51fddca7457bb164dbdff5cdf0bcf5b24f64b06a8",
+      "pointDisplacement_cyl_fixedValue": true,
+      "pointDisplacement_cyl_nonzero": true,
+      "cellDisplacement": "D:\\研二文件\\开题准备\\CFD_ANCF_VIV\\runtime\\stage324_moving_mesh_smoke_v1_quadratic\\slice_0001\\0.04\\cellDisplacement",
+      "cellDisplacement_sha256": "cd09f1b6276cc80d521e778b81b08dc9e175ad94b8c307dbd76627092dcaf438",
+      "cellDisplacement_cyl_nonzero": true,
+      "moved_mesh_points": [
+        "D:\\研二文件\\开题准备\\CFD_ANCF_VIV\\runtime\\stage324_moving_mesh_smoke_v1_quadratic\\slice_0001\\0.04\\polyMesh\\points",
+        "D:\\研二文件\\开题准备\\CFD_ANCF_VIV\\runtime\\stage324_moving_mesh_smoke_v1_quadratic\\slice_0001\\constant\\polyMesh\\points"
+      ],
+      "moved_mesh_points_present": true,
+      "initial_mesh_points_sha256": "511200d711302e99b660fe0f719722eb894a29ae446e5fbd87d566f2715ee8f9",
+      "moved_mesh_points_sha256": "fcf7d4953eabeefb783e4ca0dffaf91342793bbdc64e30f7ba1966e76ec4ed8a",
+      "moved_mesh_points_changed": true
+    },
+    {
+      "slice_id": "slice_0002",
+      "pointDisplacement": "D:\\研二文件\\开题准备\\CFD_ANCF_VIV\\runtime\\stage324_moving_mesh_smoke_v1_quadratic\\slice_0002\\0.04\\pointDisplacement",
+      "pointDisplacement_sha256": "4be86f32db1c5c40d744859ce38a8c8d3ba8254d5b1e85c3944b0784411dd343",
+      "pointDisplacement_cyl_fixedValue": true,
+      "pointDisplacement_cyl_nonzero": true,
+      "cellDisplacement": "D:\\研二文件\\开题准备\\CFD_ANCF_VIV\\runtime\\stage324_moving_mesh_smoke_v1_quadratic\\slice_0002\\0.04\\cellDisplacement",
+      "cellDisplacement_sha256": "fbab639990332a5284f58f150a3483790d0f2b38a3dc6660a9373920c467ec09",
+      "cellDisplacement_cyl_nonzero": true,
+      "moved_mesh_points": [
+        "D:\\研二文件\\开题准备\\CFD_ANCF_VIV\\runtime\\stage324_moving_mesh_smoke_v1_quadratic\\slice_0002\\0.04\\polyMesh\\points",
+        "D:\\研二文件\\开题准备\\CFD_ANCF_VIV\\runtime\\stage324_moving_mesh_smoke_v1_quadratic\\slice_0002\\constant\\polyMesh\\points"
+      ],
+      "moved_mesh_points_present": true,
+      "initial_mesh_points_sha256": "95b4a4ec558175255ccd7aad692e98277be50f740df2e68a89e1647d5a8a3d09",
+      "moved_mesh_points_sha256": "fcf7d4953eabeefb783e4ca0dffaf91342793bbdc64e30f7ba1966e76ec4ed8a",
+      "moved_mesh_points_changed": true
+    }
+  ],
+  "returns_text": "structure_return=0\nfluid_0000_return=0\nfluid_0001_return=0\nfluid_0002_return=0\n",
+  "mapping_record_count": 8,
+  "distinct_force_hash_rows": 7,
+  "distinct_motion_rows": 8,
+  "real_process_starts": {
+    "matlab": 0,
+    "openfoam": 3,
+    "wsl": 1,
+    "cfd": 3,
+    "cpp_worker": 1,
+    "precice_structure": 1
+  },
+  "owned_residual": 0,
+  "wall_clock": {
+    "start_utc": "2026-08-29T20:59:28.377503+00:00",
+    "end_utc": "2026-08-29T20:59:50.419092+00:00",
+    "elapsed_s": 22.041589
+  },
+  "protected": {
+    "stage304_runtime_modified": false,
+    "stage305_runtime_modified": false,
+    "stage307_preflight_modified": false,
+    "ancf_eb_core_modified": false,
+    "physical_parameters_modified": false,
+    "global_dt_modified": false,
+    "slice_count_modified": false,
+    "numerical_thresholds_modified": false,
+    "formal_protocol_modified": false
+  },
+  "next_authorization": "new explicit authorization required before any longer run"
+}

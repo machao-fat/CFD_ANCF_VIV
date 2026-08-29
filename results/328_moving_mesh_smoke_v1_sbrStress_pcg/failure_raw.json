@@ -1,0 +1,14 @@
+{
+  "stage_id": "stage328_moving_mesh_smoke_v1_sbrStress_pcg",
+  "run_id": "s328_sbrStress_pcg_three_slice_smoke_v1",
+  "case_id": "c328_sbrStress_pcg_three_slice_smoke_v1",
+  "mesh_method": "sbrStress",
+  "status": "do_not_pass",
+  "scope": {"steps": 8, "dt_s": 0.005, "slice_count": 3},
+  "solver_repair": "cellDisplacement PCG/DIC",
+  "failure_classification": "openfoam_sigfpe_during_pressure_gamg_after_mesh_motion",
+  "failure_evidence": "All three fluid stderr logs contain Foam::sigFpe in GAMGSolver::scale while advancing near time 0.01 s; cellDisplacement solver configuration was accepted.",
+  "real_process_starts": {"matlab": 0, "openfoam": 3, "wsl": 1, "cfd": 3, "cpp_worker": 1, "precice_structure": 1},
+  "cleanup": {"owned_residual": 0, "same_runtime_retry": false},
+  "next_action": "reject SBRStress for this case and preserve evidence"
+}

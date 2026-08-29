@@ -1,0 +1,13 @@
+{
+  "stage_id": "stage326_moving_mesh_smoke_v1_sbrStress",
+  "run_id": "s326_sbrStress_three_slice_smoke_v1",
+  "case_id": "c326_sbrStress_three_slice_smoke_v1",
+  "mesh_method": "sbrStress",
+  "status": "do_not_pass",
+  "scope": {"steps": 8, "dt_s": 0.005, "slice_count": 3},
+  "failure_classification": "openfoam_sigfpe_gamg_cell_displacement",
+  "failure_evidence": "All three fluid stderr logs contain Foam::sigFpe in GAMGSolver::scale while advancing near time 0.01 s.",
+  "real_process_starts": {"matlab": 0, "openfoam": 3, "wsl": 1, "cfd": 3, "cpp_worker": 1, "precice_structure": 1},
+  "cleanup": {"owned_residual": 0, "same_runtime_retry": false},
+  "next_action": "candidate rejected for this configuration; any repair must use a fresh runtime"
+}
