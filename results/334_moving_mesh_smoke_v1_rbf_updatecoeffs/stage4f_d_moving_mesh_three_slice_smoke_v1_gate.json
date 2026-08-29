@@ -1,0 +1,52 @@
+{
+  "gate_id": "STAGE4F_D_MOVING_MESH_THREE_SLICE_SMOKE_V1_GATE",
+  "status": "do_not_pass",
+  "stage_id": "stage334_moving_mesh_smoke_v1_rbf_updatecoeffs",
+  "run_id": "s334_rbf_three_slice_smoke_v1",
+  "case_id": "c334_rbf_three_slice_smoke_v1",
+  "mesh_method": "rbf",
+  "scope": {
+    "source_step": 0,
+    "source_time_s": 0.0,
+    "target_step": 8,
+    "target_time_s": 0.04,
+    "dt_s": 0.005,
+    "slice_count": 3
+  },
+  "checks": {
+    "launcher_return_zero": true,
+    "structure_finalized": true,
+    "structure_records_8": true,
+    "mapping_records_8": true,
+    "returns_zero": true,
+    "fluid_end_marker_all": true,
+    "fluid_stderr_empty": true,
+    "corrected_configs_all_pass": true,
+    "point_displacement_outputs_present": true,
+    "point_displacement_cyl_compatible": true,
+    "point_displacement_cyl_nonzero_artifact": true,
+    "cell_displacement_cyl_nonzero": true,
+    "moved_mesh_points_present": true,
+    "moved_mesh_points_changed": true,
+    "slice_motion_identity_distinct": true,
+    "slice_force_identity_distinct": false,
+    "owned_residual_zero": true
+  },
+  "root_cause_repair": "namePointDisplacement pointDisplacement bound to displacementLaplacian path",
+  "real_process_starts": {
+    "matlab": 0,
+    "openfoam": 3,
+    "wsl": 1,
+    "cfd": 3,
+    "cpp_worker": 1,
+    "precice_structure": 1
+  },
+  "owned_residual": 0,
+  "formal_status": {
+    "STABLE_VIV_RESPONSE_CLAIM": "not_completed",
+    "FORMAL_RESPONSE_FREQUENCY_STATUS": "not_completed_for_two_way_fsi",
+    "FORMAL_STROUHAL_STATUS": "not_completed",
+    "LOCK_IN_CLAIM": "not_completed"
+  },
+  "next_authorization": "new explicit authorization required before any longer or production run"
+}

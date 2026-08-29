@@ -74,14 +74,16 @@
         "stage330_moving_mesh_smoke_v1_rbf",
         "stage331_moving_mesh_smoke_v1_rbf_repair",
         "stage332_moving_mesh_smoke_v1_rbf_diag",
-        "stage333_moving_mesh_smoke_v1_rbf_face_map"
+        "stage333_moving_mesh_smoke_v1_rbf_face_map",
+        "stage334_moving_mesh_smoke_v1_rbf_updatecoeffs"
       ],
-      "wall_clock_s": [23.015743, 23.549742, 23.273762, 23.293653],
+      "wall_clock_s": [23.015743, 23.549742, 23.273762, 23.293653, 22.764801],
       "failure": "slice_force_identity_distinct=false in all attempts; three fluid U/p/meshPhi/Force fields were byte-identical despite distinct preCICE displacement payloads.",
       "repairs_attempted": [
         "removed premature movePoints() call",
         "mapped cellDisplacement face values to RBF control and boundary points by nearest face",
-        "added and removed call-time diagnostics"
+        "added and removed call-time diagnostics",
+        "refreshed pointDisplacement boundary coefficients before sampling"
       ],
       "conclusion": "RBF port is not qualified for this OpenFOAM 10/preCICE adapter lifecycle and is excluded from production."
     }

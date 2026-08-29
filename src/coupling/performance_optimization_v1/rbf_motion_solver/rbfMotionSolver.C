@@ -78,28 +78,43 @@ void Foam::rbfMotionSolver::buildControls() const
 void Foam::rbfMotionSolver::updateDisplacement() const
 {
     buildControls();
-    // preCICE writes face-centred values into cellDisplacement.  Do not index
-    // those face values with point indices (the counts differ on the cylinder
-    // patch); map each point/control to its nearest patch face instead.
+    pointDisplacement_.boundaryFieldRef().updateCoeffs();
+    const pointPatchField<vector>& pointMoving = pointDisplacement_.boundaryField()[movingPatchId_];
+    const vectorField& pointValuesIn = pointMoving.primitiveField();
+    const labelList& patchPoints = fvMesh_.boundaryMesh()[movingPatchId_].meshPoints();
+    const bool havePointData =
+        pointValuesIn.size() == patchPoints.size()
+     && gMax(mag(pointValuesIn)) > SMALL;
+
+    // preCICE normally exposes point values through pointDisplacement.  Keep
+    // a deterministic face-centre fallback for adapters that expose only the
+    // cellDisplacement patch; never index face values with point indices.
     const fvPatchVectorField& moving = cellDisplacement_.boundaryField()[movingPatchId_];
     const vectorField& movingValues = moving.primitiveField();
     const vectorField& faceCentres = moving.patch().Cf();
-    const labelList& patchPoints = fvMesh_.boundaryMesh()[movingPatchId_].meshPoints();
     forAll(controlPointIds_, i)
     {
-        const point& controlPoint = points0()[controlPointIds_[i]];
-        scalar bestDistance = GREAT;
-        label nearestFace = -1;
-        forAll(faceCentres, facei)
+        const label localPoint = findIndex(patchPoints, controlPointIds_[i]);
+        if (havePointData && localPoint >= 0)
         {
-            const scalar distance = magSqr(controlPoint - faceCentres[facei]);
-            if (distance < bestDistance)
-            {
-                bestDistance = distance;
-                nearestFace = facei;
-            }
+            controlDisplacements_[i] = pointValuesIn[localPoint];
         }
-        controlDisplacements_[i] = nearestFace >= 0 ? movingValues[nearestFace] : Zero;
+        else
+        {
+            const point& controlPoint = points0()[controlPointIds_[i]];
+            scalar bestDistance = GREAT;
+            label nearestFace = -1;
+            forAll(faceCentres, facei)
+            {
+                const scalar distance = magSqr(controlPoint - faceCentres[facei]);
+                if (distance < bestDistance)
+                {
+                    bestDistance = distance;
+                    nearestFace = facei;
+                }
+            }
+            controlDisplacements_[i] = nearestFace >= 0 ? movingValues[nearestFace] : Zero;
+        }
     }
 
     vectorField& pointValues = pointDisplacement_.primitiveFieldRef();
@@ -161,6 +176,10 @@ Foam::tmp<Foam::pointField> Foam::rbfMotionSolver::curPoints() const
     tmp<pointField> current(points0() + pointDisplacement_.primitiveField());
     pointField& values = current.ref();
     const labelList& moving = fvMesh_.boundaryMesh()[movingPatchId_].meshPoints();
+    pointDisplacement_.boundaryFieldRef().updateCoeffs();
+    const pointPatchField<vector>& pointMoving = pointDisplacement_.boundaryField()[movingPatchId_];
+    const vectorField& pointValuesIn = pointMoving.primitiveField();
+    const bool havePointData = pointValuesIn.size() == moving.size() && gMax(mag(pointValuesIn)) > SMALL;
     const fvPatchVectorField& movingField = cellDisplacement_.boundaryField()[movingPatchId_];
     const vectorField& faceCentres = movingField.patch().Cf();
     const vectorField& faceValues = movingField.primitiveField();
@@ -177,7 +196,11 @@ Foam::tmp<Foam::pointField> Foam::rbfMotionSolver::curPoints() const
                 nearestFace = facei;
             }
         }
-        if (nearestFace >= 0)
+        if (havePointData)
+        {
+            values[moving[i]] = points0()[moving[i]] + pointValuesIn[i];
+        }
+        else if (nearestFace >= 0)
         {
             values[moving[i]] = points0()[moving[i]] + faceValues[nearestFace];
         }
