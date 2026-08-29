@@ -69,8 +69,21 @@
     },
     {
       "method": "RBFMotionSolver",
-      "status": "not_tested",
-      "reason": "The repository has no OpenFOAM 10 RBFMotionSolver implementation; the thesis implementation targets OpenFOAM 2.3.0 and cannot be represented by a native Laplacian profile. A separate port is required before a truthful smoke test."
+      "status": "do_not_pass",
+      "stage_ids": [
+        "stage330_moving_mesh_smoke_v1_rbf",
+        "stage331_moving_mesh_smoke_v1_rbf_repair",
+        "stage332_moving_mesh_smoke_v1_rbf_diag",
+        "stage333_moving_mesh_smoke_v1_rbf_face_map"
+      ],
+      "wall_clock_s": [23.015743, 23.549742, 23.273762, 23.293653],
+      "failure": "slice_force_identity_distinct=false in all attempts; three fluid U/p/meshPhi/Force fields were byte-identical despite distinct preCICE displacement payloads.",
+      "repairs_attempted": [
+        "removed premature movePoints() call",
+        "mapped cellDisplacement face values to RBF control and boundary points by nearest face",
+        "added and removed call-time diagnostics"
+      ],
+      "conclusion": "RBF port is not qualified for this OpenFOAM 10/preCICE adapter lifecycle and is excluded from production."
     }
   ],
   "recommendation": {
@@ -80,11 +93,11 @@
   },
   "real_process_starts_total": {
     "matlab": 0,
-    "openfoam": 18,
-    "wsl": 6,
-    "cfd": 18,
-    "cpp_worker": 6,
-    "precice_structure": 6
+    "openfoam": 30,
+    "wsl": 10,
+    "cfd": 30,
+    "cpp_worker": 10,
+    "precice_structure": 10
   },
   "owned_residual_all_completed_or_cleaned": 0,
   "protected": {

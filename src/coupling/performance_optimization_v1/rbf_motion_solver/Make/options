@@ -1,0 +1,17 @@
+EXE_INC = \
+    -I$(FOAM_SRC)/dynamicMesh/motionSolvers/displacement/displacement \
+    -I$(FOAM_SRC)/dynamicMesh/motionSolvers/displacement/points0 \
+    -I$(FOAM_SRC)/dynamicMesh/motionSolvers/motionSolver \
+    -I$(FOAM_SRC)/fvMotionSolver/fvMotionSolvers \
+    -I$(FOAM_SRC)/fvMotionSolver/fvMotionSolvers/fvMotionSolver \
+    -I$(FOAM_SRC)/fvMotionSolver/lnInclude \
+    -I$(FOAM_SRC)/finiteVolume/lnInclude \
+    -I$(FOAM_SRC)/meshTools/lnInclude
+
+LIB_LIBS = \
+    -ldynamicMesh \
+    -lfvMotionSolvers \
+    -lfvMeshMovers \
+    -lfiniteVolume \
+    -lmeshTools \
+    -lOpenFOAM

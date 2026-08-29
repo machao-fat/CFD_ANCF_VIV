@@ -81,10 +81,13 @@ def corrected_dynamic_mesh(mesh_method: str = "uniform") -> str:
         "quadratic": ("displacementLaplacian", "quadratic inverseDistance 1(cyl);"),
         "exponential": ("displacementLaplacian", "exponential 1 inverseDistance 1(cyl);"),
         "sbrStress": ("displacementSBRStress", "quadratic inverseDistance 1(cyl);"),
+        "rbf": ("rbfDisplacement", "uniform;"),
     }
     if mesh_method not in methods:
         raise ValueError(f"unsupported native mesh method: {mesh_method}")
     solver, diffusivity = methods[mesh_method]
+    library_line = '    libs            ("libfvMeshMovers.so" "libfvMotionSolvers.so" "libRBFMotionSolver.so");\n' if mesh_method == "rbf" else '    libs            ("libfvMeshMovers.so" "libfvMotionSolvers.so");\n'
+    extras = "    movingPatch     cyl;\n    controlStride   16;\n    supportRadius  7.5;\n" if mesh_method == "rbf" else ""
     return '''FoamFile
 {
     format      ascii;
@@ -96,11 +99,10 @@ def corrected_dynamic_mesh(mesh_method: str = "uniform") -> str:
 mover
 {
     type            motionSolver;
-    libs            ("libfvMeshMovers.so" "libfvMotionSolvers.so");
-    motionSolver    SOLVER;
+LIBRARY_LINE    motionSolver    SOLVER;
     diffusivity     DIFFUSIVITY
-}
-'''.replace("SOLVER", solver).replace("DIFFUSIVITY", diffusivity)
+EXTRAS}
+'''.replace("LIBRARY_LINE", library_line).replace("SOLVER", solver).replace("DIFFUSIVITY", diffusivity).replace("EXTRAS", extras)
 
 
 def runtime_point_displacement() -> str:
@@ -277,7 +279,11 @@ def post_audit(runtime: Path, results: Path, cases: list[Path], run_return: int,
             dynamic_mesh=(case / "constant/dynamicMeshDict").read_text(encoding="utf-8"),
             expected_participant=f"Fluid_{index:04d}",
             allow_calculated_point=False,
-            expected_motion_solver="displacementSBRStress" if mesh_method == "sbrStress" else "displacementLaplacian",
+            expected_motion_solver=(
+                "displacementSBRStress" if mesh_method == "sbrStress"
+                else "rbfDisplacement" if mesh_method == "rbf"
+                else "displacementLaplacian"
+            ),
         ))
         numeric_times = sorted(
             (path for path in case.iterdir() if path.is_dir() and re.fullmatch(r"(?:0|[0-9]+(?:\.[0-9]+)?)", path.name)),
@@ -394,7 +400,7 @@ def main() -> int:
     )
     parser.add_argument(
         "--mesh-method",
-        choices=("uniform", "inverseDistance", "quadratic", "exponential", "sbrStress"),
+        choices=("uniform", "inverseDistance", "quadratic", "exponential", "sbrStress", "rbf"),
         default="uniform",
     )
     args = parser.parse_args()

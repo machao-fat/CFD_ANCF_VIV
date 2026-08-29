@@ -1,0 +1,3 @@
+rbfMotionSolver.C
+
+LIB = $(FOAM_USER_LIBBIN)/libRBFMotionSolver
