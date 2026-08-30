@@ -1,0 +1,15 @@
+{
+  "schema_version": 1,
+  "stages": {
+    "stage337_dt0025_one_second_baseline_v1": {"dt_s": 0.0025, "target_time_s": 1.0, "steps": 400, "wall_clock_s": 871.391595, "gate": "pass"},
+    "stage338_dt005_five_second_comparison_v1": {"dt_s": 0.005, "target_time_s": 5.0, "steps": 1000, "wall_clock_s": 2211.249162, "gate": "pass"},
+    "stage339_dt0025_five_second_comparison_v1": {"dt_s": 0.0025, "target_time_s": 5.0, "steps": 2000, "wall_clock_s": 4007.809649, "gate": "pass"},
+    "stage340_dt00125_short_sensitivity_v1": {"dt_s": 0.00125, "target_time_s": 0.1, "steps": 80, "wall_clock_s": 166.381802, "gate": "pass"}
+  },
+  "same_initial_state_final_q_l2_relative_dt005_vs_dt0025": 3.2131958740141527e-06,
+  "windowed_lift_rms_relative_difference": {"startup": 0.6876753227350041, "middle": 0.22331166919943002, "late": 0.2772189127110816},
+  "formal_convergence": "not_completed",
+  "dt005_production_promotion": "not_yet",
+  "real_process_starts": {"matlab": 0, "openfoam": 9, "wsl": 3, "cfd": 9, "cpp_worker": 3, "precice_structure": 3},
+  "owned_residual": 0
+}

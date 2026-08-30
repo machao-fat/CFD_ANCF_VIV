@@ -1,0 +1,60 @@
+{
+  "gate_id": "STAGE4F_D_STAGE337_DT0025_ONE_SECOND_BASELINE_V1_GATE",
+  "status": "pass",
+  "stage_id": "stage337_dt0025_one_second_baseline_v1",
+  "run_id": "s337_dt0025_three_slice_1s_v1",
+  "case_id": "c337_dt0025_three_slice_1s_v1",
+  "mesh_method": "inverseDistance",
+  "scope": {
+    "source_step": 0,
+    "source_time_s": 0.0,
+    "target_step": 400,
+    "target_time_s": 1.0,
+    "dt_s": 0.0025,
+    "slice_count": 3,
+    "mesh_method": "inverseDistance 1(cyl)"
+  },
+  "checks": {
+    "launcher_return_zero": true,
+    "structure_finalized": true,
+    "structure_records_8": true,
+    "mapping_records_8": true,
+    "returns_zero": true,
+    "fluid_end_marker_all": true,
+    "fluid_stderr_empty": true,
+    "corrected_configs_all_pass": true,
+    "point_displacement_outputs_present": true,
+    "point_displacement_cyl_compatible": true,
+    "point_displacement_cyl_nonzero_artifact": true,
+    "cell_displacement_cyl_nonzero": true,
+    "moved_mesh_points_present": true,
+    "moved_mesh_points_changed": true,
+    "slice_motion_identity_distinct": true,
+    "slice_force_identity_distinct": true,
+    "owned_residual_zero": true
+  },
+  "root_cause_repair": "namePointDisplacement pointDisplacement bound to displacementLaplacian path",
+  "real_process_starts": {
+    "matlab": 0,
+    "openfoam": 3,
+    "wsl": 1,
+    "cfd": 3,
+    "cpp_worker": 1,
+    "precice_structure": 1
+  },
+  "owned_residual": 0,
+  "formal_status": {
+    "STABLE_VIV_RESPONSE_CLAIM": "not_completed",
+    "FORMAL_RESPONSE_FREQUENCY_STATUS": "not_completed_for_two_way_fsi",
+    "FORMAL_STROUHAL_STATUS": "not_completed",
+    "LOCK_IN_CLAIM": "not_completed"
+  },
+  "next_authorization": "new explicit authorization required before any longer or production run",
+  "qualification": "1 s three-slice qualification at dt=0.0025 s; not formal timestep independence or VIV convergence",
+  "source_hashes": {
+    "worker": "7b246c53f2040ce9dcba3100700e1d5def905e84d8452f560b6d1b29e88d8473",
+    "fixture": "b77685eeff1582ceba589809889fcb63df74ed9f11c4075a5df5307fd014d5d2",
+    "participant": "eef0e933257a58b50cd56a4498f6217e1e127f93333a43d61dcc7e5e48089808",
+    "source_control": "b9e4ca112faeada591ab7a0177f8f099068140013a5d826c62a84f7a6c051acd"
+  }
+}
