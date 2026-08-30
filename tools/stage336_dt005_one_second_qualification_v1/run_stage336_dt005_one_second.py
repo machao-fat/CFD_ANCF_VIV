@@ -9,6 +9,7 @@ from __future__ import annotations
 
 import hashlib
 import json
+import argparse
 import subprocess
 import sys
 from datetime import datetime, timezone
@@ -46,21 +47,35 @@ def wsl(path: Path) -> str:
 
 
 def main() -> int:
-    if RUNTIME.exists() and any(RUNTIME.iterdir()):
-        raise RuntimeError(f"refusing to reuse runtime: {RUNTIME}")
-    if RESULTS.exists() and any(RESULTS.iterdir()):
-        raise RuntimeError(f"refusing to reuse results: {RESULTS}")
+    parser = argparse.ArgumentParser()
+    parser.add_argument("--runtime", type=Path, default=RUNTIME)
+    parser.add_argument("--results", type=Path, default=RESULTS)
+    parser.add_argument("--dt", type=float, default=DT)
+    parser.add_argument("--steps", type=int, default=STEPS)
+    parser.add_argument("--stage-id", default=STAGE_ID)
+    parser.add_argument("--run-id", default=RUN_ID)
+    parser.add_argument("--case-id", default=CASE_ID)
+    args = parser.parse_args()
+    runtime = args.runtime.resolve()
+    results = args.results.resolve()
+    dt = float(args.dt)
+    steps = int(args.steps)
+    target_time = steps * dt
+    if runtime.exists() and any(runtime.iterdir()):
+        raise RuntimeError(f"refusing to reuse runtime: {runtime}")
+    if results.exists() and any(results.iterdir()):
+        raise RuntimeError(f"refusing to reuse results: {results}")
     for path in (SOURCE, FIXTURE, WORKER, PARTICIPANT):
         if not path.exists():
             raise RuntimeError(f"required source missing: {path}")
 
     # Reuse the audited preparation and post-audit code with this stage's
     # explicit window.  Defaults in Stage308 remain unchanged.
-    smoke.DT = DT
-    smoke.STEPS = STEPS
-    smoke.TARGET_TIME = TARGET_TIME
-    cases = smoke.prepare(RUNTIME, "optimized_audited", "inverseDistance")
-    logs = RUNTIME / "logs"
+    smoke.DT = dt
+    smoke.STEPS = steps
+    smoke.TARGET_TIME = target_time
+    cases = smoke.prepare(runtime, "optimized_audited", "inverseDistance")
+    logs = runtime / "logs"
     started = datetime.now(timezone.utc)
     project = wsl(ROOT)
     case_args = " ".join(wsl(case / "precice-config.xml") for case in cases)
@@ -79,7 +94,7 @@ def main() -> int:
         f"printf 'preflight_rcs pf=%s py=%s worker=%s import=%s\\n' \"\\$pf_rc\" \"\\$py_rc\" \"\\$worker_rc\" \"\\$import_rc\" > '{preflight_log}';",
         "if [ \"\\$pf_rc\" -ne 0 ] || [ \"\\$py_rc\" -ne 0 ] || [ \"\\$worker_rc\" -ne 0 ] || [ \"\\$import_rc\" -ne 0 ]; then exit 127; fi;",
         "set -e; set -u;",
-        f"python3 '{wsl(PARTICIPANT)}' --config {case_args} --log '{wsl(logs / 'structure_participant.json')}' --barrier-log '{wsl(logs / 'global_barrier.json')}' --checkpoint-log '{wsl(logs / 'checkpoint.jsonl')}' --convergence-log '{wsl(logs / 'convergence_summary.json')}' --diagnostic-log '{wsl(logs / 'mapping_diagnostics.jsonl')}' --progress-log '{wsl(logs / 'progress.json')}' --worker '{wsl(WORKER)}' --fixture '{wsl(FIXTURE)}' --source-step 0 --source-time 0 --steps {STEPS} --dt {DT} --run-id '{RUN_ID}' --case-id '{CASE_ID}' > '{wsl(logs / 'structure.stdout')}' 2> '{wsl(logs / 'structure.stderr')}' & spid=\\$!;",
+        f"python3 '{wsl(PARTICIPANT)}' --config {case_args} --log '{wsl(logs / 'structure_participant.json')}' --barrier-log '{wsl(logs / 'global_barrier.json')}' --checkpoint-log '{wsl(logs / 'checkpoint.jsonl')}' --convergence-log '{wsl(logs / 'convergence_summary.json')}' --diagnostic-log '{wsl(logs / 'mapping_diagnostics.jsonl')}' --progress-log '{wsl(logs / 'progress.json')}' --worker '{wsl(WORKER)}' --fixture '{wsl(FIXTURE)}' --source-step 0 --source-time 0 --steps {steps} --dt {dt} --run-id '{args.run_id}' --case-id '{args.case_id}' --allow-qualification-window > '{wsl(logs / 'structure.stdout')}' 2> '{wsl(logs / 'structure.stderr')}' & spid=\\$!;",
         f"(cd '{wsl(cases[0])}' && pimpleFoam > '{wsl(logs / 'fluid_0000.stdout')}' 2> '{wsl(logs / 'fluid_0000.stderr')}') & f0=\\$!;",
         f"(cd '{wsl(cases[1])}' && pimpleFoam > '{wsl(logs / 'fluid_0001.stdout')}' 2> '{wsl(logs / 'fluid_0001.stderr')}') & f1=\\$!;",
         f"(cd '{wsl(cases[2])}' && pimpleFoam > '{wsl(logs / 'fluid_0002.stdout')}' 2> '{wsl(logs / 'fluid_0002.stderr')}') & f2=\\$!;",
@@ -94,31 +109,32 @@ def main() -> int:
     ended = datetime.now(timezone.utc)
     (logs / "start_utc.txt").write_text(started.isoformat() + "\n", encoding="utf-8")
     (logs / "end_utc.txt").write_text(ended.isoformat() + "\n", encoding="utf-8")
-    audit_rc = smoke.post_audit(RUNTIME, RESULTS, cases, launcher.returncode, started, ended, STAGE_ID, RUN_ID, CASE_ID, "inverseDistance")
-    report_path = RESULTS / "stage308_smoke_report.json"
+    audit_rc = smoke.post_audit(runtime, results, cases, launcher.returncode, started, ended, args.stage_id, args.run_id, args.case_id, "inverseDistance")
+    report_path = results / "stage308_smoke_report.json"
     if report_path.is_file():
         report = json.loads(report_path.read_text(encoding="utf-8"))
         checks = report.get("checks", {})
         if "structure_records_8" in checks:
             checks["structure_records_200"] = checks.pop("structure_records_8")
         report["checks"] = checks
-        report["qualification"] = "1 s three-slice smoke/qualification at dt=0.005 s; 200/200 steps; not formal timestep independence or VIV convergence"
-        report["wall_clock"]["dt_s"] = DT
+        report["qualification"] = f"{target_time:g} s three-slice qualification at dt={dt:g} s; {steps}/{steps} steps; not formal timestep independence or VIV convergence"
+        report["wall_clock"]["dt_s"] = dt
         report_path.write_text(json.dumps(report, ensure_ascii=False, indent=2) + "\n", encoding="utf-8")
-    gate_path = RESULTS / "stage4f_d_moving_mesh_three_slice_smoke_v1_gate.json"
+    gate_path = results / "stage4f_d_moving_mesh_three_slice_smoke_v1_gate.json"
     if gate_path.is_file():
         gate = json.loads(gate_path.read_text(encoding="utf-8"))
-        gate["gate_id"] = "STAGE4F_D_DT005_ONE_SECOND_QUALIFICATION_V1_GATE"
-        gate["stage_id"] = STAGE_ID
-        gate["run_id"] = RUN_ID
-        gate["case_id"] = CASE_ID
-        gate["scope"] = {"source_step": 0, "source_time_s": 0.0, "target_step": STEPS, "target_time_s": TARGET_TIME, "dt_s": DT, "slice_count": 3, "mesh_method": "inverseDistance 1(cyl)"}
-        gate["qualification"] = "1 s three-slice smoke/qualification at dt=0.005 s; not formal timestep independence or VIV convergence"
+        gate["gate_id"] = f"STAGE4F_D_{args.stage_id.upper()}_GATE"
+        gate["stage_id"] = args.stage_id
+        gate["run_id"] = args.run_id
+        gate["case_id"] = args.case_id
+        gate["scope"] = {"source_step": 0, "source_time_s": 0.0, "target_step": steps, "target_time_s": target_time, "dt_s": dt, "slice_count": 3, "mesh_method": "inverseDistance 1(cyl)"}
+        gate["qualification"] = f"{target_time:g} s three-slice qualification at dt={dt:g} s; not formal timestep independence or VIV convergence"
         gate["source_hashes"] = {"worker": sha(WORKER), "fixture": sha(FIXTURE), "participant": sha(PARTICIPANT), "source_control": sha(SOURCE / "system/controlDict")}
         gate["real_process_starts"] = {"matlab": 0, "openfoam": 3, "wsl": 1, "cfd": 3, "cpp_worker": 1, "precice_structure": 1}
         gate["owned_residual"] = 0
-        (RESULTS / "stage4f_d_dt005_one_second_qualification_v1_gate.json").write_text(json.dumps(gate, ensure_ascii=False, indent=2) + "\n", encoding="utf-8")
-    print(json.dumps({"status": "pass" if audit_rc == 0 else "do_not_pass", "elapsed_s": (ended - started).total_seconds(), "stage_id": STAGE_ID, "dt_s": DT, "steps": STEPS}, ensure_ascii=False))
+        gate_name = f"stage4f_d_{args.stage_id}_gate.json"
+        (results / gate_name).write_text(json.dumps(gate, ensure_ascii=False, indent=2) + "\n", encoding="utf-8")
+    print(json.dumps({"status": "pass" if audit_rc == 0 else "do_not_pass", "elapsed_s": (ended - started).total_seconds(), "stage_id": args.stage_id, "dt_s": dt, "steps": steps}, ensure_ascii=False))
     return audit_rc
 
 
