@@ -11,6 +11,7 @@ class Stage346LauncherContractTests(unittest.TestCase):
         self.assertIn("refusing to reuse runtime", text)
         self.assertIn("if smoke_gate[\"status\"] != \"pass\":", text)
         self.assertIn("continuation_started", text)
+        self.assertIn("watchdog()", text)
 
 
 if __name__ == "__main__":
