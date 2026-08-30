@@ -1,0 +1,61 @@
+{
+  "gate_id": "STAGE4F_D_FORMAL_DT_INVERSE_DISTANCE_1S_QUALIFICATION_V1_GATE",
+  "status": "do_not_pass",
+  "stage_id": "stage335_formal_dt_qualification_v1_inverse_distance_1s",
+  "run_id": "s335_inverse_distance_formal_dt_1s_v1",
+  "case_id": "c335_inverse_distance_formal_dt_1s_v1",
+  "scope": {
+    "source_step": 0,
+    "source_time_s": 0.0,
+    "target_step": 800,
+    "target_time_s": 1.0,
+    "dt_s": 0.00125,
+    "slice_count": 3,
+    "mesh_method": "inverseDistance 1(cyl)"
+  },
+  "checks": {
+    "launcher_return_zero": false,
+    "failure_before_first_barrier": true,
+    "fluid_0000_sigfpe": true,
+    "fluid_0001_sigfpe": true,
+    "fluid_0002_sigfpe": true,
+    "committed_steps": 0,
+    "checkpoint_count": 0,
+    "target_time_reached": false,
+    "worker_closed": "launcher cleanup interrupted while fluid participants failed",
+    "owned_residual_zero": true,
+    "matlab_started": 0,
+    "openfoam_started": 3,
+    "wsl_started": 2,
+    "cfd_started": 3,
+    "cpp_worker_started": 1,
+    "precice_structure_started": 1
+  },
+  "failure_classification": "openfoam_sigfpe_pressure_gamg_coarsest_level",
+  "failure_evidence": {
+    "fluid_0000_stderr": "Foam::PCG::solve -> Foam::GAMGSolver::solveCoarsestLevel -> Foam::GAMGSolver::Vcycle -> sigFpe",
+    "fluid_0001_stderr": "Foam::PCG::solve -> Foam::GAMGSolver::solveCoarsestLevel -> Foam::GAMGSolver::Vcycle -> sigFpe",
+    "fluid_0002_stderr": "Foam::GAMGSolver::scale -> Foam::GAMGSolver::Vcycle -> sigFpe",
+    "first_written_time": "0.00125",
+    "logs": "runtime/stage335_formal_dt_qualification_v1_inverse_distance_1s/logs"
+  },
+  "cleanup": {
+    "launcher_terminated_after_owned_fluid_failure": true,
+    "same_runtime_retry": false,
+    "owned_residual": 0,
+    "linux_cfd_processes_remaining": 0
+  },
+  "protected": {
+    "ancf_eb_core_modified": false,
+    "physical_parameters_modified": false,
+    "global_dt_modified": false,
+    "slice_count_modified": false,
+    "formal_protocol_modified": false
+  },
+  "next_action": "repair or qualify the formal-dt OpenFOAM solver configuration in a new runtime before any longer run",
+  "formal_status": {
+    "STABLE_VIV_RESPONSE_CLAIM": "not_completed",
+    "FORMAL_STROUHAL_STATUS": "not_completed",
+    "LOCK_IN_CLAIM": "not_completed"
+  }
+}
