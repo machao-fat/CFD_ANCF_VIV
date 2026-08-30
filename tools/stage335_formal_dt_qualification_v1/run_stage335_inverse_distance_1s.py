@@ -1,9 +1,10 @@
-"""Run one fresh three-slice qualification window at the formal dt.
+"""Run one fresh three-slice fine-dt sensitivity window.
 
 This launcher is intentionally limited to 1.0 s from a fresh zero state.  It
 uses the already-qualified inverseDistance mesh profile and retains only the
 final OpenFOAM field (purgeWrite=1), a compact tail, checkpoints, and audit
-logs.  No MATLAB process is started.
+logs.  No MATLAB process is started.  The 0.00125 s value is the fine
+sensitivity level from the project freeze, not the production coarse dt.
 """
 from __future__ import annotations
 
@@ -151,7 +152,7 @@ def main() -> int:
         "real_process_counts": {"matlab": 0, "openfoam": 3, "wsl": 1, "cfd": 3, "cpp_worker": 1, "precice_structure": 1},
         "owned_residual": 0,
         "protected": {"ancf_eb_core_modified": False, "physical_parameters_modified": False, "slice_count_modified": False, "numerical_thresholds_modified": False, "formal_protocol_modified": False},
-        "qualification": "formal dt 1.0 s three-slice wall-clock and stability qualification; not formal VIV convergence",
+        "qualification": "fine-dt sensitivity 1.0 s three-slice qualification; production coarse dt is 0.0025 s; not formal VIV convergence",
         "next_authorization": "new explicit authorization required before any longer run",
     }
     RESULTS.mkdir(parents=True, exist_ok=True)

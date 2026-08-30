@@ -10,6 +10,7 @@
     "target_step": 800,
     "target_time_s": 1.0,
     "dt_s": 0.00125,
+    "dt_role": "fine_sensitivity_only; production_coarse_dt_is_0.0025_s",
     "slice_count": 3,
     "mesh_method": "inverseDistance 1(cyl)"
   },
@@ -52,7 +53,7 @@
     "slice_count_modified": false,
     "formal_protocol_modified": false
   },
-  "next_action": "repair or qualify the formal-dt OpenFOAM solver configuration in a new runtime before any longer run",
+  "next_action": "run the production-coarse dt=0.0025 s qualification in a new runtime; keep this fine-dt sensitivity failure separate",
   "formal_status": {
     "STABLE_VIV_RESPONSE_CLAIM": "not_completed",
     "FORMAL_STROUHAL_STATUS": "not_completed",
