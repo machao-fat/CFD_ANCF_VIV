@@ -84,7 +84,7 @@ def verify_source() -> tuple[dict[str, object], RestartBootstrapState]:
     if source.get("finalized") is not True or source.get("target_global_step") != SOURCE_STEP or abs(float(source.get("target_time_s", -1)) - SOURCE_TIME) > 1e-12:
         raise RuntimeError("Stage341 source is not finalized at global step 16000 / 80 s")
     bootstrap = RestartBootstrapState.from_mapping(json.loads(BOOTSTRAP_STATE.read_text(encoding="utf-8")))
-    if bootstrap.source_global_step != SOURCE_STEP or abs(bootstrap.field_time_s - SOURCE_TIME) > 1e-12 or bootstrap.lag_steps != 2:
+    if bootstrap.source_global_step != SOURCE_STEP or abs(bootstrap.field_time_s - SOURCE_TIME) > 1e-12 or bootstrap.lag_steps not in (1, 2):
         raise RuntimeError("bootstrap candidate does not bind to Stage341 80 s field")
     for index in range(3):
         restart = SOURCE_RUNTIME / f"slice_{index:04d}" / "80"
