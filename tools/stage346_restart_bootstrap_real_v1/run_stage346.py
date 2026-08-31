@@ -141,9 +141,9 @@ def launch(runtime: Path, cases: list[Path], *, initial_state: Path, source_step
         f"(cd '{wsl(cases[1])}' && python3 '{quality}' --metrics '{logs_wsl}/openfoam_0001_quality.json' --failure-tail '{logs_wsl}/openfoam_0001_failure_tail.txt' -- pimpleFoam > /dev/null 2> '{logs_wsl}/fluid_0001.stderr') & fpid1=\$!;",
         f"(cd '{wsl(cases[2])}' && python3 '{quality}' --metrics '{logs_wsl}/openfoam_0002_quality.json' --failure-tail '{logs_wsl}/openfoam_0002_failure_tail.txt' -- pimpleFoam > /dev/null 2> '{logs_wsl}/fluid_0002.stderr') & fpid2=\$!;",
         f"printf 'structure_pid=%s\\nfluid_0000_pid=%s\\nfluid_0001_pid=%s\\nfluid_0002_pid=%s\\n' \"\$spid\" \"\$fpid0\" \"\$fpid1\" \"\$fpid2\" > '{logs_wsl}/pids.txt';",
-        "watchdog() { while kill -0 \"$spid\" 2>/dev/null; do for fp in \"$fpid0\" \"$fpid1\" \"$fpid2\"; do if ! kill -0 \"$fp\" 2>/dev/null; then wait \"$fp\"; fr=$?; if [ \"$fr\" -ne 0 ]; then kill -TERM \"$spid\" 2>/dev/null || true; fi; fi; done; sleep 1; done; }; watchdog & wpid=$!;",
+        "watchdog() { while kill -0 \"\$spid\" 2>/dev/null; do for fp in \"\$fpid0\" \"\$fpid1\" \"\$fpid2\"; do if ! kill -0 \"\$fp\" 2>/dev/null; then wait \"\$fp\"; fr=\$?; if [ \"\$fr\" -ne 0 ]; then kill -TERM \"\$spid\" 2>/dev/null || true; fi; fi; done; sleep 1; done; }; watchdog & wpid=\$!;",
         "set +e; wait \"\$spid\"; sr=\$?; wait \"\$fpid0\"; r0=\$?; wait \"\$fpid1\"; r1=\$?; wait \"\$fpid2\"; r2=\$?; set -e;",
-        "kill \"$wpid\" 2>/dev/null || true; wait \"$wpid\" 2>/dev/null || true;",
+        "kill \"\$wpid\" 2>/dev/null || true; wait \"\$wpid\" 2>/dev/null || true;",
         f"printf 'structure_return=%s\\nfluid_0000_return=%s\\nfluid_0001_return=%s\\nfluid_0002_return=%s\\n' \"\$sr\" \"\$r0\" \"\$r1\" \"\$r2\" > '{logs_wsl}/returns.txt';",
         "if [ \"\$sr\" -ne 0 ] || [ \"\$r0\" -ne 0 ] || [ \"\$r1\" -ne 0 ] || [ \"\$r2\" -ne 0 ]; then exit 1; fi",
     ])
