@@ -1,0 +1,115 @@
+{
+  "gate_id": "STAGE4F_D_MPI_THREE_SLICE_SHORT_BENCHMARK_V1_GATE",
+  "status": "pass",
+  "stage_id": "stage4f_d_mpi_benchmark_v1",
+  "variant": "three_mpi2_v2",
+  "run_id": "run378_three_mpi2_v2",
+  "case_id": "case378_three_mpi2_v2",
+  "scope": {
+    "source_step": 0,
+    "source_time_s": 0.0,
+    "target_step": 40,
+    "target_time_s": 0.2,
+    "dt_s": 0.005,
+    "slice_count": 3,
+    "ranks_per_slice": 2,
+    "openfoam": "10",
+    "preCICE": "3.x",
+    "worker": "persistent C++"
+  },
+  "checks": {
+    "launcher_return_zero": true,
+    "structure_finalized": true,
+    "committed_40": true,
+    "slice_counts_40": true,
+    "quality_audit_pass": true,
+    "quality_counts_40": true,
+    "returns_zero": true,
+    "decompose_zero": true,
+    "stderr_empty": true,
+    "final_fields_present": true,
+    "owned_residual_zero": true
+  },
+  "quality_record_counts": {
+    "slice_0000": 40,
+    "slice_0001": 40,
+    "slice_0002": 40
+  },
+  "quality_audit": {
+    "slice_0000": {
+      "checks": {
+        "record_count": true,
+        "time_alignment": true,
+        "required_fields": true,
+        "finite": true,
+        "courant_limit": true
+      },
+      "status": "pass"
+    },
+    "slice_0001": {
+      "checks": {
+        "record_count": true,
+        "time_alignment": true,
+        "required_fields": true,
+        "finite": true,
+        "courant_limit": true
+      },
+      "status": "pass"
+    },
+    "slice_0002": {
+      "checks": {
+        "record_count": true,
+        "time_alignment": true,
+        "required_fields": true,
+        "finite": true,
+        "courant_limit": true
+      },
+      "status": "pass"
+    }
+  },
+  "real_process_counts": {
+    "matlab": 0,
+    "openfoam_solver_processes": 6,
+    "openfoam_launchers": 3,
+    "wsl": 1,
+    "cfd": 3,
+    "cpp_worker": 1,
+    "precice_structure": 1,
+    "mpi_ranks": 6
+  },
+  "owned_residual": 0,
+  "return_code": 0,
+  "wall_clock": {
+    "elapsed_s": 41.338236
+  },
+  "resource_summary": {
+    "slice_0000": {
+      "max_rss_kb": 158124,
+      "user_s": 37.38,
+      "system_s": 0.86
+    },
+    "slice_0001": {
+      "max_rss_kb": 158536,
+      "user_s": 37.46,
+      "system_s": 0.89
+    },
+    "slice_0002": {
+      "max_rss_kb": 159032,
+      "user_s": 36.79,
+      "system_s": 0.81
+    }
+  },
+  "storage_policy": {
+    "purgeWrite": 1,
+    "writeFormat": "binary",
+    "retained": "compact scalar logs, checkpoint and latest field only"
+  },
+  "protected": {
+    "old_runtime_modified": false,
+    "physical_parameters_modified": false,
+    "global_dt_modified": false,
+    "slice_count_modified": false,
+    "formal_status_modified": false
+  },
+  "qualification": "MPI performance smoke only; not formal VIV convergence"
+}

@@ -1,0 +1,107 @@
+{
+  "schema_version": 1,
+  "stage_id": "stage4f_d_mpi_benchmark_v1",
+  "gate_id": "STAGE4F_D_MPI_THREE_SLICE_SHORT_BENCHMARK_V1_GATE",
+  "status": "pass",
+  "scope": {
+    "source_step": 0,
+    "source_time_s": 0.0,
+    "target_step": 40,
+    "target_time_s": 0.2,
+    "dt_s": 0.005,
+    "slice_count": 3,
+    "openfoam": "10",
+    "precice": "3.x",
+    "worker": "persistent C++"
+  },
+  "comparison": [
+    {
+      "variant": "three_serial_v2",
+      "ranks_per_slice": 1,
+      "mpi_ranks_total": 3,
+      "wall_clock_s": 30.246962,
+      "steps": 40,
+      "wall_clock_per_step_s": 0.75617405,
+      "speedup_vs_serial": 1.0,
+      "parallel_efficiency_vs_serial": 1.0,
+      "max_rss_kb_per_slice": {
+        "slice_0000": 188448,
+        "slice_0001": 188612,
+        "slice_0002": 190260
+      },
+      "user_s_per_slice": {
+        "slice_0000": 21.21,
+        "slice_0001": 21.21,
+        "slice_0002": 21.2
+      },
+      "gate": "pass"
+    },
+    {
+      "variant": "three_mpi2_v2",
+      "ranks_per_slice": 2,
+      "mpi_ranks_total": 6,
+      "wall_clock_s": 41.338236,
+      "steps": 40,
+      "wall_clock_per_step_s": 1.0334559,
+      "speedup_vs_serial": 0.7316945502947925,
+      "parallel_efficiency_vs_serial": 0.36584727514739623,
+      "max_rss_kb_per_slice": {
+        "slice_0000": 158124,
+        "slice_0001": 158536,
+        "slice_0002": 159032
+      },
+      "user_s_per_slice": {
+        "slice_0000": 37.38,
+        "slice_0001": 37.46,
+        "slice_0002": 36.79
+      },
+      "gate": "pass"
+    },
+    {
+      "variant": "three_mpi4",
+      "ranks_per_slice": 4,
+      "mpi_ranks_total": 12,
+      "wall_clock_s": 41.215847,
+      "steps": 40,
+      "wall_clock_per_step_s": 1.030396175,
+      "speedup_vs_serial": 0.7338672913843067,
+      "parallel_efficiency_vs_serial": 0.18346682284607668,
+      "max_rss_kb_per_slice": {
+        "slice_0000": 141296,
+        "slice_0001": 142092,
+        "slice_0002": 141756
+      },
+      "user_s_per_slice": {
+        "slice_0000": 97.39,
+        "slice_0001": 99.25,
+        "slice_0002": 99.07
+      },
+      "gate": "pass"
+    }
+  ],
+  "finding": {
+    "winner": "three_serial_v2",
+    "recommendation": "keep one OpenFOAM process per slice; do not enable per-slice MPI for this mesh",
+    "reason": "2 and 4 ranks both increased wall-clock by about 36.5% while all quality checks passed"
+  },
+  "initial_launcher_failure": {
+    "variant": "three_serial",
+    "status": "do_not_pass",
+    "cause": "Windows-to-bash launcher PID variable escaping defect; no solver progress",
+    "preserved": true,
+    "excluded_from_performance_comparison": true
+  },
+  "checks": {
+    "all_successful_variants_pass": true,
+    "quality_and_barrier_passed": true,
+    "owned_residual_zero": true,
+    "real_matlab": 0,
+    "real_openfoam_solver_ranks": 21,
+    "real_wsl": 3,
+    "real_cfd": 9,
+    "physical_contract_modified": false,
+    "old_runtime_modified": false
+  },
+  "qualification": "performance smoke only; no formal convergence or numerical-core equivalence claim",
+  "generated_utc": "2026-09-02T06:55:52.232356+00:00"
+}
