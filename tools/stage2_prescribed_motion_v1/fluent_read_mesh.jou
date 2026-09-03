@@ -1,0 +1,5 @@
+; Stage 2 Fluent mesh import smoke. No transient solve is started here.
+/file/read
+stage2_openfoam.msh
+/mesh/check
+/exit yes

@@ -1,0 +1,21 @@
+{
+  "schema_version": "stage2.prescribed_motion.v1",
+  "scope": "single-cylinder prescribed-motion cross-solver smoke",
+  "D_m": 1.0,
+  "U_inf_m_s": 1.0,
+  "rho_kg_m3": 1.0,
+  "nu_m2_s": 0.01,
+  "Re": 100.0,
+  "amplitude_m": 0.1,
+  "frequency_hz": 0.16,
+  "dt_s": 0.0025,
+  "end_time_s": 1.0,
+  "motion_source": "analytic_external_sine",
+  "feedback": false,
+  "precice": false,
+  "formal_status_unchanged": {
+    "FORMAL_STROUHAL_STATUS": "not_completed",
+    "STABLE_VIV_RESPONSE_CLAIM": "not_completed",
+    "LOCK_IN_CLAIM": "not_completed"
+  }
+}
