@@ -5,7 +5,7 @@
 
 #define STAGE2_AMPLITUDE 0.10
 #define STAGE2_FREQUENCY 0.16
-#define STAGE2_OMEGA (2.0 * M_PI * STAGE2_FREQUENCY)
+#define STAGE2_OMEGA (6.2831853071795864769 * STAGE2_FREQUENCY)
 
 DEFINE_CG_MOTION(stage2_cylinder_motion, dt, vel, omega, time, dtime)
 {

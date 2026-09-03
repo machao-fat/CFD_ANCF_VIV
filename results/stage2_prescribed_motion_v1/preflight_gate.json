@@ -18,7 +18,10 @@
     "mesh_import": "PASS",
     "mesh_check": "PASS",
     "transient_smoke": "PENDING",
-    "udf_compile": "PENDING"
+    "udf_compile": "PASS",
+    "udf_function": "stage2_cylinder_motion",
+    "dynamic_mesh_hook": "PENDING",
+    "solver_setup": "PENDING"
   },
   "mesh_lineage": {
     "source": "OpenFOAM10 foamMeshToFluent",
