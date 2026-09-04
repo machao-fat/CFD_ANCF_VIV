@@ -1,0 +1,11 @@
+{
+  "gate_id": "STAGE2_FLUENT_V1_DYNAMIC_MESH_SMOKE",
+  "status": "FAIL_CLOSED",
+  "failure": "negative_cell_volume",
+  "failure_time_s": 0.4724996387958527,
+  "failure_step": 189,
+  "cause": "dynamic mesh did not have remeshing enabled/configured",
+  "not_valid_for_cross_solver_comparison": true,
+  "physical_contract_changed": false,
+  "recommended_repair": "single deforming fluid zone with smoothing and local remeshing"
+}

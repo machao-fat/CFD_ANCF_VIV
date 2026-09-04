@@ -2,10 +2,20 @@
 
 ## Current gate
 
-`STAGE2_PRESCRIBED_MOTION_PREFLIGHT_V1_GATE` is `PASS_WITH_FLUENT_SOLVE_PENDING`.
-The OpenFOAM 10 one-second prescribed-motion smoke and Fluent mesh import/check
-passed. Fluent UDF compilation, dynamic-mesh setup, and Fluent transient smoke
-remain pending.
+`STAGE2_PRESCRIBED_MOTION_PREFLIGHT_V1_GATE` is
+`OPEN_WITH_FLUENT_V2_REPAIR_PENDING`. The OpenFOAM 10 one-second
+prescribed-motion smoke and Fluent mesh import/check passed. Fluent UDF
+compilation passed; v2 dynamic-mesh setup and the Fluent transient smoke remain
+pending.
+
+The first Fluent transient attempt advanced through 189 steps, then fail-closed
+at `t=0.4724996388 s` because one non-positive-volume cell was detected. This
+is a dynamic-mesh configuration failure, not a cross-solver comparison result.
+The v2 repair uses smoothing plus local remeshing in a single deforming fluid
+zone and retains every physical/numerical contract parameter. A separate
+two-cell-zone Gmsh mesh was generated only as an offline topology exploration;
+it is not used by v2 because a shared-node zone boundary cannot represent the
+required relative motion.
 
 ## Frozen contract
 

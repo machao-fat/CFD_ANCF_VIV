@@ -10,6 +10,7 @@
 DEFINE_CG_MOTION(stage2_cylinder_motion, dt, vel, omega, time, dtime)
 {
     static FILE *audit = NULL;
+    static real last_time = -1.0;
     real ydot = STAGE2_AMPLITUDE * STAGE2_OMEGA * cos(STAGE2_OMEGA * time);
     (void)dt; (void)dtime;
     NV_S(vel, =, 0.0);
@@ -20,9 +21,10 @@ DEFINE_CG_MOTION(stage2_cylinder_motion, dt, vel, omega, time, dtime)
         if (audit != NULL)
             fprintf(audit, "time_s,y_m,vy_m_s\n");
     }
-    if (audit != NULL) {
+    if (audit != NULL && (last_time < 0.0 || fabs(time - last_time) > 1.0e-10)) {
         fprintf(audit, "%.12g,%.12g,%.12g\n", time,
                 STAGE2_AMPLITUDE * sin(STAGE2_OMEGA * time), ydot);
         fflush(audit);
+        last_time = time;
     }
 }

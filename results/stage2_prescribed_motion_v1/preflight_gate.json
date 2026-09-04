@@ -1,6 +1,6 @@
 {
   "gate_id": "STAGE2_PRESCRIBED_MOTION_PREFLIGHT_V1_GATE",
-  "status": "PASS_WITH_FLUENT_SOLVE_PENDING",
+  "status": "OPEN_WITH_FLUENT_V2_REPAIR_PENDING",
   "scope": "single-cylinder prescribed-motion cross-solver verification",
   "contract": "tools/stage2_prescribed_motion_v1/contract.json",
   "parameters": {"Re": 100.0, "D_m": 1.0, "U_inf_m_s": 1.0, "rho": 1.0, "nu": 0.01, "dt_s": 0.0025, "end_time_s": 1.0, "amplitude_m": 0.1, "frequency_hz": 0.16},
@@ -17,7 +17,7 @@
     "license": "AVAILABLE",
     "mesh_import": "PASS",
     "mesh_check": "PASS",
-    "transient_smoke": "PENDING",
+    "transient_smoke": "FAIL_V1_NEGATIVE_VOLUME; V2_PENDING",
     "udf_compile": "PASS",
     "udf_function": "stage2_cylinder_motion",
     "dynamic_mesh_hook": "PENDING",

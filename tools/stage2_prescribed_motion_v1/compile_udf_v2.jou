@@ -1,0 +1,7 @@
+/define/user-defined/compiled-functions compile
+stage2_udf
+yes
+prescribed_motion.c
+
+
+/exit yes
