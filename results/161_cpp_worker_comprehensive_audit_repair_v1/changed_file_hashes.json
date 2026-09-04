@@ -1,8 +1,0 @@
-{
-  "src/coupling/cpp_worker_persistent_ipc_v1/ancf_kernel.cpp": "59548fb91b45817733dd1e5f1a0f5029c8733f8335f27c750737091b859128fe",
-  "src/coupling/cpp_worker_persistent_ipc_v1/ancf_kernel.hpp": "3a6552d08639766ac6827a70bc66b26b72cacde2e1fdaf2eb7686b3d086758e4",
-  "src/coupling/cpp_worker_persistent_ipc_v1/ancf_kernel_selftest.cpp": "245935198989f550b1c122e8ddab886c4aa1d967cb7db907746f0272605abaca",
-  "src/coupling/cpp_worker_persistent_ipc_v1/kernel_protocol.py": "bff2a114d5053fca61c49daea1a40c726ea37e056e099d6440397640e35e8b75",
-  "tests/cpp_worker_comprehensive_audit_repair_v1/test_repair_contract.py": "be96cfd07fd3578e059f5abbf16e8997c322f240c64cfe5b250b8a5817020b20",
-  "tools/cpp_worker_comprehensive_audit_repair_v1/generate_stage161_evidence.py": "e53883b60aa657937a0ecbaba717ca225d06578adb382c8b3aa44afee724cd1f"
-}

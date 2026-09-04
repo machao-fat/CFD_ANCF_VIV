@@ -1,9 +1,0 @@
-{
-  "stage_id": "stage4f_d_cpp_worker_matlab_intermediate_trace_repair_v1",
-  "status": "not_started_after_fail_closed_export",
-  "steps_total": 40,
-  "steps_processed": 0,
-  "worker_start_count": 0,
-  "owned_residual": 0,
-  "reason": "verification sequence stopped before replay"
-}

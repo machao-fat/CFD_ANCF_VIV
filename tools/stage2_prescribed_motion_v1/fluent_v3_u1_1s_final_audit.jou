@@ -1,0 +1,5 @@
+/file/read-case-data "D:/CFD/stage2_prescribed_motion_ogrid_v1/fluent_v3_run_1s_dt0025_u1/stage2_v3_u1_1s.cas.h5"
+/define/user-defined/compiled-functions load
+libudf_step_exact
+/define/dynamic-mesh/zones/list
+/exit yes

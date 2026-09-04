@@ -1,8 +1,0 @@
-{
-  "automatic_retry": false,
-  "downstream_cfd_started": false,
-  "new_confirm_started": false,
-  "owned_residual": 0,
-  "status": "pass",
-  "stop_reason": "offline audit scope complete; numerical blockers remain"
-}

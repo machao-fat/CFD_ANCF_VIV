@@ -1,0 +1,7 @@
+/file/read-case-data "D:/CFD/stage2_prescribed_motion_ogrid_v1/fluent_v3_formal_t0_backward/stage2_v3_formal_t0_ready_inlet1.cas.h5"
+/report/surface-integrals/area-weighted-avg
+inlet
+
+x-velocity
+no
+/exit yes

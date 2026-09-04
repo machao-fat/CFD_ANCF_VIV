@@ -1,0 +1,5 @@
+; Read-only TUI command discovery; no case/data, mesh, or report writes.
+/file/?
+/file/export/?
+/mesh/?
+/exit yes

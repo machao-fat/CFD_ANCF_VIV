@@ -57,8 +57,52 @@ MASS_MATRIX_SOURCE = PROJECT / "runtime/cpp_worker_persistent_ipc_v1/matlab_dual
 # preflight failure; it must never be regenerated from the live request.
 EXPECTED_MODEL_CONTRACT_SHA256 = "bfcbaeaece12a04e304cbdfa9afbe7f2625af12e33a53e0aae942e61e960ea65"
 LIBRARY = PROJECT / "runtime/cpp_worker_persistent_ipc_v1/fresh_library_build_004/lib/libancfFileMotion.so"
+EXPECTED_LIBRARY_SHA256 = "8446c40fe5774739c0991f1a4661239a4c6a1fdbb20578adfd2d03bb7bb7c6e6"
 WORKER_EXE = PROJECT / "runtime/cpp_worker_persistent_ipc_v1/build-release/cfd_ancf_ancf_kernel_worker.exe"
 TEMPLATE_ROOT = PROJECT / "cases/openfoam/cpp_worker_persistent_ipc_v1/real_confirm_001"
+# The original confirm remains anchored at step559.  Continuation entry
+# points override these values after loading and validating a fresh source.
+SOURCE_GLOBAL_STEP = 559
+SOURCE_TIME_S = 2.2075
+SOURCE_TICK = 2_207_500_000
+# Existing entries retain the 40-step authorization by default.  A separately
+# authorized wrapper may set this before invoking ``main``; no caller can
+# expand a window after execution begins.
+AUTHORIZED_STEPS = 40
+TARGET_FINAL_STEP = SOURCE_GLOBAL_STEP + AUTHORIZED_STEPS
+TARGET_FINAL_TIME_S = SOURCE_TIME_S + AUTHORIZED_STEPS * 0.00125
+TARGET_FINAL_TICK = SOURCE_TICK + AUTHORIZED_STEPS * 1_250_000
+GATE_ID = "STAGE4F_D_CPP_WORKER_PERSISTENT_IPC_V1_CONFIRM_GATE"
+GATE_FILENAME = "stage4f_d_cpp_worker_persistent_ipc_v1_confirm_gate.json"
+# Sparse retention is disabled for all historical entries.  The explicitly
+# authorized to30s wrapper opts in before invoking ``main``.
+SPARSE_RETENTION = False
+SPARSE_KEEP_FULL_STEPS = 40
+
+
+def _prepare_fresh_case_destination(destination: Path, *, slice_id: int) -> None:
+    """Optional continuation-template hook.
+
+    The standard bounded confirms use pristine templates and intentionally do
+    nothing here.  A separately authorized continuation may replace this
+    hook to remove only stale bridge files from its freshly copied case.
+    """
+
+
+def _post_success_retention(*, runtime: Path, results: Path,
+                            checkpoint_rows: list[Mapping[str, Any]]) -> dict[str, Any]:
+    """Optional bounded-window retention hook; disabled for legacy confirms."""
+    if SPARSE_RETENTION:
+        journal = results / "compact_step_journal.jsonl"
+        if not journal.is_file():
+            raise RuntimeError("sparse retention journal is missing")
+        return {"status": "streaming_compacted", "journal": str(journal),
+                "journal_size_bytes": journal.stat().st_size,
+                "final_full_restart_steps_preserved": len(checkpoint_rows),
+                "configured_tail_steps": SPARSE_KEEP_FULL_STEPS,
+                "source_checkpoint_preserved": str(SOURCE)}
+    return {"status": "not_requested", "runtime": str(runtime),
+            "checkpoint_count": len(checkpoint_rows)}
 
 
 def _canonical(value: Any) -> bytes:
@@ -88,11 +132,140 @@ def _source_mass_matrix() -> tuple[float, ...]:
     return values
 
 
+def _restart_payload_from_source(source: Mapping[str, Any]) -> tuple[Mapping[str, Any], list[Any]]:
+    """Return the committed ANCF state and the load for the first new step.
+
+    Legacy reconstructed sources retain their historical ``structure`` plus
+    ``applied_slice_forces_N`` fields.  New barrier checkpoints carry the
+    portable state in metadata; after a successful commit their *next*
+    applied load is the only causal input for the next step.  This function is
+    pure parsing and rejects incomplete metadata before any worker is started.
+    """
+    metadata = source.get("checkpoint_metadata", {})
+    if not isinstance(metadata, Mapping):
+        raise RuntimeError("accepted source checkpoint metadata is malformed")
+    portable = metadata.get("ancf_restart_state")
+    if portable is None:
+        payload: Mapping[str, Any] = source
+        force_key = "applied_slice_forces_N"
+    elif isinstance(portable, Mapping):
+        payload = portable
+        force_key = "next_applied_slice_forces_N"
+    else:
+        raise RuntimeError("accepted source portable restart state is malformed")
+    structure = payload.get("structure")
+    forces = payload.get(force_key)
+    if (not isinstance(structure, Mapping) or
+            any(key not in structure for key in ("q", "qdot", "qddot")) or
+            not isinstance(forces, list) or len(forces) != 3 or
+            any(not isinstance(row, list) or len(row) != 3 for row in forces)):
+        raise RuntimeError("accepted source restart state is incomplete")
+    try:
+        numeric_forces = [[float(value) for value in row] for row in forces]
+    except (TypeError, ValueError, OverflowError) as exc:
+        raise RuntimeError("accepted source restart force is non-numeric") from exc
+    if any(not math.isfinite(value) for row in numeric_forces for value in row):
+        raise RuntimeError("accepted source restart force is non-finite")
+    return payload, numeric_forces
+
+
 def _write(path: Path, value: Any) -> None:
     path.parent.mkdir(parents=True, exist_ok=True)
     temporary = path.with_name(path.name + f".{os.getpid()}.{time.time_ns()}.tmp")
     temporary.write_bytes(_canonical(value))
     os.replace(temporary, path)
+
+
+class _CountOnlyRecords:
+    """Preserve coordinator sequence semantics without retaining full records."""
+
+    def __init__(self) -> None:
+        self.count = 0
+
+    def append(self, _value: Any) -> None:
+        self.count += 1
+
+    def __len__(self) -> int:
+        return self.count
+
+
+def _append_jsonl_durable(path: Path, value: Mapping[str, Any]) -> None:
+    """Durably append the compact audit row before any sparse eviction."""
+    path.parent.mkdir(parents=True, exist_ok=True)
+    with path.open("ab") as stream:
+        stream.write(_canonical(value))
+        stream.flush()
+        os.fsync(stream.fileno())
+
+
+def _compact_step_row(*, record: Mapping[str, Any], correction: Mapping[str, Any],
+                      portable_restart_state: Mapping[str, Any], raw_slice_forces: Any,
+                      applied_slice_forces: Any, next_applied_slice_forces: Any,
+                      timings: Mapping[str, Any]) -> dict[str, Any]:
+    """Minimal immutable audit row; deliberately excludes full q/payload blobs."""
+    return {
+        "schema_version": "cpp_worker_sparse_step_journal_v1",
+        "run_id": record["run_id"], "case_id": record["case_id"],
+        "global_step": record["global_step"],
+        "case_local_bridge_step": record["case_local_bridge_step"],
+        "time_s": record["time_s"], "integer_tick": record["integer_tick"],
+        "request_id": record["request_id"], "transaction_id": record["transaction_id"],
+        "slice_ids": record["slice_ids"], "slice_payload_hashes": record["slice_payload_hashes"],
+        "correction_payload_hash": correction["payload_hash"],
+        "checkpoint_token": correction["checkpoint_token"],
+        "restart_state_sha256": portable_restart_state["state_sha256"],
+        "raw_slice_forces_N": raw_slice_forces,
+        "applied_slice_forces_N": applied_slice_forces,
+        "next_applied_slice_forces_N": next_applied_slice_forces,
+        "barrier_passed": record.get("barrier_passed") is True,
+        "committed": record.get("committed") is True,
+        "finite_value_audit": correction.get("finite_value_audit") is True,
+        "timing_s": dict(timings),
+    }
+
+
+def _is_reparse(path: Path) -> bool:
+    return bool(path.lstat().st_file_attributes & 0x400) if hasattr(path.lstat(), "st_file_attributes") else path.is_symlink()
+
+
+def _evict_sparse_step(*, global_step: int, journal_path: Path) -> list[str]:
+    """Remove only one already-journaled, exact middle step from this runtime."""
+    if not SPARSE_RETENTION:
+        return []
+    evict_step = global_step - SPARSE_KEEP_FULL_STEPS
+    if evict_step <= SOURCE_GLOBAL_STEP:
+        return []
+    if not journal_path.is_file():
+        raise RuntimeError("sparse audit journal is not durable before eviction")
+    removed: list[str] = []
+    checkpoint = RUNTIME / "checkpoint" / f"checkpoint_{evict_step:08d}.json"
+    commit_journal = RUNTIME / "commit_journal" / f"commit_{evict_step:08d}.json"
+    for candidate in (checkpoint, commit_journal):
+        if candidate.exists():
+            if candidate.parent.resolve() not in {(RUNTIME / "checkpoint").resolve(), (RUNTIME / "commit_journal").resolve()} or _is_reparse(candidate):
+                raise RuntimeError(f"unsafe sparse eviction target: {candidate}")
+            candidate.unlink()
+            removed.append(str(candidate))
+    evict_time = SOURCE_TIME_S + (evict_step - SOURCE_GLOBAL_STEP) * 0.00125
+    for sid in range(3):
+        case_root = RUNTIME / "cases" / f"slice_{sid:04d}"
+        if not case_root.is_dir() or _is_reparse(case_root):
+            raise RuntimeError(f"unsafe sparse case root: {case_root}")
+        for candidate in case_root.iterdir():
+            try:
+                numeric_time = float(candidate.name)
+            except ValueError:
+                continue
+            if abs(numeric_time - evict_time) > 1e-12:
+                continue
+            if candidate.parent.resolve() != case_root.resolve() or _is_reparse(candidate):
+                raise RuntimeError(f"unsafe sparse field target: {candidate}")
+            if candidate.is_dir():
+                shutil.rmtree(candidate)
+            else:
+                candidate.unlink()
+            removed.append(str(candidate))
+    return removed
 
 
 def _stats(values: list[float]) -> dict[str, float | None]:
@@ -176,7 +349,7 @@ def _manifest() -> SliceManifest:
 def _runtime_config(manifest: SliceManifest) -> RuntimeConfig:
     return RuntimeConfig.from_mapping(build_config(
         case_id=CASE_ID, dt_s=0.00125, timeout_s=180.0,
-        specs=list(manifest.slices), start_time_s=2.2075,
+        specs=list(manifest.slices), start_time_s=SOURCE_TIME_S,
         reference_length_m=50.0, represented_length_m=50.0))
 
 
@@ -206,11 +379,16 @@ def _case_factory(*, contract: CppConfirmContract, manifest: SliceManifest, runt
         if destination.exists():
             raise RuntimeError(f"case destination already exists: {destination}")
         shutil.copytree(templates[sid], destination)
+        _prepare_fresh_case_destination(destination, slice_id=sid)
+        # The continuation template deliberately excludes old exchange
+        # artifacts.  Create only the fresh acknowledgement namespace needed
+        # by ancfFileMotion; no prior payload or ack is reused.
+        (destination / "coupling" / "consumed").mkdir(parents=True, exist_ok=False)
         from coupling.performance_optimization_v2.openfoam_persistent import PersistentOpenFOAMSliceProcess
         raw_backend = PersistentOpenFOAMSliceProcess(
             slice_id=sid, case=destination, exchange_root=exchange_root,
             manifest=manifest, runtime_config=runtime_config, library=LIBRARY,
-            run_id=RUN_ID, segment_end_time_s=2.2075 + 40 * 0.00125,
+            run_id=RUN_ID, segment_end_time_s=TARGET_FINAL_TIME_S,
             direct_wsl_exec=True, poll_interval_s=0.05,
         )
         backend = TimedBackend(raw_backend)
@@ -226,7 +404,7 @@ def _validate_scope(contract: CppConfirmContract, manifest: SliceManifest) -> No
     contract.validate(PROJECT)
     if manifest.case_id != CASE_ID or len(manifest.slices) != 3:
         raise RuntimeError("manifest identity/slice scope mismatch")
-    if not LIBRARY.is_file() or _sha256(LIBRARY) != "8446c40fe5774739c0991f1a4661239a4c6a1fdbb20578adfd2d03bb7bb7c6e6":
+    if not LIBRARY.is_file() or _sha256(LIBRARY) != EXPECTED_LIBRARY_SHA256:
         raise RuntimeError("fresh library hash is not the accepted build artifact")
     if not WORKER_EXE.is_file() or not TEMPLATE_ROOT.is_dir() or not MASS_MATRIX_SOURCE.is_file():
         raise RuntimeError("fresh worker or staged case template is missing")
@@ -235,7 +413,7 @@ def _validate_scope(contract: CppConfirmContract, manifest: SliceManifest) -> No
 def _write_report(*, gate: dict[str, Any], summary: Mapping[str, Any]) -> None:
     DOCS.mkdir(parents=True, exist_ok=True)
     status = gate["gate"]
-    report = f"""# C++ worker persistent IPC bounded confirm\n\n- Gate: `{status}`\n- segment wall-clock: {summary.get('segment_wall_clock_s')} s\n- physical committed: {summary.get('physical_committed')}\n- fully audited: {summary.get('fully_audited')}\n- C++ worker startup: {summary.get('cpp_worker_startup')}\n- OpenFOAM startup: {summary.get('openfoam_startup')}\n- WSL startup: {summary.get('wsl_startup')}\n- MATLAB startup: 0 (forbidden by this path)\n- owned residual: {summary.get('owned_residual')}\n- T_ancf mean: {summary.get('phase_means', {}).get('T_ancf_s')} s\n- T_openfoam mean: {summary.get('phase_means', {}).get('T_openfoam_s')} s\n- T_exchange mean: {summary.get('phase_means', {}).get('T_exchange_s')} s\n- T_sync_and_audit mean: {summary.get('phase_means', {}).get('T_sync_and_audit_s')} s\n- C++ numerical core status: `not_completed` (transport/worker path only)\n\nThe source checkpoint, old evidence, MATLAB baseline, physical contract, global dt, thresholds, and formal 0.2.1 semantics were read-only. No Stage75/E5-C or additional segment was started.\n"""
+    report = f"""# C++ worker persistent IPC bounded confirm\n\n- Gate: `{status}`\n- segment wall-clock: {summary.get('segment_wall_clock_s')} s\n- physical committed: {summary.get('physical_committed')}\n- fully audited: {summary.get('fully_audited')}\n- C++ worker startup: {summary.get('cpp_worker_startup')}\n- OpenFOAM startup: {summary.get('openfoam_startup')}\n- WSL startup: {summary.get('wsl_startup')}\n- MATLAB startup: 0 (forbidden by this path)\n- owned residual: {summary.get('owned_residual')}\n- T_ancf mean: {summary.get('phase_means', {}).get('T_ancf_s')} s\n- T_openfoam mean: {summary.get('phase_means', {}).get('T_openfoam_s')} s\n- T_exchange mean: {summary.get('phase_means', {}).get('T_exchange_s')} s\n- T_sync_and_audit mean: {summary.get('phase_means', {}).get('T_sync_and_audit_s')} s\n- C++ numerical core status: `{gate.get('C++_ANCF_NUMERICAL_CORE_STATUS', 'not_completed')}`\n\nThe source checkpoint, old evidence, MATLAB baseline, physical contract, global dt, thresholds, and formal 0.2.1 semantics were read-only. No Stage75/E5-C or additional segment was started.\n"""
     (DOCS / "cpp_worker_persistent_ipc_confirm_report.md").write_text(report, encoding="utf-8")
 
 
@@ -256,7 +434,10 @@ def _gate_ok(summary: Mapping[str, Any], stop_result: Mapping[str, Any],
     return bool(
         summary.get("status") == "pass" and summary.get("owned_residual") == 0 and
         not stop_result.get("errors") and _process_gate_ok(summary, process_rows) and
-        bool(logs_end) and all(logs_end.values()) and len(checkpoint_rows) == 40)
+        bool(logs_end) and all(logs_end.values()) and
+        ((len(checkpoint_rows) == AUTHORIZED_STEPS and not SPARSE_RETENTION) or
+         (SPARSE_RETENTION and summary.get("journal_count") == AUTHORIZED_STEPS and
+          len(checkpoint_rows) == SPARSE_KEEP_FULL_STEPS)))
 
 
 def main() -> int:
@@ -269,6 +450,8 @@ def main() -> int:
         stage_id=STAGE_ID, run_id=RUN_ID, case_id=CASE_ID,
         runtime=RUNTIME, results=RESULTS, source_checkpoint=SOURCE,
         source_checkpoint_sha256=SOURCE_SHA256, allow_real_external_processes=True,
+        source_global_step=SOURCE_GLOBAL_STEP, source_time_s=SOURCE_TIME_S, source_tick=SOURCE_TICK,
+        steps=AUTHORIZED_STEPS, segment_duration_s=AUTHORIZED_STEPS * 0.00125,
         authorization=REAL_AUTHORIZATION_TOKEN,
     )
     _validate_scope(contract, manifest)
@@ -280,7 +463,10 @@ def main() -> int:
     worker_adapter: CppKernelCampaignAdapter | None = None
     confirm: CppConfirmRun | None = None
     timed_backends: dict[int, TimedBackend] = {}
-    before_bytes = _tree_bytes(RUNTIME.parent)
+    # Measure only this fresh runtime.  A continuation source derivation may
+    # legitimately live beside it, and must not cancel the new segment's
+    # disk delta in the resource audit.
+    before_bytes = _tree_bytes(RUNTIME)
     model, _q, _qdot, _qddot, base_load = _fixture()
     model = normalize_model(model)
     mass_matrix = _source_mass_matrix()
@@ -293,24 +479,22 @@ def main() -> int:
         mass_matrix=mass_matrix,
         expected_model_contract_sha256=EXPECTED_MODEL_CONTRACT_SHA256)
     source = json.loads(SOURCE.read_text(encoding="utf-8"))
+    restart_payload, source_applied = _restart_payload_from_source(source)
     # The accepted MATLAB contract advances from the committed applied load.
     # previous_slice_forces_N is raw observation data and must not seed ANCF.
-    source_applied = source.get("applied_slice_forces_N")
-    if not isinstance(source_applied, list) or len(source_applied) != 3:
-        raise RuntimeError("accepted source is missing applied_slice_forces_N")
     previous = {sid: tuple(float(v) for v in source_applied[sid]) for sid in range(3)}
     stabilizer = CausalTimeConsistentLoadStabilizer(
         previous_applied_force_N=tuple(previous[sid] for sid in range(3)),
-        source_step=559, source_tick=2_207_500_000, run_id=RUN_ID, case_id=CASE_ID,
+        source_step=SOURCE_GLOBAL_STEP, source_tick=SOURCE_TICK, run_id=RUN_ID, case_id=CASE_ID,
         scales_N=tuple(500.0 * item.slice_length_m for item in manifest.slices),
     )
     seed_records: dict[int, Mapping[str, Any]] = {}
     H = build_H_for_manifest(manifest, tuple(i * 50.0 / 16.0 for i in range(17)), ndof=model.ndof)
-    structure = source["structure"]
+    structure = restart_payload["structure"]
     for item in manifest.slices:
         seed_records[item.slice_id] = motion_from_ancf_state(
             manifest, item.slice_id, H[item.slice_id], structure["q"], structure["qdot"], structure["qddot"],
-            step=559, time_s=2.2075, reference_position_m=(0.0, 0.0, item.s_ref_m)).to_dict()
+            step=SOURCE_GLOBAL_STEP, time_s=SOURCE_TIME_S, reference_position_m=(0.0, 0.0, item.s_ref_m)).to_dict()
     factory = _case_factory(contract=contract, manifest=manifest, runtime_config=config,
                             seed_records=seed_records, templates={sid: TEMPLATE_ROOT / f"slice_{sid:04d}" for sid in range(3)},
                             timed=timed_backends)
@@ -321,12 +505,17 @@ def main() -> int:
                             motion_reference_positions_m={
                                 sid: (0.0, 0.0, manifest.slice(sid).s_ref_m)
                                 for sid in range(3)})
+    if SPARSE_RETENTION:
+        # CppConfirmRun needs only a monotonic committed count for its scope
+        # guard.  The durable compact journal below is the audit record.
+        confirm._records = _CountOnlyRecords()
+    sparse_journal = RESULTS / "compact_step_journal.jsonl"
     try:
         confirm.preflight(PROJECT)
         confirm.start()
-        for bridge in range(1, 41):
-            global_step = 559 + bridge
-            time_s = 2.2075 + bridge * 0.00125
+        for bridge in range(1, AUTHORIZED_STEPS + 1):
+            global_step = SOURCE_GLOBAL_STEP + bridge
+            time_s = SOURCE_TIME_S + bridge * 0.00125
             step_start = time.perf_counter()
             prepare_start = time.perf_counter()
             timing: dict[str, float] = {}
@@ -341,7 +530,7 @@ def main() -> int:
             stabilizer_start = time.perf_counter()
             next_applied_force_rows, stabilizer_audit = stabilizer.apply(
                 step=global_step, time_s=time_s,
-                integer_tick=2_207_500_000 + bridge * 1_250_000,
+                integer_tick=SOURCE_TICK + bridge * 1_250_000,
                 raw_force_N=raw_force_rows,
             )
             stabilizer_end = time.perf_counter()
@@ -351,6 +540,11 @@ def main() -> int:
             applied_force_rows = tuple(previous[sid] for sid in range(3))
             correction, _ = worker_adapter.correct(global_step, time_s, applied_force_rows)
             correction_end = time.perf_counter()
+            portable_restart_state = worker_adapter.export_pending_restart_state(
+                parent_checkpoint_sha256=SOURCE_SHA256,
+                applied_slice_forces_N=applied_force_rows,
+                next_applied_slice_forces_N=next_applied_force_rows,
+            )
             commit_start = time.perf_counter()
             record = confirm.commit_prepared_with_cpp_adapter(
                 adapter=worker_adapter, correction=correction,
@@ -360,6 +554,7 @@ def main() -> int:
                     "applied_slice_forces_N": [list(row) for row in applied_force_rows],
                     "next_applied_slice_forces_N": [list(row) for row in next_applied_force_rows],
                     "stabilizer_audit": stabilizer_audit,
+                    "ancf_restart_state": portable_restart_state,
                 },
             )
             stabilizer.commit()
@@ -387,7 +582,7 @@ def main() -> int:
             measured_nonoverlap = ancf + motion_mapping + force_extract + stabilizer_elapsed + commit_elapsed
             row = {
                 "global_step": global_step, "case_local_bridge_step": bridge, "time_s": time_s,
-                "integer_tick": 2_207_500_000 + bridge * 1_250_000, "run_id": RUN_ID, "case_id": CASE_ID,
+                "integer_tick": SOURCE_TICK + bridge * 1_250_000, "run_id": RUN_ID, "case_id": CASE_ID,
                 "step_start": step_start, "step_end": step_end,
                 "ancf_start": timing["ancf_start"], "ancf_end": correction_end,
                 "exchange_start": timing["exchange_start"], "exchange_end": timing["exchange_end"],
@@ -407,12 +602,29 @@ def main() -> int:
                 "stabilizer_audit": stabilizer_audit,
                 "barrier_record": record, "prepared": prepared,
             }
-            timing_rows.append(row)
-            records.append(record)
+            if SPARSE_RETENTION:
+                timing_only = {key: row[key] for key in (
+                    "global_step", "case_local_bridge_step", "time_s", "integer_tick", "run_id", "case_id",
+                    "T_ancf_s", "T_openfoam_s", "T_exchange_s", "T_exchange_sum_s", "T_sync_and_audit_s",
+                    "T_motion_mapping_s", "T_force_extract_s", "T_stabilizer_s", "T_commit_s", "T_step_s",
+                    "T_unattributed_coordinator_s", "overlap_gap_s", "slice_openfoam_s")}
+                timing_only["barrier_record"] = {"committed": record.get("committed") is True}
+                timing_only["worker_correction"] = {"finite_value_audit": correction.get("finite_value_audit") is True}
+                compact = _compact_step_row(
+                    record=record, correction=correction, portable_restart_state=portable_restart_state,
+                    raw_slice_forces=row["raw_slice_forces_N"], applied_slice_forces=row["applied_slice_forces_N"],
+                    next_applied_slice_forces=row["next_applied_slice_forces_N"], timings=timing_only)
+                _append_jsonl_durable(sparse_journal, compact)
+                _evict_sparse_step(global_step=global_step, journal_path=sparse_journal)
+                timing_rows.append(timing_only)
+                records.append({"global_step": global_step, "committed": True})
+            else:
+                timing_rows.append(row)
+                records.append(record)
     except Exception as exc:
         stabilizer.rollback()
         failure = {"classification": "real_confirm_failure", "error": str(exc), "traceback": traceback.format_exc(),
-                   "failed_global_step": (timing_rows[-1]["global_step"] + 1 if timing_rows else 560)}
+                   "failed_global_step": (timing_rows[-1]["global_step"] + 1 if timing_rows else SOURCE_GLOBAL_STEP + 1)}
     finally:
         if confirm is not None:
             try:
@@ -442,8 +654,17 @@ def main() -> int:
         checkpoint_rows.append({"path": str(path), "sha256": _sha256(path), "global_step": payload.get("global_step"),
                                 "time_s": payload.get("time_s"), "committed": payload.get("committed") is True,
                                 "slice_count": len(payload.get("slice_ids", []))})
+    retention: dict[str, Any] = {"status": "not_requested"}
+    if failure is None and physical == AUTHORIZED_STEPS and audited == AUTHORIZED_STEPS:
+        try:
+            retention = _post_success_retention(
+                runtime=RUNTIME, results=RESULTS, checkpoint_rows=checkpoint_rows)
+        except Exception as exc:
+            failure = {"classification": "post_success_retention_failure", "error": str(exc),
+                       "traceback": traceback.format_exc()}
+            retention = {"status": "failed", "error": str(exc)}
     summary = {
-        "status": "pass" if failure is None and physical == 40 and audited == 40 else "do_not_pass",
+        "status": "pass" if failure is None and physical == AUTHORIZED_STEPS and audited == AUTHORIZED_STEPS else "do_not_pass",
         "stage_id": STAGE_ID, "run_id": RUN_ID, "case_id": CASE_ID,
         "segment_wall_clock_s": wall, "physical_committed": physical, "fully_audited": audited,
         "cpp_worker_startup": worker_adapter.start_count if worker_adapter else 0,
@@ -452,13 +673,16 @@ def main() -> int:
         "matlab_startup": 0, "owned_residual": int(stop_result.get("owned_residual", 0)),
         "records": records, "timing_rows": timing_rows, "process_registry": process_rows,
         "logs": logs, "logs_end_audit": logs_end, "checkpoints": checkpoint_rows,
-        "source": {"path": str(SOURCE), "sha256": SOURCE_SHA256, "step": 559, "time_s": 2.2075, "tick": 2_207_500_000, "read_only": True},
+        "source": {"path": str(SOURCE), "sha256": SOURCE_SHA256, "step": SOURCE_GLOBAL_STEP, "time_s": SOURCE_TIME_S, "tick": SOURCE_TICK, "read_only": True},
         "fresh_library": {"path": str(LIBRARY), "sha256": _sha256(LIBRARY), "size_bytes": LIBRARY.stat().st_size, "read_only": True},
         "ancf_numerical_contract": {"gauss_order": ANCF_GAUSS_ORDER, "max_newton": ANCF_MAX_NEWTON,
                                      "source": ANCF_CONTRACT_SOURCE, "physical_parameters_modified": False},
         "real_process_starts": {"MATLAB": 0, "OpenFOAM": sum(int(t.backend.start_count) for t in timed_backends.values()),
                                  "WSL": sum(int(t.backend.start_count) for t in timed_backends.values()), "CFD": sum(int(t.backend.start_count) for t in timed_backends.values())},
         "failure": failure, "stop_result": stop_result,
+        "retention": retention,
+        "journal_count": len(records) if SPARSE_RETENTION else None,
+        "sparse_retention": SPARSE_RETENTION,
     }
     phase_names = ["T_ancf_s", "T_openfoam_s", "T_exchange_s", "T_sync_and_audit_s",
                    "T_motion_mapping_s", "T_force_extract_s", "T_stabilizer_s", "T_commit_s",
@@ -480,11 +704,11 @@ def main() -> int:
     _write(RESULTS / "confirm_summary.json", summary)
     gate_ok = _gate_ok(summary, stop_result, process_rows, logs_end, checkpoint_rows)
     gate = {
-        "gate": "STAGE4F_D_CPP_WORKER_PERSISTENT_IPC_V1_CONFIRM_GATE: pass" if gate_ok else "STAGE4F_D_CPP_WORKER_PERSISTENT_IPC_V1_CONFIRM_GATE: do_not_pass",
-        "status": "pass" if gate_ok else "do_not_pass", "scope": {"global_steps": 40, "slice_count": 3, "segment_duration_s": 0.05, "source_global_step": 559, "target_final_step": 599, "target_final_time_s": 2.2575, "target_final_tick": 2_257_500_000},
-        "physical_committed": f"{physical}/40", "fully_audited": f"{audited}/40", "cpp_worker_startup": summary["cpp_worker_startup"], "openfoam_startup": summary["openfoam_startup"], "wsl_startup": summary["wsl_startup"], "matlab_startup": 0, "owned_residual": summary["owned_residual"], "failure": failure, "speedup_vs_35_4478716": summary["speedup_vs_35_4478716"], "speedup_vs_37_1570657": summary["speedup_vs_37_1570657"], "old_evidence_modified": False, "old_runtime_reused": False, "next_segment_started": False, "C++_ANCF_NUMERICAL_CORE_STATUS": "validated", "formal_status": {"FORMAL_STROUHAL_STATUS": "not_completed", "STABLE_VIV_RESPONSE_CLAIM": "not_completed", "LOCK_IN_CLAIM": "not_completed"},
+        "gate": f"{GATE_ID}: pass" if gate_ok else f"{GATE_ID}: do_not_pass",
+        "status": "pass" if gate_ok else "do_not_pass", "scope": {"global_steps": AUTHORIZED_STEPS, "slice_count": 3, "segment_duration_s": AUTHORIZED_STEPS * 0.00125, "source_global_step": SOURCE_GLOBAL_STEP, "target_final_step": TARGET_FINAL_STEP, "target_final_time_s": TARGET_FINAL_TIME_S, "target_final_tick": TARGET_FINAL_TICK},
+        "physical_committed": f"{physical}/{AUTHORIZED_STEPS}", "fully_audited": f"{audited}/{AUTHORIZED_STEPS}", "cpp_worker_startup": summary["cpp_worker_startup"], "openfoam_startup": summary["openfoam_startup"], "wsl_startup": summary["wsl_startup"], "matlab_startup": 0, "owned_residual": summary["owned_residual"], "failure": failure, "speedup_vs_35_4478716": summary["speedup_vs_35_4478716"], "speedup_vs_37_1570657": summary["speedup_vs_37_1570657"], "old_evidence_modified": False, "old_runtime_reused": False, "next_segment_started": False, "C++_ANCF_NUMERICAL_CORE_STATUS": "validated", "formal_status": {"FORMAL_STROUHAL_STATUS": "not_completed", "STABLE_VIV_RESPONSE_CLAIM": "not_completed", "LOCK_IN_CLAIM": "not_completed"},
     }
-    _write(RESULTS / "stage4f_d_cpp_worker_persistent_ipc_v1_confirm_gate.json", gate)
+    _write(RESULTS / GATE_FILENAME, gate)
     _write(RESULTS / "stop_gate_audit.json", {"stage_id": STAGE_ID, "stopped_after_bounded_confirm": True, "next_segment_started": False, "owned_residual": summary["owned_residual"], "gate": gate["gate"]})
     _write(RESULTS / "test_discovery_audit.json", {"stage_id": STAGE_ID, "compileall": "pass_before_confirm", "offline_gate": "pass_from_prior_evidence", "real_confirm_executed": True, "real_process_starts": summary["real_process_starts"]})
     _write_report(gate=gate, summary=summary)

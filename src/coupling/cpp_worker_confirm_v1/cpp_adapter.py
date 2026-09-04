@@ -82,6 +82,7 @@ class CppKernelCampaignAdapter:
     """Persistent C++ worker with explicit predictor/corrector transport."""
 
     CHECKPOINT_SCHEMA = "cpp_kernel_campaign_checkpoint_v1"
+    PORTABLE_RESTART_SCHEMA = "ancf_portable_restart_state_v1"
 
     def __init__(self, *, worker: Any, model: Any, request_factory: Any,
                  run_id: str, case_id: str, source_global_step: int,
@@ -202,25 +203,146 @@ class CppKernelCampaignAdapter:
                         mass_matrix: Sequence[float] = (),
                         expected_model_contract_sha256: str | None = None) -> "CppKernelCampaignAdapter":
         value = load_source_checkpoint(checkpoint, expected_sha256)
-        structure = value.get("structure")
+        fresh_state = value.get("state_kind") == "cpp_reference_state" and value.get("schema_version") == "ancf-t0-cpp-v2"
+        if (value.get("status") != "committed" and value.get("committed") is not True
+                and not fresh_state):
+            raise ContractError("source checkpoint is not committed")
+        portable = value.get("checkpoint_metadata", {}).get("ancf_restart_state")
+        if portable is not None and not isinstance(portable, Mapping):
+            raise ContractError("checkpoint portable restart state is malformed")
+        structure = (portable.get("structure") if isinstance(portable, Mapping)
+                     else (value if fresh_state else value.get("structure")))
         if not isinstance(structure, Mapping):
             raise ContractError("source checkpoint missing structure object")
         if not {"q", "qdot", "qddot"}.issubset(structure):
             raise ContractError("source checkpoint missing q/qdot/qddot")
-        source_step = value.get("step")
-        source_time = value.get("time_s")
+        source_step = portable.get("global_step") if isinstance(portable, Mapping) else value.get("step", value.get("global_step"))
+        source_time = portable.get("time_s") if isinstance(portable, Mapping) else value.get("time_s")
+        source_tick = portable.get("integer_tick") if isinstance(portable, Mapping) else value.get("integer_tick", value.get("time_tick"))
         if (isinstance(source_step, bool) or not isinstance(source_step, int) or
+                (source_step < 559 and not (fresh_state and source_step == 0)) or
                 isinstance(source_time, bool) or not isinstance(source_time, Real) or
-                not math.isfinite(float(source_time)) or source_step != 559 or
-                abs(float(source_time) - 2.2075) > 1e-12):
-            raise ContractError("source checkpoint identity is not step 559 at 2.2075 s")
+                not math.isfinite(float(source_time)) or
+                isinstance(source_tick, bool) or not isinstance(source_tick, int)):
+            raise ContractError("source checkpoint identity is malformed")
+        if fresh_state and source_step == 0:
+            expected_time = 0.0
+            expected_tick = 0
+        else:
+            expected_time = 2.2075 + (source_step - 559) * dt_s
+            expected_tick = 2_207_500_000 + (source_step - 559) * canonical_tick_delta(dt_s)
+        if abs(float(source_time) - expected_time) > 1e-12 or source_tick != expected_tick:
+            raise ContractError("source checkpoint step/time/tick mapping is inconsistent")
+        if isinstance(portable, Mapping):
+            cls._validate_portable_restart_state(
+                portable, checkpoint=value, model=model, mass_matrix=mass_matrix,
+                expected_model_contract_sha256=expected_model_contract_sha256,
+                dt_s=dt_s,
+            )
         return cls(worker=worker, model=model, request_factory=request_factory,
-                   run_id=run_id, case_id=case_id, source_global_step=559,
-                   source_time_s=2.2075, source_tick=2_207_500_000, dt_s=dt_s,
+                   run_id=run_id, case_id=case_id, source_global_step=source_step,
+                   source_time_s=float(source_time), source_tick=source_tick, dt_s=dt_s,
                    q=structure["q"], qdot=structure["qdot"], qddot=structure["qddot"],
                    base_load=base_load, slice_count=slice_count,
                    mass_matrix=mass_matrix, strict_numerical_contract=True,
                    expected_model_contract_sha256=expected_model_contract_sha256)
+
+    @classmethod
+    def _validate_portable_restart_state(cls, portable: Mapping[str, Any], *, checkpoint: Mapping[str, Any],
+                                         model: Any, mass_matrix: Sequence[float],
+                                         expected_model_contract_sha256: str | None,
+                                         dt_s: float) -> None:
+        """Validate a committed cross-run restart source without weakening IDs."""
+        if portable.get("schema_version") != cls.PORTABLE_RESTART_SCHEMA:
+            raise ContractError("unsupported portable restart-state schema")
+        required = {"global_step", "time_s", "integer_tick", "structure", "state_sha256",
+                    "model_contract_sha256", "mass_matrix_sha256", "parent_checkpoint_sha256",
+                    "applied_slice_forces_N", "next_applied_slice_forces_N", "dt_s",
+                    "origin_run_id", "origin_case_id", "finite_value_audit"}
+        if required - portable.keys():
+            raise ContractError("portable restart state is incomplete")
+        checkpoint_step = checkpoint.get("global_step", checkpoint.get("step"))
+        checkpoint_time = checkpoint.get("time_s")
+        checkpoint_tick = checkpoint.get("integer_tick", checkpoint.get("time_tick"))
+        if (isinstance(checkpoint_step, bool) or not isinstance(checkpoint_step, int) or
+                isinstance(checkpoint_time, bool) or not isinstance(checkpoint_time, Real) or
+                not math.isfinite(float(checkpoint_time)) or
+                isinstance(checkpoint_tick, bool) or not isinstance(checkpoint_tick, int) or
+                portable.get("global_step") != checkpoint_step or
+                not math.isclose(float(portable.get("time_s", float("nan"))), float(checkpoint_time),
+                                   rel_tol=0.0, abs_tol=1e-12) or
+                portable.get("integer_tick") != checkpoint_tick):
+            raise ContractError("portable restart state identity differs from committed checkpoint")
+        if (isinstance(portable.get("dt_s"), bool) or not isinstance(portable.get("dt_s"), Real) or
+                not math.isfinite(float(portable["dt_s"])) or
+                not math.isclose(float(portable["dt_s"]), float(dt_s), rel_tol=0.0, abs_tol=1e-15) or
+                not isinstance(portable.get("origin_run_id"), str) or not portable["origin_run_id"] or
+                not isinstance(portable.get("origin_case_id"), str) or not portable["origin_case_id"] or
+                portable.get("finite_value_audit") is not True):
+            raise ContractError("portable restart state provenance or dt audit is invalid")
+        unsigned = {key: value for key, value in portable.items() if key != "state_sha256"}
+        if (not isinstance(portable.get("state_sha256"), str) or
+                hashlib.sha256(_canonical(unsigned)).hexdigest() != portable["state_sha256"]):
+            raise ContractError("portable restart state hash mismatch")
+        structure = portable["structure"]
+        if not isinstance(structure, Mapping) or not {"q", "qdot", "qddot"}.issubset(structure):
+            raise ContractError("portable restart structure is incomplete")
+        for field in ("q", "qdot", "qddot"):
+            _finite(structure[field], f"portable_restart.{field}")
+        forces = (portable["applied_slice_forces_N"], portable["next_applied_slice_forces_N"])
+        for rows in forces:
+            if not isinstance(rows, list) or len(rows) != 3:
+                raise ContractError("portable restart applied force shape is invalid")
+            for row in rows:
+                if not isinstance(row, list) or len(row) != 3:
+                    raise ContractError("portable restart applied force row is invalid")
+                _finite(row, "portable_restart.applied_force")
+        expected_model = _model_contract_sha256(model, mass_matrix)
+        if (expected_model is None or not isinstance(portable["model_contract_sha256"], str) or
+                portable["model_contract_sha256"] != expected_model):
+            raise ContractError("portable restart model contract mismatch")
+        mass_bytes = struct.pack("<" + "d" * len(mass_matrix), *tuple(float(value) for value in mass_matrix))
+        if portable["mass_matrix_sha256"] != hashlib.sha256(mass_bytes).hexdigest():
+            raise ContractError("portable restart mass-matrix hash mismatch")
+        if (expected_model_contract_sha256 is not None and
+                portable["model_contract_sha256"] != expected_model_contract_sha256.lower()):
+            raise ContractError("portable restart external model contract mismatch")
+
+    def export_pending_restart_state(self, *, parent_checkpoint_sha256: str,
+                                     applied_slice_forces_N: Sequence[Sequence[float]],
+                                     next_applied_slice_forces_N: Sequence[Sequence[float]]) -> dict[str, Any]:
+        """Return a state that can be published only with the matching commit.
+
+        This method is valid exclusively after a finite correction and before
+        ``finalize_committed``.  The coordinator embeds the returned mapping
+        into its atomic barrier checkpoint, so a failed transaction exposes no
+        restart source.
+        """
+        if self.pending_kind != "correction" or self.pending_step is None or self.pending_time_s is None or self.pending_tick is None:
+            raise CppAdapterError("portable restart export requires a pending correction")
+        if self.model_contract_sha256 is None:
+            raise CppAdapterError("portable restart export requires a serializable model contract")
+        if (not isinstance(parent_checkpoint_sha256, str) or len(parent_checkpoint_sha256) != 64 or
+                any(char not in "0123456789abcdefABCDEF" for char in parent_checkpoint_sha256)):
+            raise CppAdapterError("portable restart parent checkpoint hash is invalid")
+        applied = self._flatten_forces(applied_slice_forces_N)
+        next_applied = self._flatten_forces(next_applied_slice_forces_N)
+        mass_bytes = struct.pack("<" + "d" * len(self.mass_matrix), *self.mass_matrix)
+        value: dict[str, Any] = {
+            "schema_version": self.PORTABLE_RESTART_SCHEMA,
+            "origin_run_id": self.run_id, "origin_case_id": self.case_id,
+            "global_step": int(self.pending_step), "time_s": float(self.pending_time_s),
+            "integer_tick": int(self.pending_tick), "dt_s": self.dt_s,
+            "structure": self.state_view(),
+            "applied_slice_forces_N": [list(applied[index:index + 3]) for index in range(0, 9, 3)],
+            "next_applied_slice_forces_N": [list(next_applied[index:index + 3]) for index in range(0, 9, 3)],
+            "model_contract_sha256": self.model_contract_sha256,
+            "mass_matrix_sha256": hashlib.sha256(mass_bytes).hexdigest(),
+            "parent_checkpoint_sha256": parent_checkpoint_sha256.lower(),
+            "finite_value_audit": True,
+        }
+        value["state_sha256"] = hashlib.sha256(_canonical(value)).hexdigest()
+        return value
 
     def _identity(self, step: int, time_s: float) -> tuple[int, int]:
         if isinstance(step, bool) or not isinstance(step, int):

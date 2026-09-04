@@ -1,0 +1,4 @@
+; Read-only dynamic-zone inventory. No iterate and no writes to the saved case/data.
+/file/read-case-data "D:/CFD/stage2_prescribed_motion_ogrid_v1/fluent_run_20s/stage2_20s.cas.h5"
+/define/dynamic-mesh/zones/list
+/exit yes

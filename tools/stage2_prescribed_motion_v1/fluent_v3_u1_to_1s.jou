@@ -1,0 +1,4 @@
+/file/read-case-data "D:/CFD/stage2_prescribed_motion_ogrid_v1/fluent_v3_run_1s_dt0025_u1/stage2_v3_u1_5step.cas.h5"
+/solve/dual-time-iterate 395 20
+/file/write-case-data "stage2_v3_u1_1s"
+/exit yes

@@ -1,0 +1,11 @@
+; Compile an isolated exact-step UDF library. No case read and no solve.
+/define/user-defined/compiled-functions compile
+libudf_step_exact
+yes
+prescribed_motion.c
+
+
+/define/user-defined/compiled-functions load
+libudf_step_exact
+/define/user-defined/compiled-functions
+/exit yes

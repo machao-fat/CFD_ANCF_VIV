@@ -67,6 +67,24 @@ class BarrierTests(unittest.TestCase):
         self.assertEqual(len(barrier.records), 1)
         barrier.stop()
 
+    def test_restart_state_metadata_is_published_only_with_committed_checkpoint(self):
+        runtime = Path(tempfile.mkdtemp())
+        barrier = Stage100SliceBarrier(run_id="run", case_id="case", source_global_step=559,
+            source_time_s=2.2075, source_tick=2207500000, dt_s=.00125,
+            runtime=runtime, engine_factory=Engine)
+        barrier.start()
+        barrier.prepare_step(global_step=560, time_s=2.20875,
+            motion_by_slice={sid: {"global_step": 560} for sid in range(3)})
+        state = {"schema_version": "ancf_portable_restart_state_v1", "global_step": 560,
+                 "time_s": 2.20875, "integer_tick": 2208750000}
+        path = runtime / "checkpoint" / "checkpoint_00000560.json"
+        self.assertFalse(path.exists())
+        barrier.commit_prepared(checkpoint_metadata={"ancf_restart_state": state})
+        written = json.loads(path.read_text(encoding="utf-8"))
+        self.assertTrue(written["committed"])
+        self.assertEqual(written["checkpoint_metadata"]["ancf_restart_state"], state)
+        barrier.stop()
+
     def test_commit_callback_failure_leaves_no_visible_checkpoint(self):
         barrier = Stage100SliceBarrier(run_id="run", case_id="case", source_global_step=559,
             source_time_s=2.2075, source_tick=2207500000, dt_s=.00125,

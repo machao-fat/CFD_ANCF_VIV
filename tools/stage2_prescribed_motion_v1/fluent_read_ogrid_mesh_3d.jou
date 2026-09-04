@@ -1,0 +1,5 @@
+; Stage 2 O-grid Fluent-native mesh preflight: import and check only.
+/file/read
+D:/CFD/stage2_prescribed_motion_ogrid_v1/openfoam_ogrid_3d/fluentInterface/openfoam_ogrid_3d.msh
+/mesh/check
+/exit yes

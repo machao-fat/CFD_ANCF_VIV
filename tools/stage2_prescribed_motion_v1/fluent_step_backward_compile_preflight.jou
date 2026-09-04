@@ -1,0 +1,11 @@
+; Compile and load the corrected backward-average UDF. No case read or solve.
+/define/user-defined/compiled-functions compile
+libudf_step_backward
+yes
+prescribed_motion.c
+
+
+/define/user-defined/compiled-functions load
+libudf_step_backward
+/define/user-defined/compiled-functions
+/exit yes

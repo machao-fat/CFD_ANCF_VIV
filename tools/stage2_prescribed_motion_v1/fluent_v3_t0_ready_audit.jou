@@ -1,0 +1,8 @@
+/file/read-case-data "D:/CFD/stage2_prescribed_motion_ogrid_v1/fluent_v3_formal_t0/stage2_v3_formal_t0_ready.cas.h5"
+/define/user-defined/compiled-functions load
+libudf_step_exact
+/define/dynamic-mesh/zones/list
+/solve/report-files/list-properties drag-force-rfile
+/solve/report-files/list-properties lift-force-rfile
+/solve/report-files/list-properties moment-z-rfile
+/exit yes

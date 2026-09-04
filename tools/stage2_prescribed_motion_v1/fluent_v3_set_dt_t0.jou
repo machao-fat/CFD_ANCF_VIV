@@ -1,0 +1,4 @@
+/file/read-case-data "D:/CFD/stage2_prescribed_motion_ogrid_v1/fluent_v3_formal_t0/stage2_v3_formal_t0_ready.cas.h5"
+/solve/set/time-step 0.0025
+/file/write-case-data "D:/CFD/stage2_prescribed_motion_ogrid_v1/fluent_v3_formal_t0/stage2_v3_formal_t0_ready_dt0025"
+/exit yes

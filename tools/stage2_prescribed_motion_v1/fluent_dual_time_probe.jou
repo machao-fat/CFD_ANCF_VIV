@@ -1,0 +1,4 @@
+/file/read-case-data "D:/CFD/stage2_prescribed_motion_ogrid_v1/fluent_dual_time_probe/stage2_1s_checkpoint.cas.h5"
+/solve/dual-time-iterate 2 20
+/file/write-case-data "D:/CFD/stage2_prescribed_motion_ogrid_v1/fluent_dual_time_probe/stage2_1s_plus_2steps"
+/exit yes

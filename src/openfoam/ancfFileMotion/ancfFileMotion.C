@@ -13,6 +13,8 @@
 #include <cmath>
 #include <cstdlib>
 #include <fstream>
+#include <iomanip>
+#include <limits>
 #include <sstream>
 #include <chrono>
 #include <thread>
@@ -262,7 +264,11 @@ bool ancfFileMotion::loadCurrentSnapshot
             );
         }
         std::ostringstream consumed;
-        consumed << "{\"kind\":\"motion_consumed\",\"step\":"
+        // This acknowledgement is a protocol identity, not display output.
+        // The default stream precision rounds 10.00125 to 10.0013 and can
+        // falsely invalidate an otherwise correct target-time handshake.
+        consumed << std::setprecision(std::numeric_limits<scalar>::max_digits10)
+            << "{\"kind\":\"motion_consumed\",\"step\":"
             << expectedStep << ",\"time_s\":" << currentTime << "}\n";
         if (!writeTextAtomic(acknowledgementPath, consumed.str()))
         {

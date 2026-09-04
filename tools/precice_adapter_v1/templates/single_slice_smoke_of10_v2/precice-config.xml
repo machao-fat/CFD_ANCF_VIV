@@ -1,28 +1,34 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<precice-configuration xmlns:data="http://www.precice.org/schemas/data" xmlns:mapping="http://www.precice.org/schemas/mapping" xmlns:coupling-scheme="http://www.precice.org/schemas/coupling-scheme">
+<precice-configuration xmlns:data="http://www.precice.org/schemas/data" xmlns:m2n="http://www.precice.org/schemas/m2n" xmlns:coupling-scheme="http://www.precice.org/schemas/coupling-scheme" xmlns:mapping="http://www.precice.org/schemas/mapping">
   <data:vector name="Displacement" waveform-degree="1" />
   <data:vector name="Force" waveform-degree="1" />
-  <mesh name="Structure-Mesh" dimensions="2" />
-  <mesh name="Fluid-Mesh" dimensions="2" />
+  <mesh name="Structure-Mesh" dimensions="2">
+    <use-data name="Displacement" />
+    <use-data name="Force" />
+  </mesh>
+  <mesh name="Fluid-Mesh" dimensions="2">
+    <use-data name="Displacement" />
+    <use-data name="Force" />
+  </mesh>
+  <m2n:sockets acceptor="Structure" connector="Fluid" exchange-directory="./precice-sockets" />
   <participant name="Structure">
     <provide-mesh name="Structure-Mesh" />
-    <receive-mesh name="Fluid-Mesh" from="Fluid" />
     <write-data name="Displacement" mesh="Structure-Mesh" />
     <read-data name="Force" mesh="Structure-Mesh" />
   </participant>
   <participant name="Fluid">
-    <provide-mesh name="Fluid-Mesh" />
     <receive-mesh name="Structure-Mesh" from="Structure" />
+    <provide-mesh name="Fluid-Mesh" />
+    <mapping:nearest-neighbor direction="read" from="Structure-Mesh" to="Fluid-Mesh" constraint="consistent" />
+    <mapping:nearest-neighbor direction="write" from="Fluid-Mesh" to="Structure-Mesh" constraint="conservative" />
     <write-data name="Force" mesh="Fluid-Mesh" />
-    <read-data name="Displacement" mesh="Structure-Mesh" />
+    <read-data name="Displacement" mesh="Fluid-Mesh" />
   </participant>
-  <mapping:nearest-neighbor direction="forward" from="Structure-Mesh" to="Fluid-Mesh" constraint="consistent" />
-  <mapping:nearest-neighbor direction="inverse" from="Fluid-Mesh" to="Structure-Mesh" constraint="conservative" />
   <coupling-scheme:parallel-explicit>
     <participants first="Structure" second="Fluid" />
     <time-window-size value="0.005" />
     <max-time value="0.04" />
     <exchange data="Displacement" mesh="Structure-Mesh" from="Structure" to="Fluid" />
-    <exchange data="Force" mesh="Fluid-Mesh" from="Fluid" to="Structure" />
+    <exchange data="Force" mesh="Structure-Mesh" from="Fluid" to="Structure" />
   </coupling-scheme:parallel-explicit>
 </precice-configuration>

@@ -1,0 +1,5 @@
+/file/read-case-data "D:/CFD/stage2_prescribed_motion_ogrid_v1/fluent_advance_probe2/stage2_1s_checkpoint.cas.h5"
+/solve/set/transient-controls/number-of-time-steps 2
+/solve/iterate 20
+/file/write-case-data "D:/CFD/stage2_prescribed_motion_ogrid_v1/fluent_advance_probe2/stage2_1s_plus_2steps"
+/exit yes

@@ -288,6 +288,39 @@ Matrix mapping_H3(const Model& model) {
   }return H;
 }
 
+std::vector<double> static_base_load(const Model& model) {
+  validate_model(model);
+  const std::size_t n = model.ndof();
+  std::vector<double> load(n, 0.0);
+  const double line_force_z =
+      -model.material_density * model.area() * model.gravity +
+      model.fluid_density * model.displaced_area() * model.gravity;
+  const double Le = model.length_m / static_cast<double>(model.elements);
+  const auto [xi, weights] = gauss(model.mass_gauss_order);
+  for (std::size_t element = 0; element < model.elements; ++element) {
+    std::vector<double> element_load(12, 0.0);
+    for (std::size_t k = 0; k < xi.size(); ++k) {
+      const double x = 0.5 * (xi[k] + 1.0) * Le;
+      const Matrix N = block_matrix(shape(x, Le, 0));
+      for (std::size_t column = 0; column < 12; ++column) {
+        // Only the z component of the distributed line load is non-zero.
+        double contribution = N(2, column) * line_force_z;
+        contribution *= weights[k];
+        contribution *= Le;
+        contribution /= 2.0;
+        element_load[column] += contribution;
+      }
+    }
+    for (std::size_t local = 0; local < 12; ++local)
+      load[6 * element + local] += element_load[local];
+  }
+  // The canonical boundary contract leaves the top z translation free and
+  // applies the prescribed axial top tension there, matching ancf_base_load.
+  load[6 * model.elements + 2] += model.top_tension_N;
+  if (!finite_vector(load)) throw std::runtime_error("static base load contains NaN/Inf");
+  return load;
+}
+
 std::vector<double> external_force(const Model& model, const std::vector<double>& slice_force) {
   validate_model(model);
   if (slice_force.size() != 3 * model.slices ||
@@ -579,6 +612,83 @@ StepDiagnostics advance(State& state, const Model& model, const std::vector<doub
   d.external_mapping_s = std::chrono::duration<double>(external_end - external_start).count();
   (void)total_start;
   return d;
+}
+
+StepDiagnostics static_equilibrium(State& state, const Model& model,
+                                   const std::vector<double>& base_load,
+                                   std::size_t load_steps, double relaxation) {
+  validate_model(model);
+  const std::size_t n = model.ndof();
+  if (base_load.size() != n || !finite_vector(base_load) || load_steps == 0 ||
+      !std::isfinite(relaxation) || relaxation <= 0.0 || relaxation > 1.0) {
+    throw std::invalid_argument("static equilibrium contract is invalid");
+  }
+  if (state.q.size() != n || state.mass.rows != n || state.mass.cols != n ||
+      state.mass.data.size() != n * n) {
+    throw std::invalid_argument("static equilibrium state dimensions are invalid");
+  }
+  const auto boundary = model.fixed_dof.empty() ? canonical_boundary(model) :
+                        std::make_pair(model.fixed_dof, model.prescribed_values);
+  std::vector<char> fixed(n, 0);
+  std::vector<double> prescribed(n, 0.0);
+  for (std::size_t i = 0; i < boundary.first.size(); ++i) {
+    fixed[boundary.first[i]] = 1;
+    prescribed[boundary.first[i]] = boundary.second[i];
+  }
+  std::vector<std::size_t> free;
+  for (std::size_t i = 0; i < n; ++i) if (!fixed[i]) free.push_back(i);
+  double scale_value = 1.0;
+  for (std::size_t i : free) scale_value = (std::max)(scale_value, std::abs(base_load[i]));
+  StepDiagnostics diagnostics;
+  std::vector<double> q = state.q;
+  for (std::size_t load_step = 1; load_step <= load_steps; ++load_step) {
+    const double factor = static_cast<double>(load_step) / static_cast<double>(load_steps);
+    bool converged = false;
+    for (std::size_t iteration = 1; iteration <= model.max_newton; ++iteration) {
+      std::vector<double> internal;
+      Matrix tangent;
+      internal_force_tangent(q, model, internal, tangent);
+      std::vector<double> residual(n);
+      const double load_factor = factor;
+      double norm = 0.0;
+      for (std::size_t i = 0; i < n; ++i) {
+        residual[i] = internal[i] - load_factor * base_load[i];
+        if (fixed[i]) residual[i] = 0.0;
+        else norm = (std::max)(norm, std::abs(residual[i]));
+      }
+      if (!std::isfinite(norm)) throw std::runtime_error("static residual contains NaN/Inf");
+      if (load_step == 1 && iteration == 1) diagnostics.initial_residual = norm;
+      diagnostics.residual = norm;
+      diagnostics.iterations += 1;
+      if (norm <= model.newton_tolerance * scale_value) {
+        converged = true;
+        break;
+      }
+      Matrix tangent_free(free.size(), free.size());
+      std::vector<double> residual_free(free.size());
+      for (std::size_t row = 0; row < free.size(); ++row) {
+        residual_free[row] = residual[free[row]];
+        for (std::size_t col = 0; col < free.size(); ++col)
+          tangent_free(row, col) = tangent(free[row], free[col]);
+      }
+      const auto increment = solve(tangent_free, residual_free);
+      for (std::size_t index = 0; index < free.size(); ++index)
+        q[free[index]] -= relaxation * increment[index];
+      for (std::size_t i = 0; i < n; ++i) if (fixed[i]) q[i] = prescribed[i];
+    }
+    if (!converged) {
+      throw std::runtime_error("static equilibrium did not converge at load step " +
+                               std::to_string(load_step));
+    }
+  }
+  state.q = std::move(q);
+  state.qdot.assign(n, 0.0);
+  state.qddot.assign(n, 0.0);
+  state.base_load = base_load;
+  state.time_s = 0.0;
+  state.step = 0;
+  diagnostics.converged = true;
+  return diagnostics;
 }
 
 bool finite(const State& state) {

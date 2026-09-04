@@ -1,6 +1,0 @@
-{
-  "full_worker": "requires MESSAGE_INITIALIZE unless CFD_ANCF_OFFLINE_DIRECT_WORKER=1",
-  "legacy": "cfd_ancf_cpp_worker requires CFD_ANCF_OFFLINE_LEGACY_TRANSPORT=1 for direct requests",
-  "production": "KernelWorker allows only cfd_ancf_ancf_kernel_worker",
-  "status": "pass"
-}

@@ -1,7 +1,0 @@
-{
-  "status": "pass",
-  "gauss_point_count": "elements * gauss_order",
-  "element_and_gauss_order_shared": true,
-  "force_and_tangent_from_production_trace": true,
-  "selftest": "cfd_ancf_ancf_kernel_selftest=pass"
-}

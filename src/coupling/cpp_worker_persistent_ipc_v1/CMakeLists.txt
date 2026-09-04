@@ -16,6 +16,7 @@ add_executable(cfd_ancf_cpp_worker worker_main.cpp)
 add_executable(cfd_ancf_ancf_kernel_selftest ancf_kernel.cpp ancf_kernel_selftest.cpp)
 add_executable(cfd_ancf_dense_solver_selftest ancf_solver_selftest.cpp)
 add_executable(cfd_ancf_ancf_kernel_worker ancf_kernel.cpp ancf_worker_main.cpp)
+add_executable(cfd_ancf_cpp_state_initializer ancf_kernel.cpp ancf_state_initializer.cpp)
 add_executable(cfd_ancf_ancf_kernel_diagnostic ancf_kernel.cpp ancf_kernel_diagnostic.cpp)
 add_executable(cfd_ancf_ancf_forensic_diagnostic ancf_kernel.cpp ancf_forensic_diagnostic.cpp)
 add_executable(cfd_ancf_ancf_newton_trace_diagnostic ancf_kernel.cpp ancf_newton_trace_diagnostic.cpp)
@@ -46,6 +47,7 @@ if (MSVC)
   target_compile_options(cfd_ancf_dense_solver_selftest PRIVATE /W4 /permissive-)
   target_compile_options(cfd_ancf_ancf_kernel_selftest PRIVATE /W4 /permissive-)
   target_compile_options(cfd_ancf_ancf_kernel_worker PRIVATE /W4 /permissive-)
+  target_compile_options(cfd_ancf_cpp_state_initializer PRIVATE /W4 /permissive-)
   target_compile_options(cfd_ancf_ancf_kernel_diagnostic PRIVATE /W4 /permissive-)
   target_compile_options(cfd_ancf_ancf_forensic_diagnostic PRIVATE /W4 /permissive-)
   target_compile_options(cfd_ancf_ancf_newton_trace_diagnostic PRIVATE /W4 /permissive-)
@@ -60,6 +62,7 @@ else()
       cfd_ancf_dense_solver_selftest
       cfd_ancf_ancf_kernel_selftest
       cfd_ancf_ancf_kernel_worker
+      cfd_ancf_cpp_state_initializer
       cfd_ancf_ancf_kernel_diagnostic
       cfd_ancf_ancf_kernel_worker_double_solve
       cfd_ancf_ancf_forensic_diagnostic

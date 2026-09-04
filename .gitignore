@@ -20,6 +20,12 @@ out/
 *.dll
 *.dylib
 *.exe
+*.obj
+*.trn
+*.pos
+*.dep
+*.dep.*
+**/Make/*/
 
 # Local solver/runtime state and generated experiment output
 runtime/
@@ -33,6 +39,11 @@ processor*/
 **/lnInclude/
 cases/**/coupling/
 cases/**/mesh/**/generated/
+
+# Profiling traces and vendored/public reference datasets
+precice-profiling/
+references/public_precice/
+references/public_viv_benchmarks/
 
 # OpenFOAM generated time directories; keep initial conditions such as 0/ and 0.orig/
 cases/**/[1-9]*/

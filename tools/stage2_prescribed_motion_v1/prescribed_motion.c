@@ -16,6 +16,9 @@ DEFINE_CG_MOTION(stage2_cylinder_motion, dt, vel, omega, time, dtime)
     NV_S(vel, =, 0.0);
     NV_S(omega, =, 0.0);
     vel[1] = ydot;
+#if !RP_NODE
+    /* Audit I/O is host-only: every rank computes the same prescribed
+       velocity, but concurrent node writes would corrupt the CSV evidence. */
     if (audit == NULL) {
         audit = fopen("stage2_fluent_motion_audit.csv", "w");
         if (audit != NULL)
@@ -27,4 +30,5 @@ DEFINE_CG_MOTION(stage2_cylinder_motion, dt, vel, omega, time, dtime)
         fflush(audit);
         last_time = time;
     }
+#endif
 }

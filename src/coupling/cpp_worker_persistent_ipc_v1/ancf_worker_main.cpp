@@ -493,7 +493,9 @@ int process_step(const std::vector<char>& payload, std::vector<char>& response,
   cfd_ancf::StepDiagnostics diagnostics;
   try {
     diagnostics = cfd_ancf::advance(state, model, slice_force);
-  } catch (const std::exception&) {
+  } catch (const std::exception& error) {
+    // Keep the wire return code stable while exposing the fail-closed reason.
+    std::cerr << "advance exception: " << error.what() << '\n';
     return 12;
   }
   // Do not report the request identity as a checkpoint unless the numerical

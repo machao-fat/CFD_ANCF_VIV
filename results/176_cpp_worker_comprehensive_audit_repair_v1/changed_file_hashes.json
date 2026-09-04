@@ -1,7 +1,0 @@
-{
-  "src/coupling/cpp_physics_ownership_v1/physics_ownership_worker_main.cpp": "37d7d60b30cc66ae5bfb528abd7a14540daff8afba21db4e307ca129950fcf30",
-  "src/coupling/cpp_worker_persistent_ipc_v1/ancf_worker_main.cpp": "40607a6571ba9f1311bb6f9aab3bab4c219000e856595f13826be799437e7c45",
-  "tests/cpp_worker_comprehensive_audit_repair_v1/test_ownership_worker.py": "813731cc425fa396a05ed26ca0ef5610638e6e403a102ca091e7ede2ea48f2f1",
-  "tests/cpp_worker_comprehensive_audit_repair_v1/test_protocol_lifecycle_and_pair_lineage.py": "084fec7844f8cecc2b2dfef4f90ac034039194681682f5c478ff3d6fc84253e3",
-  "tools/cpp_worker_comprehensive_audit_repair_v1/generate_stage176_evidence.py": "1dfb5941a6f4db8b810e20c0c6be68fcad9b05be404225c446ffd3c2596f437d"
-}

@@ -1,8 +1,0 @@
-{
-  "trace_format": "line-oriented lossless float64",
-  "trace_sha256": "0b07d085ec4bee9cd9da134b1a78aee2ccfdd756c998cc1bdd2633da3b76f799",
-  "points_expected": 80,
-  "points_observed": 80,
-  "first_matlab_intermediate_difference": null,
-  "status": "not_evaluable_matlab_intermediate_fixture_missing"
-}

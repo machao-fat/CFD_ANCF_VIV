@@ -374,7 +374,12 @@ class MockSlice:
 
 
 def _fixture() -> tuple[KernelModel, tuple[float, ...], tuple[float, ...], tuple[float, ...], tuple[float, ...]]:
-    path = Path(__file__).resolve().parents[3] / "runtime/cpp_worker_persistent_ipc_v1/dual_run_018/results/cpp_input_fixture.json"
+    # Real continuations bind a fresh, identity-scoped fixture through the
+    # environment.  The historical default remains available for legacy
+    # offline tests, but a new runtime must never depend on that old path.
+    configured = os.environ.get("CFD_ANCF_VIV_CPP_FIXTURE")
+    path = (Path(configured) if configured else
+            Path(__file__).resolve().parents[3] / "runtime/cpp_worker_persistent_ipc_v1/dual_run_018/results/cpp_input_fixture.json")
     raw = json.loads(path.read_text(encoding="utf-8"))
     model = KernelModel(
         length_m=float(raw["length_m"]), diameter_m=float(raw["diameter_m"]),

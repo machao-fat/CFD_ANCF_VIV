@@ -156,11 +156,21 @@ void validate_model(const Model& model);
 void symmetrize_mass(State& state);
 StepDiagnostics advance(State& state, const Model& model, const std::vector<double>& slice_force,
                         std::vector<NewtonIterationTrace>* trace = nullptr);
+// Offline-only load-ramped static Newton solve. It shares the production
+// internal-force/tangent implementation but intentionally excludes Newmark
+// inertia and does not advance state time or step.
+StepDiagnostics static_equilibrium(State& state, const Model& model,
+                                   const std::vector<double>& base_load,
+                                   std::size_t load_steps = 40,
+                                   double relaxation = 0.8);
 void internal_force_tangent(const std::vector<double>& q, const Model& model, std::vector<double>& force, Matrix& tangent);
 void internal_force_tangent(const std::vector<double>& q, const Model& model, std::vector<double>& force,
                             Matrix& tangent, AssemblyTrace* trace);
 ForensicResult internal_force_forensic(const std::vector<double>& q, const Model& model);
 std::vector<double> external_force(const Model& model, const std::vector<double>& slice_force);
+// Assemble the canonical static gravity/buoyancy/top-tension load used by
+// the ANCF initialization contract. This does not alter transient advance.
+std::vector<double> static_base_load(const Model& model);
 Matrix mapping_H3(const Model& model);
 bool finite(const State& state);
 

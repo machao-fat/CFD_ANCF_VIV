@@ -1,0 +1,18 @@
+/file/read-case-data "D:/CFD/stage2_prescribed_motion_ogrid_v1/fluent_v3_formal_t0_backward/stage2_v3_formal_t0_ready.cas.h5"
+/define/boundary-conditions/velocity-inlet
+inlet
+yes
+
+no
+1
+no
+
+yes
+no
+1
+no
+0
+no
+0
+/file/write-case-data "D:/CFD/stage2_prescribed_motion_ogrid_v1/fluent_v3_formal_t0_backward/stage2_v3_formal_t0_ready_inlet1"
+/exit yes

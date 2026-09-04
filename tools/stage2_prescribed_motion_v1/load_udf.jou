@@ -1,5 +1,5 @@
 /file/read
 stage2_openfoam.msh
 /define/user-defined/compiled-functions load
-stage2_udf
+libudf
 /exit yes

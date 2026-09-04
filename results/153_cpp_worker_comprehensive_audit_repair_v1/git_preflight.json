@@ -1,8 +1,0 @@
-{
-  "baseline_tag": "stage4f-d-cpp-physics-ownership-v1-baseline",
-  "branch_before_commit": "codex/cpp-worker-comprehensive-audit-repair-v1",
-  "force_push_or_history_rewrite": false,
-  "parent_commit": "8d13a3b1612ee305a0e101c9ab6778b0718d89e5",
-  "preexisting_user_changes_preserved": true,
-  "unrelated_case_directories_staged": false
-}

@@ -1,7 +1,0 @@
-{
-  "stage_id": "stage4f_d_cpp_worker_matlab_intermediate_trace_repair_v1",
-  "status": "not_started_after_matlab_export_failure",
-  "cpp_trace_generated": false,
-  "reason": "verification sequence stopped at MATLAB trace export",
-  "old_stage184_trace_reused": false
-}

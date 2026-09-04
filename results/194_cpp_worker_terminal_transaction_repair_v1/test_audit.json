@@ -1,8 +1,0 @@
-{
-  "cpp_worker_confirm_v1": {"result": "70 passed"},
-  "performance_phase_timing_confirm_v1": {"result": "5 passed"},
-  "compileall": {"result": "pass"},
-  "fault_injection": ["unresolved journal startup rejection", "failed commit has no visible checkpoint", "aborted journal marks terminal no-resume", "interrupted real adapter terminalizes", "motion/load identity and hash mismatch rejection"],
-  "real_process_starts": {"MATLAB": 0, "OpenFOAM": 0, "WSL": 0, "CFD": 0},
-  "owned_residual": 0
-}

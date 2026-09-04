@@ -1,0 +1,5 @@
+; Stage 2 O-grid Fluent preflight: import and check only. No UDF or solve.
+/file/read
+D:/CFD/stage2_prescribed_motion_ogrid_v1/stage2_ogrid.msh
+/mesh/check
+/exit yes

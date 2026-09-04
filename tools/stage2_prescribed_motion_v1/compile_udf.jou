@@ -1,5 +1,5 @@
 /define/user-defined/compiled-functions compile
-stage2_udf
+libudf
 yes
 prescribed_motion.c
 

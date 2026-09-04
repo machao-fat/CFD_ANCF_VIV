@@ -1,0 +1,4 @@
+/file/read-case-data "D:/CFD/stage2_prescribed_motion_ogrid_v1/fluent_run_20s/stage2_1s_checkpoint.cas.h5"
+/report/definitions/list
+/define/user-defined/compiled-functions
+/exit yes

@@ -11,6 +11,28 @@ from typing import Any, Mapping
 SCHEMA_VERSION = "cfd_ancf_viv_cpp_confirm_v1.0"
 FORMAL_PROTOCOL_VERSION = "0.2.1"
 REAL_AUTHORIZATION_TOKEN = "USER_EXPLICITLY_AUTHORIZED_REAL_CFD_CONFIRM_V1"
+LONG_WINDOW_STAGE_ID = "stage4f_d_cpp_worker_long_window_v1"
+LONG_WINDOW_SOURCE_STEP = 639
+LONG_WINDOW_STEPS = 800
+LONG_WINDOW_DURATION_S = 1.0
+TO6S_STAGE_ID = "stage4f_d_cpp_worker_to6s_v1"
+TO6S_SOURCE_STEP = 1439
+TO6S_STEPS = 2154
+TO6S_DURATION_S = 2.6925
+TO30S_STAGE_ID = "stage4f_d_cpp_worker_to30s_v1"
+TO30S_SOURCE_STEP = 3593
+TO30S_STEPS = 19_200
+TO30S_DURATION_S = 24.0
+TO70S_STAGE_ID = "stage4f_d_cpp_worker_to70s_v1"
+TO70S_SOURCE_STEP = 559
+TO70S_STEPS = 55_441
+TO70S_DURATION_S = 69.30125
+FRESH_T0_STAGE_ID = "stage4f_d_cpp_worker_fresh_t0_v1"
+FRESH_T0_SOURCE_STEP = 0
+FRESH_T0_SOURCE_TIME_S = 0.0
+FRESH_T0_SOURCE_TICK = 0
+FRESH_T0_STEPS = 40
+FRESH_T0_DURATION_S = 0.05
 SCOPE = {
     "no_statistics": True, "no_e5c": True, "no_five_slice": True,
     "no_nine_slice": True, "no_long_time_viv": True,
@@ -107,12 +129,66 @@ class CppConfirmContract:
     def validate(self, project_root: Path) -> None:
         if not self.stage_id or not self.run_id or not self.case_id:
             raise ContractError("stage/run/case identity is required")
-        if self.steps != 40 or self.segment_duration_s != 0.05 or self.global_dt_s != 0.00125:
-            raise ContractError("scope must be 40 steps, 0.05 s and dt=0.00125 s")
+        standard_window = self.steps == 40 and self.segment_duration_s == 0.05
+        # The sole non-default physical authorization is an exact one-second
+        # continuation from the accepted Stage204 endpoint.  Keeping this
+        # identity-bound instead of allowing arbitrary larger windows means
+        # later calls cannot silently broaden the research scope.
+        long_window = (
+            self.stage_id == LONG_WINDOW_STAGE_ID
+            and self.source_global_step == LONG_WINDOW_SOURCE_STEP
+            and self.steps == LONG_WINDOW_STEPS
+            and self.segment_duration_s == LONG_WINDOW_DURATION_S
+        )
+        to6s_window = (
+            self.stage_id == TO6S_STAGE_ID
+            and self.source_global_step == TO6S_SOURCE_STEP
+            and self.steps == TO6S_STEPS
+            and self.segment_duration_s == TO6S_DURATION_S
+        )
+        # This is the sole direct long continuation authorized from the
+        # immutable Stage214 6.0 s portable checkpoint.  It is identity-bound
+        # so no later caller can turn the generic coordinator into an
+        # unbounded production runner.
+        to30s_window = (
+            self.stage_id == TO30S_STAGE_ID
+            and self.source_global_step == TO30S_SOURCE_STEP
+            and self.steps == TO30S_STEPS
+            and self.segment_duration_s == TO30S_DURATION_S
+        )
+        # The one explicitly authorized cumulative 0->70 s continuation.
+        # The immutable accepted source is step 559 (2.2075 s); the target
+        # endpoint is global step 56000 (70 s).  No arbitrary long window is
+        # admitted by this branch.
+        to70s_window = (
+            self.stage_id == TO70S_STAGE_ID
+            and self.source_global_step == TO70S_SOURCE_STEP
+            and self.steps == TO70S_STEPS
+            and self.segment_duration_s == TO70S_DURATION_S
+        )
+        fresh_t0_window = (
+            self.stage_id == FRESH_T0_STAGE_ID
+            and self.source_global_step == FRESH_T0_SOURCE_STEP
+            and self.source_time_s == FRESH_T0_SOURCE_TIME_S
+            and self.source_tick == FRESH_T0_SOURCE_TICK
+            and self.steps == FRESH_T0_STEPS
+            and self.segment_duration_s == FRESH_T0_DURATION_S
+        )
+        if not (standard_window or long_window or to6s_window or to30s_window or to70s_window or fresh_t0_window) or self.global_dt_s != 0.00125:
+            raise ContractError("scope is not an explicitly authorized bounded window")
         if self.slice_count != 3:
             raise ContractError("exactly three slices are required")
-        if self.source_global_step != 559 or abs(self.source_time_s - 2.2075) > 1e-12 or self.source_tick != 2_207_500_000:
-            raise ContractError("only the accepted source step 559 may be used")
+        if (not fresh_t0_window and
+                (isinstance(self.source_global_step, bool) or not isinstance(self.source_global_step, int) or self.source_global_step < 559)):
+            raise ContractError("source step must be the accepted step 559 or a verified continuation")
+        if fresh_t0_window:
+            expected_source_time = 0.0
+            expected_source_tick = 0
+        else:
+            expected_source_time = 2.2075 + (self.source_global_step - 559) * self.global_dt_s
+            expected_source_tick = 2_207_500_000 + (self.source_global_step - 559) * 1_250_000
+        if abs(self.source_time_s - expected_source_time) > 1e-12 or self.source_tick != expected_source_tick:
+            raise ContractError("source step/time/tick mapping is inconsistent")
         if self.runtime.drive.upper() != "D:" or self.results.drive.upper() != "D:" or self.source_checkpoint.drive.upper() != "D:":
             raise ContractError("runtime, results and source must be on D:")
         root = project_root.resolve()
@@ -125,13 +201,23 @@ class CppConfirmContract:
         if not self.source_checkpoint.is_file():
             raise ContractError("source checkpoint is missing")
         source = load_source_checkpoint(self.source_checkpoint, self.source_checkpoint_sha256)
-        if source.get("status") != "committed" or int(source.get("step", -1)) != self.source_global_step:
+        source_committed = source.get("status") == "committed" or source.get("committed") is True
+        fresh_state = source.get("state_kind") == "cpp_reference_state" and source.get("schema_version") == "ancf-t0-cpp-v2"
+        if fresh_t0_window:
+            if not fresh_state or source.get("equilibrated") is not True or source.get("finite_value_audit") is not True:
+                raise ContractError("fresh source is not an audited static-equilibrium state")
+            source_committed = True
+        source_step = source.get("step", source.get("global_step", -1))
+        if not source_committed or int(source_step) != self.source_global_step:
             raise ContractError("source checkpoint is not the accepted committed step")
         if abs(float(source.get("time_s", float("nan"))) - self.source_time_s) > 1e-12:
             raise ContractError("source checkpoint time mismatch")
-        if int(source.get("time_tick", -1)) != self.source_tick:
+        source_tick = source.get("time_tick", source.get("integer_tick", -1))
+        if int(source_tick) != self.source_tick:
             raise ContractError("source checkpoint tick mismatch")
-        structure = source.get("structure")
+        portable = source.get("checkpoint_metadata", {}).get("ancf_restart_state")
+        structure = (portable.get("structure") if isinstance(portable, Mapping)
+                     else (source if fresh_t0_window else source.get("structure")))
         if not isinstance(structure, Mapping) or any(key not in structure for key in ("q", "qdot", "qddot")):
             raise ContractError("source checkpoint structure state is incomplete")
         if not isinstance(self.allow_real_external_processes, bool):

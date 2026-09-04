@@ -90,6 +90,17 @@ int main() {
   }
   auto diagnostics = cfd_ancf::advance(state, model, force);
   if (!diagnostics.converged || !cfd_ancf::finite(state) || state.step != 1 || !std::isfinite(state.residual)) return 2;
+  auto static_probe = cfd_ancf::make_reference_state(model);
+  auto static_diagnostics = cfd_ancf::static_equilibrium(
+      static_probe, model, std::vector<double>(model.ndof(), 0.0), 2, 0.8);
+  if (!static_diagnostics.converged || static_probe.step != 0 || static_probe.time_s != 0.0 ||
+      !cfd_ancf::finite(static_probe)) return 3;
+  try {
+    (void)cfd_ancf::static_equilibrium(static_probe, model, std::vector<double>{}, 2, 0.8);
+    return 3;
+  } catch (const std::invalid_argument&) {
+    // Static initialization must reject a dimensionally incomplete load.
+  }
   force[1] = 1.0e-3;
   auto loaded = cfd_ancf::advance(state, model, force);
   if (!loaded.converged || !cfd_ancf::finite(state) || state.step != 2 || !std::isfinite(loaded.residual)) return 3;

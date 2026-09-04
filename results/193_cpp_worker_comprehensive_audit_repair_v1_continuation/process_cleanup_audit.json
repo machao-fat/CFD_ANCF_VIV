@@ -1,9 +1,0 @@
-{
-  "stage_id": "stage4f_d_cpp_worker_comprehensive_audit_repair_v1_continuation",
-  "real_process_starts": {"MATLAB": 0, "OpenFOAM": 0, "WSL": 0, "CFD": 0},
-  "owned_residual": 0,
-  "active_process_scan": {"matlab": 0, "matlabwindow": 0, "pimpleFoam": 0, "wsl": 0},
-  "old_evidence_modified": false,
-  "old_runtime_reused": false,
-  "cleanup": "pass"
-}

@@ -1,7 +1,0 @@
-{
-  "src/coupling/cpp_worker_persistent_ipc_v1/CMakeLists.txt": "7891acaec79bf099de65b6461367226a2c9cf2141ded1692c89b39a2aac308cb",
-  "src/coupling/cpp_worker_persistent_ipc_v1/ancf_kernel.cpp": "114e262ac9fd4f5bea79ca9ff46e44bc0941ec8b311614e1869064217ded7f82",
-  "src/coupling/cpp_worker_persistent_ipc_v1/ancf_solver_selftest.cpp": "338d26e4e4eed8d903b19c41ae5c068457ddbb6348f2cf567b0ad7eeb6b98605",
-  "tests/cpp_worker_comprehensive_audit_repair_v1/test_repair_contract.py": "d3b9ac42a969213051139ece9b339b71e537102bbaaebbb0ac868017513e0e28",
-  "tools/cpp_worker_comprehensive_audit_repair_v1/generate_stage178_evidence.py": "27faa6c2813fd31fea8e4c0b0d7094bf4a6768f4b83cdf541f29379788a829b4"
-}

@@ -1,0 +1,42 @@
+/file/read-case-data "D:/CFD/stage2_prescribed_motion_ogrid_v1/fluent_v3_formal_t0_backward/stage2_v3_formal_t0.cas.h5"
+/define/user-defined/compiled-functions load
+libudf_step_backward
+/define/dynamic-mesh
+dynamic-mesh?
+yes
+no
+no
+no
+no
+zones
+create
+fluid-1
+deforming
+yes
+yes
+no
+0
+1000
+0.9
+create
+cylinder
+rigid-body
+stage2_cylinder_motion_step_exact::libudf_step_backward
+no
+no
+
+
+
+
+
+
+
+
+
+
+no
+no
+list
+q
+/file/write-case-data "D:/CFD/stage2_prescribed_motion_ogrid_v1/fluent_v3_formal_t0_backward/stage2_v3_formal_t0_ready"
+/exit yes

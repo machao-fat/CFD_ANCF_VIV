@@ -27,6 +27,7 @@ def main() -> int:
         "xml_max_time_is_004": '<max-time value="0.04" />' in xml_text,
         "dict_patch_is_cyl": "patches     (cyl);" in dictionary,
         "dict_mesh_is_fluid_mesh": "mesh        Fluid-Mesh;" in dictionary,
+        "dict_force_location_is_face_centers": "locations   faceCenters;" in dictionary,
         "scope_is_eight_steps": contract.get("slice_count") == 1 and contract.get("max_steps") == 8 and contract.get("max_time_s") == 0.04,
         "no_cfd_guards": all(contract.get(name) is True for name in ("no_cfd", "no_correction", "no_openfoam", "no_wsl", "no_retry")),
     }

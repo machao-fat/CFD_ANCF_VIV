@@ -1,9 +1,0 @@
-{
-  "stage_id": "stage4f_d_cpp_worker_matlab_intermediate_trace_repair_v1",
-  "status": "not_evaluable",
-  "first_difference": null,
-  "reason": "MATLAB intermediate trace unavailable; valid source is now verified offline but the single allowed MATLAB launch was already consumed",
-  "strict_matlab_cpp_steps_passed": 0,
-  "strict_matlab_cpp_steps_total": 40,
-  "old_evidence_reference": "Stage184 remains do_not_pass and read-only"
-}

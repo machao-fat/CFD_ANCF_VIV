@@ -1,7 +1,0 @@
-{
-  "candidate_change": "recompute accepted qddot/qd after Newton and reuse dt^2 temporary",
-  "physics_or_thresholds_modified": false,
-  "matlab_reference_modified": false,
-  "confirmed_first_difference_fixed": false,
-  "status": "do_not_pass_until_matlab_intermediate_trace_is_available"
-}

@@ -3,11 +3,13 @@ from __future__ import annotations
 import tempfile
 import unittest
 import hashlib
+import json
 import struct
 from pathlib import Path
 from types import SimpleNamespace
 
 from coupling.cpp_worker_confirm_v1.cpp_adapter import CppAdapterError, CppKernelCampaignAdapter
+from coupling.cpp_worker_confirm_v1.contracts import ContractError
 
 
 class FakeWorker:
@@ -39,11 +41,147 @@ def factory(**kwargs): return SimpleNamespace(**kwargs)
 
 
 class CppAdapterTests(unittest.TestCase):
+    class PortableModel:
+        ndof = 3
+        gauss_order = 3
+        mass_gauss_order = 5
+        max_newton = 40
+        boundary_contract_id = "ancf_v1_bottom_top_xy_zero"
+        include_gravity = True
+        include_buoyancy = True
+
+        def bytes(self):
+            return b"portable-restart-test-model-v1"
+
     def _adapter(self):
         return CppKernelCampaignAdapter(worker=FakeWorker(), model=object(), request_factory=factory,
             run_id="run", case_id="case", source_global_step=559, source_time_s=2.2075,
             source_tick=2_207_500_000, dt_s=0.00125, q=(0.0, 0.0, 0.0),
             qdot=(0.0, 0.0, 0.0), qddot=(0.0, 0.0, 0.0), base_load=(0.0, 0.0, 0.0), slice_count=3)
+
+    def _portable_adapter(self, *, run_id="origin_run", case_id="origin_case"):
+        return CppKernelCampaignAdapter(
+            worker=FakeWorker(), model=self.PortableModel(), request_factory=factory,
+            run_id=run_id, case_id=case_id, source_global_step=559,
+            source_time_s=2.2075, source_tick=2_207_500_000, dt_s=0.00125,
+            q=(0.0, 0.0, 0.0), qdot=(0.0, 0.0, 0.0), qddot=(0.0, 0.0, 0.0),
+            base_load=(0.0, 0.0, 0.0), slice_count=3,
+            mass_matrix=(1.0, 0.0, 0.0, 0.0, 1.0, 0.0, 0.0, 0.0, 1.0),
+            strict_numerical_contract=False,
+        )
+
+    def _portable_checkpoint(self):
+        adapter = self._portable_adapter()
+        adapter.start()
+        forces = ((1.0, 2.0, 3.0), (4.0, 5.0, 6.0), (7.0, 8.0, 9.0))
+        adapter.predict(560, 2.20875, forces)
+        adapter.correct(560, 2.20875, forces)
+        state = adapter.export_pending_restart_state(
+            parent_checkpoint_sha256="a" * 64,
+            applied_slice_forces_N=forces,
+            next_applied_slice_forces_N=forces,
+        )
+        checkpoint = {
+            "committed": True, "global_step": 560, "time_s": 2.20875,
+            "integer_tick": 2_208_750_000,
+            "checkpoint_metadata": {"ancf_restart_state": state},
+        }
+        adapter.finalize_committed()
+        adapter.shutdown()
+        return checkpoint, state
+
+    def _write_checkpoint(self, directory, checkpoint):
+        path = Path(directory) / "checkpoint.json"
+        path.write_bytes(json.dumps(checkpoint, ensure_ascii=True, sort_keys=True,
+                                    separators=(",", ":"), allow_nan=False).encode("utf-8") + b"\n")
+        return path, hashlib.sha256(path.read_bytes()).hexdigest()
+
+    def test_portable_restart_export_requires_pending_correction_and_serializable_model(self):
+        adapter = self._adapter()
+        with self.assertRaises(CppAdapterError):
+            adapter.export_pending_restart_state(
+                parent_checkpoint_sha256="a" * 64,
+                applied_slice_forces_N=((0.0, 0.0, 0.0),) * 3,
+                next_applied_slice_forces_N=((0.0, 0.0, 0.0),) * 3,
+            )
+        adapter = self._portable_adapter(); adapter.start()
+        forces = ((0.0, 0.0, 0.0),) * 3
+        adapter.predict(560, 2.20875, forces)
+        with self.assertRaises(CppAdapterError):
+            adapter.export_pending_restart_state(
+                parent_checkpoint_sha256="a" * 64,
+                applied_slice_forces_N=forces, next_applied_slice_forces_N=forces,
+            )
+        adapter.correct(560, 2.20875, forces)
+        state = adapter.export_pending_restart_state(
+            parent_checkpoint_sha256="a" * 64,
+            applied_slice_forces_N=forces, next_applied_slice_forces_N=forces,
+        )
+        self.assertEqual(state["global_step"], 560)
+        self.assertEqual(state["integer_tick"], 2_208_750_000)
+        self.assertEqual(set(state["structure"]), {"q", "qdot", "qddot"})
+        self.assertEqual(len(state["applied_slice_forces_N"]), 3)
+        adapter.discard_staged(); adapter.shutdown()
+
+    def test_portable_restart_checkpoint_restores_new_identity_and_next_step(self):
+        checkpoint, state = self._portable_checkpoint()
+        with tempfile.TemporaryDirectory() as directory:
+            path, digest = self._write_checkpoint(directory, checkpoint)
+            worker = FakeWorker()
+            worker.expected_model_contract_sha256 = state["model_contract_sha256"]
+            restored = CppKernelCampaignAdapter.from_checkpoint(
+                worker=worker, model=self.PortableModel(), request_factory=factory,
+                checkpoint=path, expected_sha256=digest, run_id="new_run", case_id="new_case",
+                dt_s=0.00125, base_load=(0.0, 0.0, 0.0), slice_count=3,
+                mass_matrix=(1.0, 0.0, 0.0, 0.0, 1.0, 0.0, 0.0, 0.0, 1.0),
+                expected_model_contract_sha256=state["model_contract_sha256"],
+            )
+            self.assertEqual(restored.source_global_step, 560)
+            self.assertEqual(restored.source_time_s, 2.20875)
+            self.assertEqual(restored.source_tick, 2_208_750_000)
+            self.assertEqual(restored.state_view(), state["structure"])
+            restored.start()
+            prediction, _ = restored.predict(561, 2.21000, ((0.0, 0.0, 0.0),) * 3)
+            self.assertEqual(prediction["global_step"], 561)
+            self.assertEqual(prediction["case_local_bridge_step"], 1)
+            self.assertEqual(prediction["run_id"], "new_run")
+            self.assertEqual(prediction["case_id"], "new_case")
+            restored.shutdown()
+
+    def test_portable_restart_mutations_and_legacy_barrier_are_rejected(self):
+        checkpoint, _state = self._portable_checkpoint()
+        mutations = (
+            ("state hash", lambda state: state.__setitem__("state_sha256", "0" * 64)),
+            ("model hash", lambda state: state.__setitem__("model_contract_sha256", "0" * 64)),
+            ("mass hash", lambda state: state.__setitem__("mass_matrix_sha256", "0" * 64)),
+            ("time", lambda state: state.__setitem__("time_s", 2.209)),
+            ("tick", lambda state: state.__setitem__("integer_tick", 2_208_750_001)),
+            ("dt", lambda state: state.__setitem__("dt_s", 0.0025)),
+            ("nonfinite", lambda state: state["structure"]["q"].__setitem__(0, "not-a-number")),
+            ("force shape", lambda state: state.__setitem__("applied_slice_forces_N", [[0.0, 0.0, 0.0]])),
+        )
+        with tempfile.TemporaryDirectory() as directory:
+            for label, mutate in mutations:
+                value = json.loads(json.dumps(checkpoint))
+                mutate(value["checkpoint_metadata"]["ancf_restart_state"])
+                path, digest = self._write_checkpoint(directory, value)
+                with self.assertRaises((ContractError, CppAdapterError), msg=label):
+                    CppKernelCampaignAdapter.from_checkpoint(
+                        worker=FakeWorker(), model=self.PortableModel(), request_factory=factory,
+                        checkpoint=path, expected_sha256=digest, run_id="new_run", case_id="new_case",
+                        dt_s=0.00125, base_load=(0.0, 0.0, 0.0), slice_count=3,
+                        mass_matrix=(1.0, 0.0, 0.0, 0.0, 1.0, 0.0, 0.0, 0.0, 1.0),
+                    )
+            legacy = {"committed": True, "global_step": 560, "time_s": 2.20875,
+                      "integer_tick": 2_208_750_000, "checkpoint_metadata": {}}
+            path, digest = self._write_checkpoint(directory, legacy)
+            with self.assertRaises(ContractError):
+                CppKernelCampaignAdapter.from_checkpoint(
+                    worker=FakeWorker(), model=self.PortableModel(), request_factory=factory,
+                    checkpoint=path, expected_sha256=digest, run_id="new_run", case_id="new_case",
+                    dt_s=0.00125, base_load=(0.0, 0.0, 0.0), slice_count=3,
+                    mass_matrix=(1.0, 0.0, 0.0, 0.0, 1.0, 0.0, 0.0, 0.0, 1.0),
+                )
 
     def test_one_worker_handles_multiple_staged_steps(self):
         adapter = self._adapter(); adapter.start()

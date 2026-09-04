@@ -1,0 +1,3 @@
+/file/read-case-data "D:/CFD/stage2_prescribed_motion_ogrid_v1/fluent_v3_run_5step_dt0025_u1_backward2/stage2_v3_backward2_u1_5step.cas.h5"
+/define/dynamic-mesh/zones/list
+/exit yes

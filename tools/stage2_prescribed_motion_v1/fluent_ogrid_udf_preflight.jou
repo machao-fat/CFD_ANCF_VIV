@@ -1,0 +1,12 @@
+; Stage 2 O-grid UDF preflight: read mesh, compile and load only. No solve.
+/file/read
+D:/CFD/stage2_prescribed_motion_ogrid_v1/openfoam_ogrid_3d/fluentInterface/openfoam_ogrid_3d.msh
+/define/user-defined/compiled-functions compile
+libudf
+yes
+prescribed_motion.c
+
+
+/define/user-defined/compiled-functions load
+libudf
+/exit yes

@@ -1,7 +1,0 @@
-{
-  "all_required_checks": "recorded",
-  "fault_injection_cases": 13,
-  "focused_tests": 28,
-  "root_unittest": 1166,
-  "status": "pass"
-}

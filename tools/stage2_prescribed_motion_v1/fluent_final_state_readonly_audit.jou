@@ -1,0 +1,8 @@
+; Read-only Stage 2 Fluent final-state audit.  No iterate, write-case, or report edits.
+/file/read-case-data "D:/CFD/stage2_prescribed_motion_ogrid_v1/fluent_run_20s/stage2_20s.cas.h5"
+/solve/report-definitions/list
+/solve/report-definitions/list-properties drag-force
+/solve/report-definitions/list-properties lift-force
+/solve/report-definitions/list-properties moment-z
+/file/write-mesh "D:/CFD/stage2_prescribed_motion_ogrid_v1/fluent_final_state_audit/stage2_20s_final.msh"
+/exit yes

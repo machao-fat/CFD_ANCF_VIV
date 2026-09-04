@@ -1,8 +1,0 @@
-{
-  "branch": "codex/cpp-worker-comprehensive-audit-repair-v1",
-  "force_push": false,
-  "head_before_commit": "624ad9b3fc04e98c7a59f1b6783f3ea93cac427d",
-  "history_rewrite": false,
-  "scoped_status": "",
-  "unrelated_user_files_excluded": true
-}
