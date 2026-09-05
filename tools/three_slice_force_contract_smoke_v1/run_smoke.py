@@ -29,7 +29,7 @@ CONTROL = 'FoamFile { format ascii; class dictionary; object controlDict; }\napp
 # not provide the persisted mesh-coordinate evidence required by revalidation.
 DYNAMIC = 'FoamFile { format ascii; class dictionary; object dynamicMeshDict; }\nmover { type motionSolver; libs ("libfvMeshMovers.so" "libfvMotionSolvers.so"); motionSolver displacementLaplacian; diffusivity uniform; }\n'
 POINT = 'FoamFile { format ascii; class pointVectorField; location "0"; object pointDisplacement; }\ndimensions [0 1 0 0 0 0 0]; internalField uniform (0 0 0); boundaryField { inlet { type fixedValue; value uniform (0 0 0); } outlet { type fixedValue; value uniform (0 0 0); } lower { type symmetryPlane; } upper { type symmetryPlane; } cylinder { type fixedValue; value uniform (0 0 0); } front { type empty; } back { type empty; } }\n'
-CELL = 'FoamFile { format ascii; class volVectorField; location "0"; object cellDisplacement; }\ndimensions [0 1 0 0 0 0 0]; internalField uniform (0 0 0); boundaryField { inlet { type zeroGradient; } outlet { type zeroGradient; } lower { type zeroGradient; } upper { type zeroGradient; } cylinder { type fixedValue; value uniform (0 0 0); } front { type empty; } back { type empty; } }\n'
+CELL = 'FoamFile { format ascii; class volVectorField; location "0"; object cellDisplacement; }\ndimensions [0 1 0 0 0 0 0]; internalField uniform (0 0 0); boundaryField { inlet { type zeroGradient; } outlet { type zeroGradient; } lower { type symmetryPlane; } upper { type symmetryPlane; } cylinder { type fixedValue; value uniform (0 0 0); } front { type empty; } back { type empty; } }\n'
 
 
 def wsl(path: Path) -> str:
