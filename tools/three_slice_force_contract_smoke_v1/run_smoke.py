@@ -15,8 +15,8 @@ from coupling.openfoam_quality_contract_v3.audit import audit_records
 from coupling.convergence_observability_v1.openfoam_log import OpenFOAMLogParser
 
 STAGE = "stage_force_contract_smoke_v1"
-RUNTIME = ROOT / "runtime" / (STAGE + "_run_003")
-RESULTS = ROOT / "results" / "three_slice_force_contract_smoke_v1_run_003"
+RUNTIME = ROOT / "runtime" / (STAGE + "_run_004")
+RESULTS = ROOT / "results" / "three_slice_force_contract_smoke_v1_run_004"
 CONTRACT = Path(__file__).with_name("three_slice_force_contract_smoke_v1.json")
 SOURCE = ROOT / "cases/openfoam/single_slice_ancf_fsi"
 STATE = ROOT / "runtime/stage4f_d_cpp_worker_initialization_v1/run_20260827_cpp_only/ancf_t0_state_cpp.json"
@@ -80,7 +80,9 @@ def launch(cases: list[Path]) -> int:
     configs = " ".join("'" + wsl(case / "precice-config.xml") + "'" for case in cases)
     fluid = [f"(cd '{wsl(case)}' && pimpleFoam > '{wsl(logs / f'fluid_{sid:04d}.stdout')}' 2> '{wsl(logs / f'fluid_{sid:04d}.stderr')}') & p{sid}=$!" for sid,case in enumerate(cases)]
     script = ["set -o pipefail", "export ZSH_NAME=", "source /opt/openfoam10/etc/bashrc", f"export PYTHONPATH='{root}/src:{wsl(PYDEPS)}'", f"python3 '{part}' --contract '{wsl(RUNTIME / CONTRACT.name)}' --state '{wsl(STATE)}' --worker '{wsl(WORKER)}' --runtime '{wsl(RUNTIME)}' --config {configs} --vertex-count 40 > '{wsl(logs / 'structure.stdout')}' 2> '{wsl(logs / 'structure.stderr')}' & spid=$!", *fluid, f"printf 'structure_pid=%s\\nfluid_0000_pid=%s\\nfluid_0001_pid=%s\\nfluid_0002_pid=%s\\n' \"$spid\" \"$p0\" \"$p1\" \"$p2\" > '{wsl(logs / 'pids.txt')}'", "wait \"$spid\"; sr=$?; if [ \"$sr\" -ne 0 ]; then kill \"$p0\" \"$p1\" \"$p2\" 2>/dev/null || true; fi", "wait \"$p0\"; r0=$?; wait \"$p1\"; r1=$?; wait \"$p2\"; r2=$?", f"printf 'structure_return=%s\\nfluid_0000_return=%s\\nfluid_0001_return=%s\\nfluid_0002_return=%s\\n' \"$sr\" \"$r0\" \"$r1\" \"$r2\" > '{wsl(logs / 'returns.txt')}'", "[ \"$sr\" -eq 0 ] && [ \"$r0\" -eq 0 ] && [ \"$r1\" -eq 0 ] && [ \"$r2\" -eq 0 ]"]
-    completed = subprocess.run(["wsl.exe", "-d", "Ubuntu-22.04", "--", "bash", "-lc", "; ".join(script)], cwd=ROOT, text=True, capture_output=True, encoding="utf-8", errors="replace", timeout=900)
+    launch_file = RUNTIME / "launch.sh"
+    put(launch_file, "\n".join(script) + "\n")
+    completed = subprocess.run(["wsl.exe", "-d", "Ubuntu-22.04", "--", "bash", wsl(launch_file)], cwd=ROOT, text=True, capture_output=True, encoding="utf-8", errors="replace", timeout=900)
     put(logs / "launcher.stdout", completed.stdout); put(logs / "launcher.stderr", completed.stderr); return completed.returncode
 
 
