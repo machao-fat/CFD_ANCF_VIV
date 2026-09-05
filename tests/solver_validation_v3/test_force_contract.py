@@ -42,7 +42,20 @@ class ForceContractV3Tests(unittest.TestCase):
                 SliceDefinition(2, 41.666666666666664, 50.0 / 3.0, 1.0),
             ),
         )
-        q = tuple(0.0 for _ in range(102))
+        # A non-collinear reference geometry gives the rigid-rotation audit a
+        # nonzero physical moment; a zero geometry would make that check
+        # vacuous even though H/H^T is correct.
+        q_list = [0.0 for _ in range(102)]
+        for node in range(17):
+            s = 50.0 * node / 16.0
+            base = 6 * node
+            q_list[base + 0] = 0.03 * s / 50.0
+            q_list[base + 1] = -0.02 * s / 50.0
+            q_list[base + 2] = s
+            q_list[base + 3] = 0.03 / 50.0
+            q_list[base + 4] = -0.02 / 50.0
+            q_list[base + 5] = 1.0
+        q = tuple(q_list)
         qdot = tuple((index % 7 - 3) * 0.01 for index in range(102))
         loads = ((1.0, 2.0, 0.0), (-1.5, 0.5, 0.0), (0.75, -1.0, 0.0))
         audit = diagnose_mapping(q, qdot, loads)
