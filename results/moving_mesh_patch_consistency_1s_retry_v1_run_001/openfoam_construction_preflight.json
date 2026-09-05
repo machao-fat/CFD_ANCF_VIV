@@ -1,0 +1,121 @@
+{
+  "status": "PASS",
+  "method": "authoritative generated dictionary and polyMesh boundary compatibility audit",
+  "slices": {
+    "0": {
+      "case": "D:\\研二文件\\开题准备\\CFD_ANCF_VIV\\runtime\\moving_mesh_patch_consistency_1s_retry_v1_run_001\\cases\\slice_0000",
+      "mesh_patch_inventory": {
+        "front": "empty",
+        "back": "empty",
+        "lower": "symmetryPlane",
+        "outlet": "patch",
+        "upper": "symmetryPlane",
+        "inlet": "patch",
+        "cylinder": "wall"
+      },
+      "required_motion_fields": [
+        "pointDisplacement",
+        "cellDisplacement"
+      ],
+      "field_patch_types": {
+        "pointDisplacement": {
+          "front": "empty",
+          "back": "empty",
+          "lower": "symmetryPlane",
+          "outlet": "fixedValue",
+          "upper": "symmetryPlane",
+          "inlet": "fixedValue",
+          "cylinder": "fixedValue"
+        },
+        "cellDisplacement": {
+          "front": "empty",
+          "back": "empty",
+          "lower": "symmetryPlane",
+          "outlet": "zeroGradient",
+          "upper": "symmetryPlane",
+          "inlet": "zeroGradient",
+          "cylinder": "fixedValue"
+        }
+      },
+      "issues": [],
+      "MESH_FIELD_PATCH_COMPATIBILITY": "PASS"
+    },
+    "1": {
+      "case": "D:\\研二文件\\开题准备\\CFD_ANCF_VIV\\runtime\\moving_mesh_patch_consistency_1s_retry_v1_run_001\\cases\\slice_0001",
+      "mesh_patch_inventory": {
+        "front": "empty",
+        "back": "empty",
+        "lower": "symmetryPlane",
+        "outlet": "patch",
+        "upper": "symmetryPlane",
+        "inlet": "patch",
+        "cylinder": "wall"
+      },
+      "required_motion_fields": [
+        "pointDisplacement",
+        "cellDisplacement"
+      ],
+      "field_patch_types": {
+        "pointDisplacement": {
+          "front": "empty",
+          "back": "empty",
+          "lower": "symmetryPlane",
+          "outlet": "fixedValue",
+          "upper": "symmetryPlane",
+          "inlet": "fixedValue",
+          "cylinder": "fixedValue"
+        },
+        "cellDisplacement": {
+          "front": "empty",
+          "back": "empty",
+          "lower": "symmetryPlane",
+          "outlet": "zeroGradient",
+          "upper": "symmetryPlane",
+          "inlet": "zeroGradient",
+          "cylinder": "fixedValue"
+        }
+      },
+      "issues": [],
+      "MESH_FIELD_PATCH_COMPATIBILITY": "PASS"
+    },
+    "2": {
+      "case": "D:\\研二文件\\开题准备\\CFD_ANCF_VIV\\runtime\\moving_mesh_patch_consistency_1s_retry_v1_run_001\\cases\\slice_0002",
+      "mesh_patch_inventory": {
+        "front": "empty",
+        "back": "empty",
+        "lower": "symmetryPlane",
+        "outlet": "patch",
+        "upper": "symmetryPlane",
+        "inlet": "patch",
+        "cylinder": "wall"
+      },
+      "required_motion_fields": [
+        "pointDisplacement",
+        "cellDisplacement"
+      ],
+      "field_patch_types": {
+        "pointDisplacement": {
+          "front": "empty",
+          "back": "empty",
+          "lower": "symmetryPlane",
+          "outlet": "fixedValue",
+          "upper": "symmetryPlane",
+          "inlet": "fixedValue",
+          "cylinder": "fixedValue"
+        },
+        "cellDisplacement": {
+          "front": "empty",
+          "back": "empty",
+          "lower": "symmetryPlane",
+          "outlet": "zeroGradient",
+          "upper": "symmetryPlane",
+          "inlet": "zeroGradient",
+          "cylinder": "fixedValue"
+        }
+      },
+      "issues": [],
+      "MESH_FIELD_PATCH_COMPATIBILITY": "PASS"
+    }
+  },
+  "no_physical_time_advanced": true
+}

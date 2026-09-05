@@ -1,0 +1,108 @@
+(0) 00:12:54 [impl::ParticipantImpl]:185 in configure: [0mThis is preCICE version 3.4.1
+(0) 00:12:54 [impl::ParticipantImpl]:186 in configure: [0mRevision info: no-info [git failed to run]
+(0) 00:12:54 [impl::ParticipantImpl]:205 in configure: [0mBuild type: Release (without debug log)
+(0) 00:12:54 [impl::ParticipantImpl]:207 in configure: [0mWorking directory "/mnt/d/研二文件/开题准备/CFD_ANCF_VIV"
+(0) 00:12:54 [impl::ParticipantImpl]:211 in configure: [0mConfiguring preCICE with configuration "/mnt/d/研二文件/开题准备/CFD_ANCF_VIV/runtime/moving_mesh_patch_consistency_1s_retry_v1_run_001/cases/slice_0000/precice-config.xml"
+(0) 00:12:54 [impl::ParticipantImpl]:212 in configure: [0mI am participant "Structure_0000"
+(0) 00:12:54 [impl::ParticipantImpl]:185 in configure: [0mThis is preCICE version 3.4.1
+(0) 00:12:54 [impl::ParticipantImpl]:186 in configure: [0mRevision info: no-info [git failed to run]
+(0) 00:12:54 [impl::ParticipantImpl]:205 in configure: [0mBuild type: Release (without debug log)
+(0) 00:12:54 [impl::ParticipantImpl]:207 in configure: [0mWorking directory "/mnt/d/研二文件/开题准备/CFD_ANCF_VIV"
+(0) 00:12:54 [impl::ParticipantImpl]:211 in configure: [0mConfiguring preCICE with configuration "/mnt/d/研二文件/开题准备/CFD_ANCF_VIV/runtime/moving_mesh_patch_consistency_1s_retry_v1_run_001/cases/slice_0001/precice-config.xml"
+(0) 00:12:54 [impl::ParticipantImpl]:212 in configure: [0mI am participant "Structure_0001"
+(0) 00:12:54 [impl::ParticipantImpl]:185 in configure: [0mThis is preCICE version 3.4.1
+(0) 00:12:54 [impl::ParticipantImpl]:186 in configure: [0mRevision info: no-info [git failed to run]
+(0) 00:12:54 [impl::ParticipantImpl]:205 in configure: [0mBuild type: Release (without debug log)
+(0) 00:12:54 [impl::ParticipantImpl]:207 in configure: [0mWorking directory "/mnt/d/研二文件/开题准备/CFD_ANCF_VIV"
+(0) 00:12:54 [impl::ParticipantImpl]:211 in configure: [0mConfiguring preCICE with configuration "/mnt/d/研二文件/开题准备/CFD_ANCF_VIV/runtime/moving_mesh_patch_consistency_1s_retry_v1_run_001/cases/slice_0002/precice-config.xml"
+(0) 00:12:54 [impl::ParticipantImpl]:212 in configure: [0mI am participant "Structure_0002"
+(0) 00:12:54 [impl::ParticipantImpl]:335 in setupCommunication: [0mSetting up primary communication to coupling partner/s
+(0) 00:12:54 [impl::ParticipantImpl]:351 in setupCommunication: [0mPrimary ranks are connected
+(0) 00:12:54 [impl::ParticipantImpl]:357 in setupCommunication: [0mSetting up preliminary secondary communication to coupling partner/s
+(0) 00:12:54 [partition::ProvidedPartition]:120 in prepare: [0mPrepare partition for mesh Structure-Mesh
+(0) 00:12:54 [partition::ProvidedPartition]:87 in communicate: [0mGather mesh Structure-Mesh
+(0) 00:12:54 [partition::ProvidedPartition]:104 in communicate: [0mSend global mesh Structure-Mesh
+(0) 00:12:54 [impl::ParticipantImpl]:366 in setupCommunication: [0mSetting up secondary communication to coupling partner/s
+(0) 00:12:54 [impl::ParticipantImpl]:373 in setupCommunication: [0mSecondary ranks are connected
+(0) 00:12:54 [impl::ParticipantImpl]:298 in initialize: [0mtime-window 1, t 0 (max: 1), Dt 0.005, max-dt 0.005
+(0) 00:12:54 [impl::ParticipantImpl]:335 in setupCommunication: [0mSetting up primary communication to coupling partner/s
+(0) 00:12:54 [impl::ParticipantImpl]:351 in setupCommunication: [0mPrimary ranks are connected
+(0) 00:12:54 [impl::ParticipantImpl]:357 in setupCommunication: [0mSetting up preliminary secondary communication to coupling partner/s
+(0) 00:12:54 [partition::ProvidedPartition]:120 in prepare: [0mPrepare partition for mesh Structure-Mesh
+(0) 00:12:54 [partition::ProvidedPartition]:87 in communicate: [0mGather mesh Structure-Mesh
+(0) 00:12:54 [partition::ProvidedPartition]:104 in communicate: [0mSend global mesh Structure-Mesh
+(0) 00:12:54 [impl::ParticipantImpl]:366 in setupCommunication: [0mSetting up secondary communication to coupling partner/s
+(0) 00:12:54 [impl::ParticipantImpl]:373 in setupCommunication: [0mSecondary ranks are connected
+(0) 00:12:54 [impl::ParticipantImpl]:298 in initialize: [0mtime-window 1, t 0 (max: 1), Dt 0.005, max-dt 0.005
+(0) 00:12:54 [impl::ParticipantImpl]:335 in setupCommunication: [0mSetting up primary communication to coupling partner/s
+(0) 00:12:54 [impl::ParticipantImpl]:351 in setupCommunication: [0mPrimary ranks are connected
+(0) 00:12:54 [impl::ParticipantImpl]:357 in setupCommunication: [0mSetting up preliminary secondary communication to coupling partner/s
+(0) 00:12:54 [partition::ProvidedPartition]:120 in prepare: [0mPrepare partition for mesh Structure-Mesh
+(0) 00:12:54 [partition::ProvidedPartition]:87 in communicate: [0mGather mesh Structure-Mesh
+(0) 00:12:54 [partition::ProvidedPartition]:104 in communicate: [0mSend global mesh Structure-Mesh
+(0) 00:12:54 [impl::ParticipantImpl]:366 in setupCommunication: [0mSetting up secondary communication to coupling partner/s
+(0) 00:12:54 [impl::ParticipantImpl]:373 in setupCommunication: [0mSecondary ranks are connected
+(0) 00:12:54 [impl::ParticipantImpl]:298 in initialize: [0mtime-window 1, t 0 (max: 1), Dt 0.005, max-dt 0.005
+(0) 00:12:54 [cplscheme::BaseCouplingScheme]:407 in secondExchange: [0mTime window completed
+(0) 00:12:54 [impl::ParticipantImpl]:457 in advance: [0mtime-window 2, t 0.005 (max: 1), Dt 0.005, max-dt 0.005
+(0) 00:12:54 [cplscheme::BaseCouplingScheme]:407 in secondExchange: [0mTime window completed
+(0) 00:12:54 [impl::ParticipantImpl]:457 in advance: [0mtime-window 2, t 0.005 (max: 1), Dt 0.005, max-dt 0.005
+(0) 00:12:54 [cplscheme::BaseCouplingScheme]:407 in secondExchange: [0mTime window completed
+(0) 00:12:54 [impl::ParticipantImpl]:457 in advance: [0mtime-window 2, t 0.005 (max: 1), Dt 0.005, max-dt 0.005
+(0) 00:12:54 [cplscheme::BaseCouplingScheme]:407 in secondExchange: [0mTime window completed
+(0) 00:12:54 [impl::ParticipantImpl]:457 in advance: [0mtime-window 3, t 0.01 (max: 1), Dt 0.005, max-dt 0.005
+(0) 00:12:54 [cplscheme::BaseCouplingScheme]:407 in secondExchange: [0mTime window completed
+(0) 00:12:54 [impl::ParticipantImpl]:457 in advance: [0mtime-window 3, t 0.01 (max: 1), Dt 0.005, max-dt 0.005
+(0) 00:12:54 [cplscheme::BaseCouplingScheme]:407 in secondExchange: [0mTime window completed
+(0) 00:12:54 [impl::ParticipantImpl]:457 in advance: [0mtime-window 3, t 0.01 (max: 1), Dt 0.005, max-dt 0.005
+(0) 00:12:54 [cplscheme::BaseCouplingScheme]:407 in secondExchange: [0mTime window completed
+(0) 00:12:54 [impl::ParticipantImpl]:457 in advance: [0mtime-window 4, t 0.015 (max: 1), Dt 0.005, max-dt 0.005
+(0) 00:12:54 [cplscheme::BaseCouplingScheme]:407 in secondExchange: [0mTime window completed
+(0) 00:12:54 [impl::ParticipantImpl]:457 in advance: [0mtime-window 4, t 0.015 (max: 1), Dt 0.005, max-dt 0.005
+(0) 00:12:54 [cplscheme::BaseCouplingScheme]:407 in secondExchange: [0mTime window completed
+(0) 00:12:54 [impl::ParticipantImpl]:457 in advance: [0mtime-window 4, t 0.015 (max: 1), Dt 0.005, max-dt 0.005
+(0) 00:12:54 [cplscheme::BaseCouplingScheme]:407 in secondExchange: [0mTime window completed
+(0) 00:12:54 [impl::ParticipantImpl]:457 in advance: [0mtime-window 5, t 0.02 (max: 1), Dt 0.005, max-dt 0.005
+(0) 00:12:54 [cplscheme::BaseCouplingScheme]:407 in secondExchange: [0mTime window completed
+(0) 00:12:54 [impl::ParticipantImpl]:457 in advance: [0mtime-window 5, t 0.02 (max: 1), Dt 0.005, max-dt 0.005
+(0) 00:12:54 [cplscheme::BaseCouplingScheme]:407 in secondExchange: [0mTime window completed
+(0) 00:12:54 [impl::ParticipantImpl]:457 in advance: [0mtime-window 5, t 0.02 (max: 1), Dt 0.005, max-dt 0.005
+(0) 00:12:55 [cplscheme::BaseCouplingScheme]:407 in secondExchange: [0mTime window completed
+(0) 00:12:55 [impl::ParticipantImpl]:457 in advance: [0mtime-window 6, t 0.025 (max: 1), Dt 0.005, max-dt 0.005
+(0) 00:12:55 [cplscheme::BaseCouplingScheme]:407 in secondExchange: [0mTime window completed
+(0) 00:12:55 [impl::ParticipantImpl]:457 in advance: [0mtime-window 6, t 0.025 (max: 1), Dt 0.005, max-dt 0.005
+(0) 00:12:55 [cplscheme::BaseCouplingScheme]:407 in secondExchange: [0mTime window completed
+(0) 00:12:55 [impl::ParticipantImpl]:457 in advance: [0mtime-window 6, t 0.025 (max: 1), Dt 0.005, max-dt 0.005
+(0) 00:12:55 [cplscheme::BaseCouplingScheme]:407 in secondExchange: [0mTime window completed
+(0) 00:12:55 [impl::ParticipantImpl]:457 in advance: [0mtime-window 7, t 0.03 (max: 1), Dt 0.005, max-dt 0.005
+(0) 00:12:55 [cplscheme::BaseCouplingScheme]:407 in secondExchange: [0mTime window completed
+(0) 00:12:55 [impl::ParticipantImpl]:457 in advance: [0mtime-window 7, t 0.03 (max: 1), Dt 0.005, max-dt 0.005
+(0) 00:12:55 [cplscheme::BaseCouplingScheme]:407 in secondExchange: [0mTime window completed
+(0) 00:12:55 [impl::ParticipantImpl]:457 in advance: [0mtime-window 7, t 0.03 (max: 1), Dt 0.005, max-dt 0.005
+(0) 00:12:55 [cplscheme::BaseCouplingScheme]:407 in secondExchange: [0mTime window completed
+(0) 00:12:55 [impl::ParticipantImpl]:457 in advance: [0mtime-window 8, t 0.035 (max: 1), Dt 0.005, max-dt 0.005
+(0) 00:12:55 [cplscheme::BaseCouplingScheme]:407 in secondExchange: [0mTime window completed
+(0) 00:12:55 [impl::ParticipantImpl]:457 in advance: [0mtime-window 8, t 0.035 (max: 1), Dt 0.005, max-dt 0.005
+(0) 00:12:55 [cplscheme::BaseCouplingScheme]:407 in secondExchange: [0mTime window completed
+(0) 00:12:55 [impl::ParticipantImpl]:457 in advance: [0mtime-window 8, t 0.035 (max: 1), Dt 0.005, max-dt 0.005
+(0) 00:12:55 [cplscheme::BaseCouplingScheme]:407 in secondExchange: [0mTime window completed
+(0) 00:12:55 [impl::ParticipantImpl]:457 in advance: [0mtime-window 9, t 0.04 (max: 1), Dt 0.005, max-dt 0.005
+(0) 00:12:55 [cplscheme::BaseCouplingScheme]:407 in secondExchange: [0mTime window completed
+(0) 00:12:55 [impl::ParticipantImpl]:457 in advance: [0mtime-window 9, t 0.04 (max: 1), Dt 0.005, max-dt 0.005
+(0) 00:12:55 [cplscheme::BaseCouplingScheme]:407 in secondExchange: [0mTime window completed
+(0) 00:12:55 [impl::ParticipantImpl]:457 in advance: [0mtime-window 9, t 0.04 (max: 1), Dt 0.005, max-dt 0.005
+(0) 00:12:55 [cplscheme::BaseCouplingScheme]:407 in secondExchange: [0mTime window completed
+(0) 00:12:55 [impl::ParticipantImpl]:457 in advance: [0mtime-window 10, t 0.045 (max: 1), Dt 0.005, max-dt 0.005
+(0) 00:12:55 [cplscheme::BaseCouplingScheme]:407 in secondExchange: [0mTime window completed
+(0) 00:12:55 [impl::ParticipantImpl]:457 in advance: [0mtime-window 10, t 0.045 (max: 1), Dt 0.005, max-dt 0.005
+(0) 00:12:55 [cplscheme::BaseCouplingScheme]:407 in secondExchange: [0mTime window completed
+(0) 00:12:55 [impl::ParticipantImpl]:457 in advance: [0mtime-window 10, t 0.045 (max: 1), Dt 0.005, max-dt 0.005
+(0) 00:12:55 [cplscheme::BaseCouplingScheme]:407 in secondExchange: [0mTime window completed
+(0) 00:12:55 [impl::ParticipantImpl]:457 in advance: [0mtime-window 11, t 0.05 (max: 1), Dt 0.005, max-dt 0.005
+(0) 00:12:55 [cplscheme::BaseCouplingScheme]:407 in secondExchange: [0mTime window completed
+(0) 00:12:55 [impl::ParticipantImpl]:457 in advance: [0mtime-window 11, t 0.05 (max: 1), Dt 0.005, max-dt 0.005
+(0) 00:12:55 [cplscheme::BaseCouplingScheme]:407 in secondExchange: [0mTime window completed
+(0) 00:12:55 [impl::ParticipantImpl]:457 in advance: [0mtime-window 11, t 0.05 (max: 1), Dt 0.005, max-dt 0.005
+(0) 00:12:55 [impl::ParticipantImpl]:1832 in closeCommunicationChannels: [0mClose communication channels
+(0) 00:12:55 [impl::ParticipantImpl]:1832 in closeCommunicationChannels: [0mClose communication channels
+(0) 00:12:55 [impl::ParticipantImpl]:1832 in closeCommunicationChannels: [0mClose communication channels

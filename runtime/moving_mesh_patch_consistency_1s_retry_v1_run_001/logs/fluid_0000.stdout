@@ -1,0 +1,292 @@
+/*---------------------------------------------------------------------------*\
+  =========                 |
+  \\      /  F ield         | OpenFOAM: The Open Source CFD Toolbox
+   \\    /   O peration     | Website:  https://openfoam.org
+    \\  /    A nd           | Version:  10
+     \\/     M anipulation  |
+\*---------------------------------------------------------------------------*/
+Build  : 10-c4cf895ad8fa
+Exec   : pimpleFoam
+Date   : Sep 06 2026
+Time   : 00:12:53
+Host   : "DESKTOP-NR4V0NP"
+PID    : 1068
+I/O    : uncollated
+Case   : /mnt/d/研二文件/开题准备/CFD_ANCF_VIV/runtime/moving_mesh_patch_consistency_1s_retry_v1_run_001/cases/slice_0000
+nProcs : 1
+sigFpe : Enabling floating point exception trapping (FOAM_SIGFPE).
+fileModificationChecking : Monitoring run-time modified files using timeStampMaster (fileModificationSkew 10)
+allowSystemOperations : Allowing user-supplied system call operations
+
+// * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
+Create time
+
+Create mesh for time = 0
+
+Selecting fvMeshMover motionSolver
+Selecting motion solver: displacementLaplacian
+Selecting motion diffusion: uniform
+
+PIMPLE: No convergence criteria found
+
+
+PIMPLE: Operating solver in transient mode with 1 outer corrector
+PIMPLE: Operating solver in PISO mode
+
+
+Reading field p
+
+Reading field U
+
+Reading/calculating face flux field phi
+
+Selecting viscosity model constant
+Selecting turbulence model type laminar
+Selecting laminar stress model Stokes
+No MRF models present
+
+No fvModels present
+No fvConstraints present
+Constructing face velocity Uf
+
+Courant Number mean: 0.0301369653331 max: 0.207636934058
+
+Starting time loop
+
+---[preciceAdapter] Loaded the OpenFOAM-preCICE adapter - v1.3.0.
+---[preciceAdapter] Reading preciceDict...
+(0) 00:12:54 [impl::ParticipantImpl]:185 in configure: [0mThis is preCICE version 3.4.1
+(0) 00:12:54 [impl::ParticipantImpl]:186 in configure: [0mRevision info: no-info [git failed to run]
+(0) 00:12:54 [impl::ParticipantImpl]:205 in configure: [0mBuild type: Release (without debug log)
+(0) 00:12:54 [impl::ParticipantImpl]:207 in configure: [0mWorking directory "/mnt/d/研二文件/开题准备/CFD_ANCF_VIV/runtime/moving_mesh_patch_consistency_1s_retry_v1_run_001/cases/slice_0000"
+(0) 00:12:54 [impl::ParticipantImpl]:211 in configure: [0mConfiguring preCICE with configuration "precice-config.xml"
+(0) 00:12:54 [impl::ParticipantImpl]:212 in configure: [0mI am participant "Fluid_0000"
+(0) 00:12:54 [impl::ParticipantImpl]:335 in setupCommunication: [0mSetting up primary communication to coupling partner/s
+(0) 00:12:54 [impl::ParticipantImpl]:351 in setupCommunication: [0mPrimary ranks are connected
+(0) 00:12:54 [impl::ParticipantImpl]:357 in setupCommunication: [0mSetting up preliminary secondary communication to coupling partner/s
+(0) 00:12:54 [partition::ProvidedPartition]:120 in prepare: [0mPrepare partition for mesh Fluid-Mesh
+(0) 00:12:54 [partition::ReceivedPartition]:69 in communicate: [0mReceive global mesh Structure-Mesh
+(0) 00:12:54 [impl::ParticipantImpl]:366 in setupCommunication: [0mSetting up secondary communication to coupling partner/s
+(0) 00:12:54 [impl::ParticipantImpl]:373 in setupCommunication: [0mSecondary ranks are connected
+(0) 00:12:54 [impl::ParticipantImpl]:1633 in computeMappings: [0mComputing "nearest-neighbor" mapping from mesh "Fluid-Mesh" to mesh "Structure-Mesh" in "write" direction.
+(0) 00:12:54 [mapping::NearestNeighborMapping]:80 in computeMapping: [0mMapping distance min:0.0392295 max:0.0392295 avg: 0.0392295 var: 6.50521e-19 cnt: 40
+(0) 00:12:54 [impl::DataContext]:155 in mapData: [0mMapping "Force" for t=0 from "Fluid-Mesh" to "Structure-Mesh" (skipped zero sample)
+(0) 00:12:54 [impl::ParticipantImpl]:1633 in computeMappings: [0mComputing "nearest-neighbor" mapping from mesh "Structure-Mesh" to mesh "Fluid-Mesh" in "read" direction.
+(0) 00:12:54 [mapping::NearestNeighborMapping]:80 in computeMapping: [0mMapping distance min:0.0392295 max:0.0392295 avg: 0.0392295 var: 6.50521e-19 cnt: 40
+(0) 00:12:54 [impl::DataContext]:155 in mapData: [0mMapping "Displacement" for t=0 from "Structure-Mesh" to "Fluid-Mesh" (skipped zero sample)
+(0) 00:12:54 [impl::ParticipantImpl]:298 in initialize: [0mtime-window 1, t 0 (max: 1), Dt 0.005, max-dt 0.005
+---[preciceAdapter] preCICE was configured and initialized
+---[preciceAdapter] Setting the solver's endTime to infinity to prevent early exits. Only preCICE will control the simulation's endTime. Any functionObject's end() method will be triggered by the adapter. You may disable this behavior in the adapter's configuration.
+forces cylinderForces:
+    Not including porosity effects
+forces cylinderForces write:
+    sum of forces:
+        pressure : (0 0 0)
+        viscous  : (1683.7831098 3.46413346172 1.47066258359e-18)
+        porous   : (0 0 0)
+    sum of moments:
+        pressure : (0 0 0)
+        viscous  : (-1.73206673086 841.891554902 -4.3749934308)
+        porous   : (0 0 0)
+
+Courant Number mean: 0.0301369653331 max: 0.207636934058
+Time = 0.005s
+
+DICPCG:  Solving for cellDisplacementx, Initial residual = 0, Final residual = 0, No Iterations 0
+DICPCG:  Solving for cellDisplacementy, Initial residual = 0, Final residual = 0, No Iterations 0
+GAMG:  Solving for pcorr, Initial residual = 1, Final residual = 0.00618185742872, No Iterations 10
+time step continuity errors : sum local = 6.87470514763e-08, global = -2.7815174415e-09, cumulative = -2.7815174415e-09
+DILUPBiCGStab:  Solving for Ux, Initial residual = 1, Final residual = 2.67230370091e-09, No Iterations 3
+DILUPBiCGStab:  Solving for Uy, Initial residual = 1, Final residual = 8.33034878711e-09, No Iterations 3
+GAMG:  Solving for p, Initial residual = 1, Final residual = 0.00458274044426, No Iterations 9
+time step continuity errors : sum local = 5.12186576212e-08, global = -4.72222834845e-09, cumulative = -7.50374578995e-09
+GAMG:  Solving for p, Initial residual = 0.369382331443, Final residual = 5.54617402435e-09, No Iterations 21
+time step continuity errors : sum local = 5.59379706331e-13, global = 4.83923230384e-14, cumulative = -7.50369739763e-09
+ExecutionTime = 0.240216 s  ClockTime = 1 s
+
+(0) 00:12:54 [impl::DataContext]:155 in mapData: [0mMapping "Force" for t=0.005 from "Fluid-Mesh" to "Structure-Mesh"
+(0) 00:12:54 [cplscheme::BaseCouplingScheme]:407 in secondExchange: [0mTime window completed
+(0) 00:12:54 [impl::DataContext]:155 in mapData: [0mMapping "Displacement" for t=0.005 from "Structure-Mesh" to "Fluid-Mesh"
+(0) 00:12:54 [impl::ParticipantImpl]:457 in advance: [0mtime-window 2, t 0.005 (max: 1), Dt 0.005, max-dt 0.005
+Courant Number mean: 0.0301959613271 max: 0.341552831266
+Time = 0.01s
+
+DICPCG:  Solving for cellDisplacementx, Initial residual = 0, Final residual = 0, No Iterations 0
+DICPCG:  Solving for cellDisplacementy, Initial residual = 0, Final residual = 0, No Iterations 0
+GAMG:  Solving for pcorr, Initial residual = 1, Final residual = 0.00740344844843, No Iterations 4
+time step continuity errors : sum local = 9.54804251825e-12, global = -6.56776679113e-13, cumulative = -7.50435417431e-09
+DILUPBiCGStab:  Solving for Ux, Initial residual = 0.333585665167, Final residual = 1.76806074048e-09, No Iterations 2
+DILUPBiCGStab:  Solving for Uy, Initial residual = 0.330626443392, Final residual = 2.351640467e-09, No Iterations 2
+GAMG:  Solving for p, Initial residual = 0.137980614238, Final residual = 0.000965387290239, No Iterations 8
+time step continuity errors : sum local = 1.14699509346e-07, global = 1.11097933797e-08, cumulative = 3.60543920537e-09
+GAMG:  Solving for p, Initial residual = 0.894619129225, Final residual = 8.85992412969e-09, No Iterations 23
+time step continuity errors : sum local = 3.63661825072e-13, global = 3.05512029601e-14, cumulative = 3.60546975657e-09
+ExecutionTime = 0.292937 s  ClockTime = 1 s
+
+(0) 00:12:54 [impl::DataContext]:155 in mapData: [0mMapping "Force" for t=0.01 from "Fluid-Mesh" to "Structure-Mesh"
+(0) 00:12:54 [cplscheme::BaseCouplingScheme]:407 in secondExchange: [0mTime window completed
+(0) 00:12:54 [impl::DataContext]:155 in mapData: [0mMapping "Displacement" for t=0.01 from "Structure-Mesh" to "Fluid-Mesh"
+(0) 00:12:54 [impl::ParticipantImpl]:457 in advance: [0mtime-window 3, t 0.01 (max: 1), Dt 0.005, max-dt 0.005
+Courant Number mean: 0.0301964736235 max: 0.34628746607
+Time = 0.015s
+
+DICPCG:  Solving for cellDisplacementx, Initial residual = 1, Final residual = 9.08753335105e-09, No Iterations 310
+DICPCG:  Solving for cellDisplacementy, Initial residual = 1, Final residual = 9.03970319445e-09, No Iterations 233
+GAMG:  Solving for pcorr, Initial residual = 1, Final residual = 0.00610979286374, No Iterations 10
+time step continuity errors : sum local = 1.24528282575e-07, global = 5.35749105733e-09, cumulative = 8.9629608139e-09
+DILUPBiCGStab:  Solving for Ux, Initial residual = 0.00812146801691, Final residual = 7.85739144577e-09, No Iterations 2
+DILUPBiCGStab:  Solving for Uy, Initial residual = 0.00762160539627, Final residual = 7.38348593612e-09, No Iterations 2
+GAMG:  Solving for p, Initial residual = 0.881298004143, Final residual = 0.00724886836179, No Iterations 8
+time step continuity errors : sum local = 2.1510665671e-07, global = 2.21919188115e-08, cumulative = 3.11548796254e-08
+GAMG:  Solving for p, Initial residual = 0.370247880684, Final residual = 7.50914248867e-09, No Iterations 22
+time step continuity errors : sum local = 1.37574675652e-12, global = 1.20147356368e-13, cumulative = 3.11549997727e-08
+ExecutionTime = 0.397544 s  ClockTime = 1 s
+
+(0) 00:12:54 [impl::DataContext]:155 in mapData: [0mMapping "Force" for t=0.015 from "Fluid-Mesh" to "Structure-Mesh"
+(0) 00:12:54 [cplscheme::BaseCouplingScheme]:407 in secondExchange: [0mTime window completed
+(0) 00:12:54 [impl::DataContext]:155 in mapData: [0mMapping "Displacement" for t=0.015 from "Structure-Mesh" to "Fluid-Mesh"
+(0) 00:12:54 [impl::ParticipantImpl]:457 in advance: [0mtime-window 4, t 0.015 (max: 1), Dt 0.005, max-dt 0.005
+Courant Number mean: 0.0268485509278 max: 0.300563318137
+Time = 0.02s
+
+DICPCG:  Solving for cellDisplacementx, Initial residual = 0.887301115115, Final residual = 9.50163401645e-09, No Iterations 308
+DICPCG:  Solving for cellDisplacementy, Initial residual = 0.260769771411, Final residual = 9.17735200947e-09, No Iterations 214
+GAMG:  Solving for pcorr, Initial residual = 1, Final residual = 0.00591694300675, No Iterations 10
+time step continuity errors : sum local = 8.82532521079e-08, global = -3.22312356341e-09, cumulative = 2.79318762093e-08
+DILUPBiCGStab:  Solving for Ux, Initial residual = 0.522286687784, Final residual = 2.20599318507e-10, No Iterations 2
+DILUPBiCGStab:  Solving for Uy, Initial residual = 0.522776685472, Final residual = 3.75861865608e-10, No Iterations 2
+GAMG:  Solving for p, Initial residual = 0.192213753399, Final residual = 0.00150401681626, No Iterations 8
+time step continuity errors : sum local = 3.53409572728e-07, global = -3.66893795734e-08, cumulative = -8.75750336407e-09
+GAMG:  Solving for p, Initial residual = 0.588324007946, Final residual = 9.29509109679e-09, No Iterations 22
+time step continuity errors : sum local = 1.81215504654e-12, global = -1.58248352921e-13, cumulative = -8.75766161243e-09
+ExecutionTime = 0.500049 s  ClockTime = 1 s
+
+(0) 00:12:54 [impl::DataContext]:155 in mapData: [0mMapping "Force" for t=0.02 from "Fluid-Mesh" to "Structure-Mesh"
+(0) 00:12:54 [cplscheme::BaseCouplingScheme]:407 in secondExchange: [0mTime window completed
+(0) 00:12:54 [impl::DataContext]:155 in mapData: [0mMapping "Displacement" for t=0.02 from "Structure-Mesh" to "Fluid-Mesh"
+(0) 00:12:54 [impl::ParticipantImpl]:457 in advance: [0mtime-window 5, t 0.02 (max: 1), Dt 0.005, max-dt 0.005
+Courant Number mean: 0.0170850210281 max: 0.188368391755
+Time = 0.025s
+
+DICPCG:  Solving for cellDisplacementx, Initial residual = 0.977900811378, Final residual = 9.58451461385e-09, No Iterations 311
+DICPCG:  Solving for cellDisplacementy, Initial residual = 0.825604385439, Final residual = 9.4165651099e-09, No Iterations 232
+GAMG:  Solving for pcorr, Initial residual = 1, Final residual = 0.00615360864485, No Iterations 10
+time step continuity errors : sum local = 2.23620669999e-07, global = -8.80909479111e-09, cumulative = -1.75667564035e-08
+DILUPBiCGStab:  Solving for Ux, Initial residual = 0.573432889723, Final residual = 3.76355865685e-09, No Iterations 4
+DILUPBiCGStab:  Solving for Uy, Initial residual = 0.563222750845, Final residual = 2.90651786404e-09, No Iterations 4
+GAMG:  Solving for p, Initial residual = 0.201733605088, Final residual = 0.00146938974491, No Iterations 8
+time step continuity errors : sum local = 2.56164462478e-07, global = -2.52919214125e-08, cumulative = -4.28586778161e-08
+GAMG:  Solving for p, Initial residual = 0.226374497322, Final residual = 6.77152314032e-09, No Iterations 21
+time step continuity errors : sum local = 2.42660947952e-12, global = 2.0979602849e-13, cumulative = -4.285846802e-08
+ExecutionTime = 0.603261 s  ClockTime = 2 s
+
+(0) 00:12:55 [impl::DataContext]:155 in mapData: [0mMapping "Force" for t=0.025 from "Fluid-Mesh" to "Structure-Mesh"
+(0) 00:12:55 [cplscheme::BaseCouplingScheme]:407 in secondExchange: [0mTime window completed
+(0) 00:12:55 [impl::DataContext]:155 in mapData: [0mMapping "Displacement" for t=0.025 from "Structure-Mesh" to "Fluid-Mesh"
+(0) 00:12:55 [impl::ParticipantImpl]:457 in advance: [0mtime-window 6, t 0.025 (max: 1), Dt 0.005, max-dt 0.005
+Courant Number mean: 0.116502430702 max: 1.29916894155
+Time = 0.03s
+
+DICPCG:  Solving for cellDisplacementx, Initial residual = 0.835600473398, Final residual = 9.83473540791e-09, No Iterations 309
+DICPCG:  Solving for cellDisplacementy, Initial residual = 0.396992882098, Final residual = 9.5775004742e-09, No Iterations 222
+GAMG:  Solving for pcorr, Initial residual = 1, Final residual = 0.00621297136311, No Iterations 10
+time step continuity errors : sum local = 3.3803215161e-07, global = 1.62257735425e-08, cumulative = -2.66326944775e-08
+DILUPBiCGStab:  Solving for Ux, Initial residual = 0.30653877948, Final residual = 3.34473780204e-09, No Iterations 3
+DILUPBiCGStab:  Solving for Uy, Initial residual = 0.29954126399, Final residual = 7.49742157333e-09, No Iterations 2
+GAMG:  Solving for p, Initial residual = 0.280681660298, Final residual = 0.00217153992366, No Iterations 8
+time step continuity errors : sum local = 9.93798231259e-07, global = 1.06030513067e-07, cumulative = 7.93978185892e-08
+GAMG:  Solving for p, Initial residual = 0.498650722502, Final residual = 6.15533202153e-09, No Iterations 23
+time step continuity errors : sum local = 3.80046704977e-12, global = 3.41403331999e-13, cumulative = 7.93981599926e-08
+ExecutionTime = 0.70604 s  ClockTime = 2 s
+
+(0) 00:12:55 [impl::DataContext]:155 in mapData: [0mMapping "Force" for t=0.03 from "Fluid-Mesh" to "Structure-Mesh"
+(0) 00:12:55 [cplscheme::BaseCouplingScheme]:407 in secondExchange: [0mTime window completed
+(0) 00:12:55 [impl::DataContext]:155 in mapData: [0mMapping "Displacement" for t=0.03 from "Structure-Mesh" to "Fluid-Mesh"
+(0) 00:12:55 [impl::ParticipantImpl]:457 in advance: [0mtime-window 7, t 0.03 (max: 1), Dt 0.005, max-dt 0.005
+Courant Number mean: 0.0384387631704 max: 0.41511140342
+Time = 0.035s
+
+DICPCG:  Solving for cellDisplacementx, Initial residual = 0.952406273568, Final residual = 9.3131655643e-09, No Iterations 311
+DICPCG:  Solving for cellDisplacementy, Initial residual = 0.819488284978, Final residual = 9.31981366012e-09, No Iterations 232
+GAMG:  Solving for pcorr, Initial residual = 1, Final residual = 0.00601423977887, No Iterations 10
+time step continuity errors : sum local = 2.72563684292e-07, global = 1.2496033079e-08, cumulative = 9.18941930715e-08
+DILUPBiCGStab:  Solving for Ux, Initial residual = 0.677981074212, Final residual = 5.47823947306e-09, No Iterations 4
+DILUPBiCGStab:  Solving for Uy, Initial residual = 0.691259684384, Final residual = 6.39372544469e-09, No Iterations 4
+GAMG:  Solving for p, Initial residual = 0.113976166498, Final residual = 0.000880047823211, No Iterations 6
+time step continuity errors : sum local = 4.92653936928e-07, global = -4.36126546641e-08, cumulative = 4.82815384075e-08
+GAMG:  Solving for p, Initial residual = 0.0803631748241, Final residual = 8.05487249351e-09, No Iterations 21
+time step continuity errors : sum local = 3.76042862986e-12, global = -3.86904339798e-13, cumulative = 4.82811515031e-08
+ExecutionTime = 0.815558 s  ClockTime = 2 s
+
+(0) 00:12:55 [impl::DataContext]:155 in mapData: [0mMapping "Force" for t=0.035 from "Fluid-Mesh" to "Structure-Mesh"
+(0) 00:12:55 [cplscheme::BaseCouplingScheme]:407 in secondExchange: [0mTime window completed
+(0) 00:12:55 [impl::DataContext]:155 in mapData: [0mMapping "Displacement" for t=0.035 from "Structure-Mesh" to "Fluid-Mesh"
+(0) 00:12:55 [impl::ParticipantImpl]:457 in advance: [0mtime-window 8, t 0.035 (max: 1), Dt 0.005, max-dt 0.005
+Courant Number mean: 0.158467835002 max: 1.83394101089
+Time = 0.04s
+
+DICPCG:  Solving for cellDisplacementx, Initial residual = 0.885833019354, Final residual = 9.86503570931e-09, No Iterations 310
+DICPCG:  Solving for cellDisplacementy, Initial residual = 0.591152252749, Final residual = 9.17916746346e-09, No Iterations 229
+GAMG:  Solving for pcorr, Initial residual = 1, Final residual = 0.0061982817461, No Iterations 10
+time step continuity errors : sum local = 9.27385324264e-07, global = -3.95191783e-08, cumulative = 8.76197320311e-09
+DILUPBiCGStab:  Solving for Ux, Initial residual = 0.281089180958, Final residual = 2.00153226861e-09, No Iterations 6
+DILUPBiCGStab:  Solving for Uy, Initial residual = 0.283250762475, Final residual = 1.31037093394e-09, No Iterations 6
+GAMG:  Solving for p, Initial residual = 0.442516573774, Final residual = 0.00196379368785, No Iterations 9
+time step continuity errors : sum local = 1.05823553741e-06, global = -1.10387717754e-07, cumulative = -1.01625744551e-07
+GAMG:  Solving for p, Initial residual = 0.386392468036, Final residual = 7.85374512294e-09, No Iterations 22
+time step continuity errors : sum local = 1.59701444669e-11, global = 1.47279076338e-12, cumulative = -1.0162427176e-07
+ExecutionTime = 0.921344 s  ClockTime = 2 s
+
+(0) 00:12:55 [impl::DataContext]:155 in mapData: [0mMapping "Force" for t=0.04 from "Fluid-Mesh" to "Structure-Mesh"
+(0) 00:12:55 [cplscheme::BaseCouplingScheme]:407 in secondExchange: [0mTime window completed
+(0) 00:12:55 [impl::DataContext]:155 in mapData: [0mMapping "Displacement" for t=0.04 from "Structure-Mesh" to "Fluid-Mesh"
+(0) 00:12:55 [impl::ParticipantImpl]:457 in advance: [0mtime-window 9, t 0.04 (max: 1), Dt 0.005, max-dt 0.005
+Courant Number mean: 0.260417279799 max: 2.47703853975
+Time = 0.045s
+
+DICPCG:  Solving for cellDisplacementx, Initial residual = 0.895406180524, Final residual = 9.74183791176e-09, No Iterations 310
+DICPCG:  Solving for cellDisplacementy, Initial residual = 0.273092521614, Final residual = 9.10674292896e-09, No Iterations 222
+GAMG:  Solving for pcorr, Initial residual = 1, Final residual = 0.00568187527475, No Iterations 10
+time step continuity errors : sum local = 3.22859234014e-08, global = -9.89554248688e-10, cumulative = -1.02613826009e-07
+DILUPBiCGStab:  Solving for Ux, Initial residual = 0.367263572955, Final residual = 5.38776785756e-09, No Iterations 5
+DILUPBiCGStab:  Solving for Uy, Initial residual = 0.421051747556, Final residual = 3.89204567447e-09, No Iterations 5
+GAMG:  Solving for p, Initial residual = 0.30161120566, Final residual = 0.00218683698972, No Iterations 7
+time step continuity errors : sum local = 3.75066522464e-06, global = 3.98672265238e-07, cumulative = 2.96058439229e-07
+GAMG:  Solving for p, Initial residual = 0.626379910664, Final residual = 4.86603952161e-09, No Iterations 23
+time step continuity errors : sum local = 4.72107272342e-12, global = -4.13158461888e-13, cumulative = 2.96058026071e-07
+ExecutionTime = 1.025152 s  ClockTime = 2 s
+
+(0) 00:12:55 [impl::DataContext]:155 in mapData: [0mMapping "Force" for t=0.045 from "Fluid-Mesh" to "Structure-Mesh"
+(0) 00:12:55 [cplscheme::BaseCouplingScheme]:407 in secondExchange: [0mTime window completed
+(0) 00:12:55 [impl::DataContext]:155 in mapData: [0mMapping "Displacement" for t=0.045 from "Structure-Mesh" to "Fluid-Mesh"
+(0) 00:12:55 [impl::ParticipantImpl]:457 in advance: [0mtime-window 10, t 0.045 (max: 1), Dt 0.005, max-dt 0.005
+Courant Number mean: 0.258494024987 max: 2.90019817605
+Time = 0.05s
+
+DICPCG:  Solving for cellDisplacementx, Initial residual = 0.955052601124, Final residual = 8.99285954886e-09, No Iterations 311
+DICPCG:  Solving for cellDisplacementy, Initial residual = 0.646383136152, Final residual = 9.28079529228e-09, No Iterations 229
+GAMG:  Solving for pcorr, Initial residual = 1, Final residual = 0.00624839602692, No Iterations 10
+time step continuity errors : sum local = 2.18921991863e-06, global = 1.13872283222e-07, cumulative = 4.09930309293e-07
+DILUPBiCGStab:  Solving for Ux, Initial residual = 0.11704119337, Final residual = 6.57378916739e-09, No Iterations 9
+DILUPBiCGStab:  Solving for Uy, Initial residual = 0.114694257916, Final residual = 5.56805951346e-09, No Iterations 9
+GAMG:  Solving for p, Initial residual = 0.78483215333, Final residual = 0.00347341459087, No Iterations 9
+time step continuity errors : sum local = 2.30625602921e-06, global = 3.03065101937e-07, cumulative = 7.1299541123e-07
+GAMG:  Solving for p, Initial residual = 0.319245969936, Final residual = 5.65889050581e-09, No Iterations 23
+time step continuity errors : sum local = 2.81926845747e-11, global = -3.46712680178e-12, cumulative = 7.12991944103e-07
+ExecutionTime = 1.135292 s  ClockTime = 2 s
+
+(0) 00:12:55 [impl::DataContext]:155 in mapData: [0mMapping "Force" for t=0.05 from "Fluid-Mesh" to "Structure-Mesh"
+(0) 00:12:55 [cplscheme::BaseCouplingScheme]:407 in secondExchange: [0mTime window completed
+(0) 00:12:55 [impl::DataContext]:155 in mapData: [0mMapping "Displacement" for t=0.05 from "Structure-Mesh" to "Fluid-Mesh"
+(0) 00:12:55 [impl::ParticipantImpl]:457 in advance: [0mtime-window 11, t 0.05 (max: 1), Dt 0.005, max-dt 0.005
+Courant Number mean: 0.708210777593 max: 7.08143592587
+Time = 0.055s
+
+DICPCG:  Solving for cellDisplacementx, Initial residual = 0.891211256553, Final residual = 9.86771025667e-09, No Iterations 305
+DICPCG:  Solving for cellDisplacementy, Initial residual = 0.31110864184, Final residual = 9.65518065668e-09, No Iterations 215
+GAMG:  Solving for pcorr, Initial residual = 1, Final residual = 0.0059342246348, No Iterations 10
+time step continuity errors : sum local = 1.3563514386e-06, global = -6.60126360169e-08, cumulative = 6.46979308086e-07
+DILUPBiCGStab:  Solving for Ux, Initial residual = 0.3186871155, Final residual = 5.68035106773e-10, No Iterations 3
+DILUPBiCGStab:  Solving for Uy, Initial residual = 0.387682730933, Final residual = 4.51108331612e-10, No Iterations 3
+GAMG:  Solving for p, Initial residual = 0.447009484487, Final residual = 0.00354238213176, No Iterations 6
+time step continuity errors : sum local = 2.6721682084e-05, global = -2.16894615286e-06, cumulative = -1.52196684477e-06

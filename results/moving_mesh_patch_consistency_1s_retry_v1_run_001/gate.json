@@ -1,0 +1,14 @@
+{
+  "run_id": "moving_mesh_patch_consistency_1s_retry_v1_run_001",
+  "task": "MOVING_MESH_PATCH_CONSISTENCY_FIX_AND_1S_RETRY_V1",
+  "status": "FAIL",
+  "CORRECTED_COUPLED_1S_SMOKE": "FAIL",
+  "MESH_FIELD_PATCH_COMPATIBILITY": "PASS",
+  "OPENFOAM_CONSTRUCTION": "PASS",
+  "committed_coupled_windows": 9,
+  "expected_coupled_windows": 200,
+  "failure_time_s": 0.05,
+  "unique_minimal_blocker": "C++ generalized force differs from formal H^T mapping",
+  "fresh_corrected_20s": "NOT_AUTHORIZED",
+  "postprocessing_status": "NOT_EVALUABLE: run stopped before required 0.1 s mesh snapshot; no retry was performed"
+}
