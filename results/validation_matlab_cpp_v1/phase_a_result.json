@@ -1,0 +1,172 @@
+{
+  "schema_version": "baseline_credibility_closure_v1.phase_a.1",
+  "status": "pass",
+  "contract": {
+    "L_m": 50.0,
+    "D_m": 1.0,
+    "Di_m": 0.9,
+    "elements": 16,
+    "slices": 3,
+    "slice_positions_m": [
+      8.333333333333334,
+      25.0,
+      41.666666666666664
+    ],
+    "E_Pa": 3227125779.2218256,
+    "material_density_kgpm3": 26315.789473684214,
+    "fluid_density_kgpm3": 1000.0,
+    "gravity_mps2": 9.81,
+    "top_tension_N": 2179104.0029808935,
+    "dt_s": 0.005,
+    "duration_s": 50.0,
+    "beta": 0.25,
+    "gamma": 0.5,
+    "newton_tolerance": 1e-08,
+    "max_newton": 40,
+    "internal_gauss_order": 3,
+    "mass_gauss_order": 5,
+    "static_load_steps": 40,
+    "static_relaxation": 0.8,
+    "damping_alpha": 0.0,
+    "damping_beta": 0.0,
+    "perturbation_m": 0.0001,
+    "output_every_steps": 5
+  },
+  "thresholds": {
+    "static_normalized_l2_shape_error": 0.005,
+    "modal_relative_frequency_error": 0.005,
+    "modal_mac": 0.95,
+    "dynamic_relative_frequency_error": 0.005,
+    "dynamic_rms_relative_error": 0.02,
+    "dynamic_time_series_nrmse": 0.02
+  },
+  "sources": {
+    "matlab_script_sha256": "86fe99c7f565753cca1eac3926cc143a026a64cb7bf2f2852956866129ccfa76",
+    "cpp_kernel_sha256": "1a3fc668b1e2800c12eec6aa0494e040266cd5f116805d6166288947938f5f03",
+    "cpp_diagnostic_sha256": "efa1e2e1ad4fc6ab5977aab424df86865487d2f31f907880da80f1e536231a5f"
+  },
+  "matlab_execution": {
+    "status": "pass",
+    "executable": "D:\\Program Files\\MATLAB\\R2021b\\bin\\matlab.exe",
+    "stdout_path": "D:\\研二文件\\开题准备\\CFD_ANCF_VIV\\results\\validation_matlab_cpp_v1\\matlab_stdout.txt"
+  },
+  "comparison": {
+    "static": {
+      "max_absolute": 0.0,
+      "relative_l2": 0.0,
+      "normalized_l2_shape_error": 0.0,
+      "max_relative_to_length": 0.0
+    },
+    "modal": [
+      {
+        "mode": 1,
+        "matlab_hz": 0.19876102675389518,
+        "cpp_hz": 0.19876102675386906,
+        "relative_frequency_error": 1.3140401355767784e-13,
+        "MAC": 1.0000000000000002
+      },
+      {
+        "mode": 2,
+        "matlab_hz": 0.476181930710043,
+        "cpp_hz": 0.4761819307101451,
+        "relative_frequency_error": 2.143823621405845e-13,
+        "MAC": 1.0
+      },
+      {
+        "mode": 3,
+        "matlab_hz": 0.8702401692325742,
+        "cpp_hz": 0.870240169232566,
+        "relative_frequency_error": 9.44067014221048e-15,
+        "MAC": 1.0
+      },
+      {
+        "mode": 4,
+        "matlab_hz": 1.3985123281821055,
+        "cpp_hz": 1.3985123281819831,
+        "relative_frequency_error": 8.748337418857637e-14,
+        "MAC": 0.9999999999999999
+      },
+      {
+        "mode": 5,
+        "matlab_hz": 2.068594917195311,
+        "cpp_hz": 2.0685949171953086,
+        "relative_frequency_error": 1.0734078628893125e-15,
+        "MAC": 1.0000000000000002
+      },
+      {
+        "mode": 6,
+        "matlab_hz": 2.8842837351244612,
+        "cpp_hz": 2.8842837351245127,
+        "relative_frequency_error": 1.786036086369441e-14,
+        "MAC": 1.0
+      }
+    ],
+    "dynamic": {
+      "slices": {
+        "0": {
+          "frequency_matlab_hz": 0.19990004997498123,
+          "frequency_cpp_hz": 0.19990004997498123,
+          "relative_frequency_error": 0.0,
+          "y_rms_matlab_m": 4.179112660925028e-05,
+          "y_rms_cpp_m": 4.179112660928119e-05,
+          "rms_relative_error": 7.397100042799617e-13,
+          "y_time_series_nrmse": 2.9058798990221898e-12,
+          "vy_time_series_nrmse": 2.379124800089565e-11,
+          "phase_difference_early_rad": -4.1389114358025836e-13,
+          "phase_difference_late_rad": -1.7781331962396507e-12,
+          "phase_drift_rad": -1.3642420526593924e-12
+        },
+        "1": {
+          "frequency_matlab_hz": 0.19990004997498123,
+          "frequency_cpp_hz": 0.19990004997498123,
+          "relative_frequency_error": 0.0,
+          "y_rms_matlab_m": 6.945214381026281e-05,
+          "y_rms_cpp_m": 6.945214381029504e-05,
+          "rms_relative_error": 4.640304504519753e-13,
+          "y_time_series_nrmse": 1.7196564124052035e-12,
+          "vy_time_series_nrmse": 2.6283454001511268e-11,
+          "phase_difference_early_rad": -4.050093593832571e-13,
+          "phase_difference_late_rad": -1.765698698363849e-12,
+          "phase_drift_rad": -1.3606893389805919e-12
+        },
+        "2": {
+          "frequency_matlab_hz": 0.19990004997498123,
+          "frequency_cpp_hz": 0.19990004997498123,
+          "relative_frequency_error": 0.0,
+          "y_rms_matlab_m": 3.0015165260618043e-05,
+          "y_rms_cpp_m": 3.00151652606399e-05,
+          "rms_relative_error": 7.281931643943883e-13,
+          "y_time_series_nrmse": 3.4366046718521722e-12,
+          "vy_time_series_nrmse": 3.145680667233075e-11,
+          "phase_difference_early_rad": -4.227729277772596e-13,
+          "phase_difference_late_rad": -1.751931932858497e-12,
+          "phase_drift_rad": -1.3291590050812374e-12
+        }
+      },
+      "energy": {
+        "max_absolute": 0.0007977038621902466,
+        "relative_l2": 0.0007977044687248682
+      }
+    },
+    "core": {
+      "mass_matrix": {
+        "max_absolute": 9.094947017729282e-13,
+        "relative_l2": 5.4295301308103474e-17
+      },
+      "internal_force": {
+        "max_absolute": 0.0,
+        "relative_l2": 0.0
+      },
+      "tangent_matrix": {
+        "max_absolute": 0.0,
+        "relative_l2": 0.0
+      }
+    },
+    "status": "pass",
+    "failures": []
+  },
+  "artifacts": {
+    "matlab": "D:\\研二文件\\开题准备\\CFD_ANCF_VIV\\results\\validation_matlab_cpp_v1\\matlab_reference.json",
+    "cpp_raw": "D:\\研二文件\\开题准备\\CFD_ANCF_VIV\\results\\validation_matlab_cpp_v1\\cpp_reference.stdout.txt"
+  }
+}

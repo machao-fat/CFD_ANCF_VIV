@@ -21,6 +21,7 @@ add_executable(cfd_ancf_ancf_kernel_diagnostic ancf_kernel.cpp ancf_kernel_diagn
 add_executable(cfd_ancf_ancf_forensic_diagnostic ancf_kernel.cpp ancf_forensic_diagnostic.cpp)
 add_executable(cfd_ancf_ancf_newton_trace_diagnostic ancf_kernel.cpp ancf_newton_trace_diagnostic.cpp)
 add_executable(cfd_ancf_ancf_modal_free_diagnostic ancf_kernel.cpp ancf_modal_free_diagnostic.cpp)
+add_executable(cfd_ancf_baseline_cross_diagnostic ancf_kernel.cpp ancf_baseline_cross_diagnostic.cpp)
 add_executable(cfd_ancf_ancf_kernel_worker_double_solve ancf_kernel.cpp ancf_worker_main.cpp)
 add_executable(cfd_ancf_physics_ownership_selftest
   ancf_kernel.cpp
@@ -53,6 +54,7 @@ if (MSVC)
   target_compile_options(cfd_ancf_ancf_forensic_diagnostic PRIVATE /W4 /permissive-)
   target_compile_options(cfd_ancf_ancf_newton_trace_diagnostic PRIVATE /W4 /permissive-)
   target_compile_options(cfd_ancf_ancf_modal_free_diagnostic PRIVATE /W4 /permissive-)
+  target_compile_options(cfd_ancf_baseline_cross_diagnostic PRIVATE /W4 /permissive-)
   target_compile_options(cfd_ancf_ancf_kernel_worker_double_solve PRIVATE /W4 /permissive-)
   target_compile_options(cfd_ancf_physics_ownership_selftest PRIVATE /W4 /permissive-)
   target_compile_options(cfd_ancf_physics_ownership_worker PRIVATE /W4 /permissive-)
@@ -70,6 +72,7 @@ else()
       cfd_ancf_ancf_forensic_diagnostic
       cfd_ancf_ancf_newton_trace_diagnostic
       cfd_ancf_ancf_modal_free_diagnostic
+      cfd_ancf_baseline_cross_diagnostic
       cfd_ancf_physics_ownership_selftest
       cfd_ancf_physics_ownership_worker
       cfd_ancf_physics_ownership_worker_double_solve)
