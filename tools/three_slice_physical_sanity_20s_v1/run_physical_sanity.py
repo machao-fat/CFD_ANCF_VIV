@@ -47,10 +47,14 @@ def force_reconciliation(rows: list[dict[str, object]], sid: int) -> float:
         if not line or line.startswith("#"): continue
         values = [float(v) for v in re.findall(r"[-+]?(?:\d+\.\d*|\d*\.\d+|\d+)(?:[eE][-+]?\d+)?", line)]
         if len(values) < 7: return math.inf
-        actual[round(values[0], 12)] = (values[1] + values[4], values[2] + values[5], values[3] + values[6])
+        # OpenFOAM emits long accumulated decimal timestamps after 15 s
+        # (for example 15.350000000001).  The coupled contract tick is exact
+        # at 5 ms, so reconcile at a 1 ns display tolerance rather than make
+        # an exact 12-decimal text-key assertion.
+        actual[round(values[0], 9)] = (values[1] + values[4], values[2] + values[5], values[3] + values[6])
     maximum = 0.0
     for row in rows:
-        value = actual.get(round(float(row["time_s"]), 12))
+        value = actual.get(round(float(row["time_s"]), 9))
         load = row["loads"][sid]
         if value is None: return math.inf
         maximum = max(maximum, *(abs(value[i] - float(load[key])) for i, key in enumerate(("openfoam_force_x_N", "openfoam_force_y_N", "openfoam_force_z_N"))))

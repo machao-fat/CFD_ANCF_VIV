@@ -53,12 +53,14 @@ def main() -> int:
     windows = contract["physical_sanity_contract"]["windows_s"]
     result: dict[str, object] = {"schema_version": "three-slice-physical-sanity-analysis-v1", "run_id": contract["run_id"], "window_definition_s": windows, "fft_resolution_Hz": 1.0 / float(contract["duration_s"]), "MODAL_PROJECTION": "not_available", "structural_energy": "not_available_from_current_C++_wire", "slices": {}, "total": {}}
     total_power = [0.0] * len(rows)
+    series: dict[int, tuple[list[float], list[float]]] = {}
     for sid in range(3):
         fy = [float(row["loads"][sid]["force_y_N"]) for row in rows]
         y = [float(row["motion"][sid]["uy_m"]) for row in rows]
         vy = [float(row["motion"][sid]["vy_mps"]) for row in rows]
         ay = [float(row["motion"][sid]["ay_mps2"]) for row in rows]
         power = [force * velocity for force, velocity in zip(fy, vy)]
+        series[sid] = (fy, y)
         total_power = [old + value for old, value in zip(total_power, power)]
         cumulative = []; current = 0.0
         for value in power: current += value * dt; cumulative.append(current)
@@ -71,9 +73,16 @@ def main() -> int:
         y_at_mode = projection_amplitude(y, dt, .198761)
         scan = {f: projection_amplitude(y, dt, f) for f in [0.05 * index for index in range(1, 21)]}
         strongest = max(scan, key=scan.get)
-        result["slices"][str(sid)] = {"full": {"Fy_N": stats(fy), "y_m": stats(y), "y_over_D": stats(y), "vy_mps": stats(vy), "ay_mps2": stats(ay)}, "windows": by_window, "power": {"mean_crossflow_W": mean(power), "positive_fraction": sum(value > 0 for value in power) / len(power), "negative_fraction": sum(value < 0 for value in power) / len(power), "cumulative_crossflow_work_J": cumulative[-1]}, "growth_classification": classification, "force_y_crossflow_y": cross_correlation(fy, y, dt), "force_y_crossflow_velocity": cross_correlation(fy, vy, dt), "frequency_exploratory": {"y_zero_crossing": crossing_frequency(y, dt), "Fy_zero_crossing": crossing_frequency(fy, dt), "mode_0p198761_projection_amplitude_m": y_at_mode, "strongest_0p05Hz_grid_Hz": strongest, "grid_peak_amplitude_m": scan[strongest], "status": "exploratory_short_window"}}
+        force_scan = {f: projection_amplitude(fy, dt, f) for f in [0.05 * index for index in range(1, 41)]}
+        force_strongest = max(force_scan, key=force_scan.get)
+        result["slices"][str(sid)] = {"full": {"Fy_N": stats(fy), "y_m": stats(y), "y_over_D": stats(y), "vy_mps": stats(vy), "ay_mps2": stats(ay)}, "windows": by_window, "power": {"mean_crossflow_W": mean(power), "positive_fraction": sum(value > 0 for value in power) / len(power), "negative_fraction": sum(value < 0 for value in power) / len(power), "cumulative_crossflow_work_J": cumulative[-1]}, "growth_classification": classification, "force_y_crossflow_y": cross_correlation(fy, y, dt), "force_y_crossflow_velocity": cross_correlation(fy, vy, dt), "frequency_exploratory": {"y_zero_crossing": crossing_frequency(y, dt), "Fy_zero_crossing": crossing_frequency(fy, dt), "mode_0p198761_projection_amplitude_m": y_at_mode, "strongest_0p05Hz_grid_Hz": strongest, "grid_peak_amplitude_m": scan[strongest], "Fy_strongest_0p05Hz_grid_Hz": force_strongest, "Fy_grid_peak_amplitude_N": force_scan[force_strongest], "status": "exploratory_short_window"}}
     total_work = sum(total_power) * dt
     result["total"] = {"mean_crossflow_power_W": mean(total_power), "cumulative_crossflow_work_J": total_work, "sign": "positive" if total_work > 0 else "negative" if total_work < 0 else "zero"}
+    pairwise = {}
+    for left, right in ((0, 1), (0, 2), (1, 2)):
+        fy_left, y_left = series[left]; fy_right, y_right = series[right]
+        pairwise[f"{left}-{right}"] = {"max_abs_Fy_difference_N": max(abs(a - b) for a, b in zip(fy_left, fy_right)), "max_abs_y_difference_m": max(abs(a - b) for a, b in zip(y_left, y_right))}
+    result["slice_comparison"] = {"pairwise": pairwise, "finding": "local_structural_displacements_differ_but_Fy_is_numerically_identical; requires moving-mesh/load-sensitivity investigation before a longer physical run"}
     RESULTS.mkdir(parents=True, exist_ok=True)
     (RESULTS / "physical_sanity_analysis.json").write_text(json.dumps(result, ensure_ascii=False, indent=2, allow_nan=False) + "\n", encoding="utf-8")
     print(RESULTS / "physical_sanity_analysis.json")
