@@ -74,8 +74,14 @@ def main() -> int:
     args = parser.parse_args()
     contract = json.loads(Path(args.contract).read_text(encoding="utf-8"))
     state = json.loads(Path(args.state).read_text(encoding="utf-8"))
-    if contract.get("number_of_steps") != 200 or contract.get("dt_s") != 0.005 or state.get("equilibrated") is not True:
-        raise RuntimeError("frozen smoke contract or fresh static state is invalid")
+    steps = contract.get("number_of_steps")
+    dt_s = contract.get("dt_s")
+    duration_s = contract.get("duration_s")
+    if (isinstance(steps, bool) or not isinstance(steps, int) or steps <= 0 or
+            isinstance(dt_s, bool) or not isinstance(dt_s, (int, float)) or float(dt_s) <= 0.0 or
+            isinstance(duration_s, bool) or not isinstance(duration_s, (int, float)) or
+            abs(float(duration_s) - int(steps) * float(dt_s)) > 1e-12 or state.get("equilibrated") is not True):
+        raise RuntimeError("frozen run contract or fresh static state is invalid")
     if hashlib.sha256(Path(args.state).read_bytes()).hexdigest() != contract["ANCF"]["initial_state"]["sha256"]:
         raise RuntimeError("initial static state hash differs from frozen contract")
     items = contract["slices"]["items"]
@@ -108,21 +114,21 @@ def main() -> int:
             participant = precice.Participant(f"Structure_{sid:04d}", config, 0, 1)
             participants.append(participant); mesh_ids.append(participant.set_mesh_vertices("Structure-Mesh", vertices))
         for participant in participants: participant.initialize()
-        for step in range(1, 201):
-            time_s = step * 0.005; before = adapter.state_view()
+        for step in range(1, int(steps) + 1):
+            time_s = step * float(dt_s); before = adapter.state_view()
             prediction, _ = adapter.predict(step, time_s, prior)
             predicted_q = tuple(prediction["predictor"]); predicted_qdot = tuple(prediction["predictor_qdot"]); predicted_qddot = tuple(prediction["predictor_qddot"])
             motion = [motion_from_ancf_state(manifest, sid, H[sid], predicted_q, predicted_qdot, predicted_qddot,
                       step=step, time_s=time_s, reference_position_m=(0.0, 0.0, definitions[sid].s_ref_m)) for sid in range(3)]
             for sid, participant in enumerate(participants):
                 participant.write_data("Structure-Mesh", "Displacement", mesh_ids[sid], [[motion[sid].ux_m, motion[sid].uy_m] for _ in vertices])
-            for participant in participants: participant.advance(0.005)
+            for participant in participants: participant.advance(float(dt_s))
             loads = []
             for sid, participant in enumerate(participants):
                 raw = force_sum(participant.read_data("Structure-Mesh", "Force", mesh_ids[sid], 0.0), args.vertex_count)
                 loads.append(LoadRecord.from_conversion(case_id=manifest.case_id, step=step, time_s=time_s,
                     slice_definition=definitions[sid], unit_span_m=definitions[sid].unit_span_m,
-                    openfoam_force_N=raw, cfd_time_step_s=0.005, R_GL=manifest.R_GL))
+                    openfoam_force_N=raw, cfd_time_step_s=float(dt_s), R_GL=manifest.R_GL))
             mapping = map_integrated_slice_forces(manifest, H, {item.slice_id: item for item in loads},
                 delta_q=tuple(predicted_q[i] - before["q"][i] for i in range(len(predicted_q))))
             audit = moment_audit(predicted_q, [item.force_N for item in loads], positions_m=[item.s_ref_m for item in definitions],
@@ -165,19 +171,19 @@ def main() -> int:
             except Exception as exc: error = error or f"preCICE finalize: {exc}"
         adapter.shutdown()
     try:
-        newton_validation = validate_newton_records(newton_records, expected_steps=200)
+        newton_validation = validate_newton_records(newton_records, expected_steps=int(steps))
     except Exception as exc:
         newton_validation = {"status": "fail", "error": f"{type(exc).__name__}: {exc}"}
         error = error or f"Newton evidence validation: {newton_validation['error']}"
     atomic_json(runtime / "structure_summary.json", {"run_id": contract["run_id"], "case_id": contract["case_id"],
-        "status": "completed" if error is None and len(records) == 200 else "failed", "error": error,
+        "status": "completed" if error is None and len(records) == int(steps) else "failed", "error": error,
         "committed_steps": len(records), "slice_record_counts": {
             str(sid): sum(1 for row in records if any(int(load["slice_id"]) == sid for load in row["loads"]))
             for sid in range(3)
         },
         "cpp_worker": worker.audit, "adapter_responses": adapter.responses, "newton_evidence": newton_validation, "owned_residual": adapter.owned_residual,
         "tributary_partition_m": [{"slice_id": sid, "left": left, "right": right, "length": right-left} for sid,(left,_,right) in enumerate(partition)]})
-    return 0 if error is None and len(records) == 200 else 1
+    return 0 if error is None and len(records) == int(steps) else 1
 
 
 if __name__ == "__main__":
