@@ -1,0 +1,26 @@
+{
+  "gate_id": "THREE_SLICE_STATISTICAL_CONTRACT_V3_GATE",
+  "scope": "read-only historical 220--370 s local three-slice diagnostic",
+  "DATA_INTEGRITY": "pass",
+  "MAPPING_INTEGRITY": "fail",
+  "LOCAL_STATISTICAL_STABILITY": "pass",
+  "LOCAL_FLUID_STRUCTURE_SYNCHRONIZATION": "not_completed",
+  "LOCAL_FLUID_STRUCTURE_SYNCHRONIZATION_REASON": "Coherence, frequency ratios and raw-scale power are reported, but no historical force-scale contract or predeclared lock-in acceptance criterion exists.",
+  "SLICE_PHASE_COHERENCE": "diagnostic",
+  "PHYSICAL_FORCE_SCALING": "not_evaluable",
+  "FORMAL_LOCK_IN": "not_completed",
+  "FORMAL_VIV_VALIDATION": "not_completed",
+  "formal_status": {
+    "FORMAL_STROUHAL_STATUS": "not_completed",
+    "STABLE_VIV_RESPONSE_CLAIM": "not_completed",
+    "LOCK_IN_CLAIM": "not_completed"
+  },
+  "conclusion": "V3 separates complete retained data and H/H^T mapping conservation from physically scaled force validation and from local fluid-structure synchronization. Slice-slice phase remains a diagnostic, not a primary stability veto.",
+  "old_runtime_modified": false,
+  "real_process_starts": {
+    "CFD": 0,
+    "MATLAB": 0,
+    "OpenFOAM": 0,
+    "WSL": 0
+  }
+}

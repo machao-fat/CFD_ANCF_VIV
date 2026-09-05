@@ -1,0 +1,1145 @@
+{
+  "contract": {
+    "schema_version": 3,
+    "scope": "read-only historical 220--370 s local three-slice diagnostic",
+    "sample_dt_s": 0.05,
+    "windows_s": [
+      [
+        220.0,
+        270.0
+      ],
+      [
+        270.0,
+        320.0
+      ],
+      [
+        320.0,
+        370.0
+      ],
+      [
+        270.0,
+        370.0
+      ],
+      [
+        220.0,
+        370.0
+      ]
+    ],
+    "local_stationarity_thresholds": {
+      "rms_drift_fraction_max": 0.05,
+      "frequency_drift_fraction_max": 0.05
+    },
+    "slice_phase_policy": "diagnostic_only; no assumption that independent 2D slices must remain phase locked",
+    "no_interpolation": true
+  },
+  "metadata": {
+    "interface_coordinate_semantics": {
+      "status": "established_by_source_inspection",
+      "value": "absolute_ANCF_projected_position",
+      "evidence": "project_interface() returns positions as its first value; the Stage305 writer aliases that result as displacement_xy before writing preCICE Displacement.",
+      "analysis_policy": "V3 reports the retained y coordinate as local_y_coordinate_m. It does not relabel it as displacement relative to an independently retained static equilibrium.",
+      "projection_source_sha256": "37fa896f8be089db923762a97d1952b8a215a8ea872a13718c92cdb108ac7371",
+      "writer_source_sha256": "eef0e933257a58b50cd56a4498f6217e1e127f93333a43d61dcc7e5e48089808"
+    },
+    "force_semantics": {
+      "Fy_source": "OpenFOAM forces.dat: pressure_y + viscous_y per slice",
+      "physical_force_scaling": "not_evaluable",
+      "reason": "Stage381/382 diagnostics do not declare unit_span_m or tributary/slice length; mapping conservation cannot supply missing physical scale."
+    }
+  },
+  "source_integrity": {
+    "checks": {
+      "records_present": true,
+      "time_tick_identity": true,
+      "global_step_continuity": true,
+      "uniform_sample_dt_0p05_s": true,
+      "finite_local_observables": true,
+      "no_interpolation": true
+    },
+    "status": "pass"
+  },
+  "source_segments": [
+    {
+      "name": "stage381_cpp_worker_precice_three_slice_continue220_to270_v1",
+      "runtime": "D:\\研二文件\\开题准备\\CFD_ANCF_VIV\\runtime\\stage381_cpp_worker_precice_three_slice_continue220_to270_v1",
+      "mapping_path": "D:\\研二文件\\开题准备\\CFD_ANCF_VIV\\runtime\\stage381_cpp_worker_precice_three_slice_continue220_to270_v1\\logs\\mapping_diagnostics.jsonl",
+      "mapping_sha256": "131c792b69f46956973c40eca3c0c11972623d2cca4bde0d4bb7d169f57775af",
+      "mapping_record_count": 10000,
+      "scalar_record_count": 1000,
+      "force_files": {
+        "slice_0000": {
+          "path": "D:\\研二文件\\开题准备\\CFD_ANCF_VIV\\runtime\\stage381_cpp_worker_precice_three_slice_continue220_to270_v1\\slice_0000\\postProcessing\\forces1\\220\\forces.dat",
+          "sha256": "8da8e0c87679ae9b786d65ca496d8ca1b017079998bd4e720983d1502645336c"
+        },
+        "slice_0001": {
+          "path": "D:\\研二文件\\开题准备\\CFD_ANCF_VIV\\runtime\\stage381_cpp_worker_precice_three_slice_continue220_to270_v1\\slice_0001\\postProcessing\\forces1\\220\\forces.dat",
+          "sha256": "a2670efe79345d224b59f25fe08424459e1680a4c516e53266128209321b7b35"
+        },
+        "slice_0002": {
+          "path": "D:\\研二文件\\开题准备\\CFD_ANCF_VIV\\runtime\\stage381_cpp_worker_precice_three_slice_continue220_to270_v1\\slice_0002\\postProcessing\\forces1\\220\\forces.dat",
+          "sha256": "a590368604210d5f9502178f8905405d591ea00665cdd27ea67dc1bb3f9fca43"
+        }
+      },
+      "max_mapping_errors": {
+        "virtual_work_error": 3.766349848155852e-13,
+        "force_balance_error": 7.579999396588728e-15,
+        "moment_balance_error": 2.902658559413817e-12
+      }
+    },
+    {
+      "name": "stage382_cpp_worker_precice_three_slice_continue270_to370_v1",
+      "runtime": "D:\\研二文件\\开题准备\\CFD_ANCF_VIV\\runtime\\stage382_cpp_worker_precice_three_slice_continue270_to370_v1",
+      "mapping_path": "D:\\研二文件\\开题准备\\CFD_ANCF_VIV\\runtime\\stage382_cpp_worker_precice_three_slice_continue270_to370_v1\\logs\\mapping_diagnostics.jsonl",
+      "mapping_sha256": "5cdb79e172d76a7acfaa36bd0ae04d9471fd8baae060a27edc4583ad9d45fa7a",
+      "mapping_record_count": 20000,
+      "scalar_record_count": 2000,
+      "force_files": {
+        "slice_0000": {
+          "path": "D:\\研二文件\\开题准备\\CFD_ANCF_VIV\\runtime\\stage382_cpp_worker_precice_three_slice_continue270_to370_v1\\slice_0000\\postProcessing\\forces1\\270\\forces.dat",
+          "sha256": "8fc216294c7d06b388fefe4c2937840dc8a626c8bd77634fcc7c82cd69d6ebb7"
+        },
+        "slice_0001": {
+          "path": "D:\\研二文件\\开题准备\\CFD_ANCF_VIV\\runtime\\stage382_cpp_worker_precice_three_slice_continue270_to370_v1\\slice_0001\\postProcessing\\forces1\\270\\forces.dat",
+          "sha256": "a1bcf0f32df5e27d16e72da74ec948fc5ead3131eac9a81e5a399035388d2887"
+        },
+        "slice_0002": {
+          "path": "D:\\研二文件\\开题准备\\CFD_ANCF_VIV\\runtime\\stage382_cpp_worker_precice_three_slice_continue270_to370_v1\\slice_0002\\postProcessing\\forces1\\270\\forces.dat",
+          "sha256": "ec740bc47dd859cb84a04cc2be4897862aa01226139b521ad03f190cf15739d2"
+        }
+      },
+      "max_mapping_errors": {
+        "virtual_work_error": 1.9179306486779396e-13,
+        "force_balance_error": 1.8709106966080555e-14,
+        "moment_balance_error": 4.4424272515886743e-10
+      }
+    }
+  ],
+  "mapping_integrity": {
+    "threshold_relative": 1e-10,
+    "max_errors": {
+      "virtual_work_error": 3.766349848155852e-13,
+      "force_balance_error": 1.8709106966080555e-14,
+      "moment_balance_error": 4.4424272515886743e-10
+    },
+    "status": "fail",
+    "scope": "mathematical H/H^T conservation only; this does not validate the physical force unit scale"
+  },
+  "windows": [
+    {
+      "start_time_s": 220.0,
+      "end_time_s": 269.95,
+      "sample_count": 999,
+      "slices": {
+        "slice_0000": {
+          "Fy": {
+            "mean": 8.157321501501413e-05,
+            "demeaned_rms": 0.11282765464947413,
+            "peak_to_peak": 0.36927257,
+            "fft_dominant_frequency_hz": 0.16016016016012374,
+            "peak_detection_frequency_hz": 0.16110471806674342
+          },
+          "y": {
+            "mean": 0.00036320745863761405,
+            "demeaned_rms": 0.0002079791064135863,
+            "peak_to_peak": 0.0007203937723971553,
+            "fft_dominant_frequency_hz": 0.20020020020015467,
+            "peak_detection_frequency_hz": 0.1960784313725491
+          },
+          "vy_rms": 0.0003621390087938931,
+          "Fy_y_cross_spectrum": {
+            "method": "Welch Hann, 512 samples max, 50% overlap; Pxy=conj(left)*right",
+            "segment_count": 2,
+            "targets": {
+              "0.16_Hz": {
+                "requested_frequency_hz": 0.16,
+                "actual_frequency_hz": 0.15624999999996447,
+                "coherence": 0.0030210421539139114,
+                "phase_deg_y_relative_to_left": -61.520616662035096
+              },
+              "0.20_Hz": {
+                "requested_frequency_hz": 0.2,
+                "actual_frequency_hz": 0.1953124999999556,
+                "coherence": 0.0028859097833296246,
+                "phase_deg_y_relative_to_left": -55.35743594831573
+              }
+            }
+          },
+          "fluid_to_structure_power": {
+            "raw_unit": "legacy_force_scale_times_m_per_s; physical_W_not_evaluable",
+            "mean_raw": -2.7724152518504476e-07,
+            "rms_raw": 4.1110461904190736e-05,
+            "positive_fraction": 0.4844844844844845,
+            "negative_fraction": 0.5155155155155156,
+            "cumulative_raw_work": -1.383290183090181e-05
+          }
+        },
+        "slice_0001": {
+          "Fy": {
+            "mean": -0.0014210471687287304,
+            "demeaned_rms": 0.12254601930873367,
+            "peak_to_peak": 0.40561877999999996,
+            "fft_dominant_frequency_hz": 0.16016016016012374,
+            "peak_detection_frequency_hz": 0.16129032258064518
+          },
+          "y": {
+            "mean": 0.0005638165044441072,
+            "demeaned_rms": 0.00034257745991512784,
+            "peak_to_peak": 0.0011123266842957432,
+            "fft_dominant_frequency_hz": 0.20020020020015467,
+            "peak_detection_frequency_hz": 0.2
+          },
+          "vy_rms": 0.0005067997388881559,
+          "Fy_y_cross_spectrum": {
+            "method": "Welch Hann, 512 samples max, 50% overlap; Pxy=conj(left)*right",
+            "segment_count": 2,
+            "targets": {
+              "0.16_Hz": {
+                "requested_frequency_hz": 0.16,
+                "actual_frequency_hz": 0.15624999999996447,
+                "coherence": 0.0013710701564642396,
+                "phase_deg_y_relative_to_left": -89.8157976248316
+              },
+              "0.20_Hz": {
+                "requested_frequency_hz": 0.2,
+                "actual_frequency_hz": 0.1953124999999556,
+                "coherence": 0.0016868546385779349,
+                "phase_deg_y_relative_to_left": -81.89608522539545
+              }
+            }
+          },
+          "fluid_to_structure_power": {
+            "raw_unit": "legacy_force_scale_times_m_per_s; physical_W_not_evaluable",
+            "mean_raw": -7.916390554333264e-07,
+            "rms_raw": 6.241272994967823e-05,
+            "positive_fraction": 0.5085085085085085,
+            "negative_fraction": 0.4914914914914915,
+            "cumulative_raw_work": -3.9696787365058265e-05
+          }
+        },
+        "slice_0002": {
+          "Fy": {
+            "mean": -0.0006949571153153166,
+            "demeaned_rms": 0.1094982139748298,
+            "peak_to_peak": 0.36181644999999996,
+            "fft_dominant_frequency_hz": 0.16016016016012374,
+            "peak_detection_frequency_hz": 0.16222479721900357
+          },
+          "y": {
+            "mean": 0.0002841974488978118,
+            "demeaned_rms": 0.0001525422405746915,
+            "peak_to_peak": 0.0005119209582318183,
+            "fft_dominant_frequency_hz": 0.20020020020015467,
+            "peak_detection_frequency_hz": 0.1960784313725491
+          },
+          "vy_rms": 0.0003229887147801805,
+          "Fy_y_cross_spectrum": {
+            "method": "Welch Hann, 512 samples max, 50% overlap; Pxy=conj(left)*right",
+            "segment_count": 2,
+            "targets": {
+              "0.16_Hz": {
+                "requested_frequency_hz": 0.16,
+                "actual_frequency_hz": 0.15624999999996447,
+                "coherence": 0.0055952257849282904,
+                "phase_deg_y_relative_to_left": -106.00033936050288
+              },
+              "0.20_Hz": {
+                "requested_frequency_hz": 0.2,
+                "actual_frequency_hz": 0.1953124999999556,
+                "coherence": 0.00485451485629081,
+                "phase_deg_y_relative_to_left": -101.11441246166821
+              }
+            }
+          },
+          "fluid_to_structure_power": {
+            "raw_unit": "legacy_force_scale_times_m_per_s; physical_W_not_evaluable",
+            "mean_raw": -1.3822882672386286e-06,
+            "rms_raw": 3.5697090018295614e-05,
+            "positive_fraction": 0.4994994994994995,
+            "negative_fraction": 0.5005005005005005,
+            "cumulative_raw_work": -6.916057986689146e-05
+          }
+        }
+      },
+      "slice_slice_cross_spectrum": {
+        "slice_0000__slice_0001": {
+          "method": "Welch Hann, 512 samples max, 50% overlap; Pxy=conj(left)*right",
+          "segment_count": 2,
+          "targets": {
+            "0.16_Hz": {
+              "requested_frequency_hz": 0.16,
+              "actual_frequency_hz": 0.15624999999996447,
+              "coherence": 0.9918079828128397,
+              "phase_deg_y_relative_to_left": -144.25833492297934
+            },
+            "0.20_Hz": {
+              "requested_frequency_hz": 0.2,
+              "actual_frequency_hz": 0.1953124999999556,
+              "coherence": 0.9911832016156071,
+              "phase_deg_y_relative_to_left": -143.20963339731003
+            }
+          }
+        },
+        "slice_0000__slice_0002": {
+          "method": "Welch Hann, 512 samples max, 50% overlap; Pxy=conj(left)*right",
+          "segment_count": 2,
+          "targets": {
+            "0.16_Hz": {
+              "requested_frequency_hz": 0.16,
+              "actual_frequency_hz": 0.15624999999996447,
+              "coherence": 0.9995055883437242,
+              "phase_deg_y_relative_to_left": 42.67564794956595
+            },
+            "0.20_Hz": {
+              "requested_frequency_hz": 0.2,
+              "actual_frequency_hz": 0.1953124999999556,
+              "coherence": 0.9997144968966394,
+              "phase_deg_y_relative_to_left": 42.70896625448215
+            }
+          }
+        },
+        "slice_0001__slice_0002": {
+          "method": "Welch Hann, 512 samples max, 50% overlap; Pxy=conj(left)*right",
+          "segment_count": 2,
+          "targets": {
+            "0.16_Hz": {
+              "requested_frequency_hz": 0.16,
+              "actual_frequency_hz": 0.15624999999996447,
+              "coherence": 0.9873502126019574,
+              "phase_deg_y_relative_to_left": -173.08155066390037
+            },
+            "0.20_Hz": {
+              "requested_frequency_hz": 0.2,
+              "actual_frequency_hz": 0.1953124999999556,
+              "coherence": 0.9878832909277896,
+              "phase_deg_y_relative_to_left": -174.10825591051687
+            }
+          }
+        }
+      }
+    },
+    {
+      "start_time_s": 270.0,
+      "end_time_s": 319.95,
+      "sample_count": 1000,
+      "slices": {
+        "slice_0000": {
+          "Fy": {
+            "mean": -0.0004134046123400015,
+            "demeaned_rms": 0.11277310483037949,
+            "peak_to_peak": 0.38604991,
+            "fft_dominant_frequency_hz": 0.15999999999996362,
+            "peak_detection_frequency_hz": 0.16222479721900357
+          },
+          "y": {
+            "mean": 0.00036369397593724606,
+            "demeaned_rms": 0.00020720110827176307,
+            "peak_to_peak": 0.0007232623853997762,
+            "fft_dominant_frequency_hz": 0.19999999999995452,
+            "peak_detection_frequency_hz": 0.19629225736095957
+          },
+          "vy_rms": 0.0003642913213476479,
+          "Fy_y_cross_spectrum": {
+            "method": "Welch Hann, 512 samples max, 50% overlap; Pxy=conj(left)*right",
+            "segment_count": 2,
+            "targets": {
+              "0.16_Hz": {
+                "requested_frequency_hz": 0.16,
+                "actual_frequency_hz": 0.15624999999996447,
+                "coherence": 0.001829596838061703,
+                "phase_deg_y_relative_to_left": -103.22748113744329
+              },
+              "0.20_Hz": {
+                "requested_frequency_hz": 0.2,
+                "actual_frequency_hz": 0.1953124999999556,
+                "coherence": 0.0019146476251827977,
+                "phase_deg_y_relative_to_left": -93.73148284581734
+              }
+            }
+          },
+          "fluid_to_structure_power": {
+            "raw_unit": "legacy_force_scale_times_m_per_s; physical_W_not_evaluable",
+            "mean_raw": -1.1366610750674624e-06,
+            "rms_raw": 4.119965725778111e-05,
+            "positive_fraction": 0.51,
+            "negative_fraction": 0.49,
+            "cumulative_raw_work": -5.8230529930905645e-05
+          }
+        },
+        "slice_0001": {
+          "Fy": {
+            "mean": -0.0014789867968599993,
+            "demeaned_rms": 0.1222424606436571,
+            "peak_to_peak": 0.39730715,
+            "fft_dominant_frequency_hz": 0.15999999999996362,
+            "peak_detection_frequency_hz": 0.16129032258064507
+          },
+          "y": {
+            "mean": 0.0005621822398036449,
+            "demeaned_rms": 0.00034449988320461145,
+            "peak_to_peak": 0.0011156870578143481,
+            "fft_dominant_frequency_hz": 0.19999999999995452,
+            "peak_detection_frequency_hz": 0.2
+          },
+          "vy_rms": 0.0005090496858924488,
+          "Fy_y_cross_spectrum": {
+            "method": "Welch Hann, 512 samples max, 50% overlap; Pxy=conj(left)*right",
+            "segment_count": 2,
+            "targets": {
+              "0.16_Hz": {
+                "requested_frequency_hz": 0.16,
+                "actual_frequency_hz": 0.15624999999996447,
+                "coherence": 0.0022171669646870893,
+                "phase_deg_y_relative_to_left": -88.84003560494415
+              },
+              "0.20_Hz": {
+                "requested_frequency_hz": 0.2,
+                "actual_frequency_hz": 0.1953124999999556,
+                "coherence": 0.0020344452087987684,
+                "phase_deg_y_relative_to_left": -83.25681377482606
+              }
+            }
+          },
+          "fluid_to_structure_power": {
+            "raw_unit": "legacy_force_scale_times_m_per_s; physical_W_not_evaluable",
+            "mean_raw": -1.0655381785781327e-07,
+            "rms_raw": 6.296207290632393e-05,
+            "positive_fraction": 0.523,
+            "negative_fraction": 0.477,
+            "cumulative_raw_work": -2.8989040024864538e-06
+          }
+        },
+        "slice_0002": {
+          "Fy": {
+            "mean": -0.0009921512312000018,
+            "demeaned_rms": 0.10885222224170148,
+            "peak_to_peak": 0.35146284,
+            "fft_dominant_frequency_hz": 0.15999999999996362,
+            "peak_detection_frequency_hz": 0.16355140186915906
+          },
+          "y": {
+            "mean": 0.00028470040238240694,
+            "demeaned_rms": 0.00015178698052704042,
+            "peak_to_peak": 0.0005400010827554359,
+            "fft_dominant_frequency_hz": 0.19999999999995452,
+            "peak_detection_frequency_hz": 0.20044543429844108
+          },
+          "vy_rms": 0.0003211931137108571,
+          "Fy_y_cross_spectrum": {
+            "method": "Welch Hann, 512 samples max, 50% overlap; Pxy=conj(left)*right",
+            "segment_count": 2,
+            "targets": {
+              "0.16_Hz": {
+                "requested_frequency_hz": 0.16,
+                "actual_frequency_hz": 0.15624999999996447,
+                "coherence": 0.004193300281514327,
+                "phase_deg_y_relative_to_left": -159.5136168333159
+              },
+              "0.20_Hz": {
+                "requested_frequency_hz": 0.2,
+                "actual_frequency_hz": 0.1953124999999556,
+                "coherence": 0.004268196621484247,
+                "phase_deg_y_relative_to_left": -156.49847242470526
+              }
+            }
+          },
+          "fluid_to_structure_power": {
+            "raw_unit": "legacy_force_scale_times_m_per_s; physical_W_not_evaluable",
+            "mean_raw": -1.914495791481047e-06,
+            "rms_raw": 3.4573584553725475e-05,
+            "positive_fraction": 0.478,
+            "negative_fraction": 0.522,
+            "cumulative_raw_work": -9.592191466788155e-05
+          }
+        }
+      },
+      "slice_slice_cross_spectrum": {
+        "slice_0000__slice_0001": {
+          "method": "Welch Hann, 512 samples max, 50% overlap; Pxy=conj(left)*right",
+          "segment_count": 2,
+          "targets": {
+            "0.16_Hz": {
+              "requested_frequency_hz": 0.16,
+              "actual_frequency_hz": 0.15624999999996447,
+              "coherence": 0.992047923775183,
+              "phase_deg_y_relative_to_left": 175.62162404614924
+            },
+            "0.20_Hz": {
+              "requested_frequency_hz": 0.2,
+              "actual_frequency_hz": 0.1953124999999556,
+              "coherence": 0.9921751785490178,
+              "phase_deg_y_relative_to_left": 176.39972069981965
+            }
+          }
+        },
+        "slice_0000__slice_0002": {
+          "method": "Welch Hann, 512 samples max, 50% overlap; Pxy=conj(left)*right",
+          "segment_count": 2,
+          "targets": {
+            "0.16_Hz": {
+              "requested_frequency_hz": 0.16,
+              "actual_frequency_hz": 0.15624999999996447,
+              "coherence": 0.9994168659233579,
+              "phase_deg_y_relative_to_left": 53.5745585491849
+            },
+            "0.20_Hz": {
+              "requested_frequency_hz": 0.2,
+              "actual_frequency_hz": 0.1953124999999556,
+              "coherence": 0.9994335036247851,
+              "phase_deg_y_relative_to_left": 53.09969160066108
+            }
+          }
+        },
+        "slice_0001__slice_0002": {
+          "method": "Welch Hann, 512 samples max, 50% overlap; Pxy=conj(left)*right",
+          "segment_count": 2,
+          "targets": {
+            "0.16_Hz": {
+              "requested_frequency_hz": 0.16,
+              "actual_frequency_hz": 0.15624999999996447,
+              "coherence": 0.9872038526622899,
+              "phase_deg_y_relative_to_left": -122.05848681411379
+            },
+            "0.20_Hz": {
+              "requested_frequency_hz": 0.2,
+              "actual_frequency_hz": 0.1953124999999556,
+              "coherence": 0.987965990347,
+              "phase_deg_y_relative_to_left": -123.35968603403218
+            }
+          }
+        }
+      }
+    },
+    {
+      "start_time_s": 320.0,
+      "end_time_s": 369.95,
+      "sample_count": 1000,
+      "slices": {
+        "slice_0000": {
+          "Fy": {
+            "mean": -0.0008363613229500004,
+            "demeaned_rms": 0.11235298505292245,
+            "peak_to_peak": 0.36244,
+            "fft_dominant_frequency_hz": 0.15999999999996362,
+            "peak_detection_frequency_hz": 0.16091954022988506
+          },
+          "y": {
+            "mean": 0.0003625489213134284,
+            "demeaned_rms": 0.00020869571869731426,
+            "peak_to_peak": 0.000707786227386636,
+            "fft_dominant_frequency_hz": 0.19999999999995452,
+            "peak_detection_frequency_hz": 0.2
+          },
+          "vy_rms": 0.0003635900290632248,
+          "Fy_y_cross_spectrum": {
+            "method": "Welch Hann, 512 samples max, 50% overlap; Pxy=conj(left)*right",
+            "segment_count": 2,
+            "targets": {
+              "0.16_Hz": {
+                "requested_frequency_hz": 0.16,
+                "actual_frequency_hz": 0.15624999999996447,
+                "coherence": 0.001422961756582933,
+                "phase_deg_y_relative_to_left": -153.31528350858594
+              },
+              "0.20_Hz": {
+                "requested_frequency_hz": 0.2,
+                "actual_frequency_hz": 0.1953124999999556,
+                "coherence": 0.001356593063588282,
+                "phase_deg_y_relative_to_left": -138.1585705347129
+              }
+            }
+          },
+          "fluid_to_structure_power": {
+            "raw_unit": "legacy_force_scale_times_m_per_s; physical_W_not_evaluable",
+            "mean_raw": -1.946024242087931e-06,
+            "rms_raw": 4.0987166562150864e-05,
+            "positive_fraction": 0.473,
+            "negative_fraction": 0.527,
+            "cumulative_raw_work": -9.838825645571836e-05
+          }
+        },
+        "slice_0001": {
+          "Fy": {
+            "mean": -0.0013839887825050003,
+            "demeaned_rms": 0.12230353268730022,
+            "peak_to_peak": 0.39789951,
+            "fft_dominant_frequency_hz": 0.15999999999996362,
+            "peak_detection_frequency_hz": 0.16096579476861153
+          },
+          "y": {
+            "mean": 0.0005624497998550444,
+            "demeaned_rms": 0.0003443855809894742,
+            "peak_to_peak": 0.0010887725248191968,
+            "fft_dominant_frequency_hz": 0.19999999999995452,
+            "peak_detection_frequency_hz": 0.19650655021834054
+          },
+          "vy_rms": 0.0005087898698356953,
+          "Fy_y_cross_spectrum": {
+            "method": "Welch Hann, 512 samples max, 50% overlap; Pxy=conj(left)*right",
+            "segment_count": 2,
+            "targets": {
+              "0.16_Hz": {
+                "requested_frequency_hz": 0.16,
+                "actual_frequency_hz": 0.15624999999996447,
+                "coherence": 0.0029422510538591423,
+                "phase_deg_y_relative_to_left": -81.66571654787813
+              },
+              "0.20_Hz": {
+                "requested_frequency_hz": 0.2,
+                "actual_frequency_hz": 0.1953124999999556,
+                "coherence": 0.0024125466398113907,
+                "phase_deg_y_relative_to_left": -80.97997254991952
+              }
+            }
+          },
+          "fluid_to_structure_power": {
+            "raw_unit": "legacy_force_scale_times_m_per_s; physical_W_not_evaluable",
+            "mean_raw": 2.1202796858658685e-07,
+            "rms_raw": 6.252440534559953e-05,
+            "positive_fraction": 0.517,
+            "negative_fraction": 0.483,
+            "cumulative_raw_work": 1.2861443101827758e-05
+          }
+        },
+        "slice_0002": {
+          "Fy": {
+            "mean": -0.0008975943381499993,
+            "demeaned_rms": 0.10875875486129599,
+            "peak_to_peak": 0.3659342,
+            "fft_dominant_frequency_hz": 0.15999999999996362,
+            "peak_detection_frequency_hz": 0.16336056009334882
+          },
+          "y": {
+            "mean": 0.00028339708232011417,
+            "demeaned_rms": 0.0001534202991755749,
+            "peak_to_peak": 0.0005667386685639299,
+            "fft_dominant_frequency_hz": 0.19999999999995452,
+            "peak_detection_frequency_hz": 0.20044543429844108
+          },
+          "vy_rms": 0.000325295329702806,
+          "Fy_y_cross_spectrum": {
+            "method": "Welch Hann, 512 samples max, 50% overlap; Pxy=conj(left)*right",
+            "segment_count": 2,
+            "targets": {
+              "0.16_Hz": {
+                "requested_frequency_hz": 0.16,
+                "actual_frequency_hz": 0.15624999999996447,
+                "coherence": 0.0037660279485381156,
+                "phase_deg_y_relative_to_left": 139.9725663913084
+              },
+              "0.20_Hz": {
+                "requested_frequency_hz": 0.2,
+                "actual_frequency_hz": 0.1953124999999556,
+                "coherence": 0.004214744862864393,
+                "phase_deg_y_relative_to_left": 146.5689263178806
+              }
+            }
+          },
+          "fluid_to_structure_power": {
+            "raw_unit": "legacy_force_scale_times_m_per_s; physical_W_not_evaluable",
+            "mean_raw": -1.5569983819405128e-06,
+            "rms_raw": 3.552709579116547e-05,
+            "positive_fraction": 0.491,
+            "negative_fraction": 0.509,
+            "cumulative_raw_work": -7.828458286173134e-05
+          }
+        }
+      },
+      "slice_slice_cross_spectrum": {
+        "slice_0000__slice_0001": {
+          "method": "Welch Hann, 512 samples max, 50% overlap; Pxy=conj(left)*right",
+          "segment_count": 2,
+          "targets": {
+            "0.16_Hz": {
+              "requested_frequency_hz": 0.16,
+              "actual_frequency_hz": 0.15624999999996447,
+              "coherence": 0.991813737710326,
+              "phase_deg_y_relative_to_left": 135.54387104963212
+            },
+            "0.20_Hz": {
+              "requested_frequency_hz": 0.2,
+              "actual_frequency_hz": 0.1953124999999556,
+              "coherence": 0.9927013828133404,
+              "phase_deg_y_relative_to_left": 136.88987507050717
+            }
+          }
+        },
+        "slice_0000__slice_0002": {
+          "method": "Welch Hann, 512 samples max, 50% overlap; Pxy=conj(left)*right",
+          "segment_count": 2,
+          "targets": {
+            "0.16_Hz": {
+              "requested_frequency_hz": 0.16,
+              "actual_frequency_hz": 0.15624999999996447,
+              "coherence": 0.9994624884487637,
+              "phase_deg_y_relative_to_left": 64.59925112777333
+            },
+            "0.20_Hz": {
+              "requested_frequency_hz": 0.2,
+              "actual_frequency_hz": 0.1953124999999556,
+              "coherence": 0.9991384738884999,
+              "phase_deg_y_relative_to_left": 64.56411634105905
+            }
+          }
+        },
+        "slice_0001__slice_0002": {
+          "method": "Welch Hann, 512 samples max, 50% overlap; Pxy=conj(left)*right",
+          "segment_count": 2,
+          "targets": {
+            "0.16_Hz": {
+              "requested_frequency_hz": 0.16,
+              "actual_frequency_hz": 0.15624999999996447,
+              "coherence": 0.9871785174819734,
+              "phase_deg_y_relative_to_left": -70.96675020032252
+            },
+            "0.20_Hz": {
+              "requested_frequency_hz": 0.2,
+              "actual_frequency_hz": 0.1953124999999556,
+              "coherence": 0.9875213030303891,
+              "phase_deg_y_relative_to_left": -72.39776553644298
+            }
+          }
+        }
+      }
+    },
+    {
+      "start_time_s": 270.0,
+      "end_time_s": 369.95,
+      "sample_count": 2000,
+      "slices": {
+        "slice_0000": {
+          "Fy": {
+            "mean": -0.0006248829676450009,
+            "demeaned_rms": 0.11256343960091016,
+            "peak_to_peak": 0.38604991,
+            "fft_dominant_frequency_hz": 0.15999999999996362,
+            "peak_detection_frequency_hz": 0.16059957173447542
+          },
+          "y": {
+            "mean": 0.00036312144862533723,
+            "demeaned_rms": 0.00020795054441703339,
+            "peak_to_peak": 0.0007232623853997762,
+            "fft_dominant_frequency_hz": 0.19999999999995452,
+            "peak_detection_frequency_hz": 0.19884877027734169
+          },
+          "vy_rms": 0.00036394084412402246,
+          "Fy_y_cross_spectrum": {
+            "method": "Welch Hann, 512 samples max, 50% overlap; Pxy=conj(left)*right",
+            "segment_count": 6,
+            "targets": {
+              "0.16_Hz": {
+                "requested_frequency_hz": 0.16,
+                "actual_frequency_hz": 0.15624999999996447,
+                "coherence": 0.001371316416515744,
+                "phase_deg_y_relative_to_left": -117.49228099775932
+              },
+              "0.20_Hz": {
+                "requested_frequency_hz": 0.2,
+                "actual_frequency_hz": 0.1953124999999556,
+                "coherence": 0.0017566048249006208,
+                "phase_deg_y_relative_to_left": -105.58771930284396
+              }
+            }
+          },
+          "fluid_to_structure_power": {
+            "raw_unit": "legacy_force_scale_times_m_per_s; physical_W_not_evaluable",
+            "mean_raw": -1.5413426585776967e-06,
+            "rms_raw": 4.10935492562527e-05,
+            "positive_fraction": 0.4915,
+            "negative_fraction": 0.5085,
+            "cumulative_raw_work": -0.00015304697918325477
+          }
+        },
+        "slice_0001": {
+          "Fy": {
+            "mean": -0.0014314877896825,
+            "demeaned_rms": 0.12227300970435162,
+            "peak_to_peak": 0.40180842,
+            "fft_dominant_frequency_hz": 0.15999999999996362,
+            "peak_detection_frequency_hz": 0.16056196688409427
+          },
+          "y": {
+            "mean": 0.0005623160198293446,
+            "demeaned_rms": 0.0003444427628181779,
+            "peak_to_peak": 0.0011156870578143481,
+            "fft_dominant_frequency_hz": 0.19999999999995452,
+            "peak_detection_frequency_hz": 0.19884877027734169
+          },
+          "vy_rms": 0.0005089197944443825,
+          "Fy_y_cross_spectrum": {
+            "method": "Welch Hann, 512 samples max, 50% overlap; Pxy=conj(left)*right",
+            "segment_count": 6,
+            "targets": {
+              "0.16_Hz": {
+                "requested_frequency_hz": 0.16,
+                "actual_frequency_hz": 0.15624999999996447,
+                "coherence": 0.002790502879889112,
+                "phase_deg_y_relative_to_left": -77.94670445632634
+              },
+              "0.20_Hz": {
+                "requested_frequency_hz": 0.2,
+                "actual_frequency_hz": 0.1953124999999556,
+                "coherence": 0.0023257301194127404,
+                "phase_deg_y_relative_to_left": -73.97281685594335
+              }
+            }
+          },
+          "fluid_to_structure_power": {
+            "raw_unit": "legacy_force_scale_times_m_per_s; physical_W_not_evaluable",
+            "mean_raw": 5.273707536438679e-08,
+            "rms_raw": 6.274362074538767e-05,
+            "positive_fraction": 0.52,
+            "negative_fraction": 0.48,
+            "cumulative_raw_work": 1.0854947190295845e-05
+          }
+        },
+        "slice_0002": {
+          "Fy": {
+            "mean": -0.0009448727846750005,
+            "demeaned_rms": 0.1088055088597063,
+            "peak_to_peak": 0.3659342,
+            "fft_dominant_frequency_hz": 0.15999999999996362,
+            "peak_detection_frequency_hz": 0.16260162601626016
+          },
+          "y": {
+            "mean": 0.00028404874235126056,
+            "demeaned_rms": 0.00015260721637300024,
+            "peak_to_peak": 0.0005667386685639299,
+            "fft_dominant_frequency_hz": 0.19999999999995452,
+            "peak_detection_frequency_hz": 0.19895287958115185
+          },
+          "vy_rms": 0.00032325072917298504,
+          "Fy_y_cross_spectrum": {
+            "method": "Welch Hann, 512 samples max, 50% overlap; Pxy=conj(left)*right",
+            "segment_count": 6,
+            "targets": {
+              "0.16_Hz": {
+                "requested_frequency_hz": 0.16,
+                "actual_frequency_hz": 0.15624999999996447,
+                "coherence": 0.00328782016795825,
+                "phase_deg_y_relative_to_left": -179.71880042750718
+              },
+              "0.20_Hz": {
+                "requested_frequency_hz": 0.2,
+                "actual_frequency_hz": 0.1953124999999556,
+                "coherence": 0.003765051072231242,
+                "phase_deg_y_relative_to_left": -175.02895555344435
+              }
+            }
+          },
+          "fluid_to_structure_power": {
+            "raw_unit": "legacy_force_scale_times_m_per_s; physical_W_not_evaluable",
+            "mean_raw": -1.73574708671078e-06,
+            "rms_raw": 3.505358244351248e-05,
+            "positive_fraction": 0.4845,
+            "negative_fraction": 0.5155,
+            "cumulative_raw_work": -0.00017331849728455088
+          }
+        }
+      },
+      "slice_slice_cross_spectrum": {
+        "slice_0000__slice_0001": {
+          "method": "Welch Hann, 512 samples max, 50% overlap; Pxy=conj(left)*right",
+          "segment_count": 6,
+          "targets": {
+            "0.16_Hz": {
+              "requested_frequency_hz": 0.16,
+              "actual_frequency_hz": 0.15624999999996447,
+              "coherence": 0.9104270461420739,
+              "phase_deg_y_relative_to_left": 155.15263656639328
+            },
+            "0.20_Hz": {
+              "requested_frequency_hz": 0.2,
+              "actual_frequency_hz": 0.1953124999999556,
+              "coherence": 0.9091662504406476,
+              "phase_deg_y_relative_to_left": 155.9112129209179
+            }
+          }
+        },
+        "slice_0000__slice_0002": {
+          "method": "Welch Hann, 512 samples max, 50% overlap; Pxy=conj(left)*right",
+          "segment_count": 6,
+          "targets": {
+            "0.16_Hz": {
+              "requested_frequency_hz": 0.16,
+              "actual_frequency_hz": 0.15624999999996447,
+              "coherence": 0.9927986775812371,
+              "phase_deg_y_relative_to_left": 59.24993025768992
+            },
+            "0.20_Hz": {
+              "requested_frequency_hz": 0.2,
+              "actual_frequency_hz": 0.1953124999999556,
+              "coherence": 0.9929590584244614,
+              "phase_deg_y_relative_to_left": 58.751619572806284
+            }
+          }
+        },
+        "slice_0001__slice_0002": {
+          "method": "Welch Hann, 512 samples max, 50% overlap; Pxy=conj(left)*right",
+          "segment_count": 6,
+          "targets": {
+            "0.16_Hz": {
+              "requested_frequency_hz": 0.16,
+              "actual_frequency_hz": 0.15624999999996447,
+              "coherence": 0.8569484119607917,
+              "phase_deg_y_relative_to_left": -95.95310693785851
+            },
+            "0.20_Hz": {
+              "requested_frequency_hz": 0.2,
+              "actual_frequency_hz": 0.1953124999999556,
+              "coherence": 0.8567780739379957,
+              "phase_deg_y_relative_to_left": -97.31668318534895
+            }
+          }
+        }
+      }
+    },
+    {
+      "start_time_s": 220.0,
+      "end_time_s": 369.95,
+      "sample_count": 2999,
+      "slices": {
+        "slice_0000": {
+          "Fy": {
+            "mean": -0.0003895546160353453,
+            "demeaned_rms": 0.11265201347231522,
+            "peak_to_peak": 0.38604991,
+            "fft_dominant_frequency_hz": 0.16005335111700264,
+            "peak_detection_frequency_hz": 0.1606706252183025
+          },
+          "y": {
+            "mean": 0.0003631500995097202,
+            "demeaned_rms": 0.00020796006312026136,
+            "peak_to_peak": 0.0007232623853997762,
+            "fft_dominant_frequency_hz": 0.2000666888962533,
+            "peak_detection_frequency_hz": 0.19856213625470728
+          },
+          "vy_rms": 0.0003633416253833672,
+          "Fy_y_cross_spectrum": {
+            "method": "Welch Hann, 512 samples max, 50% overlap; Pxy=conj(left)*right",
+            "segment_count": 10,
+            "targets": {
+              "0.16_Hz": {
+                "requested_frequency_hz": 0.16,
+                "actual_frequency_hz": 0.15624999999996447,
+                "coherence": 0.0016607393334939363,
+                "phase_deg_y_relative_to_left": -81.6809896800544
+              },
+              "0.20_Hz": {
+                "requested_frequency_hz": 0.2,
+                "actual_frequency_hz": 0.1953124999999556,
+                "coherence": 0.0021960185370712244,
+                "phase_deg_y_relative_to_left": -75.44113693754235
+              }
+            }
+          },
+          "fluid_to_structure_power": {
+            "raw_unit": "legacy_force_scale_times_m_per_s; physical_W_not_evaluable",
+            "mean_raw": -1.1202566191447992e-06,
+            "rms_raw": 4.109918381898706e-05,
+            "positive_fraction": 0.48916305435145047,
+            "negative_fraction": 0.5108369456485495,
+            "cumulative_raw_work": -0.0001683207116629867
+          }
+        },
+        "slice_0001": {
+          "Fy": {
+            "mean": -0.0014280099036095369,
+            "demeaned_rms": 0.1223640199730509,
+            "peak_to_peak": 0.4058401,
+            "fft_dominant_frequency_hz": 0.16005335111700264,
+            "peak_detection_frequency_hz": 0.16026711185308845
+          },
+          "y": {
+            "mean": 0.0005628158478153892,
+            "demeaned_rms": 0.00034382326120884296,
+            "peak_to_peak": 0.001116302410766062,
+            "fft_dominant_frequency_hz": 0.2000666888962533,
+            "peak_detection_frequency_hz": 0.1986301369863014
+          },
+          "vy_rms": 0.0005082145628761902,
+          "Fy_y_cross_spectrum": {
+            "method": "Welch Hann, 512 samples max, 50% overlap; Pxy=conj(left)*right",
+            "segment_count": 10,
+            "targets": {
+              "0.16_Hz": {
+                "requested_frequency_hz": 0.16,
+                "actual_frequency_hz": 0.15624999999996447,
+                "coherence": 0.002373833298331506,
+                "phase_deg_y_relative_to_left": -70.62935085347503
+              },
+              "0.20_Hz": {
+                "requested_frequency_hz": 0.2,
+                "actual_frequency_hz": 0.1953124999999556,
+                "coherence": 0.0022024379668160237,
+                "phase_deg_y_relative_to_left": -65.70927668042992
+              }
+            }
+          },
+          "fluid_to_structure_power": {
+            "raw_unit": "legacy_force_scale_times_m_per_s; physical_W_not_evaluable",
+            "mean_raw": -2.2853393319410538e-07,
+            "rms_raw": 6.263359153623159e-05,
+            "positive_fraction": 0.5161720573524509,
+            "negative_fraction": 0.4838279426475492,
+            "cumulative_raw_work": -3.33745212838588e-05
+          }
+        },
+        "slice_0002": {
+          "Fy": {
+            "mean": -0.0008616231168889638,
+            "demeaned_rms": 0.10903680901078826,
+            "peak_to_peak": 0.36929202,
+            "fft_dominant_frequency_hz": 0.16005335111700264,
+            "peak_detection_frequency_hz": 0.16214310891787095
+          },
+          "y": {
+            "mean": 0.0002840982781431928,
+            "demeaned_rms": 0.00015258559138825583,
+            "peak_to_peak": 0.0005667386685639299,
+            "fft_dominant_frequency_hz": 0.2000666888962533,
+            "peak_detection_frequency_hz": 0.1986301369863014
+          },
+          "vy_rms": 0.0003231634728830059,
+          "Fy_y_cross_spectrum": {
+            "method": "Welch Hann, 512 samples max, 50% overlap; Pxy=conj(left)*right",
+            "segment_count": 10,
+            "targets": {
+              "0.16_Hz": {
+                "requested_frequency_hz": 0.16,
+                "actual_frequency_hz": 0.15624999999996447,
+                "coherence": 0.0032516799787137007,
+                "phase_deg_y_relative_to_left": -138.45629395451277
+              },
+              "0.20_Hz": {
+                "requested_frequency_hz": 0.2,
+                "actual_frequency_hz": 0.1953124999999556,
+                "coherence": 0.003511523520629284,
+                "phase_deg_y_relative_to_left": -136.74927636333982
+              }
+            }
+          },
+          "fluid_to_structure_power": {
+            "raw_unit": "legacy_force_scale_times_m_per_s; physical_W_not_evaluable",
+            "mean_raw": -1.6180060528152558e-06,
+            "rms_raw": 3.526924608165943e-05,
+            "positive_fraction": 0.4894964988329443,
+            "negative_fraction": 0.5105035011670557,
+            "cumulative_raw_work": -0.00024333128493902106
+          }
+        }
+      },
+      "slice_slice_cross_spectrum": {
+        "slice_0000__slice_0001": {
+          "method": "Welch Hann, 512 samples max, 50% overlap; Pxy=conj(left)*right",
+          "segment_count": 10,
+          "targets": {
+            "0.16_Hz": {
+              "requested_frequency_hz": 0.16,
+              "actual_frequency_hz": 0.15624999999996447,
+              "coherence": 0.7616048168546549,
+              "phase_deg_y_relative_to_left": 174.66652986885921
+            },
+            "0.20_Hz": {
+              "requested_frequency_hz": 0.2,
+              "actual_frequency_hz": 0.1953124999999556,
+              "coherence": 0.7543746387084224,
+              "phase_deg_y_relative_to_left": 175.32897148774393
+            }
+          }
+        },
+        "slice_0000__slice_0002": {
+          "method": "Welch Hann, 512 samples max, 50% overlap; Pxy=conj(left)*right",
+          "segment_count": 10,
+          "targets": {
+            "0.16_Hz": {
+              "requested_frequency_hz": 0.16,
+              "actual_frequency_hz": 0.15624999999996447,
+              "coherence": 0.9800373578509249,
+              "phase_deg_y_relative_to_left": 53.937438211573465
+            },
+            "0.20_Hz": {
+              "requested_frequency_hz": 0.2,
+              "actual_frequency_hz": 0.1953124999999556,
+              "coherence": 0.9817604414824123,
+              "phase_deg_y_relative_to_left": 53.64817675420894
+            }
+          }
+        },
+        "slice_0001__slice_0002": {
+          "method": "Welch Hann, 512 samples max, 50% overlap; Pxy=conj(left)*right",
+          "segment_count": 10,
+          "targets": {
+            "0.16_Hz": {
+              "requested_frequency_hz": 0.16,
+              "actual_frequency_hz": 0.15624999999996447,
+              "coherence": 0.636337398515369,
+              "phase_deg_y_relative_to_left": -120.75600810537051
+            },
+            "0.20_Hz": {
+              "requested_frequency_hz": 0.2,
+              "actual_frequency_hz": 0.1953124999999556,
+              "coherence": 0.6358646295887933,
+              "phase_deg_y_relative_to_left": -121.9394590407075
+            }
+          }
+        }
+      }
+    }
+  ],
+  "local_statistical_stationarity": {
+    "thresholds": {
+      "amplitude_drift_fraction_max": 0.05,
+      "frequency_drift_fraction_max": 0.05
+    },
+    "by_slice": {
+      "slice_0000": {
+        "Fy_rms_drift_fraction": 0.004209067377063213,
+        "Fy_frequency_drift_fraction": 0.0010010010010010257,
+        "y_rms_drift_fraction": 0.00718634891419823,
+        "y_frequency_drift_fraction": 0.0010010010010009563,
+        "stable": true
+      },
+      "slice_0001": {
+        "Fy_rms_drift_fraction": 0.0024820106043273236,
+        "Fy_frequency_drift_fraction": 0.0010010010010010257,
+        "y_rms_drift_fraction": 0.005582182865961414,
+        "y_frequency_drift_fraction": 0.0010010010010009563,
+        "stable": true
+      },
+      "slice_0002": {
+        "Fy_rms_drift_fraction": 0.0067932385605492685,
+        "Fy_frequency_drift_fraction": 0.0010010010010010257,
+        "y_rms_drift_fraction": 0.010707320427319426,
+        "y_frequency_drift_fraction": 0.0010010010010009563,
+        "stable": true
+      }
+    },
+    "status": "pass"
+  },
+  "beat_diagnostic": {
+    "slice_0000__slice_0001": {
+      "f_left_peak_hz": 0.1606706252183025,
+      "f_right_peak_hz": 0.16026711185308845,
+      "delta_f_hz": 0.0004035133652140477,
+      "estimated_beat_period_s": 2478.2326589592394,
+      "phase_drift_deg_over_50s_from_delta_f": 7.263240573852858,
+      "interpretation": "diagnostic_only; finite-window peak estimates cannot prove a physical beating mechanism"
+    },
+    "slice_0000__slice_0002": {
+      "f_left_peak_hz": 0.1606706252183025,
+      "f_right_peak_hz": 0.16214310891787095,
+      "delta_f_hz": 0.0014724836995684554,
+      "estimated_beat_period_s": 679.124665551865,
+      "phase_drift_deg_over_50s_from_delta_f": 26.504706592232196,
+      "interpretation": "diagnostic_only; finite-window peak estimates cannot prove a physical beating mechanism"
+    },
+    "slice_0001__slice_0002": {
+      "f_left_peak_hz": 0.16026711185308845,
+      "f_right_peak_hz": 0.16214310891787095,
+      "delta_f_hz": 0.001875997064782503,
+      "estimated_beat_period_s": 533.0498745294875,
+      "phase_drift_deg_over_50s_from_delta_f": 33.76794716608506,
+      "interpretation": "diagnostic_only; finite-window peak estimates cannot prove a physical beating mechanism"
+    }
+  }
+}
