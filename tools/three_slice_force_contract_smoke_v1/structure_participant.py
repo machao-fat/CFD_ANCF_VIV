@@ -81,8 +81,9 @@ def main() -> int:
     partition = bounded_midpoint_voronoi([item["s_ref_m"] for item in items], contract["slices"]["represented_interval_m"])
     definitions = tuple(SliceDefinition(int(item["slice_id"]), float(item["s_ref_m"]), right-left, float(item["unit_span_m"]))
                         for item, (left, _, right) in zip(items, partition))
-    manifest = SliceManifest("0.2.1", str(contract["case_id"]), 50.0, 50.0, definitions)
-    H = build_H_for_manifest(manifest, tuple(50.0 * index / 16.0 for index in range(17)))
+    length_m, elements = float(contract["ANCF"]["length_m"]), int(contract["ANCF"]["elements"])
+    manifest = SliceManifest("0.2.1", str(contract["case_id"]), length_m, length_m, definitions)
+    H = build_H_for_manifest(manifest, tuple(length_m * index / elements for index in range(elements + 1)))
     model = model_from_contract(contract)
     q, qdot, qddot = (tuple(float(x) for x in state[key]) for key in ("q", "qdot", "qddot"))
     mass = tuple(float(x) for x in state["mass_matrix"]); base = tuple(float(x) for x in state["base_load"])
@@ -100,7 +101,8 @@ def main() -> int:
     participants = []; mesh_ids = []; records: list[dict[str, object]] = []; prior = [(0.0, 0.0, 0.0)] * 3
     error: str | None = None
     try:
-        worker.start(); adapter.start()
+        # ``CppKernelCampaignAdapter.start`` owns the only permissible worker start.
+        adapter.start()
         for sid, config in enumerate(args.config):
             participant = precice.Participant(f"Structure_{sid:04d}", config, 0, 1)
             participants.append(participant); mesh_ids.append(participant.set_mesh_vertices("Structure-Mesh", vertices))
@@ -123,7 +125,7 @@ def main() -> int:
             mapping = map_integrated_slice_forces(manifest, H, {item.slice_id: item for item in loads},
                 delta_q=tuple(predicted_q[i] - before["q"][i] for i in range(len(predicted_q))))
             audit = moment_audit(predicted_q, [item.force_N for item in loads], positions_m=[item.s_ref_m for item in definitions],
-                length_m=50.0, elements=16, delta_q=tuple(predicted_q[i] - before["q"][i] for i in range(len(predicted_q))), compensated=True)
+                length_m=length_m, elements=elements, delta_q=tuple(predicted_q[i] - before["q"][i] for i in range(len(predicted_q))), compensated=True)
             correction, _ = adapter.correct(step, time_s, [item.force_N for item in loads])
             if max(abs(a-b) for a, b in zip(mapping.generalized_force, correction["generalized_force"])) > 1e-8:
                 raise RuntimeError("C++ generalized force differs from formal H^T mapping")
@@ -144,7 +146,10 @@ def main() -> int:
         adapter.shutdown()
     atomic_json(runtime / "structure_summary.json", {"run_id": contract["run_id"], "case_id": contract["case_id"],
         "status": "completed" if error is None and len(records) == 200 else "failed", "error": error,
-        "committed_steps": len(records), "slice_record_counts": {str(sid): sum(1 for row in records if len(row["loads"]) == 3) for sid in range(3)},
+        "committed_steps": len(records), "slice_record_counts": {
+            str(sid): sum(1 for row in records if any(int(load["slice_id"]) == sid for load in row["loads"]))
+            for sid in range(3)
+        },
         "cpp_worker": worker.audit, "adapter_responses": adapter.responses, "owned_residual": adapter.owned_residual,
         "tributary_partition_m": [{"slice_id": sid, "left": left, "right": right, "length": right-left} for sid,(left,_,right) in enumerate(partition)]})
     return 0 if error is None and len(records) == 200 else 1

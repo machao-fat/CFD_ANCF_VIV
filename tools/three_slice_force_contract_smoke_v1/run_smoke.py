@@ -15,9 +15,9 @@ from coupling.openfoam_quality_contract_v3.audit import audit_records
 from coupling.convergence_observability_v1.openfoam_log import OpenFOAMLogParser
 
 STAGE = "stage_force_contract_smoke_v1"
-RUNTIME = ROOT / "runtime" / (STAGE + "_run_005")
-RESULTS = ROOT / "results" / "three_slice_force_contract_smoke_v1_run_005"
-CONTRACT = Path(__file__).with_name("three_slice_force_contract_smoke_v1.json")
+RUNTIME = ROOT / "runtime" / (STAGE + "_run_006")
+RESULTS = ROOT / "results" / "three_slice_force_contract_smoke_v1_run_006"
+CONTRACT = Path(__file__).with_name("three_slice_force_contract_smoke_v1_run_006.json")
 SOURCE = ROOT / "cases/openfoam/single_slice_ancf_fsi"
 STATE = ROOT / "runtime/stage4f_d_cpp_worker_initialization_v1/run_20260827_cpp_only/ancf_t0_state_cpp.json"
 WORKER = ROOT / "runtime/292_cpp_worker_linux_build_v1/cfd_ancf_ancf_kernel_worker"
@@ -50,7 +50,7 @@ def xml(sid: int) -> str:
         f'<m2n:sockets acceptor="Structure_{sid:04d}" connector="Fluid_{sid:04d}" exchange-directory="{socket}"/>',
         f'<participant name="Structure_{sid:04d}"><provide-mesh name="Structure-Mesh"/><write-data name="Displacement" mesh="Structure-Mesh"/><read-data name="Force" mesh="Structure-Mesh"/></participant>',
         f'<participant name="Fluid_{sid:04d}"><receive-mesh name="Structure-Mesh" from="Structure_{sid:04d}"/><provide-mesh name="Fluid-Mesh"/><mapping:nearest-neighbor direction="read" from="Structure-Mesh" to="Fluid-Mesh" constraint="consistent"/><mapping:nearest-neighbor direction="write" from="Fluid-Mesh" to="Structure-Mesh" constraint="conservative"/><write-data name="Force" mesh="Fluid-Mesh"/><read-data name="Displacement" mesh="Fluid-Mesh"/></participant>',
-        f'<coupling-scheme:parallel-explicit><participants first="Structure_{sid:04d}" second="Fluid_{sid:04d}"/><time-window-size value="0.005"/><max-time value="1"/><exchange data="Displacement" mesh="Structure-Mesh" from="Structure_{sid:04d}" to="Fluid_{sid:04d}"/><exchange data="Force" mesh="Structure-Mesh" from="Fluid_{sid:04d}" to="Structure_{sid:04d}"/></coupling-scheme></precice-configuration>',
+        f'<coupling-scheme:parallel-explicit><participants first="Structure_{sid:04d}" second="Fluid_{sid:04d}"/><time-window-size value="0.005"/><max-time value="1"/><exchange data="Displacement" mesh="Structure-Mesh" from="Structure_{sid:04d}" to="Fluid_{sid:04d}"/><exchange data="Force" mesh="Structure-Mesh" from="Fluid_{sid:04d}" to="Structure_{sid:04d}"/></coupling-scheme:parallel-explicit></precice-configuration>',
     ))
 
 
@@ -115,7 +115,16 @@ def audit(code: int) -> dict[str, object]:
     moment = [row["moment_audit"] for row in rows]
     maxf = max((float(item["force_error_absolute_N"]) for item in moment), default=float("inf")); maxm=max((float(item["moment_error_absolute_Nm"]) for item in moment),default=float("inf")); maxv=max((float(item["moment_error_normalized_v2"]) for item in moment),default=float("inf")); maxw=max((float(item.get("virtual_work",{}).get("normalized_error",float("inf"))) for item in moment),default=float("inf"))
     max_reconciliation = max(reconciliation_errors, default=float("inf"))
-    mc=contract["mapping_contract"]; checks={"launch_return":code==0,"committed_200":len(rows)==200 and summary.get("committed_steps")==200,"three_loads_each_step":all(len(row.get("loads",[]))==3 for row in rows),"force_chain":all(all(abs(float(l["force_2d_x_Npm"])-float(l["openfoam_force_x_N"])/float(l["unit_span_m"]))<1e-12 and abs(float(l["force_x_N"])-float(l["force_2d_x_Npm"])*float(l["slice_length_m"]))<1e-12 for l in row["loads"]) for row in rows),"force_function_reconciliation":max_reconciliation<=1e-6,"displacement":all(all(abs(float(m["x_m"])-float(m["x_ref_m"])-float(m["ux_m"]))<1e-12 and abs(float(m["y_m"])-float(m["y_ref_m"])-float(m["uy_m"]))<1e-12 and abs(float(m["z_m"])-float(m["z_ref_m"])-float(m["uz_m"]))<1e-12 for m in row["motion"]) for row in rows),"mapping":maxf<=mc["force_error_tolerance_N"] and maxm<=mc["absolute_moment_error_tolerance_Nm"] and maxv<=mc["normalized_moment_v2_tolerance"] and maxw<=mc["virtual_work_tolerance"],"quality":all(v["OBSERVABILITY_COMPLETENESS"]["status"]=="pass" and v["NUMERICAL_QUALITY"]["status"]=="pass" for v in quality.values()),"cpp":summary.get("status")=="completed" and summary.get("owned_residual")==0}
+    mc=contract["mapping_contract"]
+    force_chain_tolerance = float(mc["force_chain_identity_tolerance_N"])
+    force_chain = all(
+        all(
+            all(abs(float(l[f"force_2d_{axis}_Npm"]) - float(l[f"openfoam_force_{axis}_N"])/float(l["unit_span_m"])) < force_chain_tolerance for axis in "xyz")
+            and all(abs(float(l[f"force_{axis}_N"]) - float(l[f"force_2d_{axis}_Npm"])*float(l["slice_length_m"])) < force_chain_tolerance for axis in "xyz")
+            for l in row["loads"]
+        ) for row in rows
+    )
+    checks={"launch_return":code==0,"committed_200":len(rows)==200 and summary.get("committed_steps")==200,"three_loads_each_step":all(len(row.get("loads",[]))==3 for row in rows),"force_chain":force_chain,"force_function_reconciliation":max_reconciliation<=float(mc["openfoam_force_function_reconciliation_tolerance_N"]),"displacement":all(all(abs(float(m["x_m"])-float(m["x_ref_m"])-float(m["ux_m"]))<float(mc["displacement_identity_tolerance_m"]) and abs(float(m["y_m"])-float(m["y_ref_m"])-float(m["uy_m"]))<float(mc["displacement_identity_tolerance_m"]) and abs(float(m["z_m"])-float(m["z_ref_m"])-float(m["uz_m"]))<float(mc["displacement_identity_tolerance_m"]) for m in row["motion"]) for row in rows),"mapping":maxf<=mc["force_error_tolerance_N"] and maxm<=mc["absolute_moment_error_tolerance_Nm"] and maxv<=mc["normalized_moment_v2_tolerance"] and maxw<=mc["virtual_work_tolerance"],"quality":all(v["OBSERVABILITY_COMPLETENESS"]["status"]=="pass" and v["NUMERICAL_QUALITY"]["status"]=="pass" for v in quality.values()),"cpp":summary.get("status")=="completed" and summary.get("owned_residual")==0}
     result={"THREE_SLICE_FORCE_CONTRACT_SMOKE":"PASS" if all(checks.values()) else "FAIL","checks":checks,"max_force_error_N":maxf,"max_force_function_reconciliation_error_N":max_reconciliation,"max_absolute_moment_error_Nm":maxm,"max_v2_moment_error":maxv,"max_virtual_work_error":maxw,"quality":quality,"structure_summary":summary,"formal_status":contract["formal_status"],"next_stage_10_to_20s_physical_test":"CONDITIONAL" if all(checks.values()) else "NOT_AUTHORIZED"}
     RESULTS.mkdir(parents=True,exist_ok=True); put(RESULTS / "three_slice_force_contract_smoke_v1_gate.json",json.dumps(result,ensure_ascii=False,indent=2)); return result
 
