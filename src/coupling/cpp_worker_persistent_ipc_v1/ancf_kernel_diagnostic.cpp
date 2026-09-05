@@ -63,6 +63,19 @@ int main(int argc, char** argv) {
   write_vector("internal_before", internal);
   write_vector("predictor", predictor);
   write_vector("velocity_predictor", velocity_predictor);
+  const auto external_total = cfd_ancf::external_force(model, slice_force);
+  write_vector("mapping_H3", [&]() {
+    const auto H = cfd_ancf::mapping_H3(model);
+    return H.data;
+  }());
+  write_vector("external_total", external_total);
+  for (std::size_t slice = 0; slice < model.slices; ++slice) {
+    std::vector<double> isolated(slice_force.size(), 0.0);
+    for (std::size_t component = 0; component < 3; ++component)
+      isolated[3 * slice + component] = slice_force[3 * slice + component];
+    write_vector(("external_slice_" + std::to_string(slice)).c_str(),
+                 cfd_ancf::external_force(model, isolated));
+  }
   output << "mass " << state.mass.rows << ' ' << state.mass.cols << '\n';
   output << std::setprecision(17);
   for (double value : state.mass.data) output << value << ' ';
