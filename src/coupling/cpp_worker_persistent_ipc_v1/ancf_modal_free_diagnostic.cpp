@@ -286,12 +286,14 @@ int main() {
     for (std::size_t step = 0; step <= steps; ++step) {
       if (step % output_every == 0u || step == steps) {
         const double kinetic = kinetic_energy(state);
+        const double strain_energy = internal_energy(state, model);
         const double potential = potential_energy(state, model);
         std::vector<double> transverse_displacement(free_y.size());
         for (std::size_t index = 0; index < free_y.size(); ++index)
           transverse_displacement[index] = state.q[free_y[index]] - equilibrium_q[free_y[index]];
         const double modal_coordinate_1 = dot(modes.front(), multiply(mass, transverse_displacement));
-        std::cout << "sample time_s " << state.time_s << " kinetic_J " << kinetic << " potential_J "
+        std::cout << "sample time_s " << state.time_s << " kinetic_J " << kinetic
+                  << " strain_energy_J " << strain_energy << " potential_J "
                   << potential << " total_J " << kinetic + potential
                   << " incremental_total_J " << kinetic + potential - equilibrium_total
                   << " modal_coordinate_1 " << modal_coordinate_1;

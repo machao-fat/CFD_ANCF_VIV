@@ -7,7 +7,7 @@ from pathlib import Path
 
 
 ROOT = Path(__file__).resolve().parents[2]
-RESULT = ROOT / "results/ancf_free_decay/undamped/cpp_50m_fixture_v1.json"
+RESULT = ROOT / "results/ancf_free_decay/undamped/cpp_50m_fixture_v2.json"
 
 
 class AncfModalFreeEvidenceTest(unittest.TestCase):
@@ -34,6 +34,7 @@ class AncfModalFreeEvidenceTest(unittest.TestCase):
         self.assertLess(abs(observed - first_mode), 0.02)
         self.assertLess(float(self.result["cpp"]["summary"]["relative_incremental_energy_change"]), 1.0e-3)
         self.assertGreater(float(self.result["analysis"]["slice_observables"]["slice_0001"]["y_peak_to_peak_m"]), 1.0e-5)
+        self.assertTrue(all("strain_energy_J" in row for row in self.result["cpp"]["samples"]))
 
     def test_reference_status_is_not_misrepresented(self) -> None:
         self.assertEqual(self.result["matlab_comparison"]["status"], "reference_not_available")

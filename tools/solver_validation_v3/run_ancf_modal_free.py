@@ -21,8 +21,8 @@ import numpy as np
 ROOT = Path(__file__).resolve().parents[2]
 FIXTURE = ROOT / "runtime/cpp_worker_to70s_real_v1/run_001/support/cpp_input_fixture.json"
 DEFAULT_BINARY = ROOT / "runtime/solver_validation_v3/ancf_modal_build/cfd_ancf_ancf_modal_free_diagnostic"
-RESULT = ROOT / "results/ancf_free_decay/undamped/cpp_50m_fixture_v1.json"
-RAW = ROOT / "results/ancf_free_decay/undamped/cpp_50m_fixture_v1.stdout.txt"
+RESULT = ROOT / "results/ancf_free_decay/undamped/cpp_50m_fixture_v2.json"
+RAW = ROOT / "results/ancf_free_decay/undamped/cpp_50m_fixture_v2.stdout.txt"
 
 
 def sha256(path: Path) -> str:
@@ -202,7 +202,7 @@ def main() -> int:
     mode_frequency = [float(mode["frequency_hz"]) for mode in parsed["modes"]]
     closest = min(enumerate(mode_frequency, start=1), key=lambda item: abs(item[1] - 0.20))
     result = {
-        "schema_version": "solver_validation_v3.ancf_modal_free.1",
+        "schema_version": "solver_validation_v3.ancf_modal_free.2",
         "scope": "offline C++ ANCF-only controlled equilibrium perturbation; zero mapped fluid force",
         "fixture": {"path": str(FIXTURE), "sha256": sha256(FIXTURE), "fields_used": "physical model and slice positions only; legacy base_load intentionally not used"},
         "source": {"kernel_sha256": sha256(ROOT / "src/coupling/cpp_worker_persistent_ipc_v1/ancf_kernel.cpp"), "diagnostic_sha256": sha256(ROOT / "src/coupling/cpp_worker_persistent_ipc_v1/ancf_modal_free_diagnostic.cpp"), "binary_sha256": sha256(args.diagnostic)},
