@@ -23,6 +23,7 @@ class OpenFOAMLogParser:
 
     def __init__(self) -> None:
         self._current: _TimeRecord | None = None
+        self._pending_courant_max: float | None = None
         self.records: list[dict[str, float | int]] = []
 
     def feed(self, line: str) -> None:
@@ -30,12 +31,23 @@ class OpenFOAMLogParser:
         if match:
             self._flush()
             self._current = _TimeRecord(float(match.group(1)))
-            return
-        if self._current is None:
+            if self._pending_courant_max is not None:
+                self._current.courant_max = self._pending_courant_max
+                self._pending_courant_max = None
             return
         match = self._courant.search(line)
         if match:
-            self._current.courant_max = float(match.group(2))
+            courant_max = float(match.group(2))
+            # OpenFOAM 10 prints the CFL for the impending step immediately
+            # before ``Time = ...``.  Earlier logs can print it after the
+            # time header.  Preserve both grammars without shifting the final
+            # sample onto the preceding time layer.
+            if self._current is None or self._current.residual_max is not None or self._current.continuity_global is not None:
+                self._pending_courant_max = courant_max
+            else:
+                self._current.courant_max = courant_max
+            return
+        if self._current is None:
             return
         match = self._solve.search(line)
         if match:

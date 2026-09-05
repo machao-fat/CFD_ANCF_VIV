@@ -7,6 +7,7 @@ import re
 import shutil
 import subprocess
 import sys
+import argparse
 from pathlib import Path
 
 ROOT = Path(__file__).resolve().parents[2]
@@ -105,7 +106,7 @@ def audit(code: int) -> dict[str, object]:
         reported: dict[float, tuple[float, float, float]] = {}
         for line in force_files[0].read_text(encoding="utf-8", errors="replace").splitlines():
             if not line or line.startswith("#"): continue
-            values = [float(value) for value in re.findall(r"[-+]?(?:\\d+\\.\\d*|\\d*\\.\\d+|\\d+)(?:[eE][-+]?\\d+)?", line)]
+            values = [float(value) for value in re.findall(r"[-+]?(?:\d+\.\d*|\d*\.\d+|\d+)(?:[eE][-+]?\d+)?", line)]
             if len(values) < 7: reconciliation_errors.append(float("inf")); continue
             reported[round(values[0], 12)] = (values[1] + values[4], values[2] + values[5], values[3] + values[6])
         for row in rows:
@@ -130,6 +131,20 @@ def audit(code: int) -> dict[str, object]:
 
 
 def main() -> int:
-    cases=prepare(); result=audit(launch(cases)); print(json.dumps({"gate":result["THREE_SLICE_FORCE_CONTRACT_SMOKE"],"results":str(RESULTS)})); return 0 if result["THREE_SLICE_FORCE_CONTRACT_SMOKE"]=="PASS" else 1
+    parser = argparse.ArgumentParser()
+    parser.add_argument("--audit-only", action="store_true", help="re-audit existing raw evidence without launching CFD")
+    args = parser.parse_args()
+    if args.audit_only:
+        global RESULTS
+        returns = (RUNTIME / "logs" / "returns.txt").read_text(encoding="utf-8")
+        values = [int(value) for value in re.findall(r"(?:structure|fluid_\d+)_return=(\d+)", returns)]
+        if len(values) != 4:
+            raise RuntimeError("raw launch return evidence is incomplete")
+        RESULTS = RESULTS.with_name(RESULTS.name + "_reaudit_v2")
+        result = audit(0 if all(value == 0 for value in values) else 1)
+    else:
+        cases=prepare(); result=audit(launch(cases))
+    print(json.dumps({"gate":result["THREE_SLICE_FORCE_CONTRACT_SMOKE"],"results":str(RESULTS)}))
+    return 0 if result["THREE_SLICE_FORCE_CONTRACT_SMOKE"]=="PASS" else 1
 
 if __name__ == "__main__": raise SystemExit(main())
