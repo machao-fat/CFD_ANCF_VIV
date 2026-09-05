@@ -1,0 +1,44 @@
+{
+  "CONTROLLED_PRESCRIBED_MOTION_SENSITIVITY": "PASS",
+  "kind": "uncoupled; not VIV",
+  "time_s": 0.1,
+  "offsets_y_m": [
+    0.0,
+    0.01,
+    -0.01
+  ],
+  "actual_mesh_points_sha256": [
+    "7dc6f3e27ba79fb449441476a99fc69fd37e254dd78accb4b07f18962821ce00",
+    "be075dee199bb198c4d667870a53dacc90e1678026cae689d4c5ebe5a03dbac4",
+    "dc2d8a3434ff88b6bd74868723e197d2b93a63a250611b0846c1f33d17ad82e6"
+  ],
+  "fields": {
+    "U": {
+      "sha256": [
+        "75b9d0081a8586bfe1996ba39466b5de5d79fe53a8ab3471ee304b8505f9c8fb",
+        "7b7cec1df344d6cc9fcbf435aef4eb05e10410132b55eb5dbd6d5cefd17dc2c6",
+        "ee6c14f2d0a20db438f44aa42209ffb5cf873ac9cb32857821a60b7f63a82dfc"
+      ],
+      "distinct": true
+    },
+    "p": {
+      "sha256": [
+        "5691c3a9569e017f6840a472f602257fb437d1ac86e4b2a6322a08f42926b3a3",
+        "f12b6f2aea8ce92469561bc1f0ff07d8dea901fed0f00c4eb735739d470facfa",
+        "571dcd5cd5d93d772383a11b8c33d8c4d8fb74b8cfd08cebe3abb9d3ab9f58fb"
+      ],
+      "distinct": true
+    }
+  },
+  "Fy_at_0p1_s_N": [
+    -9.9639080107936,
+    68.840136350376,
+    -90.17097191838
+  ],
+  "max_pairwise_Fy_difference_N": 159.011108268756,
+  "force_paths": [
+    "D:\\研二文件\\开题准备\\CFD_ANCF_VIV\\runtime\\slice_force_sensitivity_controlled_v6\\cases\\offset_0000\\postProcessing\\cylinderForces\\0\\forces.dat",
+    "D:\\研二文件\\开题准备\\CFD_ANCF_VIV\\runtime\\slice_force_sensitivity_controlled_v6\\cases\\offset_0001\\postProcessing\\cylinderForces\\0\\forces.dat",
+    "D:\\研二文件\\开题准备\\CFD_ANCF_VIV\\runtime\\slice_force_sensitivity_controlled_v6\\cases\\offset_0002\\postProcessing\\cylinderForces\\0\\forces.dat"
+  ]
+}

@@ -1,0 +1,433 @@
+{
+  "audit_id": "SLICE_INDEPENDENCE_AND_FORCE_SENSITIVITY_AUDIT_V1",
+  "source_runtime": "D:\\研二文件\\开题准备\\CFD_ANCF_VIV\\runtime\\three_slice_physical_sanity_20s_v1_run_001",
+  "source_runtime_mode": "read_only",
+  "cross_slice_identity": [
+    {
+      "slice_id": 0,
+      "case_path": "D:\\研二文件\\开题准备\\CFD_ANCF_VIV\\runtime\\three_slice_physical_sanity_20s_v1_run_001\\cases\\slice_0000",
+      "participant": "Fluid_0000",
+      "structure_participant": "Structure_0000",
+      "fluid_participant": "Fluid_0000",
+      "mesh": "Fluid-Mesh",
+      "read_data": "Displacement",
+      "write_data": "Force",
+      "force_path": "D:\\研二文件\\开题准备\\CFD_ANCF_VIV\\runtime\\three_slice_physical_sanity_20s_v1_run_001\\cases\\slice_0000\\postProcessing\\cylinderForces\\0\\forces.dat",
+      "motion_input": "D:\\研二文件\\开题准备\\CFD_ANCF_VIV\\runtime\\three_slice_physical_sanity_20s_v1_run_001\\cases\\slice_0000\\system\\preciceDict",
+      "solver_log": "D:\\研二文件\\开题准备\\CFD_ANCF_VIV\\runtime\\three_slice_physical_sanity_20s_v1_run_001\\logs\\fluid_0000.stdout"
+    },
+    {
+      "slice_id": 1,
+      "case_path": "D:\\研二文件\\开题准备\\CFD_ANCF_VIV\\runtime\\three_slice_physical_sanity_20s_v1_run_001\\cases\\slice_0001",
+      "participant": "Fluid_0001",
+      "structure_participant": "Structure_0001",
+      "fluid_participant": "Fluid_0001",
+      "mesh": "Fluid-Mesh",
+      "read_data": "Displacement",
+      "write_data": "Force",
+      "force_path": "D:\\研二文件\\开题准备\\CFD_ANCF_VIV\\runtime\\three_slice_physical_sanity_20s_v1_run_001\\cases\\slice_0001\\postProcessing\\cylinderForces\\0\\forces.dat",
+      "motion_input": "D:\\研二文件\\开题准备\\CFD_ANCF_VIV\\runtime\\three_slice_physical_sanity_20s_v1_run_001\\cases\\slice_0001\\system\\preciceDict",
+      "solver_log": "D:\\研二文件\\开题准备\\CFD_ANCF_VIV\\runtime\\three_slice_physical_sanity_20s_v1_run_001\\logs\\fluid_0001.stdout"
+    },
+    {
+      "slice_id": 2,
+      "case_path": "D:\\研二文件\\开题准备\\CFD_ANCF_VIV\\runtime\\three_slice_physical_sanity_20s_v1_run_001\\cases\\slice_0002",
+      "participant": "Fluid_0002",
+      "structure_participant": "Structure_0002",
+      "fluid_participant": "Fluid_0002",
+      "mesh": "Fluid-Mesh",
+      "read_data": "Displacement",
+      "write_data": "Force",
+      "force_path": "D:\\研二文件\\开题准备\\CFD_ANCF_VIV\\runtime\\three_slice_physical_sanity_20s_v1_run_001\\cases\\slice_0002\\postProcessing\\cylinderForces\\0\\forces.dat",
+      "motion_input": "D:\\研二文件\\开题准备\\CFD_ANCF_VIV\\runtime\\three_slice_physical_sanity_20s_v1_run_001\\cases\\slice_0002\\system\\preciceDict",
+      "solver_log": "D:\\研二文件\\开题准备\\CFD_ANCF_VIV\\runtime\\three_slice_physical_sanity_20s_v1_run_001\\logs\\fluid_0002.stdout"
+    }
+  ],
+  "raw_force": {
+    "paths": [
+      "D:\\研二文件\\开题准备\\CFD_ANCF_VIV\\runtime\\three_slice_physical_sanity_20s_v1_run_001\\cases\\slice_0000\\postProcessing\\cylinderForces\\0\\forces.dat",
+      "D:\\研二文件\\开题准备\\CFD_ANCF_VIV\\runtime\\three_slice_physical_sanity_20s_v1_run_001\\cases\\slice_0001\\postProcessing\\cylinderForces\\0\\forces.dat",
+      "D:\\研二文件\\开题准备\\CFD_ANCF_VIV\\runtime\\three_slice_physical_sanity_20s_v1_run_001\\cases\\slice_0002\\postProcessing\\cylinderForces\\0\\forces.dat"
+    ],
+    "sha256": [
+      "83884c008c1558565c814dc64c46a8dfbd749a6fe75aeb201074bde197471fc4",
+      "83884c008c1558565c814dc64c46a8dfbd749a6fe75aeb201074bde197471fc4",
+      "83884c008c1558565c814dc64c46a8dfbd749a6fe75aeb201074bde197471fc4"
+    ],
+    "byte_identical": true,
+    "row_count": [
+      4001,
+      4001,
+      4001
+    ],
+    "max_inter_slice_Fy_difference_N": 0.0,
+    "samples": {
+      "0.005": {
+        "pressure_N": [
+          153048.9262929,
+          -277.1956000953,
+          -1.105942749259e-15
+        ],
+        "viscous_N": [
+          1801.811460631,
+          8.301877738655,
+          -1.527716038291e-15
+        ],
+        "total_N": [
+          154850.737753531,
+          -268.893722356645,
+          -2.6336587875499997e-15
+        ],
+        "Fy_pair_differences_N": {
+          "0-1": 0.0,
+          "0-2": 0.0,
+          "1-2": 0.0
+        }
+      },
+      "0.5": {
+        "pressure_N": [
+          457.0356666225,
+          0.4466920733449,
+          8.379004923306e-17
+        ],
+        "viscous_N": [
+          331.0771235544,
+          3.241356397752,
+          -1.490041048543e-17
+        ],
+        "total_N": [
+          788.1127901769,
+          3.6880484710969,
+          6.888963874763e-17
+        ],
+        "Fy_pair_differences_N": {
+          "0-1": 0.0,
+          "0-2": 0.0,
+          "1-2": 0.0
+        }
+      },
+      "1": {
+        "pressure_N": [
+          525.9473133164,
+          3.15937045228,
+          7.279109268233e-17
+        ],
+        "viscous_N": [
+          254.4528574648,
+          -0.09573848114669,
+          -1.726810808339e-17
+        ],
+        "total_N": [
+          780.4001707812,
+          3.06363197113331,
+          5.552298459894e-17
+        ],
+        "Fy_pair_differences_N": {
+          "0-1": 0.0,
+          "0-2": 0.0,
+          "1-2": 0.0
+        }
+      },
+      "5": {
+        "pressure_N": [
+          487.4018722309,
+          3.394481434898,
+          4.050695264778e-17
+        ],
+        "viscous_N": [
+          184.7627835072,
+          -0.2295601597904,
+          -1.553865101434e-17
+        ],
+        "total_N": [
+          672.1646557381,
+          3.1649212751076004,
+          2.496830163344e-17
+        ],
+        "Fy_pair_differences_N": {
+          "0-1": 0.0,
+          "0-2": 0.0,
+          "1-2": 0.0
+        }
+      },
+      "10": {
+        "pressure_N": [
+          448.0917582613,
+          7.895710902059,
+          2.973259326821e-17
+        ],
+        "viscous_N": [
+          171.8579249427,
+          -0.08910272160031,
+          -1.347432130692e-17
+        ],
+        "total_N": [
+          619.949683204,
+          7.80660818045869,
+          1.625827196129e-17
+        ],
+        "Fy_pair_differences_N": {
+          "0-1": 0.0,
+          "0-2": 0.0,
+          "1-2": 0.0
+        }
+      },
+      "15": {
+        "pressure_N": [
+          433.1603040198,
+          -2.735696005839,
+          2.572891960247e-17
+        ],
+        "viscous_N": [
+          167.3289691446,
+          -1.933677521178,
+          -1.264499711941e-17
+        ],
+        "total_N": [
+          600.4892731644,
+          -4.669373527017,
+          1.308392248306e-17
+        ],
+        "Fy_pair_differences_N": {
+          "0-1": 0.0,
+          "0-2": 0.0,
+          "1-2": 0.0
+        }
+      },
+      "20": {
+        "pressure_N": [
+          426.4041206882,
+          1.644257358655,
+          2.387002528276e-17
+        ],
+        "viscous_N": [
+          165.2240492199,
+          0.1630696848091,
+          -1.2299470169e-17
+        ],
+        "total_N": [
+          591.6281699081001,
+          1.8073270434641,
+          1.157055511376e-17
+        ],
+        "Fy_pair_differences_N": {
+          "0-1": 0.0,
+          "0-2": 0.0,
+          "1-2": 0.0
+        }
+      }
+    }
+  },
+  "field_file_evidence": {
+    "5": {
+      "U_sha256": [
+        "8696737ac3ff873ebd943445b0f85ba74c9e287037964e967a28b82b49469e7c",
+        "8696737ac3ff873ebd943445b0f85ba74c9e287037964e967a28b82b49469e7c",
+        "8696737ac3ff873ebd943445b0f85ba74c9e287037964e967a28b82b49469e7c"
+      ],
+      "p_sha256": [
+        "97349eb161479bdf874b84bf48790212e4cdb24d62aab6f740b7a7f43dd1fa47",
+        "97349eb161479bdf874b84bf48790212e4cdb24d62aab6f740b7a7f43dd1fa47",
+        "97349eb161479bdf874b84bf48790212e4cdb24d62aab6f740b7a7f43dd1fa47"
+      ],
+      "U_byte_identical": true,
+      "p_byte_identical": true
+    },
+    "10": {
+      "U_sha256": [
+        "035cc75d8d9c6a64d80659423bc0f3651f1552afb8be6a8bf8eafd10d3739e3c",
+        "035cc75d8d9c6a64d80659423bc0f3651f1552afb8be6a8bf8eafd10d3739e3c",
+        "035cc75d8d9c6a64d80659423bc0f3651f1552afb8be6a8bf8eafd10d3739e3c"
+      ],
+      "p_sha256": [
+        "1d14958a31c99428b40503cbfd61ec3b2156394466f817e5c2be901fcc6c9082",
+        "1d14958a31c99428b40503cbfd61ec3b2156394466f817e5c2be901fcc6c9082",
+        "1d14958a31c99428b40503cbfd61ec3b2156394466f817e5c2be901fcc6c9082"
+      ],
+      "U_byte_identical": true,
+      "p_byte_identical": true
+    },
+    "20": {
+      "U_sha256": [
+        "e6ecdb0636caa1a46a37e3f6e0d1ce311f9777ac5889a9930f2a1eb1167c9906",
+        "e6ecdb0636caa1a46a37e3f6e0d1ce311f9777ac5889a9930f2a1eb1167c9906",
+        "e6ecdb0636caa1a46a37e3f6e0d1ce311f9777ac5889a9930f2a1eb1167c9906"
+      ],
+      "p_sha256": [
+        "757fcf01257de42316058580dcb3dca71ffbd9abd0c44973136198e00555600f",
+        "757fcf01257de42316058580dcb3dca71ffbd9abd0c44973136198e00555600f",
+        "757fcf01257de42316058580dcb3dca71ffbd9abd0c44973136198e00555600f"
+      ],
+      "U_byte_identical": true,
+      "p_byte_identical": true
+    }
+  },
+  "motion_geometry_evidence": [
+    {
+      "slice_id": 0,
+      "persisted_constant_points_sha256": "fbdbb5f484af3b11e025dbeba34ac41459cb3cf08bf5544c561e16a77149012f",
+      "cellDisplacement_sha256": "6378c4cb681a7ae9382f8580807ea9670599e9e26d29944556cdb943a4ef5dd3",
+      "motion_path": {
+        "motion_solver": "displacementLaplacian",
+        "point_displacement_bound": false,
+        "final_pointDisplacement_present": false,
+        "final_polyMesh_points_present": false,
+        "status": "fail"
+      }
+    },
+    {
+      "slice_id": 1,
+      "persisted_constant_points_sha256": "fbdbb5f484af3b11e025dbeba34ac41459cb3cf08bf5544c561e16a77149012f",
+      "cellDisplacement_sha256": "a061380387b04fc1a5768a388e561152db4c1eec4d5482b7f4ac3396eefdc7e3",
+      "motion_path": {
+        "motion_solver": "displacementLaplacian",
+        "point_displacement_bound": false,
+        "final_pointDisplacement_present": false,
+        "final_polyMesh_points_present": false,
+        "status": "fail"
+      }
+    },
+    {
+      "slice_id": 2,
+      "persisted_constant_points_sha256": "fbdbb5f484af3b11e025dbeba34ac41459cb3cf08bf5544c561e16a77149012f",
+      "cellDisplacement_sha256": "a5e03645ab52e74d56ecc4f0904781a34d6a4e4f218cc53dfe4c34fffd4c05da",
+      "motion_path": {
+        "motion_solver": "displacementLaplacian",
+        "point_displacement_bound": false,
+        "final_pointDisplacement_present": false,
+        "final_polyMesh_points_present": false,
+        "status": "fail"
+      }
+    }
+  ],
+  "forces_function_object": [
+    {
+      "function_object": "cylinderForces",
+      "patches": [
+        "cylinder"
+      ],
+      "rho": "rhoInf",
+      "rhoInf": 1000.0,
+      "CofR": "(0 0 0)",
+      "region": "default region0 (not explicitly overridden)",
+      "status": "pass"
+    },
+    {
+      "function_object": "cylinderForces",
+      "patches": [
+        "cylinder"
+      ],
+      "rho": "rhoInf",
+      "rhoInf": 1000.0,
+      "CofR": "(0 0 0)",
+      "region": "default region0 (not explicitly overridden)",
+      "status": "pass"
+    },
+    {
+      "function_object": "cylinderForces",
+      "patches": [
+        "cylinder"
+      ],
+      "rho": "rhoInf",
+      "rhoInf": 1000.0,
+      "CofR": "(0 0 0)",
+      "region": "default region0 (not explicitly overridden)",
+      "status": "pass"
+    }
+  ],
+  "precice_pairing": [
+    {
+      "socket_structure": "Structure_0000",
+      "socket_fluid": "Fluid_0000",
+      "displacement_from": "Structure_0000",
+      "displacement_to": "Fluid_0000",
+      "force_from": "Fluid_0000",
+      "force_to": "Structure_0000"
+    },
+    {
+      "socket_structure": "Structure_0001",
+      "socket_fluid": "Fluid_0001",
+      "displacement_from": "Structure_0001",
+      "displacement_to": "Fluid_0001",
+      "force_from": "Fluid_0001",
+      "force_to": "Structure_0001"
+    },
+    {
+      "socket_structure": "Structure_0002",
+      "socket_fluid": "Fluid_0002",
+      "displacement_from": "Structure_0002",
+      "displacement_to": "Fluid_0002",
+      "force_from": "Fluid_0002",
+      "force_to": "Structure_0002"
+    }
+  ],
+  "synthetic_channel_probe": {
+    "status": "pass",
+    "displacement_written_by_structure_m": {
+      "Structure_0000": 1.0,
+      "Structure_0001": 0.0,
+      "Structure_0002": -1.0
+    },
+    "displacement_received_by_fluid_m": {
+      "Fluid_0000": 1.0,
+      "Fluid_0001": 0.0,
+      "Fluid_0002": -1.0
+    },
+    "force_written_by_fluid_N": {
+      "Fluid_0000": 1.0,
+      "Fluid_0001": 2.0,
+      "Fluid_0002": 3.0
+    },
+    "force_received_by_structure_N": {
+      "Structure_0000": 1.0,
+      "Structure_0001": 2.0,
+      "Structure_0002": 3.0
+    },
+    "scope": "declared preCICE pair graph; not a CFD run"
+  },
+  "root_cause": "MOVING_MESH_NOT_APPLIED_BUG: launcher configured namePointDisplacement unused while dynamicFvMesh uses displacementLaplacian; distinct cellDisplacement values were not projected to the pointDisplacement field required to move mesh points.",
+  "controlled_prescribed_motion_sensitivity": {
+    "CONTROLLED_PRESCRIBED_MOTION_SENSITIVITY": "PASS",
+    "kind": "uncoupled; not VIV",
+    "time_s": 0.1,
+    "offsets_y_m": [
+      0.0,
+      0.01,
+      -0.01
+    ],
+    "actual_mesh_points_sha256": [
+      "7dc6f3e27ba79fb449441476a99fc69fd37e254dd78accb4b07f18962821ce00",
+      "be075dee199bb198c4d667870a53dacc90e1678026cae689d4c5ebe5a03dbac4",
+      "dc2d8a3434ff88b6bd74868723e197d2b93a63a250611b0846c1f33d17ad82e6"
+    ],
+    "fields": {
+      "U": {
+        "sha256": [
+          "75b9d0081a8586bfe1996ba39466b5de5d79fe53a8ab3471ee304b8505f9c8fb",
+          "7b7cec1df344d6cc9fcbf435aef4eb05e10410132b55eb5dbd6d5cefd17dc2c6",
+          "ee6c14f2d0a20db438f44aa42209ffb5cf873ac9cb32857821a60b7f63a82dfc"
+        ],
+        "distinct": true
+      },
+      "p": {
+        "sha256": [
+          "5691c3a9569e017f6840a472f602257fb437d1ac86e4b2a6322a08f42926b3a3",
+          "f12b6f2aea8ce92469561bc1f0ff07d8dea901fed0f00c4eb735739d470facfa",
+          "571dcd5cd5d93d772383a11b8c33d8c4d8fb74b8cfd08cebe3abb9d3ab9f58fb"
+        ],
+        "distinct": true
+      }
+    },
+    "Fy_at_0p1_s_N": [
+      -9.9639080107936,
+      68.840136350376,
+      -90.17097191838
+    ],
+    "max_pairwise_Fy_difference_N": 159.011108268756,
+    "force_paths": [
+      "D:\\研二文件\\开题准备\\CFD_ANCF_VIV\\runtime\\slice_force_sensitivity_controlled_v6\\cases\\offset_0000\\postProcessing\\cylinderForces\\0\\forces.dat",
+      "D:\\研二文件\\开题准备\\CFD_ANCF_VIV\\runtime\\slice_force_sensitivity_controlled_v6\\cases\\offset_0001\\postProcessing\\cylinderForces\\0\\forces.dat",
+      "D:\\研二文件\\开题准备\\CFD_ANCF_VIV\\runtime\\slice_force_sensitivity_controlled_v6\\cases\\offset_0002\\postProcessing\\cylinderForces\\0\\forces.dat"
+    ]
+  }
+}

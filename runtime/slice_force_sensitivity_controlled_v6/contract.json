@@ -1,0 +1,13 @@
+{
+  "kind": "controlled_prescribed_motion_sensitivity",
+  "coupled": false,
+  "dt_s": 0.005,
+  "duration_s": 0.1,
+  "offsets_y_m": [
+    0.0,
+    0.01,
+    -0.01
+  ],
+  "source": "D:\\\u7814\u4e8c\u6587\u4ef6\\\u5f00\u9898\u51c6\u5907\\CFD_ANCF_VIV\\cases\\openfoam\\single_slice_ancf_fsi",
+  "purpose": "prove geometry -> field -> force sensitivity after pointDisplacement repair"
+}

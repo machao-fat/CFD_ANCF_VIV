@@ -1,0 +1,76 @@
+/*--------------------------------*- C++ -*----------------------------------*\
+  =========                 |
+  \\      /  Solution      | OpenFOAM: The CFD Toolbox
+\*---------------------------------------------------------------------------*/
+FoamFile
+{
+    format      ascii;
+    class       dictionary;
+    location    "system";
+    object      fvSolution;
+}
+
+solvers
+{
+    p
+    {
+        solver          GAMG;
+        smoother        DIC;
+        cacheAgglomeration no;
+        tolerance       1e-8;
+        relTol          0.01;
+    }
+    pFinal
+    {
+        $p;
+        relTol          0;
+    }
+    pcorr
+    {
+        solver          GAMG;
+        smoother        GaussSeidel;
+        tolerance       1e-2;
+        relTol          0;
+    }
+    pcorrFinal
+    {
+        $pcorr;
+        relTol          0;
+    }
+    U
+    {
+        solver          PBiCGStab;
+        preconditioner  DILU;
+        tolerance       1e-8;
+        relTol          0.1;
+    }
+    UFinal
+    {
+        $U;
+        relTol          0;
+    }
+    cellMotionUx
+    {
+        solver          PCG;
+        preconditioner  DIC;
+        tolerance       1e-8;
+        relTol          0;
+    }
+    cellDisplacementFinal
+    {
+        $cellMotionUx;
+        relTol 0;
+    }
+}
+
+PIMPLE
+{
+    correctPhi          yes;
+    correctMeshPhi      yes;
+    nOuterCorrectors    1;
+    nCorrectors         2;
+    nNonOrthogonalCorrectors 0;
+}
+
+relaxationFactors
+{}

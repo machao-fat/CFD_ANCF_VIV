@@ -1,0 +1,569 @@
+/*---------------------------------------------------------------------------*\
+  =========                 |
+  \\      /  F ield         | OpenFOAM: The Open Source CFD Toolbox
+   \\    /   O peration     | Website:  https://openfoam.org
+    \\  /    A nd           | Version:  10
+     \\/     M anipulation  |
+\*---------------------------------------------------------------------------*/
+Build  : 10-c4cf895ad8fa
+Exec   : pimpleFoam
+Date   : Sep 05 2026
+Time   : 23:44:53
+Host   : "DESKTOP-NR4V0NP"
+PID    : 1056
+I/O    : uncollated
+Case   : /mnt/d/研二文件/开题准备/CFD_ANCF_VIV/runtime/slice_force_sensitivity_controlled_v6/cases/offset_0000
+nProcs : 1
+sigFpe : Enabling floating point exception trapping (FOAM_SIGFPE).
+fileModificationChecking : Monitoring run-time modified files using timeStampMaster (fileModificationSkew 10)
+allowSystemOperations : Allowing user-supplied system call operations
+
+// * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
+Create time
+
+Create mesh for time = 0
+
+Selecting fvMeshMover motionSolver
+Selecting motion solver: displacementLaplacian
+Selecting motion diffusion: uniform
+
+PIMPLE: No convergence criteria found
+
+
+PIMPLE: Operating solver in transient mode with 1 outer corrector
+PIMPLE: Operating solver in PISO mode
+
+
+Reading field p
+
+Reading field U
+
+Reading/calculating face flux field phi
+
+Selecting viscosity model constant
+Selecting turbulence model type laminar
+Selecting laminar stress model Stokes
+No MRF models present
+
+No fvModels present
+No fvConstraints present
+Constructing face velocity Uf
+
+Courant Number mean: 0.0301369653331 max: 0.207636934058
+
+Starting time loop
+
+forces cylinderForces:
+    Not including porosity effects
+forces cylinderForces write:
+    sum of forces:
+        pressure : (0 0 0)
+        viscous  : (1683.7831098 3.46413346172 1.47066258359e-18)
+        porous   : (0 0 0)
+    sum of moments:
+        pressure : (0 0 0)
+        viscous  : (-1.73206673086 841.891554902 -4.3749934308)
+        porous   : (0 0 0)
+
+Courant Number mean: 0.0301369653331 max: 0.207636934058
+Time = 0.005s
+
+DICPCG:  Solving for cellDisplacementx, Initial residual = 0, Final residual = 0, No Iterations 0
+DICPCG:  Solving for cellDisplacementy, Initial residual = 0, Final residual = 0, No Iterations 0
+GAMG:  Solving for pcorr, Initial residual = 1, Final residual = 0.00618185742872, No Iterations 10
+time step continuity errors : sum local = 6.87470514763e-08, global = -2.7815174415e-09, cumulative = -2.7815174415e-09
+DILUPBiCGStab:  Solving for Ux, Initial residual = 1, Final residual = 2.67230370091e-09, No Iterations 3
+DILUPBiCGStab:  Solving for Uy, Initial residual = 1, Final residual = 8.33034878711e-09, No Iterations 3
+GAMG:  Solving for p, Initial residual = 1, Final residual = 0.00458274044426, No Iterations 9
+time step continuity errors : sum local = 5.12186576212e-08, global = -4.72222834845e-09, cumulative = -7.50374578995e-09
+GAMG:  Solving for p, Initial residual = 0.369382331443, Final residual = 5.54617402435e-09, No Iterations 21
+time step continuity errors : sum local = 5.59379706331e-13, global = 4.83923230384e-14, cumulative = -7.50369739763e-09
+ExecutionTime = 0.208443 s  ClockTime = 1 s
+
+forces cylinderForces write:
+    sum of forces:
+        pressure : (153522.562107 -193.340797394 -1.05387442713e-15)
+        viscous  : (1789.98178545 5.68876365397 -1.72572372376e-15)
+        porous   : (0 0 0)
+    sum of moments:
+        pressure : (96.670398697 76761.2810534 -4.96931088101e-06)
+        viscous  : (-2.84438182699 894.990892726 -12.4667137607)
+        porous   : (0 0 0)
+
+Courant Number mean: 0.0301959613271 max: 0.341552831266
+Time = 0.01s
+
+DICPCG:  Solving for cellDisplacementx, Initial residual = 0, Final residual = 0, No Iterations 0
+DICPCG:  Solving for cellDisplacementy, Initial residual = 0, Final residual = 0, No Iterations 0
+GAMG:  Solving for pcorr, Initial residual = 1, Final residual = 0.00740344844843, No Iterations 4
+time step continuity errors : sum local = 9.54804251825e-12, global = -6.56776679113e-13, cumulative = -7.50435417431e-09
+DILUPBiCGStab:  Solving for Ux, Initial residual = 0.333585665167, Final residual = 1.76806074048e-09, No Iterations 2
+DILUPBiCGStab:  Solving for Uy, Initial residual = 0.330626443392, Final residual = 2.351640467e-09, No Iterations 2
+GAMG:  Solving for p, Initial residual = 0.137980614238, Final residual = 0.000965387290239, No Iterations 8
+time step continuity errors : sum local = 1.14699509346e-07, global = 1.11097933797e-08, cumulative = 3.60543920537e-09
+GAMG:  Solving for p, Initial residual = 0.894619129225, Final residual = 8.85992412969e-09, No Iterations 23
+time step continuity errors : sum local = 3.63661825072e-13, global = 3.05512029601e-14, cumulative = 3.60546975657e-09
+ExecutionTime = 0.318783 s  ClockTime = 1 s
+
+forces cylinderForces write:
+    sum of forces:
+        pressure : (1838.35193385 158.268521782 1.03393311774e-16)
+        viscous  : (1619.233728 0.552323109425 -2.5560941574e-17)
+        porous   : (0 0 0)
+    sum of moments:
+        pressure : (-79.1342608911 919.175966926 1.72969710999e-07)
+        viscous  : (-0.276161554712 809.616864002 -10.2947195693)
+        porous   : (0 0 0)
+
+Courant Number mean: 0.0301964736235 max: 0.34628746607
+Time = 0.015s
+
+DICPCG:  Solving for cellDisplacementx, Initial residual = 0, Final residual = 0, No Iterations 0
+DICPCG:  Solving for cellDisplacementy, Initial residual = 0, Final residual = 0, No Iterations 0
+GAMG:  Solving for pcorr, Initial residual = 1, Final residual = 0.00934533509986, No Iterations 3
+time step continuity errors : sum local = 4.80366027801e-12, global = -3.65348106907e-13, cumulative = 3.60510440846e-09
+DILUPBiCGStab:  Solving for Ux, Initial residual = 0.00742321857869, Final residual = 9.81884396114e-09, No Iterations 2
+DILUPBiCGStab:  Solving for Uy, Initial residual = 0.00612244023009, Final residual = 6.47731921584e-09, No Iterations 2
+GAMG:  Solving for p, Initial residual = 0.612650104171, Final residual = 0.0046016265127, No Iterations 3
+time step continuity errors : sum local = 4.83355376e-08, global = -5.91155421038e-10, cumulative = 3.01394898742e-09
+GAMG:  Solving for p, Initial residual = 0.125171458442, Final residual = 7.01414897151e-09, No Iterations 20
+time step continuity errors : sum local = 3.91856101559e-14, global = -3.27864583643e-15, cumulative = 3.01394570878e-09
+ExecutionTime = 0.425093 s  ClockTime = 1 s
+
+forces cylinderForces write:
+    sum of forces:
+        pressure : (1722.61517824 -12.0302450656 4.88196638666e-17)
+        viscous  : (1480.5503415 -1.03878158126 -2.35824030762e-17)
+        porous   : (0 0 0)
+    sum of moments:
+        pressure : (6.01512253282 861.307589119 -4.79323574387e-07)
+        viscous  : (0.51939079063 740.275170752 -9.26234669642)
+        porous   : (0 0 0)
+
+Courant Number mean: 0.0301960187347 max: 0.3463107695
+Time = 0.02s
+
+DICPCG:  Solving for cellDisplacementx, Initial residual = 0, Final residual = 0, No Iterations 0
+DICPCG:  Solving for cellDisplacementy, Initial residual = 0, Final residual = 0, No Iterations 0
+GAMG:  Solving for pcorr, Initial residual = 1, Final residual = 0.00974049074294, No Iterations 3
+time step continuity errors : sum local = 1.63669435521e-12, global = -1.21221293522e-13, cumulative = 3.01382448748e-09
+DILUPBiCGStab:  Solving for Ux, Initial residual = 0.0063704619993, Final residual = 6.1081454549e-09, No Iterations 2
+DILUPBiCGStab:  Solving for Uy, Initial residual = 0.00513883296488, Final residual = 1.99691482047e-09, No Iterations 2
+GAMG:  Solving for p, Initial residual = 0.157627210121, Final residual = 0.0010087302646, No Iterations 3
+time step continuity errors : sum local = 5.16260190434e-09, global = 1.47749859768e-11, cumulative = 3.02859947346e-09
+GAMG:  Solving for p, Initial residual = 0.0182589927456, Final residual = 6.73298649031e-09, No Iterations 17
+time step continuity errors : sum local = 3.068224374e-14, global = 2.58115381417e-15, cumulative = 3.02860205462e-09
+ExecutionTime = 0.532228 s  ClockTime = 2 s
+
+forces cylinderForces write:
+    sum of forces:
+        pressure : (1421.57906757 0.855780038219 6.42523566625e-17)
+        viscous  : (1366.99331277 -1.56301192759 -2.03594528275e-17)
+        porous   : (0 0 0)
+    sum of moments:
+        pressure : (-0.427890019109 710.789533783 -4.01803348149e-07)
+        viscous  : (0.781505963793 683.496656384 -8.72513941516)
+        porous   : (0 0 0)
+
+Courant Number mean: 0.0301956009959 max: 0.346568277527
+Time = 0.025s
+
+DICPCG:  Solving for cellDisplacementx, Initial residual = 0, Final residual = 0, No Iterations 0
+DICPCG:  Solving for cellDisplacementy, Initial residual = 0, Final residual = 0, No Iterations 0
+GAMG:  Solving for pcorr, Initial residual = 1, Final residual = 0.00972513312673, No Iterations 3
+time step continuity errors : sum local = 6.12741317575e-13, global = -2.53211015879e-14, cumulative = 3.02857673351e-09
+DILUPBiCGStab:  Solving for Ux, Initial residual = 0.00540927447857, Final residual = 4.79487570217e-09, No Iterations 2
+DILUPBiCGStab:  Solving for Uy, Initial residual = 0.00438873662146, Final residual = 1.64437235578e-09, No Iterations 2
+GAMG:  Solving for p, Initial residual = 0.112335051925, Final residual = 0.0011168820373, No Iterations 2
+time step continuity errors : sum local = 4.69929264658e-09, global = -4.11292149787e-12, cumulative = 3.02446381202e-09
+GAMG:  Solving for p, Initial residual = 0.0111599478895, Final residual = 5.59493286761e-09, No Iterations 17
+time step continuity errors : sum local = 2.16717656122e-14, global = 1.83588040961e-15, cumulative = 3.0244656479e-09
+ExecutionTime = 0.634564 s  ClockTime = 2 s
+
+forces cylinderForces write:
+    sum of forces:
+        pressure : (1260.0480286 -5.35616639219 7.3487065817e-17)
+        viscous  : (1271.98370116 -1.64320299124 -2.34613282769e-17)
+        porous   : (0 0 0)
+    sum of moments:
+        pressure : (2.6780831961 630.024014302 -3.19567804302e-07)
+        viscous  : (0.82160149562 635.991850582 -7.77656977505)
+        porous   : (0 0 0)
+
+Courant Number mean: 0.0301951987929 max: 0.346886594502
+Time = 0.03s
+
+DICPCG:  Solving for cellDisplacementx, Initial residual = 0, Final residual = 0, No Iterations 0
+DICPCG:  Solving for cellDisplacementy, Initial residual = 0, Final residual = 0, No Iterations 0
+GAMG:  Solving for pcorr, Initial residual = 1, Final residual = 0.00582642794625, No Iterations 4
+time step continuity errors : sum local = 1.67335443819e-13, global = 1.04234722331e-14, cumulative = 3.02447607137e-09
+DILUPBiCGStab:  Solving for Ux, Initial residual = 0.00483318861731, Final residual = 3.93978828738e-09, No Iterations 2
+DILUPBiCGStab:  Solving for Uy, Initial residual = 0.00398969241804, Final residual = 1.47854365178e-09, No Iterations 2
+GAMG:  Solving for p, Initial residual = 0.0855117870935, Final residual = 0.00047349870395, No Iterations 3
+time step continuity errors : sum local = 1.74460537561e-09, global = -8.27122403304e-13, cumulative = 3.02364894897e-09
+GAMG:  Solving for p, Initial residual = 0.00889651367937, Final residual = 6.52167957467e-09, No Iterations 16
+time step continuity errors : sum local = 2.27755047893e-14, global = 1.92654186354e-15, cumulative = 3.02365087551e-09
+ExecutionTime = 0.735185 s  ClockTime = 2 s
+
+forces cylinderForces write:
+    sum of forces:
+        pressure : (1145.89497337 -9.53204631181 7.96833693356e-17)
+        viscous  : (1191.91049252 -1.67004544315 -2.56815384458e-17)
+        porous   : (0 0 0)
+    sum of moments:
+        pressure : (4.7660231559 572.947486685 -2.82228036608e-07)
+        viscous  : (0.835022721573 595.955246261 -6.80948975269)
+        porous   : (0 0 0)
+
+Courant Number mean: 0.0301948113277 max: 0.347250902721
+Time = 0.035s
+
+DICPCG:  Solving for cellDisplacementx, Initial residual = 0, Final residual = 0, No Iterations 0
+DICPCG:  Solving for cellDisplacementy, Initial residual = 0, Final residual = 0, No Iterations 0
+GAMG:  Solving for pcorr, Initial residual = 1, Final residual = 0.00585582277641, No Iterations 4
+time step continuity errors : sum local = 1.25715973936e-13, global = 1.05098443943e-14, cumulative = 3.02366138535e-09
+DILUPBiCGStab:  Solving for Ux, Initial residual = 0.00439472273492, Final residual = 3.21748937304e-09, No Iterations 2
+DILUPBiCGStab:  Solving for Uy, Initial residual = 0.00368726481407, Final residual = 1.32022239337e-09, No Iterations 2
+GAMG:  Solving for p, Initial residual = 0.0663980680779, Final residual = 0.000436504673975, No Iterations 3
+time step continuity errors : sum local = 1.47578046354e-09, global = -8.07108794438e-13, cumulative = 3.02285427656e-09
+GAMG:  Solving for p, Initial residual = 0.00720106225518, Final residual = 5.30097991768e-09, No Iterations 16
+time step continuity errors : sum local = 1.73162493897e-14, global = 1.45998850597e-15, cumulative = 3.02285573655e-09
+ExecutionTime = 0.835577 s  ClockTime = 3 s
+
+forces cylinderForces write:
+    sum of forces:
+        pressure : (1055.12174287 -11.3194164323 8.44335009326e-17)
+        viscous  : (1123.482122 -2.13270165695 -3.02406902628e-17)
+        porous   : (0 0 0)
+    sum of moments:
+        pressure : (5.65970821615 527.560871434 -2.60654309581e-07)
+        viscous  : (1.06635082848 561.741061002 -5.77516854561)
+        porous   : (0 0 0)
+
+Courant Number mean: 0.0301944394079 max: 0.347617046082
+Time = 0.04s
+
+DICPCG:  Solving for cellDisplacementx, Initial residual = 0, Final residual = 0, No Iterations 0
+DICPCG:  Solving for cellDisplacementy, Initial residual = 0, Final residual = 0, No Iterations 0
+GAMG:  Solving for pcorr, Initial residual = 1, Final residual = 0.00593183910908, No Iterations 4
+time step continuity errors : sum local = 1.14886843324e-13, global = 1.04217269866e-14, cumulative = 3.02286615827e-09
+DILUPBiCGStab:  Solving for Ux, Initial residual = 0.00403387521404, Final residual = 2.71067008617e-09, No Iterations 2
+DILUPBiCGStab:  Solving for Uy, Initial residual = 0.00343591623395, Final residual = 1.18331365351e-09, No Iterations 2
+GAMG:  Solving for p, Initial residual = 0.0552749024331, Final residual = 0.000376369005809, No Iterations 3
+time step continuity errors : sum local = 1.19887176613e-09, global = 1.47386076181e-13, cumulative = 3.02301354435e-09
+GAMG:  Solving for p, Initial residual = 0.00634853057576, Final residual = 9.69629518509e-09, No Iterations 15
+time step continuity errors : sum local = 3.0086431022e-14, global = 2.53935544094e-15, cumulative = 3.0230160837e-09
+ExecutionTime = 0.93288 s  ClockTime = 3 s
+
+forces cylinderForces write:
+    sum of forces:
+        pressure : (982.46513637 -14.7308295621 8.77034755353e-17)
+        viscous  : (1065.06459431 -2.45588290387 -3.36368568369e-17)
+        porous   : (0 0 0)
+    sum of moments:
+        pressure : (7.36541478105 491.232568185 -2.1835684022e-07)
+        viscous  : (1.22794145193 532.532297153 -4.98345386537)
+        porous   : (0 0 0)
+
+Courant Number mean: 0.0301940797427 max: 0.348059823311
+Time = 0.045s
+
+DICPCG:  Solving for cellDisplacementx, Initial residual = 0, Final residual = 0, No Iterations 0
+DICPCG:  Solving for cellDisplacementy, Initial residual = 0, Final residual = 0, No Iterations 0
+GAMG:  Solving for pcorr, Initial residual = 1, Final residual = 0.00598023962475, No Iterations 4
+time step continuity errors : sum local = 1.10770094673e-13, global = 1.15394223573e-14, cumulative = 3.02302762313e-09
+DILUPBiCGStab:  Solving for Ux, Initial residual = 0.00373689691423, Final residual = 2.3373471885e-09, No Iterations 2
+DILUPBiCGStab:  Solving for Uy, Initial residual = 0.00323166224754, Final residual = 1.06966403701e-09, No Iterations 2
+GAMG:  Solving for p, Initial residual = 0.0467159429032, Final residual = 0.000340123700807, No Iterations 3
+time step continuity errors : sum local = 1.03509016747e-09, global = 8.9965400191e-13, cumulative = 3.02392727713e-09
+GAMG:  Solving for p, Initial residual = 0.00558197875646, Final residual = 8.6476838859e-09, No Iterations 15
+time step continuity errors : sum local = 2.57977884443e-14, global = 2.1731443031e-15, cumulative = 3.02392945027e-09
+ExecutionTime = 1.029825 s  ClockTime = 3 s
+
+forces cylinderForces write:
+    sum of forces:
+        pressure : (923.124863567 -16.2690073115 8.94522939679e-17)
+        viscous  : (1014.98807445 -2.7812399719 -3.47874983524e-17)
+        porous   : (0 0 0)
+    sum of moments:
+        pressure : (8.13450365576 461.562431784 -1.50024441536e-07)
+        viscous  : (1.39061998595 507.494037224 -4.13897894272)
+        porous   : (0 0 0)
+
+Courant Number mean: 0.030193729624 max: 0.348517729966
+Time = 0.05s
+
+DICPCG:  Solving for cellDisplacementx, Initial residual = 0, Final residual = 0, No Iterations 0
+DICPCG:  Solving for cellDisplacementy, Initial residual = 0, Final residual = 0, No Iterations 0
+GAMG:  Solving for pcorr, Initial residual = 1, Final residual = 0.00595039592748, No Iterations 4
+time step continuity errors : sum local = 1.06620857478e-13, global = 1.12640864105e-14, cumulative = 3.02394071436e-09
+DILUPBiCGStab:  Solving for Ux, Initial residual = 0.00348438054551, Final residual = 2.00757687216e-09, No Iterations 2
+DILUPBiCGStab:  Solving for Uy, Initial residual = 0.00306558355082, Final residual = 9.88755986854e-10, No Iterations 2
+GAMG:  Solving for p, Initial residual = 0.0398226466069, Final residual = 0.000334396928383, No Iterations 3
+time step continuity errors : sum local = 9.82060265149e-10, global = 1.63429262373e-12, cumulative = 3.02557500698e-09
+GAMG:  Solving for p, Initial residual = 0.00472355037423, Final residual = 7.59378299034e-09, No Iterations 15
+time step continuity errors : sum local = 2.1950403869e-14, global = 1.84630460848e-15, cumulative = 3.02557685329e-09
+ExecutionTime = 1.130296 s  ClockTime = 4 s
+
+forces cylinderForces write:
+    sum of forces:
+        pressure : (873.032046907 -16.4748110077 9.05348433297e-17)
+        viscous  : (971.308560879 -3.03925968368 -3.54077330183e-17)
+        porous   : (0 0 0)
+    sum of moments:
+        pressure : (8.23740550387 436.516023453 -8.99484275674e-08)
+        viscous  : (1.51962984184 485.65428044 -3.36591376042)
+        porous   : (0 0 0)
+
+Courant Number mean: 0.0301933888736 max: 0.348978521119
+Time = 0.055s
+
+DICPCG:  Solving for cellDisplacementx, Initial residual = 0, Final residual = 0, No Iterations 0
+DICPCG:  Solving for cellDisplacementy, Initial residual = 0, Final residual = 0, No Iterations 0
+GAMG:  Solving for pcorr, Initial residual = 1, Final residual = 0.00592476524342, No Iterations 4
+time step continuity errors : sum local = 1.02868242916e-13, global = 1.09747391948e-14, cumulative = 3.02558782803e-09
+DILUPBiCGStab:  Solving for Ux, Initial residual = 0.00326637921561, Final residual = 1.68916291796e-09, No Iterations 2
+DILUPBiCGStab:  Solving for Uy, Initial residual = 0.00292249764596, Final residual = 9.17847063852e-10, No Iterations 2
+GAMG:  Solving for p, Initial residual = 0.0355092034652, Final residual = 0.000315687095244, No Iterations 3
+time step continuity errors : sum local = 9.00186081118e-10, global = 1.83380531376e-12, cumulative = 3.02742163334e-09
+GAMG:  Solving for p, Initial residual = 0.00419660512772, Final residual = 6.66357978755e-09, No Iterations 15
+time step continuity errors : sum local = 1.87456723539e-14, global = 1.57575893007e-15, cumulative = 3.0274232091e-09
+ExecutionTime = 1.229881 s  ClockTime = 4 s
+
+forces cylinderForces write:
+    sum of forces:
+        pressure : (830.820886506 -16.3507239059 9.13635164134e-17)
+        viscous  : (932.808418554 -3.09441772579 -3.5307174734e-17)
+        porous   : (0 0 0)
+    sum of moments:
+        pressure : (8.17536195296 415.410443253 -8.72086747261e-09)
+        viscous  : (1.54720886289 466.404209277 -2.70577240031)
+        porous   : (0 0 0)
+
+Courant Number mean: 0.0301930559628 max: 0.349353281683
+Time = 0.06s
+
+DICPCG:  Solving for cellDisplacementx, Initial residual = 0, Final residual = 0, No Iterations 0
+DICPCG:  Solving for cellDisplacementy, Initial residual = 0, Final residual = 0, No Iterations 0
+GAMG:  Solving for pcorr, Initial residual = 1, Final residual = 0.00590741916297, No Iterations 4
+time step continuity errors : sum local = 9.93994559201e-14, global = 1.07137742749e-14, cumulative = 3.02743392287e-09
+DILUPBiCGStab:  Solving for Ux, Initial residual = 0.00307724011491, Final residual = 1.45986670745e-09, No Iterations 2
+DILUPBiCGStab:  Solving for Uy, Initial residual = 0.0027981630204, Final residual = 8.54407726526e-10, No Iterations 2
+GAMG:  Solving for p, Initial residual = 0.031508912259, Final residual = 0.000292356899283, No Iterations 3
+time step continuity errors : sum local = 8.11919390151e-10, global = 1.80843887173e-12, cumulative = 3.02924236175e-09
+GAMG:  Solving for p, Initial residual = 0.00382838862947, Final residual = 6.01806861936e-09, No Iterations 15
+time step continuity errors : sum local = 1.64994929063e-14, global = 1.38607159503e-15, cumulative = 3.02924374782e-09
+ExecutionTime = 1.328765 s  ClockTime = 4 s
+
+forces cylinderForces write:
+    sum of forces:
+        pressure : (794.737191112 -15.134202579 9.18108048476e-17)
+        viscous  : (898.612681977 -2.76216843994 -3.43423155759e-17)
+        porous   : (0 0 0)
+    sum of moments:
+        pressure : (7.56710128951 397.368595556 8.42244477495e-08)
+        viscous  : (1.38108421997 449.306340988 -2.31385352564)
+        porous   : (0 0 0)
+
+Courant Number mean: 0.0301927298089 max: 0.349634583807
+Time = 0.065s
+
+DICPCG:  Solving for cellDisplacementx, Initial residual = 0, Final residual = 0, No Iterations 0
+DICPCG:  Solving for cellDisplacementy, Initial residual = 0, Final residual = 0, No Iterations 0
+GAMG:  Solving for pcorr, Initial residual = 1, Final residual = 0.00590394930764, No Iterations 4
+time step continuity errors : sum local = 9.62370423633e-14, global = 1.0481858973e-14, cumulative = 3.02925422968e-09
+DILUPBiCGStab:  Solving for Ux, Initial residual = 0.00290952794014, Final residual = 1.3326644487e-09, No Iterations 2
+DILUPBiCGStab:  Solving for Uy, Initial residual = 0.0026866781666, Final residual = 7.93310380083e-10, No Iterations 2
+GAMG:  Solving for p, Initial residual = 0.0270095030459, Final residual = 0.000269722360723, No Iterations 3
+time step continuity errors : sum local = 7.30733620918e-10, global = 1.7595068371e-12, cumulative = 3.03101373651e-09
+GAMG:  Solving for p, Initial residual = 0.00343485960866, Final residual = 5.56018862757e-09, No Iterations 15
+time step continuity errors : sum local = 1.48841152565e-14, global = 1.24992809266e-15, cumulative = 3.03101498644e-09
+ExecutionTime = 1.427791 s  ClockTime = 5 s
+
+forces cylinderForces write:
+    sum of forces:
+        pressure : (763.020249663 -14.0245625579 9.12409256455e-17)
+        viscous  : (868.08464317 -2.34545483996 -3.2776982238e-17)
+        porous   : (0 0 0)
+    sum of moments:
+        pressure : (7.01228127896 381.510124831 2.11459834865e-07)
+        viscous  : (1.17272741998 434.042321585 -1.91936393974)
+        porous   : (0 0 0)
+
+Courant Number mean: 0.0301924101467 max: 0.349844471493
+Time = 0.07s
+
+DICPCG:  Solving for cellDisplacementx, Initial residual = 0, Final residual = 0, No Iterations 0
+DICPCG:  Solving for cellDisplacementy, Initial residual = 0, Final residual = 0, No Iterations 0
+GAMG:  Solving for pcorr, Initial residual = 1, Final residual = 0.00589941650508, No Iterations 4
+time step continuity errors : sum local = 9.33801632303e-14, global = 1.02677761999e-14, cumulative = 3.03102525422e-09
+DILUPBiCGStab:  Solving for Ux, Initial residual = 0.00275979048847, Final residual = 1.24468087643e-09, No Iterations 2
+DILUPBiCGStab:  Solving for Uy, Initial residual = 0.00258784071071, Final residual = 7.3223917482e-10, No Iterations 2
+GAMG:  Solving for p, Initial residual = 0.0247459959554, Final residual = 0.000244375737282, No Iterations 3
+time step continuity errors : sum local = 6.47731268773e-10, global = 1.81308814263e-12, cumulative = 3.03283834236e-09
+GAMG:  Solving for p, Initial residual = 0.00311521115654, Final residual = 5.03309295433e-09, No Iterations 15
+time step continuity errors : sum local = 1.32102261402e-14, global = 1.10867020479e-15, cumulative = 3.03283945103e-09
+ExecutionTime = 1.526989 s  ClockTime = 5 s
+
+forces cylinderForces write:
+    sum of forces:
+        pressure : (735.665331138 -13.9632138482 9.16691709353e-17)
+        viscous  : (840.582841643 -1.84285792234 -3.14626571861e-17)
+        porous   : (0 0 0)
+    sum of moments:
+        pressure : (6.98160692409 367.832665569 2.72898751347e-07)
+        viscous  : (0.921428961171 420.291420822 -1.63857794017)
+        porous   : (0 0 0)
+
+Courant Number mean: 0.0301920966775 max: 0.349980590823
+Time = 0.075s
+
+DICPCG:  Solving for cellDisplacementx, Initial residual = 0, Final residual = 0, No Iterations 0
+DICPCG:  Solving for cellDisplacementy, Initial residual = 0, Final residual = 0, No Iterations 0
+GAMG:  Solving for pcorr, Initial residual = 1, Final residual = 0.00588850724524, No Iterations 4
+time step continuity errors : sum local = 9.07695705471e-14, global = 1.00303677854e-14, cumulative = 3.0328494814e-09
+DILUPBiCGStab:  Solving for Ux, Initial residual = 0.00262581185948, Final residual = 1.15902657686e-09, No Iterations 2
+DILUPBiCGStab:  Solving for Uy, Initial residual = 0.00249907704088, Final residual = 6.82274057737e-10, No Iterations 2
+GAMG:  Solving for p, Initial residual = 0.0226879747825, Final residual = 0.000224636876874, No Iterations 3
+time step continuity errors : sum local = 5.84448060923e-10, global = 1.7922037418e-12, cumulative = 3.03464168514e-09
+GAMG:  Solving for p, Initial residual = 0.00288488500301, Final residual = 9.90528356637e-09, No Iterations 14
+time step continuity errors : sum local = 2.55468365644e-14, global = 2.14711890731e-15, cumulative = 3.03464383226e-09
+ExecutionTime = 1.628323 s  ClockTime = 5 s
+
+forces cylinderForces write:
+    sum of forces:
+        pressure : (711.644275265 -13.2826570545 9.24958432488e-17)
+        viscous  : (815.576587384 -1.31251085871 -3.01552193728e-17)
+        porous   : (0 0 0)
+    sum of moments:
+        pressure : (6.64132852725 355.822137633 3.06419918106e-07)
+        viscous  : (0.656255429357 407.788293692 -1.40931873456)
+        porous   : (0 0 0)
+
+Courant Number mean: 0.0301917890699 max: 0.350043157094
+Time = 0.08s
+
+DICPCG:  Solving for cellDisplacementx, Initial residual = 0, Final residual = 0, No Iterations 0
+DICPCG:  Solving for cellDisplacementy, Initial residual = 0, Final residual = 0, No Iterations 0
+GAMG:  Solving for pcorr, Initial residual = 1, Final residual = 0.00591386515492, No Iterations 4
+time step continuity errors : sum local = 8.9242684945e-14, global = 1.06945281356e-14, cumulative = 3.03465452679e-09
+DILUPBiCGStab:  Solving for Ux, Initial residual = 0.00250581623017, Final residual = 1.04192288588e-09, No Iterations 2
+DILUPBiCGStab:  Solving for Uy, Initial residual = 0.00241791942782, Final residual = 6.34491217553e-10, No Iterations 2
+GAMG:  Solving for p, Initial residual = 0.0208752277244, Final residual = 0.000113059167483, No Iterations 4
+time step continuity errors : sum local = 2.89277114792e-10, global = 3.56301548506e-12, cumulative = 3.03821754227e-09
+GAMG:  Solving for p, Initial residual = 0.00285213281596, Final residual = 8.53915746149e-09, No Iterations 14
+time step continuity errors : sum local = 2.16696320292e-14, global = 1.81421927275e-15, cumulative = 3.03821935649e-09
+ExecutionTime = 1.727178 s  ClockTime = 6 s
+
+forces cylinderForces write:
+    sum of forces:
+        pressure : (690.429780973 -12.6535403929 9.26255081447e-17)
+        viscous  : (792.63082537 -0.773913659236 -2.8941177299e-17)
+        porous   : (0 0 0)
+    sum of moments:
+        pressure : (6.32677019643 345.214890487 3.20237052695e-07)
+        viscous  : (0.386956829618 396.315412685 -1.21373723375)
+        porous   : (0 0 0)
+
+Courant Number mean: 0.0301914874424 max: 0.350033853376
+Time = 0.085s
+
+DICPCG:  Solving for cellDisplacementx, Initial residual = 0, Final residual = 0, No Iterations 0
+DICPCG:  Solving for cellDisplacementy, Initial residual = 0, Final residual = 0, No Iterations 0
+GAMG:  Solving for pcorr, Initial residual = 1, Final residual = 0.00587688571234, No Iterations 4
+time step continuity errors : sum local = 8.66720340946e-14, global = 1.03539527476e-14, cumulative = 3.03822971044e-09
+DILUPBiCGStab:  Solving for Ux, Initial residual = 0.00239692161417, Final residual = 9.59156948097e-10, No Iterations 2
+DILUPBiCGStab:  Solving for Uy, Initial residual = 0.00234493853819, Final residual = 5.67606472899e-10, No Iterations 2
+GAMG:  Solving for p, Initial residual = 0.0192905482679, Final residual = 0.000106748168047, No Iterations 4
+time step continuity errors : sum local = 2.68913806019e-10, global = 3.19206382008e-12, cumulative = 3.04142177426e-09
+GAMG:  Solving for p, Initial residual = 0.0027123472479, Final residual = 8.02602136598e-09, No Iterations 14
+time step continuity errors : sum local = 2.00598449185e-14, global = 1.67951545804e-15, cumulative = 3.04142345378e-09
+ExecutionTime = 1.825628 s  ClockTime = 6 s
+
+forces cylinderForces write:
+    sum of forces:
+        pressure : (671.167452052 -11.9968945238 9.26741297276e-17)
+        viscous  : (771.468471005 -0.281000742194 -2.77005079721e-17)
+        porous   : (0 0 0)
+    sum of moments:
+        pressure : (5.99844726188 335.583726026 3.14436010979e-07)
+        viscous  : (0.140500371097 385.734235502 -1.02918444131)
+        porous   : (0 0 0)
+
+Courant Number mean: 0.0301911927237 max: 0.349959848639
+Time = 0.09s
+
+DICPCG:  Solving for cellDisplacementx, Initial residual = 0, Final residual = 0, No Iterations 0
+DICPCG:  Solving for cellDisplacementy, Initial residual = 0, Final residual = 0, No Iterations 0
+GAMG:  Solving for pcorr, Initial residual = 1, Final residual = 0.00585509924617, No Iterations 4
+time step continuity errors : sum local = 8.44664632934e-14, global = 1.01723966758e-14, cumulative = 3.04143362618e-09
+DILUPBiCGStab:  Solving for Ux, Initial residual = 0.00229622776017, Final residual = 8.94545456666e-10, No Iterations 2
+DILUPBiCGStab:  Solving for Uy, Initial residual = 0.00227756493339, Final residual = 5.09554014646e-10, No Iterations 2
+GAMG:  Solving for p, Initial residual = 0.0179953845521, Final residual = 9.90738254154e-05, No Iterations 4
+time step continuity errors : sum local = 2.45985413114e-10, global = 2.92837502987e-12, cumulative = 3.04436200121e-09
+GAMG:  Solving for p, Initial residual = 0.00258339846529, Final residual = 7.53799017875e-09, No Iterations 14
+time step continuity errors : sum local = 1.85815620019e-14, global = 1.55509979771e-15, cumulative = 3.04436355631e-09
+ExecutionTime = 1.924814 s  ClockTime = 6 s
+
+forces cylinderForces write:
+    sum of forces:
+        pressure : (653.920766703 -11.6089081966 9.26423679023e-17)
+        viscous  : (751.811398386 0.182424479218 -2.65526957953e-17)
+        porous   : (0 0 0)
+    sum of moments:
+        pressure : (5.80445409829 326.960383352 3.04437358031e-07)
+        viscous  : (-0.0912122396092 375.905699193 -0.873229651318)
+        porous   : (0 0 0)
+
+Courant Number mean: 0.0301909039293 max: 0.349827563283
+Time = 0.095s
+
+DICPCG:  Solving for cellDisplacementx, Initial residual = 0, Final residual = 0, No Iterations 0
+DICPCG:  Solving for cellDisplacementy, Initial residual = 0, Final residual = 0, No Iterations 0
+GAMG:  Solving for pcorr, Initial residual = 1, Final residual = 0.00584690995582, No Iterations 4
+time step continuity errors : sum local = 8.24513919765e-14, global = 1.00096889255e-14, cumulative = 3.04437356599e-09
+DILUPBiCGStab:  Solving for Ux, Initial residual = 0.0022037897511, Final residual = 8.35717508982e-10, No Iterations 2
+DILUPBiCGStab:  Solving for Uy, Initial residual = 0.00221668127118, Final residual = 4.67714532302e-10, No Iterations 2
+GAMG:  Solving for p, Initial residual = 0.0170215653839, Final residual = 9.4007967362e-05, No Iterations 4
+time step continuity errors : sum local = 2.30280233131e-10, global = 2.77601149227e-12, cumulative = 3.04714957749e-09
+GAMG:  Solving for p, Initial residual = 0.00247090765663, Final residual = 7.16330134075e-09, No Iterations 14
+time step continuity errors : sum local = 1.7426902354e-14, global = 1.45827605257e-15, cumulative = 3.04715103576e-09
+ExecutionTime = 2.02465 s  ClockTime = 7 s
+
+forces cylinderForces write:
+    sum of forces:
+        pressure : (638.078585064 -11.5377782226 9.28393223029e-17)
+        viscous  : (733.466190388 0.622559114155 -2.5540688923e-17)
+        porous   : (0 0 0)
+    sum of moments:
+        pressure : (5.76888911128 319.039292532 2.85278252125e-07)
+        viscous  : (-0.311279557078 366.733095194 -0.735394193105)
+        porous   : (0 0 0)
+
+Courant Number mean: 0.0301906195914 max: 0.349641775967
+Time = 0.1s
+
+DICPCG:  Solving for cellDisplacementx, Initial residual = 0, Final residual = 0, No Iterations 0
+DICPCG:  Solving for cellDisplacementy, Initial residual = 0, Final residual = 0, No Iterations 0
+GAMG:  Solving for pcorr, Initial residual = 1, Final residual = 0.00584757691756, No Iterations 4
+time step continuity errors : sum local = 8.06642342716e-14, global = 9.88859373338e-15, cumulative = 3.04716092436e-09
+DILUPBiCGStab:  Solving for Ux, Initial residual = 0.00211812578051, Final residual = 7.7626096777e-10, No Iterations 2
+DILUPBiCGStab:  Solving for Uy, Initial residual = 0.00216055879797, Final residual = 4.32931470885e-10, No Iterations 2
+GAMG:  Solving for p, Initial residual = 0.0160630995787, Final residual = 8.83291847225e-05, No Iterations 4
+time step continuity errors : sum local = 2.13593391443e-10, global = 2.74193700811e-12, cumulative = 3.04990286136e-09
+GAMG:  Solving for p, Initial residual = 0.00233067895966, Final residual = 6.80132165788e-09, No Iterations 14
+time step continuity errors : sum local = 1.63384540394e-14, global = 1.36635398593e-15, cumulative = 3.04990422772e-09
+ExecutionTime = 2.12605 s  ClockTime = 7 s
+
+forces cylinderForces write:
+    sum of forces:
+        pressure : (623.799129101 -10.9388627647 9.31161462435e-17)
+        viscous  : (716.280828642 0.974954753896 -2.48080843287e-17)
+        porous   : (0 0 0)
+    sum of moments:
+        pressure : (5.46943138234 311.899564551 2.67661980004e-07)
+        viscous  : (-0.487477376948 358.140414321 -0.616537998639)
+        porous   : (0 0 0)
+
+End
+

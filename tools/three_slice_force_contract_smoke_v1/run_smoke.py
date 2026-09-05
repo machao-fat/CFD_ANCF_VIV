@@ -26,7 +26,7 @@ PYDEPS = ROOT / "runtime/284_precice_single_slice_smoke_real_v1/python_deps"
 
 CONTROL = 'FoamFile { format ascii; class dictionary; object controlDict; }\napplication pimpleFoam;\nlibs ("libpreciceAdapterFunctionObject.so");\nstartFrom startTime; startTime 0; stopAt endTime; endTime 1; deltaT 0.005;\nwriteControl timeStep; writeInterval 1; purgeWrite 0; writeFormat ascii; writePrecision 12; writeCompression off; timeFormat general; timePrecision 12; runTimeModifiable false;\nfunctions { preCICE_Adapter { type preciceAdapterFunctionObject; } cylinderForces { type forces; libs ("libforces.so"); writeControl timeStep; writeInterval 1; log yes; patches (cylinder); rho rhoInf; rhoInf 1000; CofR (0 0 0); } }\n'
 DYNAMIC = 'FoamFile { format ascii; class dictionary; object dynamicMeshDict; }\ndynamicFvMesh dynamicMotionSolverFvMesh; motionSolverLibs ("libfvMotionSolvers.so"); solver displacementLaplacian;\n'
-POINT = 'FoamFile { format ascii; class pointVectorField; location "0"; object pointDisplacement; }\ndimensions [0 1 0 0 0 0 0]; internalField uniform (0 0 0); boundaryField { inlet { type fixedValue; value uniform (0 0 0); } outlet { type fixedValue; value uniform (0 0 0); } lower { type fixedValue; value uniform (0 0 0); } upper { type fixedValue; value uniform (0 0 0); } cylinder { type fixedValue; value uniform (0 0 0); } front { type empty; } back { type empty; } }\n'
+POINT = 'FoamFile { format ascii; class pointVectorField; location "0"; object pointDisplacement; }\ndimensions [0 1 0 0 0 0 0]; internalField uniform (0 0 0); boundaryField { inlet { type fixedValue; value uniform (0 0 0); } outlet { type fixedValue; value uniform (0 0 0); } lower { type symmetryPlane; } upper { type symmetryPlane; } cylinder { type fixedValue; value uniform (0 0 0); } front { type empty; } back { type empty; } }\n'
 CELL = 'FoamFile { format ascii; class volVectorField; location "0"; object cellDisplacement; }\ndimensions [0 1 0 0 0 0 0]; internalField uniform (0 0 0); boundaryField { inlet { type zeroGradient; } outlet { type zeroGradient; } lower { type zeroGradient; } upper { type zeroGradient; } cylinder { type fixedValue; value uniform (0 0 0); } front { type empty; } back { type empty; } }\n'
 
 
@@ -39,6 +39,15 @@ def put(path: Path, text: str) -> None:
     path.parent.mkdir(parents=True, exist_ok=True)
     with path.open("w", encoding="utf-8", newline="\n") as stream:
         stream.write(text)
+
+
+def ensure_cell_displacement_final(case: Path) -> None:
+    """Supply the OpenFOAM 10 mover's final motion-solve control."""
+    path = case / "system" / "fvSolution"
+    text = path.read_text(encoding="utf-8")
+    if "cellDisplacementFinal" not in text:
+        text = text.replace("\n}\n\nPIMPLE\n{", "\n    cellDisplacementFinal\n    {\n        $cellMotionUx;\n        relTol 0;\n    }\n}\n\nPIMPLE\n{")
+        put(path, text)
 
 
 def xml(sid: int) -> str:
@@ -67,10 +76,14 @@ def prepare() -> list[Path]:
     for sid in range(3):
         case = RUNTIME / "cases" / f"slice_{sid:04d}"
         for name in ("0", "constant", "system"): shutil.copytree(SOURCE / name, case / name)
+        ensure_cell_displacement_final(case)
         put(case / "system/controlDict", CONTROL)
         put(case / "constant/dynamicMeshDict", DYNAMIC)
         put(case / "0/pointDisplacement", POINT); put(case / "0/cellDisplacement", CELL)
-        put(case / "system/preciceDict", f'FoamFile {{ format ascii; class dictionary; object preciceDict; }}\npreciceConfig "precice-config.xml"; participant Fluid_{sid:04d}; modules (FSI); FSI {{ solverType incompressible; rho rho [1 -3 0 0 0 0 0] 1000; nu nu [0 2 -1 0 0 0 0] 0.01; namePointDisplacement unused; nameCellDisplacement cellDisplacement; nameForce Force; }} interfaces {{ Interface1 {{ mesh Fluid-Mesh; patches (cylinder); locations faceCenters; readData (Displacement); writeData (Force); }} }}\n')
+        # ``displacementLaplacian`` moves mesh points through the registered
+        # pointDisplacement field.  Keep cellDisplacement for the adapter's
+        # face-centre representation, but never disable its point projection.
+        put(case / "system/preciceDict", f'FoamFile {{ format ascii; class dictionary; object preciceDict; }}\npreciceConfig "precice-config.xml"; participant Fluid_{sid:04d}; modules (FSI); FSI {{ solverType incompressible; rho rho [1 -3 0 0 0 0 0] 1000; nu nu [0 2 -1 0 0 0 0] 0.01; namePointDisplacement pointDisplacement; nameCellDisplacement cellDisplacement; nameForce Force; }} interfaces {{ Interface1 {{ mesh Fluid-Mesh; patches (cylinder); locations faceCenters; readData (Displacement); writeData (Force); }} }}\n')
         put(case / "precice-config.xml", xml(sid)); cases.append(case)
     (RUNTIME / "logs").mkdir(parents=True); (RUNTIME / "precice-sockets").mkdir()
     shutil.copy2(CONTRACT, RUNTIME / CONTRACT.name)
