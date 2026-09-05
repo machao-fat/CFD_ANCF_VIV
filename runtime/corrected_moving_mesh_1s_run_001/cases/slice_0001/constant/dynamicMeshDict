@@ -1,0 +1,2 @@
+FoamFile { format ascii; class dictionary; object dynamicMeshDict; }
+mover { type motionSolver; libs ("libfvMeshMovers.so" "libfvMotionSolvers.so"); motionSolver displacementLaplacian; diffusivity uniform; }

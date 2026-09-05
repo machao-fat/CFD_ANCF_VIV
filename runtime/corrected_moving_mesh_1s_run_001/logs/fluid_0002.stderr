@@ -1,0 +1,13 @@
+
+
+--> FOAM FATAL IO ERROR: 
+inconsistent patch and patchField types for 
+    patch type symmetryPlane and patchField type zeroGradient
+
+file: /mnt/d/研二文件/开题准备/CFD_ANCF_VIV/runtime/corrected_moving_mesh_1s_run_001/cases/slice_0002/0/cellDisplacement/boundaryField/lower from line 2 to line 2.
+
+    From function static Foam::tmp<Foam::fvPatchField<Type> > Foam::fvPatchField<Type>::New(const Foam::fvPatch&, const Foam::DimensionedField<Type, Foam::volMesh>&, const Foam::dictionary&) [with Type = Foam::Vector<double>]
+    in file /home/ubuntu/OpenFOAM/OpenFOAM-10/src/finiteVolume/lnInclude/fvPatchFieldNew.C at line 154.
+
+FOAM exiting
+

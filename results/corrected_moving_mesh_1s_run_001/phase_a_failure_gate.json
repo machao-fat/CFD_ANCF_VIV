@@ -1,0 +1,9 @@
+{
+  "CORRECTED_COUPLED_1S_SMOKE": "FAIL",
+  "phase_b_20s": "NOT_AUTHORIZED",
+  "committed_coupled_windows": 0,
+  "failure_stage": "OpenFOAM field construction before Time = 0.005 s",
+  "unique_minimal_blocker": "cellDisplacement lower/upper zeroGradient patch fields are incompatible with the symmetryPlane mesh patches under the corrected OpenFOAM 10 mover path",
+  "mesh_motion_error_m": null,
+  "physical_metrics": "not_evaluable"
+}

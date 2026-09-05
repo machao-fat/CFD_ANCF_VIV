@@ -1,0 +1,19 @@
+(0) 23:56:04 [impl::ParticipantImpl]:185 in configure: [0mThis is preCICE version 3.4.1
+(0) 23:56:04 [impl::ParticipantImpl]:186 in configure: [0mRevision info: no-info [git failed to run]
+(0) 23:56:04 [impl::ParticipantImpl]:205 in configure: [0mBuild type: Release (without debug log)
+(0) 23:56:04 [impl::ParticipantImpl]:207 in configure: [0mWorking directory "/mnt/d/研二文件/开题准备/CFD_ANCF_VIV"
+(0) 23:56:04 [impl::ParticipantImpl]:211 in configure: [0mConfiguring preCICE with configuration "/mnt/d/研二文件/开题准备/CFD_ANCF_VIV/runtime/corrected_moving_mesh_1s_run_001/cases/slice_0000/precice-config.xml"
+(0) 23:56:04 [impl::ParticipantImpl]:212 in configure: [0mI am participant "Structure_0000"
+(0) 23:56:04 [impl::ParticipantImpl]:185 in configure: [0mThis is preCICE version 3.4.1
+(0) 23:56:04 [impl::ParticipantImpl]:186 in configure: [0mRevision info: no-info [git failed to run]
+(0) 23:56:04 [impl::ParticipantImpl]:205 in configure: [0mBuild type: Release (without debug log)
+(0) 23:56:04 [impl::ParticipantImpl]:207 in configure: [0mWorking directory "/mnt/d/研二文件/开题准备/CFD_ANCF_VIV"
+(0) 23:56:04 [impl::ParticipantImpl]:211 in configure: [0mConfiguring preCICE with configuration "/mnt/d/研二文件/开题准备/CFD_ANCF_VIV/runtime/corrected_moving_mesh_1s_run_001/cases/slice_0001/precice-config.xml"
+(0) 23:56:04 [impl::ParticipantImpl]:212 in configure: [0mI am participant "Structure_0001"
+(0) 23:56:04 [impl::ParticipantImpl]:185 in configure: [0mThis is preCICE version 3.4.1
+(0) 23:56:04 [impl::ParticipantImpl]:186 in configure: [0mRevision info: no-info [git failed to run]
+(0) 23:56:04 [impl::ParticipantImpl]:205 in configure: [0mBuild type: Release (without debug log)
+(0) 23:56:04 [impl::ParticipantImpl]:207 in configure: [0mWorking directory "/mnt/d/研二文件/开题准备/CFD_ANCF_VIV"
+(0) 23:56:04 [impl::ParticipantImpl]:211 in configure: [0mConfiguring preCICE with configuration "/mnt/d/研二文件/开题准备/CFD_ANCF_VIV/runtime/corrected_moving_mesh_1s_run_001/cases/slice_0002/precice-config.xml"
+(0) 23:56:04 [impl::ParticipantImpl]:212 in configure: [0mI am participant "Structure_0002"
+(0) 23:56:04 [impl::ParticipantImpl]:335 in setupCommunication: [0mSetting up primary communication to coupling partner/s
