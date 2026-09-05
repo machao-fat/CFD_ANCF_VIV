@@ -435,7 +435,11 @@ class CppKernelCampaignAdapter:
                                "case_local_bridge_step": bridge,
                                "payload_hash": response.payload_hash.hex(),
                                "return_code": int(response.return_code),
-                               "finite_value_audit": True})
+                               "finite_value_audit": True,
+                               "newton_iterations": int(iterations),
+                               "newton_final_residual": float(residual),
+                               "newton_converged": True,
+                               "newton_converged_semantics": "derived_from_zero_return_code; kernel throws when Newton does not converge"})
         return response, state_out, request_id, transaction_id
 
     def predict(self, step: int, time_s: float, previous_slice_forces: Sequence[Sequence[float]]):
@@ -468,8 +472,11 @@ class CppKernelCampaignAdapter:
         return {"step": int(step), "global_step": int(step), "case_local_bridge_step": bridge,
                 "time_s": float(time_s), "integer_tick": tick, "run_id": self.run_id,
                 "case_id": self.case_id, "request_id": request_id, "transaction_id": transaction_id,
-                "sequence": 2 * bridge - 1, "ack": response.ack,
+                "sequence": 2 * bridge - 1, "transport_sequence": 2 * bridge - 1, "ack": response.ack,
                 "payload_hash": response.payload_hash.hex(), "finite_value_audit": True,
+                "worker_return_code": int(response.return_code), "newton_iterations": int(response.iterations),
+                "newton_final_residual": float(response.residual), "newton_converged": True,
+                "newton_converged_semantics": "derived_from_zero_return_code; kernel throws when Newton does not converge",
                 "predictor": list(motion_state["q"]),
                 "predictor_qdot": list(motion_state["qdot"]),
                 "predictor_qddot": list(motion_state["qddot"]),
@@ -492,6 +499,8 @@ class CppKernelCampaignAdapter:
         audit = {"phase": "correction", "step": int(step), "time_s": float(time_s), "integer_tick": tick,
                  "case_local_bridge_step": bridge, "payload_hash": response.payload_hash.hex(),
                  "return_code": int(response.return_code), "finite_value_audit": True,
+                 "newton_iterations": int(response.iterations), "newton_final_residual": float(response.residual),
+                 "newton_converged": True,
                  "prediction_transport_sequence": 2 * bridge - 1,
                  "correction_transport_sequence": 2 * bridge}
         self.responses.append(audit)
@@ -504,6 +513,9 @@ class CppKernelCampaignAdapter:
                 "transport_sequence": 2 * bridge,
                 "ack": response.ack, "return_code": int(response.return_code),
                 "payload_hash": response.payload_hash.hex(), "finite_value_audit": True,
+                "worker_return_code": int(response.return_code), "newton_iterations": int(response.iterations),
+                "newton_final_residual": float(response.residual), "newton_converged": True,
+                "newton_converged_semantics": "derived_from_zero_return_code; kernel throws when Newton does not converge",
                 "generalized_force": list(response.generalized_force),
                 "checkpoint_token": hashlib.sha256(_canonical(audit)).hexdigest(), "audit": audit}, []
 

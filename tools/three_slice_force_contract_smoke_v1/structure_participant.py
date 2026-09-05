@@ -16,6 +16,7 @@ from coupling.moment_mapping_audit_v1.audit import audit as moment_audit
 from coupling.multi_slice_mapping.mapping import (SliceDefinition, SliceManifest, LoadRecord,
     build_H_for_manifest, map_integrated_slice_forces, motion_from_ancf_state)
 from coupling.three_slice_force_contract_smoke_v1.contract import bounded_midpoint_voronoi, finite_rows
+from coupling.ancf_newton_evidence_v1 import make_record as make_newton_record, validate_records as validate_newton_records
 
 
 def atomic_json(path: Path, value: object) -> None:
@@ -98,7 +99,7 @@ def main() -> int:
     import precice  # type: ignore
     radius = 0.5
     vertices = [(radius * math.cos(2.0 * math.pi * i / args.vertex_count), radius * math.sin(2.0 * math.pi * i / args.vertex_count)) for i in range(args.vertex_count)]
-    participants = []; mesh_ids = []; records: list[dict[str, object]] = []; prior = [(0.0, 0.0, 0.0)] * 3
+    participants = []; mesh_ids = []; records: list[dict[str, object]] = []; newton_records: list[dict[str, object]] = []; prior = [(0.0, 0.0, 0.0)] * 3
     error: str | None = None
     try:
         # ``CppKernelCampaignAdapter.start`` owns the only permissible worker start.
@@ -138,11 +139,24 @@ def main() -> int:
             for record in motion:
                 if max(abs(record.x_m-record.x_ref_m-record.ux_m), abs(record.y_m-record.y_ref_m-record.uy_m), abs(record.z_m-record.z_ref_m-record.uz_m)) > 1e-12:
                     raise RuntimeError("absolute position/reference/displacement identity failed")
+            prediction_newton = make_newton_record(run_id=str(contract["run_id"]), case_id=str(contract["case_id"]),
+                global_step=step, time_s=time_s, integer_tick=int(prediction["integer_tick"]), phase="prediction",
+                transport_sequence=int(prediction["transport_sequence"]), correction_sequence=None, diagnostics=prediction,
+                state={"q": predicted_q, "qdot": predicted_qdot, "qddot": predicted_qddot},
+                max_newton_iterations=int(contract["ANCF"]["max_newton_iterations"]))
+            corrected_state = adapter.state_view()
+            correction_newton = make_newton_record(run_id=str(contract["run_id"]), case_id=str(contract["case_id"]),
+                global_step=step, time_s=time_s, integer_tick=int(correction["integer_tick"]), phase="correction",
+                transport_sequence=int(correction["transport_sequence"]), correction_sequence=int(correction["transport_sequence"]), diagnostics=correction,
+                state=corrected_state, max_newton_iterations=int(contract["ANCF"]["max_newton_iterations"]))
             row = {"global_step": step, "case_local_step": step, "time_s": time_s, "integer_tick": int(round(time_s*1e9)),
                 "motion": [item.to_dict() for item in motion], "loads": [item.to_dict() for item in loads],
                 "mapping": mapping.to_dict(), "moment_audit": audit, "prediction": prediction, "correction": correction,
-                "ancf_state": adapter.state_view(), "committed": True}
-            append_jsonl(runtime / "records.jsonl", row); records.append(row); prior = [item.force_N for item in loads]; adapter.finalize_committed()
+                "ancf_state": corrected_state, "newton_evidence": [prediction_newton, correction_newton], "committed": True}
+            append_jsonl(runtime / "records.jsonl", row)
+            append_jsonl(runtime / "newton_evidence.jsonl", prediction_newton)
+            append_jsonl(runtime / "newton_evidence.jsonl", correction_newton)
+            records.append(row); newton_records.extend((prediction_newton, correction_newton)); prior = [item.force_N for item in loads]; adapter.finalize_committed()
     except Exception as exc:
         error = f"{type(exc).__name__}: {exc}"
     finally:
@@ -150,13 +164,18 @@ def main() -> int:
             try: participant.finalize()
             except Exception as exc: error = error or f"preCICE finalize: {exc}"
         adapter.shutdown()
+    try:
+        newton_validation = validate_newton_records(newton_records, expected_steps=200)
+    except Exception as exc:
+        newton_validation = {"status": "fail", "error": f"{type(exc).__name__}: {exc}"}
+        error = error or f"Newton evidence validation: {newton_validation['error']}"
     atomic_json(runtime / "structure_summary.json", {"run_id": contract["run_id"], "case_id": contract["case_id"],
         "status": "completed" if error is None and len(records) == 200 else "failed", "error": error,
         "committed_steps": len(records), "slice_record_counts": {
             str(sid): sum(1 for row in records if any(int(load["slice_id"]) == sid for load in row["loads"]))
             for sid in range(3)
         },
-        "cpp_worker": worker.audit, "adapter_responses": adapter.responses, "owned_residual": adapter.owned_residual,
+        "cpp_worker": worker.audit, "adapter_responses": adapter.responses, "newton_evidence": newton_validation, "owned_residual": adapter.owned_residual,
         "tributary_partition_m": [{"slice_id": sid, "left": left, "right": right, "length": right-left} for sid,(left,_,right) in enumerate(partition)]})
     return 0 if error is None and len(records) == 200 else 1
 

@@ -204,6 +204,19 @@ class CppAdapterTests(unittest.TestCase):
         self.assertEqual(prediction["predictor_qddot"], [0.0, 0.0, 0.0])
         adapter.shutdown()
 
+    def test_prediction_and_correction_expose_wire_newton_diagnostics(self):
+        adapter = self._adapter(); adapter.start()
+        force = ((0.0, 0.0, 0.0),) * 3
+        prediction, _ = adapter.predict(560, 2.20875, force)
+        correction, _ = adapter.correct(560, 2.20875, force)
+        for item, sequence in ((prediction, 1), (correction, 2)):
+            self.assertEqual(item["transport_sequence"], sequence)
+            self.assertEqual(item["newton_iterations"], 1)
+            self.assertEqual(item["newton_final_residual"], 0.0)
+            self.assertTrue(item["newton_converged"])
+            self.assertEqual(item["worker_return_code"], 0)
+        adapter.shutdown()
+
     def test_prediction_motion_uses_complete_worker_response_state(self):
         class ResponseStateWorker(FakeWorker):
             def step(self, request):
