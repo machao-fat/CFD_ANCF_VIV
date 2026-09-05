@@ -15,9 +15,9 @@ from coupling.openfoam_quality_contract_v3.audit import audit_records
 from coupling.convergence_observability_v1.openfoam_log import OpenFOAMLogParser
 
 STAGE = "stage_force_contract_smoke_v1"
-RUNTIME = ROOT / "runtime" / (STAGE + "_run_006")
-RESULTS = ROOT / "results" / "three_slice_force_contract_smoke_v1_run_006"
-CONTRACT = Path(__file__).with_name("three_slice_force_contract_smoke_v1_run_006.json")
+RUNTIME = ROOT / "runtime" / (STAGE + "_run_007")
+RESULTS = ROOT / "results" / "three_slice_force_contract_smoke_v1_run_007"
+CONTRACT = Path(__file__).with_name("three_slice_force_contract_smoke_v1_run_007.json")
 SOURCE = ROOT / "cases/openfoam/single_slice_ancf_fsi"
 STATE = ROOT / "runtime/stage4f_d_cpp_worker_initialization_v1/run_20260827_cpp_only/ancf_t0_state_cpp.json"
 WORKER = ROOT / "runtime/292_cpp_worker_linux_build_v1/cfd_ancf_ancf_kernel_worker"
@@ -69,7 +69,7 @@ def prepare() -> list[Path]:
         put(case / "system/controlDict", CONTROL)
         put(case / "constant/dynamicMeshDict", DYNAMIC)
         put(case / "0/pointDisplacement", POINT); put(case / "0/cellDisplacement", CELL)
-        put(case / "system/preciceDict", f'FoamFile {{ format ascii; class dictionary; object preciceDict; }}\npreciceConfig "precice-config.xml"; participant Fluid_{sid:04d}; modules (FSI); FSI {{ solverType incompressible; rho rho [1 -3 0 0 0 0 0] 1000; nu nu [0 2 -1 0 0 0 0] 0.01; namePointDisplacement pointDisplacement; nameCellDisplacement cellDisplacement; nameForce Force; }} interfaces {{ Interface1 {{ mesh Fluid-Mesh; patches (cylinder); locations faceCenters; readData (Displacement); writeData (Force); }} }}\n')
+        put(case / "system/preciceDict", f'FoamFile {{ format ascii; class dictionary; object preciceDict; }}\npreciceConfig "precice-config.xml"; participant Fluid_{sid:04d}; modules (FSI); FSI {{ solverType incompressible; rho rho [1 -3 0 0 0 0 0] 1000; nu nu [0 2 -1 0 0 0 0] 0.01; namePointDisplacement unused; nameCellDisplacement cellDisplacement; nameForce Force; }} interfaces {{ Interface1 {{ mesh Fluid-Mesh; patches (cylinder); locations faceCenters; readData (Displacement); writeData (Force); }} }}\n')
         put(case / "precice-config.xml", xml(sid)); cases.append(case)
     (RUNTIME / "logs").mkdir(parents=True); (RUNTIME / "precice-sockets").mkdir()
     shutil.copy2(CONTRACT, RUNTIME / CONTRACT.name)
