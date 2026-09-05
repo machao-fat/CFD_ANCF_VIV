@@ -141,6 +141,28 @@ def main() -> int:
                 delta_q=tuple(predicted_q[i] - before["q"][i] for i in range(len(predicted_q))))
             audit = moment_audit(predicted_q, [item.force_N for item in loads], positions_m=[item.s_ref_m for item in definitions],
                 length_m=length_m, elements=elements, delta_q=tuple(predicted_q[i] - before["q"][i] for i in range(len(predicted_q))), compensated=True)
+            # Persist every available correction input *before* the wire call.
+            # If the worker disconnects before responding, Q_cpp is genuinely
+            # unavailable, but the state, loads and formal H^T Q remain
+            # replayable rather than silently disappearing.
+            formal_input = {
+                "run_id": contract["run_id"], "case_id": contract["case_id"],
+                "global_step": step, "case_local_step": step, "time_s": time_s,
+                "integer_tick": int(round(time_s * 1e9)), "stage": "correction",
+                "state_input": before, "prediction_state": {
+                    "q": list(predicted_q), "qdot": list(predicted_qdot), "qddot": list(predicted_qddot)},
+                "integrated_slice_forces_N": [list(item.force_N) for item in loads],
+                "slice_metadata": [{"slice_id": item.slice_id, "s_ref_m": item.s_ref_m,
+                                     "unit_span_m": item.unit_span_m,
+                                     "tributary_length_m": item.slice_length_m} for item in definitions],
+            }
+            pre_cpp_attempt = {**formal_input, "event": "pre_cpp_correction_request",
+                "formal_mapper_input_sha256": canonical_sha256(formal_input),
+                "Q_formal_N": list(mapping.generalized_force),
+                "H_by_slice": {str(sid): [list(row) for row in H[sid]] for sid in range(3)},
+                "Q_cpp_cfd_N": None, "cpp_response_payload_sha256": None,
+                "cpp_response_status": "unavailable_until_worker_response"}
+            append_jsonl(runtime / "correction_attempts_pre_cpp.jsonl", pre_cpp_attempt)
             correction, _ = adapter.correct(step, time_s, [item.force_N for item in loads])
             # v1 C++ protocol labels this slot ``generalized_force``, but its
             # frozen wire semantics are total Qext = base_load + H^T F_CFD.
@@ -158,17 +180,6 @@ def main() -> int:
             # force gate.  It is an uncommitted diagnostic attempt, not a
             # coupled-window commit, and retains enough identity, state, load,
             # H^T result and worker request information for offline replay.
-            formal_input = {
-                "run_id": contract["run_id"], "case_id": contract["case_id"],
-                "global_step": step, "case_local_step": step, "time_s": time_s,
-                "integer_tick": int(round(time_s * 1e9)), "stage": "correction",
-                "state_input": before, "prediction_state": {
-                    "q": list(predicted_q), "qdot": list(predicted_qdot), "qddot": list(predicted_qddot)},
-                "integrated_slice_forces_N": [list(item.force_N) for item in loads],
-                "slice_metadata": [{"slice_id": item.slice_id, "s_ref_m": item.s_ref_m,
-                                     "unit_span_m": item.unit_span_m,
-                                     "tributary_length_m": item.slice_length_m} for item in definitions],
-            }
             attempt = {**formal_input, "formal_mapper_input_sha256": canonical_sha256(formal_input),
                 "cpp_request_payload_sha256": correction.get("request_payload_sha256"),
                 "cpp_response_payload_sha256": correction.get("payload_hash"),

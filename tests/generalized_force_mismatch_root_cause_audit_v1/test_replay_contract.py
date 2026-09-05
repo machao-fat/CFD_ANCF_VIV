@@ -38,6 +38,12 @@ class GeneralizedForceReplayContractTests(unittest.TestCase):
         self.assertLess(source.index('append_jsonl(runtime / "correction_attempts.jsonl", attempt)'),
                         source.index('raise RuntimeError("C++ generalized force fails formal H^T mapping metric V2")'))
 
+    def test_precpp_evidence_precedes_worker_correction(self) -> None:
+        source = (ROOT / "tools" / "three_slice_force_contract_smoke_v1" /
+                  "structure_participant.py").read_text(encoding="utf-8")
+        self.assertLess(source.index('append_jsonl(runtime / "correction_attempts_pre_cpp.jsonl", pre_cpp_attempt)'),
+                        source.index('correction, _ = adapter.correct(step, time_s, [item.force_N for item in loads])'))
+
 
 if __name__ == "__main__":
     unittest.main()
