@@ -12,7 +12,11 @@ class AuditError(ValueError):
     pass
 
 
-_TIME = re.compile(r"^Time = ([0-9.+\-eE]+)s?\s*$")
+# Foundation OpenFOAM writes either ``Time = 0.05`` or ``Time = 0.05s``
+# depending on the configured user-time unit.  Allow harmless whitespace
+# before the optional unit, but keep the expression anchored so solver lines
+# cannot be misclassified as time records.
+_TIME = re.compile(r"^Time\s*=\s*([0-9.+\-eE]+)\s*(?:s)?\s*$")
 _COURANT = re.compile(r"^Courant Number mean:\s*([^\s]+)\s+max:\s*([^\s]+)\s*$")
 _SOLVE = re.compile(
     r"^[^:]+:\s+Solving for ([^,]+), Initial residual = ([^,]+), "
@@ -177,7 +181,7 @@ def audit_log(log_path: Path, fv_solution_path: Path) -> dict[str, Any]:
             "field_terminal_final_residual": {field: rows[-1]["final_residual"] for field, rows in by_field.items()},
             "field_terminal_reduction_ratio": {field: rows[-1]["reduction_ratio"] for field, rows in by_field.items()},
         }
-    return {"schema_version": "openfoam-numerical-quality-evidence-v2", "parser_version": "1.0.0",
+    return {"schema_version": "openfoam-numerical-quality-evidence-v2", "parser_version": "1.0.1",
             "source_log": str(log_path), "source_log_sha256": hashlib.sha256(raw).hexdigest(),
             "fvSolution": cfg, "time_records": records}
 

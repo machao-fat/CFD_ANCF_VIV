@@ -96,6 +96,27 @@ class NumericalQualityAuditTests(unittest.TestCase):
         self.assertEqual(result["observability_completeness"], "fail")
         directory.cleanup()
 
+    def test_time_grammar_and_pending_courant_are_time_local(self):
+        directory = tempfile.TemporaryDirectory(); root = Path(directory.name)
+        (root / "fvSolution").write_text(FV, encoding="utf-8")
+        lines = [
+            "Courant Number mean: 0.01 max: 0.2", "Time = 5e-2 s",
+            "solver: Solving for Ux, Initial residual = 1, Final residual = 1e-9, No Iterations 2",
+            "solver: Solving for Uy, Initial residual = 1, Final residual = 1e-9, No Iterations 2",
+            "solver: Solving for p, Initial residual = 1, Final residual = 1e-9, No Iterations 2",
+            "time step continuity errors : sum local = 1e-9, global = 1e-9, cumulative = 1e-9",
+            "Courant Number mean: 0.02 max: 0.3", "Time = .055",
+            "solver: Solving for Ux, Initial residual = 1, Final residual = 1e-9, No Iterations 2",
+            "solver: Solving for Uy, Initial residual = 1, Final residual = 1e-9, No Iterations 2",
+            "solver: Solving for p, Initial residual = 1, Final residual = 1e-9, No Iterations 2",
+            "time step continuity errors : sum local = 1e-9, global = 1e-9, cumulative = 1e-9",
+        ]
+        (root / "stdout").write_text("\n".join(lines) + "\n", encoding="utf-8")
+        audit = audit_log(root / "stdout", root / "fvSolution")
+        self.assertEqual([(item["time_s"], item["courant_max"]) for item in audit["time_records"]],
+                         [(0.05, 0.2), (0.055, 0.3)])
+        directory.cleanup()
+
 
 if __name__ == "__main__":
     unittest.main()
