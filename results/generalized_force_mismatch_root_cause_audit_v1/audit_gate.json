@@ -1,0 +1,12 @@
+{
+  "task": "GENERALIZED_FORCE_MISMATCH_ROOT_CAUSE_AUDIT_V1",
+  "status": "NOT_COMPLETED",
+  "offline_cfd_or_precice_starts": 0,
+  "committed_fixture_replay": "PARTIAL_PASS: 9/9 saved correction fixtures replayed",
+  "failed_step_10_replay": "NOT_EVALUABLE",
+  "direct_root_cause_classification": "OTHER: correction-attempt evidence was not persisted before the fail-closed gate",
+  "metric_conditioning_evidence": "SUPPORTED_FOR_VERSIONED_FUTURE_AUDIT_ONLY",
+  "mapping_implementation_change": "none",
+  "evidence_persistence_fix": "implemented; future correction attempts record state, forces, H, Q_formal, Q_cpp, and request/response hashes before the gate",
+  "next_corrected_smoke": "NOT_AUTHORIZED"
+}
