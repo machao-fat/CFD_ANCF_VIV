@@ -1,0 +1,48 @@
+{
+  "schema_version": 1,
+  "scope": "read-only historical Stage382 force-scale audit",
+  "legacy": {
+    "runtime": "D:\\研二文件\\开题准备\\CFD_ANCF_VIV\\runtime\\stage382_cpp_worker_precice_three_slice_continue270_to370_v1",
+    "mapping_diagnostics_sha256": "5cdb79e172d76a7acfaa36bd0ae04d9471fd8baae060a27edc4583ad9d45fa7a",
+    "participant_sha256": "eef0e933257a58b50cd56a4498f6217e1e127f93333a43d61dcc7e5e48089808",
+    "diagnostic_fields": [
+      "case_local_bridge_step",
+      "fluid_power",
+      "fluid_resultant",
+      "force_balance_error",
+      "force_hashes",
+      "global_step",
+      "integer_tick",
+      "interface_positions_xy",
+      "interface_velocities_xy",
+      "mapped_power",
+      "mapped_resultant",
+      "moment_balance_error",
+      "time_s",
+      "virtual_work_error"
+    ],
+    "missing_required_force_contract_fields": [
+      "slice_id",
+      "s_ref_m",
+      "unit_span_m",
+      "tributary_length_m",
+      "force_representation",
+      "openfoam_force_N",
+      "force_2d_Npm",
+      "integrated_slice_force_N"
+    ],
+    "participant_direct_vertex_force_sum": true,
+    "participant_passes_force_sum_to_cpp_slice_force": true,
+    "physical_force_scaling": "not_evaluable",
+    "reason": "Stage382 has no explicit unit_span_m or tributary_length_m, and its participant passes preCICE vertex-force sums directly to the C++ worker."
+  },
+  "future_run_contract": {
+    "path": "D:\\研二文件\\开题准备\\CFD_ANCF_VIV\\src\\coupling\\multi_slice_mapping\\mapping.py",
+    "sha256": "d46fdd1cf1fda291803db0b9b41228c2a071f691961f23c20e85a23fa7f746ba",
+    "requires_unit_span_m": true,
+    "requires_integrated_slice_force_representation": true,
+    "conversion": "F_slice_N = F_openfoam_N / unit_span_m * slice_length_m",
+    "missing_field_policy": "fail_closed"
+  },
+  "conclusion": "Historical mapping conservation does not establish physical force scale. No span or tributary length is inferred from legacy data."
+}
