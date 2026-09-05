@@ -51,7 +51,12 @@ def audit(runtime,results,contract,code):
  for i,case in enumerate(cases): quality[str(i)]=evaluate_quality(audit_log(runtime/'logs'/f'fluid_{i:04d}.stdout',case/'system/fvSolution'),qcon)
  try: ns=validate_records(newton,expected_steps=n)
  except Exception as e: ns={'status':'fail','error':str(e)}
- mc=c['moving_mesh_contract']; snapshots=[k for k in range(20,n+1,20)]; mesh=[]; meshok=True; geomdistinct=True
+ mc=c.get('moving_mesh_contract')
+ if mc is None:
+  # Later patch-consistency contracts retain the same frozen tolerance under
+  # a narrower schema; normalize it without mutating the frozen contract.
+  p=c['moving_mesh_patch_contract']; mc={'reference_cylinder_centroid_xyz_m':[0.0,0.0,0.5],'mesh_motion_error_tolerance_m':p['mesh_tracking_tolerance_m'],'point_displacement_error_tolerance_m':p['mesh_tracking_tolerance_m'],'distinct_motion_threshold_m':1e-8,'distinct_geometry_threshold_m':1e-9,'field_comparison_times_s':[0.1,0.5,1.0] if n==200 else [1.0,5.0,10.0,15.0,20.0]}
+ snapshots=[k for k in range(20,n+1,20)]; mesh=[]; meshok=True; geomdistinct=True
  for step in snapshots:
   t=f'{step*dt:g}'; geo=[]; struct=[]
   for i,case in enumerate(cases):
