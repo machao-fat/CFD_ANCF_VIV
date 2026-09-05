@@ -133,7 +133,7 @@
     "mesh_tracking_tolerance_m": 1e-08,
     "snapshot_interval_s": 0.1
   },
-  "source_git_commit": "d1f51821a79440f4ff8711ca7b0482d0581ee2bb",
+  "source_git_commit": "867cba399132d076771a30c6ad028b9d0a8e1c75",
   "generalized_force_metric_v2": {
     "schema_version": "generalized-force-metric-v2.0.0",
     "formula": "abs(Q_cpp_j-Q_formal_j) <= atol_group + rtol * sum_i(abs(Q_formal_i_j))",
