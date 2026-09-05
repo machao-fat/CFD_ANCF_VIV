@@ -36,7 +36,7 @@ class GeneralizedForceReplayContractTests(unittest.TestCase):
         source = (ROOT / "tools" / "three_slice_force_contract_smoke_v1" /
                   "structure_participant.py").read_text(encoding="utf-8")
         self.assertLess(source.index('append_jsonl(runtime / "correction_attempts.jsonl", attempt)'),
-                        source.index('raise RuntimeError("C++ generalized force differs from formal H^T mapping")'))
+                        source.index('raise RuntimeError("C++ generalized force fails formal H^T mapping metric V2")'))
 
 
 if __name__ == "__main__":

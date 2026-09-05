@@ -17,6 +17,7 @@ from coupling.multi_slice_mapping.mapping import (SliceDefinition, SliceManifest
     build_H_for_manifest, map_integrated_slice_forces, motion_from_ancf_state)
 from coupling.three_slice_force_contract_smoke_v1.contract import bounded_midpoint_voronoi, finite_rows
 from coupling.ancf_newton_evidence_v1 import make_record as make_newton_record, validate_records as validate_newton_records
+from coupling.generalized_force_metric_v2 import evaluate as evaluate_generalized_force_v2
 
 
 def atomic_json(path: Path, value: object) -> None:
@@ -147,6 +148,12 @@ def main() -> int:
             cpp_cfd_generalized_force = tuple(float(value) - base[index] for index, value in enumerate(correction["generalized_force"]))
             correction["cpp_generalized_force_semantics"] = "total_Qext_N=base_load_N+H_transpose_integrated_slice_force_N"
             correction["cpp_cfd_generalized_force_N"] = list(cpp_cfd_generalized_force)
+            metric_contract = contract.get("generalized_force_metric_v2")
+            if not isinstance(metric_contract, dict):
+                raise RuntimeError("generalized_force_metric_v2 is missing from the frozen run contract")
+            metric_v2 = evaluate_generalized_force_v2(mapping.generalized_force, cpp_cfd_generalized_force,
+                                                       mapping.slice_contributions, contract=metric_contract)
+            correction["generalized_force_mapping_v2"] = metric_v2
             # This record is deliberately written *before* the generalized
             # force gate.  It is an uncommitted diagnostic attempt, not a
             # coupled-window commit, and retains enough identity, state, load,
@@ -169,10 +176,11 @@ def main() -> int:
                 "Q_cpp_cfd_N": list(cpp_cfd_generalized_force),
                 "Q_cpp_total_N": list(correction["generalized_force"]),
                 "base_load_N": list(base), "H_by_slice": {str(sid): [list(row) for row in H[sid]] for sid in range(3)},
+                "generalized_force_mapping_v2": metric_v2,
             }
             append_jsonl(runtime / "correction_attempts.jsonl", attempt)
-            if max(abs(a-b) for a, b in zip(mapping.generalized_force, cpp_cfd_generalized_force)) > 1e-8:
-                raise RuntimeError("C++ generalized force differs from formal H^T mapping")
+            if metric_v2["GENERALIZED_FORCE_MAPPING_V2"] != "PASS":
+                raise RuntimeError("C++ generalized force fails formal H^T mapping metric V2")
             for record in motion:
                 if max(abs(record.x_m-record.x_ref_m-record.ux_m), abs(record.y_m-record.y_ref_m-record.uy_m), abs(record.z_m-record.z_ref_m-record.uz_m)) > 1e-12:
                     raise RuntimeError("absolute position/reference/displacement identity failed")

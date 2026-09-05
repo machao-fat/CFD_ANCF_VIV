@@ -177,6 +177,8 @@ def main() -> int:
         "realistic_step9": realistic,
         "realistic_step9_x0p1": [0.1 * item for item in realistic],
         "realistic_step9_x10": [10.0 * item for item in realistic],
+        "realistic_step9_x0p01": [0.01 * item for item in realistic],
+        "realistic_step9_x100": [100.0 * item for item in realistic],
     }
     synthetic = [compare_case(name, args.cpp_diagnostic, contract, initial, force, manifest, h, definitions, RESULTS)
                  for name, force in synthetic_forces.items()]
