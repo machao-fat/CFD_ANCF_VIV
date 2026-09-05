@@ -15,8 +15,8 @@ from coupling.openfoam_quality_contract_v3.audit import audit_records
 from coupling.convergence_observability_v1.openfoam_log import OpenFOAMLogParser
 
 STAGE = "stage_force_contract_smoke_v1"
-RUNTIME = ROOT / "runtime" / STAGE
-RESULTS = ROOT / "results" / "three_slice_force_contract_smoke_v1"
+RUNTIME = ROOT / "runtime" / (STAGE + "_run_002")
+RESULTS = ROOT / "results" / "three_slice_force_contract_smoke_v1_run_002"
 CONTRACT = Path(__file__).with_name("three_slice_force_contract_smoke_v1.json")
 SOURCE = ROOT / "cases/openfoam/single_slice_ancf_fsi"
 STATE = ROOT / "runtime/stage4f_d_cpp_worker_initialization_v1/run_20260827_cpp_only/ancf_t0_state_cpp.json"
@@ -36,7 +36,7 @@ def wsl(path: Path) -> str:
 
 def put(path: Path, text: str) -> None:
     path.parent.mkdir(parents=True, exist_ok=True)
-    path.write_text(text, encoding="utf-8", newline="\n")
+    path.write_text(text, encoding="utf-8")
 
 
 def xml(sid: int) -> str:
