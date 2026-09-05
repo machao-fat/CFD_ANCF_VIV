@@ -14,6 +14,7 @@ from typing import Any, Mapping, Sequence
 
 from .contracts import ContractError, load_source_checkpoint
 from coupling.cpp_worker_persistent_ipc_v1.mapping_contract import SourceMapping
+from coupling.cpp_worker_persistent_ipc_v1.kernel_protocol import KernelStepRequest
 from coupling.cpp_worker_persistent_ipc_v1.protocol import canonical_integer_tick, canonical_tick_delta
 
 
@@ -392,6 +393,19 @@ class CppKernelCampaignAdapter:
             run_id=self.run_id, case_id=self.case_id, model=self.model,
             q=tuple(state["q"]), qdot=tuple(state["qdot"]), qddot=tuple(state["qddot"]),
             base_load=self.base_load, slice_force=force, mass_matrix=self.mass_matrix)
+        # Persist the exact binary request identity in the adapter result.  A
+        # response payload hash proves the returned state, but cannot recreate
+        # the input slice-force vector after a fail-closed correction abort.
+        payload_method = getattr(request, "payload", None)
+        if not callable(payload_method):
+            # Unit-test doubles intentionally model only the response
+            # envelope.  They are never accepted by a strict production
+            # numerical contract, which must retain an exact wire payload.
+            if self.strict_numerical_contract and self.request_factory is KernelStepRequest:
+                raise CppAdapterError("strict C++ request lacks a wire payload for replay hashing")
+            request_payload_sha256 = None
+        else:
+            request_payload_sha256 = hashlib.sha256(payload_method()).hexdigest()
         try:
             response = self.worker.step(request)
             if getattr(response, "return_code", None) != 0 or getattr(response, "finite_value_audit", False) is not True:
@@ -440,7 +454,7 @@ class CppKernelCampaignAdapter:
                                "newton_final_residual": float(residual),
                                "newton_converged": True,
                                "newton_converged_semantics": "derived_from_zero_return_code; kernel throws when Newton does not converge"})
-        return response, state_out, request_id, transaction_id
+        return response, state_out, request_id, transaction_id, request_payload_sha256
 
     def predict(self, step: int, time_s: float, previous_slice_forces: Sequence[Sequence[float]]):
         if self._terminal or not self._started:
@@ -452,7 +466,7 @@ class CppKernelCampaignAdapter:
         if self.pending_kind is not None:
             raise CppAdapterError("prediction requested with pending state")
         force = self._flatten_forces(previous_slice_forces)
-        response, predictor, request_id, transaction_id = self._request(
+        response, predictor, request_id, transaction_id, request_payload_sha256 = self._request(
             sequence=2 * bridge - 1, step=int(step), bridge=bridge, tick=tick,
             time_s=float(time_s), force=force, state=self._committed_state)
         # The protected MATLAB prediction operation calls ancf_advance_step
@@ -473,7 +487,8 @@ class CppKernelCampaignAdapter:
                 "time_s": float(time_s), "integer_tick": tick, "run_id": self.run_id,
                 "case_id": self.case_id, "request_id": request_id, "transaction_id": transaction_id,
                 "sequence": 2 * bridge - 1, "transport_sequence": 2 * bridge - 1, "ack": response.ack,
-                "payload_hash": response.payload_hash.hex(), "finite_value_audit": True,
+                "payload_hash": response.payload_hash.hex(), "request_payload_sha256": request_payload_sha256,
+                "finite_value_audit": True,
                 "worker_return_code": int(response.return_code), "newton_iterations": int(response.iterations),
                 "newton_final_residual": float(response.residual), "newton_converged": True,
                 "newton_converged_semantics": "derived_from_zero_return_code; kernel throws when Newton does not converge",
@@ -492,12 +507,13 @@ class CppKernelCampaignAdapter:
             self._terminal = True
             raise CppAdapterError("prediction state is missing for correction")
         force = self._flatten_forces(integrated_slice_forces)
-        response, corrected, request_id, transaction_id = self._request(
+        response, corrected, request_id, transaction_id, request_payload_sha256 = self._request(
             sequence=2 * bridge, step=int(step), bridge=bridge, tick=tick,
             time_s=float(time_s), force=force, state=self._committed_state)
         self._state = corrected
         audit = {"phase": "correction", "step": int(step), "time_s": float(time_s), "integer_tick": tick,
                  "case_local_bridge_step": bridge, "payload_hash": response.payload_hash.hex(),
+                 "request_payload_sha256": request_payload_sha256,
                  "return_code": int(response.return_code), "finite_value_audit": True,
                  "newton_iterations": int(response.iterations), "newton_final_residual": float(response.residual),
                  "newton_converged": True,
@@ -513,6 +529,7 @@ class CppKernelCampaignAdapter:
                 "transport_sequence": 2 * bridge,
                 "ack": response.ack, "return_code": int(response.return_code),
                 "payload_hash": response.payload_hash.hex(), "finite_value_audit": True,
+                "request_payload_sha256": request_payload_sha256,
                 "worker_return_code": int(response.return_code), "newton_iterations": int(response.iterations),
                 "newton_final_residual": float(response.residual), "newton_converged": True,
                 "newton_converged_semantics": "derived_from_zero_return_code; kernel throws when Newton does not converge",

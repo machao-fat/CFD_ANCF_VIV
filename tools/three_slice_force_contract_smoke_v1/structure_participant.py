@@ -34,6 +34,13 @@ def append_jsonl(path: Path, value: object) -> None:
         os.fsync(stream.fileno())
 
 
+def canonical_sha256(value: object) -> str:
+    """Hash an offline-replay payload without changing solver arithmetic."""
+    raw = json.dumps(value, ensure_ascii=True, sort_keys=True,
+                     separators=(",", ":"), allow_nan=False).encode("utf-8")
+    return hashlib.sha256(raw).hexdigest()
+
+
 def force_sum(value: object, count: int) -> tuple[float, float, float]:
     rows = value.tolist() if hasattr(value, "tolist") else value
     if not isinstance(rows, list) or len(rows) != count:
@@ -140,6 +147,30 @@ def main() -> int:
             cpp_cfd_generalized_force = tuple(float(value) - base[index] for index, value in enumerate(correction["generalized_force"]))
             correction["cpp_generalized_force_semantics"] = "total_Qext_N=base_load_N+H_transpose_integrated_slice_force_N"
             correction["cpp_cfd_generalized_force_N"] = list(cpp_cfd_generalized_force)
+            # This record is deliberately written *before* the generalized
+            # force gate.  It is an uncommitted diagnostic attempt, not a
+            # coupled-window commit, and retains enough identity, state, load,
+            # H^T result and worker request information for offline replay.
+            formal_input = {
+                "run_id": contract["run_id"], "case_id": contract["case_id"],
+                "global_step": step, "case_local_step": step, "time_s": time_s,
+                "integer_tick": int(round(time_s * 1e9)), "stage": "correction",
+                "state_input": before, "prediction_state": {
+                    "q": list(predicted_q), "qdot": list(predicted_qdot), "qddot": list(predicted_qddot)},
+                "integrated_slice_forces_N": [list(item.force_N) for item in loads],
+                "slice_metadata": [{"slice_id": item.slice_id, "s_ref_m": item.s_ref_m,
+                                     "unit_span_m": item.unit_span_m,
+                                     "tributary_length_m": item.slice_length_m} for item in definitions],
+            }
+            attempt = {**formal_input, "formal_mapper_input_sha256": canonical_sha256(formal_input),
+                "cpp_request_payload_sha256": correction.get("request_payload_sha256"),
+                "cpp_response_payload_sha256": correction.get("payload_hash"),
+                "Q_formal_N": list(mapping.generalized_force),
+                "Q_cpp_cfd_N": list(cpp_cfd_generalized_force),
+                "Q_cpp_total_N": list(correction["generalized_force"]),
+                "base_load_N": list(base), "H_by_slice": {str(sid): [list(row) for row in H[sid]] for sid in range(3)},
+            }
+            append_jsonl(runtime / "correction_attempts.jsonl", attempt)
             if max(abs(a-b) for a, b in zip(mapping.generalized_force, cpp_cfd_generalized_force)) > 1e-8:
                 raise RuntimeError("C++ generalized force differs from formal H^T mapping")
             for record in motion:
