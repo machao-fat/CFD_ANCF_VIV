@@ -15,9 +15,9 @@ from coupling.openfoam_quality_contract_v3.audit import audit_records
 from coupling.convergence_observability_v1.openfoam_log import OpenFOAMLogParser
 
 STAGE = "stage_force_contract_smoke_v1"
-RUNTIME = ROOT / "runtime" / (STAGE + "_run_007")
-RESULTS = ROOT / "results" / "three_slice_force_contract_smoke_v1_run_007"
-CONTRACT = Path(__file__).with_name("three_slice_force_contract_smoke_v1_run_007.json")
+RUNTIME = ROOT / "runtime" / (STAGE + "_run_008")
+RESULTS = ROOT / "results" / "three_slice_force_contract_smoke_v1_run_008"
+CONTRACT = Path(__file__).with_name("three_slice_force_contract_smoke_v1_run_008.json")
 SOURCE = ROOT / "cases/openfoam/single_slice_ancf_fsi"
 STATE = ROOT / "runtime/stage4f_d_cpp_worker_initialization_v1/run_20260827_cpp_only/ancf_t0_state_cpp.json"
 WORKER = ROOT / "runtime/292_cpp_worker_linux_build_v1/cfd_ancf_ancf_kernel_worker"

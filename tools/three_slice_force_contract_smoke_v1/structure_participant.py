@@ -127,7 +127,13 @@ def main() -> int:
             audit = moment_audit(predicted_q, [item.force_N for item in loads], positions_m=[item.s_ref_m for item in definitions],
                 length_m=length_m, elements=elements, delta_q=tuple(predicted_q[i] - before["q"][i] for i in range(len(predicted_q))), compensated=True)
             correction, _ = adapter.correct(step, time_s, [item.force_N for item in loads])
-            if max(abs(a-b) for a, b in zip(mapping.generalized_force, correction["generalized_force"])) > 1e-8:
+            # v1 C++ protocol labels this slot ``generalized_force``, but its
+            # frozen wire semantics are total Qext = base_load + H^T F_CFD.
+            # Compare like-with-like, and retain both representations.
+            cpp_cfd_generalized_force = tuple(float(value) - base[index] for index, value in enumerate(correction["generalized_force"]))
+            correction["cpp_generalized_force_semantics"] = "total_Qext_N=base_load_N+H_transpose_integrated_slice_force_N"
+            correction["cpp_cfd_generalized_force_N"] = list(cpp_cfd_generalized_force)
+            if max(abs(a-b) for a, b in zip(mapping.generalized_force, cpp_cfd_generalized_force)) > 1e-8:
                 raise RuntimeError("C++ generalized force differs from formal H^T mapping")
             for record in motion:
                 if max(abs(record.x_m-record.x_ref_m-record.ux_m), abs(record.y_m-record.y_ref_m-record.uy_m), abs(record.z_m-record.z_ref_m-record.uz_m)) > 1e-12:
