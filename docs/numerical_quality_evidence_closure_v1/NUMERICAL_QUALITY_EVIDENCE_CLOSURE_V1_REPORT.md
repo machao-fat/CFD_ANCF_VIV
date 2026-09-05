@@ -50,3 +50,28 @@ residual, so no initial residual is invented.
 
 This authorization is not authorization for a 10–20 s physical run. That
 decision must wait for the fresh V2 smoke evidence.
+
+## Fresh smoke V2 execution
+
+The authorized fresh case `three_slice_force_contract_smoke_v2_run_001` was
+run once from `t=0` to `t=1.0 s`; no run_008 runtime was reused or modified.
+All six preCICE participants returned zero, 200 coupled windows committed, and
+each slice has 200 force records. The final gate is
+`THREE_SLICE_FORCE_CONTRACT_SMOKE_V2 = PASS`.
+
+The force/mapping/displacement checks pass with maximum force error
+1.4551915228366852e-11 N, absolute moment error 2.9802322387695312e-8 Nm,
+V2 moment error 2.4025997889903465e-16, and normalized virtual-work error
+8.512774285412415e-16. All three OpenFOAM V2 evaluations pass: maximum terminal
+residuals are `Ux=9.99659849617e-9`, `Uy=8.48413096951e-9`, and
+`p=9.983874437e-9`; maximum Courant number is 0.350855773225 and maximum
+absolute global continuity error is 1.10665568732e-8.
+
+The structure participant persisted and validated exactly 400 Newton records:
+200 predictions and 200 corrections. The C++ worker completed with return code
+zero and owned residual zero.
+
+`NEXT_10_TO_20S_PHYSICAL_TEST = CONDITIONAL`: this V2 smoke removes the
+force-contract and numerical-quality-evidence blocker, but it does not itself
+authorize a physical-duration test. That requires explicit human approval in a
+later turn.
