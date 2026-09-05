@@ -1,0 +1,44 @@
+{
+  "schema_version": "openfoam-numerical-quality-contract-v2",
+  "contract_id": "three-slice-force-contract-smoke-openfoam-quality-v2",
+  "frozen_before_run": true,
+  "applies_to": {
+    "openfoam_version": "10",
+    "dt_s": 0.005,
+    "n_outer_correctors": 1,
+    "n_correctors": 2,
+    "n_non_orthogonal_correctors": 0
+  },
+  "observability_completeness": {
+    "required_raw_streams": ["stdout", "stderr"],
+    "required_per_time": ["time_s", "courant_max", "solves", "continuity"],
+    "required_per_solve": ["field", "initial_residual", "final_residual", "linear_iterations", "solve_index"],
+    "require_raw_source_sha256": true,
+    "require_parser_version": true
+  },
+  "linear_solver_health": {
+    "semantics": "every parsed solve must be finite, have positive bounded iterations, and meet max(absolute_tolerance, relative_tolerance*initial_residual) for its actual base fvSolution solver",
+    "per_field_base_solver": {
+      "p": {"absolute_tolerance": 1e-8, "relative_tolerance": 0.01, "source": "fvSolution p"},
+      "U": {"absolute_tolerance": 1e-8, "relative_tolerance": 0.1, "source": "fvSolution U"}
+    }
+  },
+  "pimple_terminal_convergence": {
+    "semantics": "the final parsed solve of each required field in each time step; evaluated against terminal pFinal/UFinal absolute tolerance after preflight confirms the configuration",
+    "required_fields": ["Ux", "Uy", "p"],
+    "per_field_absolute_final_residual_limit": {"Ux": 1e-8, "Uy": 1e-8, "p": 1e-8},
+    "source": {"p": "fvSolution pFinal tolerance=1e-8 relTol=0", "Ux": "fvSolution UFinal tolerance=1e-8 relTol=0", "Uy": "fvSolution UFinal tolerance=1e-8 relTol=0"}
+  },
+  "courant_quality": {"max_limit": 0.5},
+  "continuity_quality": {"global_abs_limit": 1e-6},
+  "iteration_health": {"linear_iterations_max": 999},
+  "legacy_metric": {
+    "name": "max_final_residual_across_all_parsed_Solving_for_lines_per_time",
+    "role": "diagnostic_only",
+    "reason": "it includes intermediate PIMPLE/PISO solves and is not a terminal-timestep convergence metric"
+  },
+  "startup_policy": {
+    "enabled": false,
+    "reason": "no exemption is needed or justified: run_008 terminal per-field values satisfy this contract from the first step"
+  }
+}

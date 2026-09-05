@@ -1,0 +1,22 @@
+{
+  "status": "pass",
+  "failures": [],
+  "observability_completeness": "pass",
+  "linear_solver_health": "pass",
+  "pimple_terminal_convergence": "pass",
+  "courant_quality": "pass",
+  "continuity_quality": "pass",
+  "iteration_health": "pass",
+  "legacy_max_final_residual_diagnostic": 0.00462973685818,
+  "max_terminal_final_residual": {
+    "Ux": 9.99659849617e-09,
+    "Uy": 8.48413096951e-09,
+    "p": 9.983874437e-09
+  },
+  "max_courant": 0.350855773225,
+  "max_abs_continuity_global": 1.10665568732e-08,
+  "max_linear_iterations": 23,
+  "schema_version": "openfoam-numerical-quality-evaluation-v2",
+  "source_audit": "results\\numerical_quality_evidence_closure_v1\\run_008_residual_audit.json",
+  "source_contract": "tools\\numerical_quality_evidence_closure_v1\\openfoam_numerical_quality_contract_v2.json"
+}
