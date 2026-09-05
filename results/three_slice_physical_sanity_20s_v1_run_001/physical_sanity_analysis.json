@@ -1,0 +1,508 @@
+{
+  "schema_version": "three-slice-physical-sanity-analysis-v1",
+  "run_id": "three_slice_physical_sanity_20s_v1_run_001",
+  "window_definition_s": {
+    "FULL": [
+      0.0,
+      20.0
+    ],
+    "EARLY": [
+      0.0,
+      5.0
+    ],
+    "MID": [
+      5.0,
+      10.0
+    ],
+    "LATE": [
+      10.0,
+      20.0
+    ]
+  },
+  "fft_resolution_Hz": 0.05,
+  "MODAL_PROJECTION": "not_available",
+  "structural_energy": "not_available_from_current_C++_wire",
+  "slices": {
+    "0": {
+      "full": {
+        "Fy_N": {
+          "mean": 62.99156158874901,
+          "rms": 137.40368124560234,
+          "peak_to_peak": 7412.053729740224,
+          "max_abs": 4481.562039277799
+        },
+        "y_m": {
+          "mean": 0.0005990126593488713,
+          "rms": 0.0014091729403193794,
+          "peak_to_peak": 0.004736612064456522,
+          "max_abs": 0.003208301924389027
+        },
+        "y_over_D": {
+          "mean": 0.0005990126593488713,
+          "rms": 0.0014091729403193794,
+          "peak_to_peak": 0.004736612064456522,
+          "max_abs": 0.003208301924389027
+        },
+        "vy_mps": {
+          "mean": 5.370396085574527e-05,
+          "rms": 0.001206059634822026,
+          "peak_to_peak": 0.0068037393400989825,
+          "max_abs": 0.0037523834670707664
+        },
+        "ay_mps2": {
+          "mean": -0.00015104850656285157,
+          "rms": 0.09895076592123318,
+          "peak_to_peak": 0.5862577313793993,
+          "max_abs": 0.3055578081711929
+        }
+      },
+      "windows": {
+        "FULL": {
+          "Fy_N": {
+            "mean": 62.99156158874901,
+            "rms": 137.40368124560234,
+            "peak_to_peak": 7412.053729740224,
+            "max_abs": 4481.562039277799
+          },
+          "y_m": {
+            "mean": 0.0005990126593488713,
+            "rms": 0.0014091729403193794,
+            "peak_to_peak": 0.004736612064456522,
+            "max_abs": 0.003208301924389027
+          },
+          "vy_mps": {
+            "mean": 5.370396085574527e-05,
+            "rms": 0.001206059634822026,
+            "peak_to_peak": 0.0068037393400989825,
+            "max_abs": 0.0037523834670707664
+          },
+          "mean_crossflow_power_W": 0.020453037804992576
+        },
+        "EARLY": {
+          "Fy_N": {
+            "mean": 94.19912068803416,
+            "rms": 203.05002349995686,
+            "peak_to_peak": 7412.053729740224,
+            "max_abs": 4481.562039277799
+          },
+          "y_m": {
+            "mean": 0.0009656217631290603,
+            "rms": 0.0012563764227650153,
+            "peak_to_peak": 0.002163987237763107,
+            "max_abs": 0.0020217149334044245
+          },
+          "vy_mps": {
+            "mean": 0.00014582981242204458,
+            "rms": 0.0009808232755833851,
+            "peak_to_peak": 0.005697960940898057,
+            "max_abs": 0.003473186012705855
+          },
+          "mean_crossflow_power_W": 0.022315129583398655
+        },
+        "MID": {
+          "Fy_N": {
+            "mean": 15.90966690535874,
+            "rms": 54.10596488193368,
+            "peak_to_peak": 173.14485592083446,
+            "max_abs": 130.11013634097418
+          },
+          "y_m": {
+            "mean": -9.10686318754079e-05,
+            "rms": 0.0011316759239453826,
+            "peak_to_peak": 0.003482672891250075,
+            "max_abs": 0.00195436275118258
+          },
+          "vy_mps": {
+            "mean": 0.00024523722649383875,
+            "rms": 0.001327335717660965,
+            "peak_to_peak": 0.005539044531532627,
+            "max_abs": 0.0028592955929042426
+          },
+          "mean_crossflow_power_W": 0.01662840099956265
+        },
+        "LATE": {
+          "Fy_N": {
+            "mean": 70.92872938080133,
+            "rms": 125.22443651347402,
+            "peak_to_peak": 322.463538579653,
+            "max_abs": 227.79966429800717
+          },
+          "y_m": {
+            "mean": 0.0007607487530709149,
+            "rms": 0.0015943496151089296,
+            "peak_to_peak": 0.004294928789758512,
+            "max_abs": 0.003208301924389027
+          },
+          "vy_mps": {
+            "mean": -8.812559774645144e-05,
+            "rms": 0.0012438820212712053,
+            "peak_to_peak": 0.0068037393400989825,
+            "max_abs": 0.0037523834670707664
+          },
+          "mean_crossflow_power_W": 0.021434310318504526
+        }
+      },
+      "power": {
+        "mean_crossflow_W": 0.020453037804992576,
+        "positive_fraction": 0.55375,
+        "negative_fraction": 0.446,
+        "cumulative_crossflow_work_J": 0.4090607560998513
+      },
+      "growth_classification": "BOUNDED",
+      "force_y_crossflow_y": {
+        "peak_correlation": 0.6588083130605479,
+        "lag_s": 0.26
+      },
+      "force_y_crossflow_velocity": {
+        "peak_correlation": -0.4938627500223595,
+        "lag_s": 1.865
+      },
+      "frequency_exploratory": {
+        "y_zero_crossing": {
+          "estimate_Hz": 0.13362625507996923,
+          "complete_cycles": 2,
+          "confidence": "low_confidence"
+        },
+        "Fy_zero_crossing": {
+          "estimate_Hz": 0.7956355912275607,
+          "complete_cycles": 13,
+          "confidence": "exploratory"
+        },
+        "mode_0p198761_projection_amplitude_m": 0.0007360795608453478,
+        "strongest_0p05Hz_grid_Hz": 0.15000000000000002,
+        "grid_peak_amplitude_m": 0.001235955288797825,
+        "Fy_strongest_0p05Hz_grid_Hz": 0.15000000000000002,
+        "Fy_grid_peak_amplitude_N": 91.88340878872921,
+        "status": "exploratory_short_window"
+      }
+    },
+    "1": {
+      "full": {
+        "Fy_N": {
+          "mean": 62.99156158874899,
+          "rms": 137.40368124560223,
+          "peak_to_peak": 7412.053729740221,
+          "max_abs": 4481.562039277797
+        },
+        "y_m": {
+          "mean": 0.0009632835658568049,
+          "rms": 0.0022999527628808224,
+          "peak_to_peak": 0.007996095300007737,
+          "max_abs": 0.005431753623481425
+        },
+        "y_over_D": {
+          "mean": 0.0009632835658568049,
+          "rms": 0.0022999527628808224,
+          "peak_to_peak": 0.007996095300007737,
+          "max_abs": 0.005431753623481425
+        },
+        "vy_mps": {
+          "mean": 9.587051180016245e-05,
+          "rms": 0.001934586120761878,
+          "peak_to_peak": 0.011001007313196295,
+          "max_abs": 0.006351397696982064
+        },
+        "ay_mps2": {
+          "mean": -0.00028734821148666703,
+          "rms": 0.10378163917914272,
+          "peak_to_peak": 0.6955514625612427,
+          "max_abs": 0.3666694403259307
+        }
+      },
+      "windows": {
+        "FULL": {
+          "Fy_N": {
+            "mean": 62.99156158874899,
+            "rms": 137.40368124560223,
+            "peak_to_peak": 7412.053729740221,
+            "max_abs": 4481.562039277797
+          },
+          "y_m": {
+            "mean": 0.0009632835658568049,
+            "rms": 0.0022999527628808224,
+            "peak_to_peak": 0.007996095300007737,
+            "max_abs": 0.005431753623481425
+          },
+          "vy_mps": {
+            "mean": 9.587051180016245e-05,
+            "rms": 0.001934586120761878,
+            "peak_to_peak": 0.011001007313196295,
+            "max_abs": 0.006351397696982064
+          },
+          "mean_crossflow_power_W": 0.03529358696633653
+        },
+        "EARLY": {
+          "Fy_N": {
+            "mean": 94.19912068803413,
+            "rms": 203.05002349995678,
+            "peak_to_peak": 7412.053729740221,
+            "max_abs": 4481.562039277797
+          },
+          "y_m": {
+            "mean": 0.0015596058610695383,
+            "rms": 0.002043449554464453,
+            "peak_to_peak": 0.003769607589445984,
+            "max_abs": 0.0034437886092903024
+          },
+          "vy_mps": {
+            "mean": 0.0002715973810119912,
+            "rms": 0.0015130571738732608,
+            "peak_to_peak": 0.007983463757430063,
+            "max_abs": 0.004214008194522484
+          },
+          "mean_crossflow_power_W": 0.04170980759323382
+        },
+        "MID": {
+          "Fy_N": {
+            "mean": 15.909666905358733,
+            "rms": 54.10596488193366,
+            "peak_to_peak": 173.1448559208344,
+            "max_abs": 130.11013634097412
+          },
+          "y_m": {
+            "mean": -0.00016290324074626512,
+            "rms": 0.0018731437201726909,
+            "peak_to_peak": 0.005612553034367947,
+            "max_abs": 0.003048211357841634
+          },
+          "vy_mps": {
+            "mean": 0.00033599568661173,
+            "rms": 0.0022013844382546602,
+            "peak_to_peak": 0.009065166568673805,
+            "max_abs": 0.004586217822850595
+          },
+          "mean_crossflow_power_W": 0.020752092354993756
+        },
+        "LATE": {
+          "Fy_N": {
+            "mean": 70.92872938080129,
+            "rms": 125.22443651347395,
+            "peak_to_peak": 322.46353857965283,
+            "max_abs": 227.79966429800706
+          },
+          "y_m": {
+            "mean": 0.001228215821551976,
+            "rms": 0.0025956480277446324,
+            "peak_to_peak": 0.007138112041364001,
+            "max_abs": 0.005431753623481425
+          },
+          "vy_mps": {
+            "mean": -0.00011205551021153671,
+            "rms": 0.001979274914985143,
+            "peak_to_peak": 0.011001007313196295,
+            "max_abs": 0.006351397696982064
+          },
+          "mean_crossflow_power_W": 0.03935622395855934
+        }
+      },
+      "power": {
+        "mean_crossflow_W": 0.03529358696633653,
+        "positive_fraction": 0.55075,
+        "negative_fraction": 0.449,
+        "cumulative_crossflow_work_J": 0.7058717393267319
+      },
+      "growth_classification": "BOUNDED",
+      "force_y_crossflow_y": {
+        "peak_correlation": 0.655095114230033,
+        "lag_s": 0.275
+      },
+      "force_y_crossflow_velocity": {
+        "peak_correlation": -0.49593751425031857,
+        "lag_s": 2.0
+      },
+      "frequency_exploratory": {
+        "y_zero_crossing": {
+          "estimate_Hz": 0.13432789708512927,
+          "complete_cycles": 2,
+          "confidence": "low_confidence"
+        },
+        "Fy_zero_crossing": {
+          "estimate_Hz": 0.7956355912275607,
+          "complete_cycles": 13,
+          "confidence": "exploratory"
+        },
+        "mode_0p198761_projection_amplitude_m": 0.0012329510814461766,
+        "strongest_0p05Hz_grid_Hz": 0.15000000000000002,
+        "grid_peak_amplitude_m": 0.0020132163976965163,
+        "Fy_strongest_0p05Hz_grid_Hz": 0.15000000000000002,
+        "Fy_grid_peak_amplitude_N": 91.88340878872916,
+        "status": "exploratory_short_window"
+      }
+    },
+    "2": {
+      "full": {
+        "Fy_N": {
+          "mean": 62.991561588749015,
+          "rms": 137.40368124560237,
+          "peak_to_peak": 7412.053729740225,
+          "max_abs": 4481.5620392778
+        },
+        "y_m": {
+          "mean": 0.0004471368761099603,
+          "rms": 0.0010396512985169218,
+          "peak_to_peak": 0.0035122391498287244,
+          "max_abs": 0.0023706964061536106
+        },
+        "y_over_D": {
+          "mean": 0.0004471368761099603,
+          "rms": 0.0010396512985169218,
+          "peak_to_peak": 0.0035122391498287244,
+          "max_abs": 0.0023706964061536106
+        },
+        "vy_mps": {
+          "mean": 3.822521681817253e-05,
+          "rms": 0.0009510636252300378,
+          "peak_to_peak": 0.006027685791695905,
+          "max_abs": 0.0034716637365935516
+        },
+        "ay_mps2": {
+          "mean": -0.00011477661430647978,
+          "rms": 0.1045084832052593,
+          "peak_to_peak": 0.6150888410776691,
+          "max_abs": 0.3186175087850555
+        }
+      },
+      "windows": {
+        "FULL": {
+          "Fy_N": {
+            "mean": 62.991561588749015,
+            "rms": 137.40368124560237,
+            "peak_to_peak": 7412.053729740225,
+            "max_abs": 4481.5620392778
+          },
+          "y_m": {
+            "mean": 0.0004471368761099603,
+            "rms": 0.0010396512985169218,
+            "peak_to_peak": 0.0035122391498287244,
+            "max_abs": 0.0023706964061536106
+          },
+          "vy_mps": {
+            "mean": 3.822521681817253e-05,
+            "rms": 0.0009510636252300378,
+            "peak_to_peak": 0.006027685791695905,
+            "max_abs": 0.0034716637365935516
+          },
+          "mean_crossflow_power_W": 0.01411796437110518
+        },
+        "EARLY": {
+          "Fy_N": {
+            "mean": 94.1991206880342,
+            "rms": 203.05002349995692,
+            "peak_to_peak": 7412.053729740225,
+            "max_abs": 4481.5620392778
+          },
+          "y_m": {
+            "mean": 0.0007176587519846169,
+            "rms": 0.0009294451025987294,
+            "peak_to_peak": 0.001659660059985779,
+            "max_abs": 0.001536854490937141
+          },
+          "vy_mps": {
+            "mean": 9.895722753668933e-05,
+            "rms": 0.0008136834973923952,
+            "peak_to_peak": 0.005521870949719088,
+            "max_abs": 0.0034716637365935516
+          },
+          "mean_crossflow_power_W": 0.013616010249583171
+        },
+        "MID": {
+          "Fy_N": {
+            "mean": 15.909666905358744,
+            "rms": 54.10596488193369,
+            "peak_to_peak": 173.14485592083452,
+            "max_abs": 130.1101363409742
+          },
+          "y_m": {
+            "mean": -5.9790495556121503e-05,
+            "rms": 0.0008274599877192046,
+            "peak_to_peak": 0.0026138918956062347,
+            "max_abs": 0.001472349151931121
+          },
+          "vy_mps": {
+            "mean": 0.00019576938727747576,
+            "rms": 0.00102388107268708,
+            "peak_to_peak": 0.004816810496515547,
+            "max_abs": 0.00241090632707215
+          },
+          "mean_crossflow_power_W": 0.01384663907948635
+        },
+        "LATE": {
+          "Fy_N": {
+            "mean": 70.92872938080134,
+            "rms": 125.22443651347403,
+            "peak_to_peak": 322.463538579653,
+            "max_abs": 227.7996642980072
+          },
+          "y_m": {
+            "mean": 0.0005653396240056728,
+            "rms": 0.001177909389556484,
+            "peak_to_peak": 0.003214733590906378,
+            "max_abs": 0.0023706964061536106
+          },
+          "vy_mps": {
+            "mean": -7.091287377073681e-05,
+            "rms": 0.000976645993184645,
+            "peak_to_peak": 0.005522284402145778,
+            "max_abs": 0.002966262347043425
+          },
+          "mean_crossflow_power_W": 0.014504604077675478
+        }
+      },
+      "power": {
+        "mean_crossflow_W": 0.01411796437110518,
+        "positive_fraction": 0.54425,
+        "negative_fraction": 0.4555,
+        "cumulative_crossflow_work_J": 0.2823592874221032
+      },
+      "growth_classification": "BOUNDED",
+      "force_y_crossflow_y": {
+        "peak_correlation": 0.6610861567942613,
+        "lag_s": 0.25
+      },
+      "force_y_crossflow_velocity": {
+        "peak_correlation": -0.4660215720567478,
+        "lag_s": 1.7550000000000001
+      },
+      "frequency_exploratory": {
+        "y_zero_crossing": {
+          "estimate_Hz": 0.133431587549486,
+          "complete_cycles": 2,
+          "confidence": "low_confidence"
+        },
+        "Fy_zero_crossing": {
+          "estimate_Hz": 0.7956355912275607,
+          "complete_cycles": 13,
+          "confidence": "exploratory"
+        },
+        "mode_0p198761_projection_amplitude_m": 0.0005298241398435828,
+        "strongest_0p05Hz_grid_Hz": 0.15000000000000002,
+        "grid_peak_amplitude_m": 0.0009139485409586908,
+        "Fy_strongest_0p05Hz_grid_Hz": 0.15000000000000002,
+        "Fy_grid_peak_amplitude_N": 91.88340878872923,
+        "status": "exploratory_short_window"
+      }
+    }
+  },
+  "total": {
+    "mean_crossflow_power_W": 0.06986458914243428,
+    "cumulative_crossflow_work_J": 1.3972917828486857,
+    "sign": "positive"
+  },
+  "slice_comparison": {
+    "pairwise": {
+      "0-1": {
+        "max_abs_Fy_difference_N": 1.8189894035458565e-12,
+        "max_abs_y_difference_m": 0.0022246709789350404
+      },
+      "0-2": {
+        "max_abs_Fy_difference_N": 9.094947017729282e-13,
+        "max_abs_y_difference_m": 0.0008638579661230652
+      },
+      "1-2": {
+        "max_abs_Fy_difference_N": 2.7284841053187847e-12,
+        "max_abs_y_difference_m": 0.0030647872009401684
+      }
+    },
+    "finding": "local_structural_displacements_differ_but_Fy_is_numerically_identical; requires moving-mesh/load-sensitivity investigation before a longer physical run"
+  }
+}
