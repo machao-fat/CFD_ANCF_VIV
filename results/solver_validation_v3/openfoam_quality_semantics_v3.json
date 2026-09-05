@@ -1,0 +1,188 @@
+{
+  "schema_version": "openfoam_quality_semantics_v3.1",
+  "scope": "read-only historical Stage381/382 audit",
+  "segments": {
+    "stage381_cpp_worker_precice_three_slice_continue220_to270_v1": {
+      "mapping_record_count": 10000,
+      "slices": {
+        "slice_0000": {
+          "path": "D:\\研二文件\\开题准备\\CFD_ANCF_VIV\\runtime\\stage381_cpp_worker_precice_three_slice_continue220_to270_v1\\logs\\openfoam_0000_quality.json",
+          "sha256": "39add95f26e6a75f1d3d2708430196a5dcc1f5da1c26a63dda824b585072d2e0",
+          "OBSERVABILITY_COMPLETENESS": {
+            "status": "pass",
+            "checks": {
+              "record_count": true,
+              "required_fields": true,
+              "finite_fields": true,
+              "strictly_increasing_time": true,
+              "uniform_dt": true,
+              "expected_start": true
+            },
+            "record_count": 10000,
+            "expected_count": 10000,
+            "field_definitions": {
+              "courant_max": "maximum Courant Number printed for the time record",
+              "residual_max": "max_final_residual_across_all_parsed_Solving_for_lines_per_time",
+              "continuity_global": "last_parsed_global_continuity_error_per_time",
+              "iterations_max": "maximum_iterations_across_all_parsed_Solving_for_lines_per_time"
+            }
+          },
+          "NUMERICAL_QUALITY": {
+            "status": "not_evaluable",
+            "reason": "no frozen pre-run numerical-quality contract retained with the historical records"
+          }
+        },
+        "slice_0001": {
+          "path": "D:\\研二文件\\开题准备\\CFD_ANCF_VIV\\runtime\\stage381_cpp_worker_precice_three_slice_continue220_to270_v1\\logs\\openfoam_0001_quality.json",
+          "sha256": "3baa24fe9429aad01b3fbf2427183ed6af076107a8a223cd2b45d9966547fe69",
+          "OBSERVABILITY_COMPLETENESS": {
+            "status": "pass",
+            "checks": {
+              "record_count": true,
+              "required_fields": true,
+              "finite_fields": true,
+              "strictly_increasing_time": true,
+              "uniform_dt": true,
+              "expected_start": true
+            },
+            "record_count": 10000,
+            "expected_count": 10000,
+            "field_definitions": {
+              "courant_max": "maximum Courant Number printed for the time record",
+              "residual_max": "max_final_residual_across_all_parsed_Solving_for_lines_per_time",
+              "continuity_global": "last_parsed_global_continuity_error_per_time",
+              "iterations_max": "maximum_iterations_across_all_parsed_Solving_for_lines_per_time"
+            }
+          },
+          "NUMERICAL_QUALITY": {
+            "status": "not_evaluable",
+            "reason": "no frozen pre-run numerical-quality contract retained with the historical records"
+          }
+        },
+        "slice_0002": {
+          "path": "D:\\研二文件\\开题准备\\CFD_ANCF_VIV\\runtime\\stage381_cpp_worker_precice_three_slice_continue220_to270_v1\\logs\\openfoam_0002_quality.json",
+          "sha256": "de690e1afd4cbc336be728fc499063ea7cee84cc7f7fddeaeb7f9ca8ad6120f9",
+          "OBSERVABILITY_COMPLETENESS": {
+            "status": "pass",
+            "checks": {
+              "record_count": true,
+              "required_fields": true,
+              "finite_fields": true,
+              "strictly_increasing_time": true,
+              "uniform_dt": true,
+              "expected_start": true
+            },
+            "record_count": 10000,
+            "expected_count": 10000,
+            "field_definitions": {
+              "courant_max": "maximum Courant Number printed for the time record",
+              "residual_max": "max_final_residual_across_all_parsed_Solving_for_lines_per_time",
+              "continuity_global": "last_parsed_global_continuity_error_per_time",
+              "iterations_max": "maximum_iterations_across_all_parsed_Solving_for_lines_per_time"
+            }
+          },
+          "NUMERICAL_QUALITY": {
+            "status": "not_evaluable",
+            "reason": "no frozen pre-run numerical-quality contract retained with the historical records"
+          }
+        }
+      }
+    },
+    "stage382_cpp_worker_precice_three_slice_continue270_to370_v1": {
+      "mapping_record_count": 20000,
+      "slices": {
+        "slice_0000": {
+          "path": "D:\\研二文件\\开题准备\\CFD_ANCF_VIV\\runtime\\stage382_cpp_worker_precice_three_slice_continue270_to370_v1\\logs\\openfoam_0000_quality.json",
+          "sha256": "ffd60459778722e84d1ba003ca4aa9f85490ecb780edfe8dcb9a996afbe15458",
+          "OBSERVABILITY_COMPLETENESS": {
+            "status": "pass",
+            "checks": {
+              "record_count": true,
+              "required_fields": true,
+              "finite_fields": true,
+              "strictly_increasing_time": true,
+              "uniform_dt": true,
+              "expected_start": true
+            },
+            "record_count": 20000,
+            "expected_count": 20000,
+            "field_definitions": {
+              "courant_max": "maximum Courant Number printed for the time record",
+              "residual_max": "max_final_residual_across_all_parsed_Solving_for_lines_per_time",
+              "continuity_global": "last_parsed_global_continuity_error_per_time",
+              "iterations_max": "maximum_iterations_across_all_parsed_Solving_for_lines_per_time"
+            }
+          },
+          "NUMERICAL_QUALITY": {
+            "status": "not_evaluable",
+            "reason": "no frozen pre-run numerical-quality contract retained with the historical records"
+          }
+        },
+        "slice_0001": {
+          "path": "D:\\研二文件\\开题准备\\CFD_ANCF_VIV\\runtime\\stage382_cpp_worker_precice_three_slice_continue270_to370_v1\\logs\\openfoam_0001_quality.json",
+          "sha256": "22853f69ecd7c45f7ea00c4740e4ae0a2c41829b27c4ace58eed924074d3e43e",
+          "OBSERVABILITY_COMPLETENESS": {
+            "status": "pass",
+            "checks": {
+              "record_count": true,
+              "required_fields": true,
+              "finite_fields": true,
+              "strictly_increasing_time": true,
+              "uniform_dt": true,
+              "expected_start": true
+            },
+            "record_count": 20000,
+            "expected_count": 20000,
+            "field_definitions": {
+              "courant_max": "maximum Courant Number printed for the time record",
+              "residual_max": "max_final_residual_across_all_parsed_Solving_for_lines_per_time",
+              "continuity_global": "last_parsed_global_continuity_error_per_time",
+              "iterations_max": "maximum_iterations_across_all_parsed_Solving_for_lines_per_time"
+            }
+          },
+          "NUMERICAL_QUALITY": {
+            "status": "not_evaluable",
+            "reason": "no frozen pre-run numerical-quality contract retained with the historical records"
+          }
+        },
+        "slice_0002": {
+          "path": "D:\\研二文件\\开题准备\\CFD_ANCF_VIV\\runtime\\stage382_cpp_worker_precice_three_slice_continue270_to370_v1\\logs\\openfoam_0002_quality.json",
+          "sha256": "1894e9444455523130d46e8a014860c1618b7541130ef7f564ec3b598c16c3ab",
+          "OBSERVABILITY_COMPLETENESS": {
+            "status": "pass",
+            "checks": {
+              "record_count": true,
+              "required_fields": true,
+              "finite_fields": true,
+              "strictly_increasing_time": true,
+              "uniform_dt": true,
+              "expected_start": true
+            },
+            "record_count": 20000,
+            "expected_count": 20000,
+            "field_definitions": {
+              "courant_max": "maximum Courant Number printed for the time record",
+              "residual_max": "max_final_residual_across_all_parsed_Solving_for_lines_per_time",
+              "continuity_global": "last_parsed_global_continuity_error_per_time",
+              "iterations_max": "maximum_iterations_across_all_parsed_Solving_for_lines_per_time"
+            }
+          },
+          "NUMERICAL_QUALITY": {
+            "status": "not_evaluable",
+            "reason": "no frozen pre-run numerical-quality contract retained with the historical records"
+          }
+        }
+      }
+    }
+  },
+  "historical_interpretation": {
+    "OBSERVABILITY_COMPLETENESS": "records are assessed for count, alignment, required fields and finite values",
+    "NUMERICAL_QUALITY": "not_evaluable unless an explicit pre-run numerical contract is retained; historical record completeness is not a convergence claim"
+  },
+  "real_process_starts": {
+    "CFD": 0,
+    "MATLAB": 0,
+    "OpenFOAM": 0,
+    "WSL": 0
+  }
+}
