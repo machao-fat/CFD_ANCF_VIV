@@ -1,0 +1,18 @@
+{
+  "schema_version": "openfoam-numerical-quality-contract-v4-proposal",
+  "scope": "future only; this proposal does not reclassify any V3 evaluation or runtime",
+  "fluid_primary_fields": {
+    "policy": "retain terminal residual, Courant, continuity, finite-value and missing-field hard gates"
+  },
+  "mesh_motion_auxiliary_fields": {
+    "fields": ["cellDisplacementx", "cellDisplacementy"],
+    "validity_hard_gate": "final residual satisfies the configured cellMotionUx/cellDisplacementFinal tolerance, values are finite, and the solve is observed",
+    "iteration_policy": "iterations above 200 are an efficiency/conditioning warning only unless a separately frozen fvSolution maxIter supplies a hard limit",
+    "basis": "V3 supplied a hard 200-iteration limit although the audited fvSolution supplies tolerance=1e-8 and relTol=0 but no maxIter=200; exact-motion mesh-only replay converged below 1e-8 and retained Mesh OK for 20/20 steps despite 236/205 early iterations"
+  },
+  "flux_correction_auxiliary_fields": {
+    "fields": ["pcorr"],
+    "policy": "retain pcorrFinal configured-tolerance health gate"
+  },
+  "unknown_solve_policy": "fail_closed"
+}
