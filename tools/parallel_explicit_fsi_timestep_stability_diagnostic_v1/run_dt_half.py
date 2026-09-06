@@ -1,6 +1,6 @@
 """The sole fresh coupled dt=0.0025 s / 0.100 s diagnostic permitted by V1."""
 from __future__ import annotations
-import importlib.util,json,math,re,sys
+import importlib.util,json,math,re,sys,subprocess,threading,time
 from pathlib import Path
 ROOT=Path(__file__).resolve().parents[2]; HERE=Path(__file__).parent; sys.path.insert(0,str(ROOT/'src'))
 from coupling.ancf_newton_evidence_v1 import validate_records
@@ -15,6 +15,29 @@ def load(path,name):
 def put(path,value): path.parent.mkdir(parents=True,exist_ok=True); path.write_text(json.dumps(value,ensure_ascii=False,indent=2)+'\n',encoding='utf8')
 def time_key(d,t):
  return next((v for k,v in d.items() if abs(float(k)-t)<1e-9),None)
+def containment_monitor(done):
+    """Stop only this fresh diagnostic if a pre-frozen containment limit is crossed."""
+    limits={'ux_m':.1,'vx_mps':20.,'openfoam_force_x_N':2e6}
+    records=RUNTIME/'records.jsonl'; event=RUNTIME/'containment_event.json'
+    seen=0
+    while not done.wait(.10):
+        if not records.is_file(): continue
+        lines=records.read_text(encoding='utf8').splitlines()
+        for line in lines[seen:]:
+            row=json.loads(line); breached=[]
+            for sid,motion in enumerate(row['motion']):
+                if abs(float(motion['ux_m']))>limits['ux_m']: breached.append({'slice_id':sid,'quantity':'ux_m','value':motion['ux_m'],'limit':limits['ux_m']})
+                if abs(float(motion['vx_mps']))>limits['vx_mps']: breached.append({'slice_id':sid,'quantity':'vx_mps','value':motion['vx_mps'],'limit':limits['vx_mps']})
+                force=float(row['loads'][sid]['openfoam_force_x_N'])
+                if abs(force)>limits['openfoam_force_x_N']: breached.append({'slice_id':sid,'quantity':'raw_Fx_N','value':force,'limit':limits['openfoam_force_x_N']})
+            if breached:
+                event.write_text(json.dumps({'global_step':row['global_step'],'tau_s':row['time_s'],'breaches':breached},indent=2)+'\n',encoding='utf8')
+                pids=RUNTIME/'pids.txt'
+                if pids.is_file():
+                    values=' '.join(pids.read_text(encoding='utf8').split())
+                    if values: subprocess.run(['wsl.exe','-d','Ubuntu-22.04','--','bash','-lc',f'kill {values} 2>/dev/null || true'],check=False)
+                return
+        seen=len(lines)
 def main():
  p=load(ROOT/'tools/preconditioned_coupled_0p1s_smoke_v1/run_smoke.py','preconditioned_dt_half')
  p.HERE=HERE; p.RUN=RUN; p.RUNTIME=RUNTIME; p.RESULTS=RESULTS; p.DT=.0025; p.STEPS=40; p.QUALITY=V4
@@ -24,7 +47,9 @@ def main():
   text=base.CONTROL.replace('startFrom startTime; startTime 0; stopAt endTime; endTime 1;','startFrom startTime; startTime 0.1; stopAt endTime; endTime 0.2;')
   return text.replace('deltaT 0.005;','deltaT 0.0025;')
  p.control=control; p.evaluate_quality_v3=evaluate_quality_v4
- base,cases,c=p.prepare(); rc=base.launch(cases)
+ base,cases,c=p.prepare(); done=threading.Event(); monitor=threading.Thread(target=containment_monitor,args=(done,),daemon=True); monitor.start()
+ try: rc=base.launch(cases)
+ finally: done.set(); monitor.join(timeout=1)
  raw=p.audit(base,cases,c,rc)
  rows=[json.loads(x) for x in (RUNTIME/'records.jsonl').read_text(encoding='utf8').splitlines()] if (RUNTIME/'records.jsonl').is_file() else []
  attempts=[json.loads(x) for x in (RUNTIME/'correction_attempts.jsonl').read_text(encoding='utf8').splitlines()] if (RUNTIME/'correction_attempts.jsonl').is_file() else []
@@ -37,8 +62,8 @@ def main():
  for row in rows:
   tau=float(row['time_s']); tof=.1+tau; step=int(row['global_step']); entry={'step':step,'tau_s':tau,'openfoam_physical_time_s':tof,'slices':[]}
   for sid in range(3):
-   rawforce=time_key(forces[sid],tof); load=row['loads'][sid]; motion=row['motion'][sid]
-   entry['slices'].append({'slice_id':sid,'raw_pressure_Fx_N':None if rawforce is None else rawforce['pressure_N'][0],'raw_viscous_Fx_N':None if rawforce is None else rawforce['viscous_N'][0],'raw_total_Fx_N':None if rawforce is None else rawforce['total_N'][0],'integrated_Fx_N':load['force_x_N'],'ux_m':motion['ux_m'],'vx_mps':motion['vx_mps'],'ax_mps2':motion['ax_mps2']})
+   rawforce=time_key(forces[sid],tof); load_record=row['loads'][sid]; motion=row['motion'][sid]
+   entry['slices'].append({'slice_id':sid,'raw_pressure_Fx_N':None if rawforce is None else rawforce['pressure_N'][0],'raw_viscous_Fx_N':None if rawforce is None else rawforce['viscous_N'][0],'raw_total_Fx_N':None if rawforce is None else rawforce['total_N'][0],'integrated_Fx_N':load_record['force_x_N'],'ux_m':motion['ux_m'],'vx_mps':motion['vx_mps'],'ax_mps2':motion['ax_mps2']})
   ledger.append(entry)
  # Correctness is V2 mapping / V4 quality; legacy absolute-moment remains a diagnostic only.
  try: newton_ok=validate_records(newton,expected_steps=40).get('status')=='pass' and len(newton)==80
