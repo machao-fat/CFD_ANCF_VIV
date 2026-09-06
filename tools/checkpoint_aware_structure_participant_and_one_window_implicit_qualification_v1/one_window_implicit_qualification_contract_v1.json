@@ -1,0 +1,18 @@
+{
+  "schema_version": "one-window-implicit-qualification-v1",
+  "status": "FROZEN_BEFORE_RUN",
+  "coupling_scheme": "parallel-implicit",
+  "dt_s": 0.005,
+  "duration_s": 0.005,
+  "time_windows": 1,
+  "openfoam_source_time_s": 0.1,
+  "openfoam_target_time_s": 0.105,
+  "structure_initial_state": "NO_FLOW_EQUILIBRIUM",
+  "min_coupling_iterations": 2,
+  "max_coupling_iterations": 8,
+  "acceleration": "none",
+  "convergence_measures": {"Displacement": {"abs_limit": 1e-8, "rel_limit": 1e-5}, "Force": {"abs_limit": 0.001, "rel_limit": 1e-5}},
+  "quality_contract": "OPENFOAM_QUALITY_V4",
+  "generalized_force_contract": "GENERALIZED_FORCE_METRIC_V2",
+  "fail_closed": ["checkpoint-write", "checkpoint-restore", "wire-id-reuse", "max-iteration", "NaN-Inf", "participant-FPE", "negative-cells"]
+}
