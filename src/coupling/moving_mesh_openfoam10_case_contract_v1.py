@@ -26,9 +26,9 @@ def ensure_solver_entries(path:Path) -> None:
     if _block(text,'cellDisplacement') is None:
         additions += ['    cellDisplacement','    {','        $cellMotionUx;','    }']
     if _block(text,'cellDisplacementFinal') is None:
-        additions += ['    cellDisplacementFinal','    {','        $cellDisplacement;','        relTol 0;','    }']
+        additions += ['    cellDisplacementFinal','    {','        $cellMotionUx;','        relTol 0;','    }']
     elif '$cellMotionUx;' in text[_block(text,'cellDisplacementFinal')[0]:_block(text,'cellDisplacementFinal')[1]+1]:
-        a,b=_block(text,'cellDisplacementFinal'); text=text[:a]+'{\n        $cellDisplacement;\n        relTol 0;\n    }'+text[b+1:]
+        a,b=_block(text,'cellDisplacementFinal'); text=text[:a]+'{\n        $cellMotionUx;\n        relTol 0;\n    }'+text[b+1:]
     if additions:
         solvers=_block(text,'solvers'); assert solvers
         text=text[:solvers[1]]+'\n'+'\n'.join(additions)+'\n'+text[solvers[1]:]

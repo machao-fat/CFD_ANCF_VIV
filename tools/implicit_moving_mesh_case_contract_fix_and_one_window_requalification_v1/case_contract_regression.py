@@ -4,7 +4,7 @@ import json, shutil, sys
 from pathlib import Path
 ROOT=Path(__file__).resolve().parents[2]; sys.path.insert(0,str(ROOT/'src'))
 from coupling.moving_mesh_openfoam10_case_contract_v1 import ensure_solver_entries,preflight
-RUN='implicit_moving_mesh_case_contract_regression_v1_run_002'
+RUN='implicit_moving_mesh_case_contract_regression_v1_run_003'
 SOURCES={
  'validated_corrected_explicit':ROOT/'runtime/preconditioned_coupled_0p1s_smoke_v1_run_003/cases/slice_0000',
  'precursor_dynamic':ROOT/'runtime/parallel_explicit_fsi_timestep_stability_v1_run_001/cases/slice_0000',

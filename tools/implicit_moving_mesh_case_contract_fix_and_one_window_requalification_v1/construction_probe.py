@@ -4,7 +4,7 @@ import json, shutil, subprocess, sys
 from pathlib import Path
 ROOT=Path(__file__).resolve().parents[2]; sys.path.insert(0,str(ROOT/'src'))
 from coupling.moving_mesh_openfoam10_case_contract_v1 import ensure_solver_entries,preflight
-RUN='implicit_moving_mesh_construction_probe_v1_run_001'; SOURCE=ROOT/'runtime/implicit_one_window_v1_run_001/cases/slice_0000'
+RUN='implicit_moving_mesh_construction_probe_v1_run_002'; SOURCE=ROOT/'runtime/implicit_one_window_v1_run_001/cases/slice_0000'
 def wsl(p):
  s=str(p.resolve()).replace('\\','/'); return '/mnt/'+s[0].lower()+s[2:]
 def main():
