@@ -9,7 +9,9 @@ from coupling.slice_independence_audit_v1.audit import parse_forces
 RUN='parallel_explicit_fsi_timestep_stability_preflight_v1_run_001'; RUNTIME=ROOT/'runtime'/RUN; RESULTS=ROOT/'results'/RUN
 SOURCE=ROOT/'runtime/generalized_force_metric_v2_0p1s_micro_smoke_v1_run_001/cases/slice_0000'; PRE=ROOT/'results/fixed_cylinder_precursor_initialization_contract_v1_run_002/PRECURSOR_STATE_V1'; V4=HERE/'openfoam_quality_contract_v4.json'
 def sha(p): return hashlib.sha256(p.read_bytes()).hexdigest()
-def put(p,s): p.parent.mkdir(parents=True,exist_ok=True); p.write_text(s,encoding='utf8',newline='\n')
+def put(p,s):
+ p.parent.mkdir(parents=True,exist_ok=True)
+ with p.open('w',encoding='utf8',newline='\n') as stream: stream.write(s)
 def wsl(p):
     s=str(p.resolve()).replace('\\','/'); return '/mnt/'+s[0].lower()+s[2:]
 def main():
@@ -36,7 +38,7 @@ functions { cylinderForces { type forces; libs ("libforces.so"); writeControl ti
  put(case/'preflight.launch.stdout',done.stdout or ''); put(case/'preflight.launch.stderr',done.stderr or '')
  paths=list(case.glob('postProcessing/cylinderForces/*/forces.dat'))
  forces=parse_forces(paths[0]) if len(paths)==1 else {}
- rows=[forces[k] for k in sorted(forces)] if isinstance(forces,dict) else forces
+ rows=[{'time_s':time_s,**value} for time_s,value in sorted(forces.items())]
  advanced=next((r for r in rows if abs(float(r['time_s'])-.1025)<1e-10),None)
  quality=evaluate_quality_v4(audit_log(case/'preflight.stdout',case/'system/fvSolution'),json.loads(V4.read_text(encoding='utf8'))) if done.returncode==0 else {'status':'fail','failures':['pimpleFoam return code']}
  meshphi=case/'0.1025'/'meshPhi'; uf=case/'0.1025'/'Uf'; meshphi_zero=meshphi.is_file() and bool(re.search(r'internalField\s+uniform\s+0\s*;',meshphi.read_text(encoding='utf8')))
