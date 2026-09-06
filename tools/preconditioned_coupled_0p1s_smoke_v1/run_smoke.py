@@ -19,13 +19,14 @@ SOURCE=ROOT/'runtime/generalized_force_metric_v2_0p1s_micro_smoke_v1_run_001/cas
 BASE=ROOT/'tools/three_slice_force_contract_smoke_v1/run_smoke.py'
 QUALITY=ROOT/'tools/precursor_transfer_and_structural_mean_load_closure_v1/openfoam_quality_contract_v3.json'
 TRANSFER=ROOT/'results/precursor_transfer_and_structural_mean_load_closure_v1_run_001/precursor_transfer_v2_evaluation.json'
-DT=.005; OFFSET=.1; STEPS=20; NUM=r'[-+0-9.eE]+'
+DT=.005; OFFSET=.1; STEPS=20; NUM=r'[-+0-9.eE]+'; REAL=r'[-+]?(?:\d+\.\d*|\d*\.\d+|\d+)(?:[eE][-+]?\d+)?'
 
 def put(path,text):
  path.parent.mkdir(parents=True,exist_ok=True)
  with path.open('w',encoding='utf8',newline='\n') as stream: stream.write(text)
 def load(path,name):
  s=importlib.util.spec_from_file_location(name,path); m=importlib.util.module_from_spec(s); assert s and s.loader; s.loader.exec_module(m); return m
+GEOM=load(ROOT/'tools/corrected_moving_mesh_coupling_revalidation_v1/run_revalidation.py','preconditioned_geometry')
 def contract():
  old=json.loads((ROOT/'tools/generalized_force_metric_v2_and_0p1s_micro_smoke_v1/generalized_force_metric_v2_and_0p1s_micro_smoke_v1_contract.json').read_text(encoding='utf8'))
  old.update({'schema_version':'preconditioned-coupled-0p1s-smoke-v1','run_id':RUN,'case_id':'preconditioned_coupled_0p1s_smoke_v1_case_001','git_commit':subprocess.check_output(['git','rev-parse','HEAD'],cwd=ROOT,text=True).strip(),'duration_s':.1,'number_of_steps':20,'openfoam_physical_time_offset_s':OFFSET,'initial_structure_state':'NO_FLOW_EQUILIBRIUM','initialization_policy':'zero-geometry precursor state; mean-drag equilibrium explicitly prohibited','quality_contract_v3':{'source':str(QUALITY),'sha256':sha256(QUALITY),'frozen_before_run':True},'precursor_state':{'source':str(PRECURSOR),'manifest_sha256':sha256(PRECURSOR/'manifest.json'),'source_openfoam_time_s':.1,'U_p_phi':'exact manifest hashes','Uf':'OpenFOAM reconstruction','meshPhi':'zero under initial zero motion'},'cold_start_guard':{'raw_first_abs_Fx_max_N':5000.,'basis':'inherited precursor startup-balanced contract'},'structural_startup_sanity_guard':{'max_abs_ux_m':.05,'max_abs_vx_mps':1.,'basis':'10x ANCF-only normal-drag 0.1 s reference (0.004209 m, 0.07482 m/s); runaway screen only'},'mesh_snapshot_coupling_times_s':[0,.025,.05,.075,.1],'formal_status':{'VIV':'not_evaluated','LOCK_IN':'not_evaluated','STROUHAL':'not_evaluated'}})
@@ -63,19 +64,35 @@ def prepare():
  if any(values!=[manifest['field_hashes'][field]]*3 for field,values in hashes.items()): raise RuntimeError('precursor field-copy identity fail')
  return base,cases,c
 
-def points(path): return [[float(x) for x in p] for p in re.findall(r'\(\s*(%s)\s+(%s)\s+(%s)\s*\)'%(NUM,NUM,NUM),path.read_text(encoding='utf8',errors='replace'))]
+def mesh_points_path(case,time):
+ path=case/time/'polyMesh/points'
+ return path if path.is_file() else case/'constant/polyMesh/points'
+def points(path): return [[float(x) for x in p] for p in re.findall(r'\(\s*(%s)\s+(%s)\s+(%s)\s*\)'%(REAL,REAL,REAL),path.read_text(encoding='utf8',errors='replace'))]
+def actual_mesh_centroid(case,time):
+ boundary=(case/'constant/polyMesh/boundary').read_text(encoding='utf8',errors='replace'); block=GEOM.patch_block(boundary,'cylinder'); start=int(re.search(r'startFace\s+(\d+)',block).group(1)); count=int(re.search(r'nFaces\s+(\d+)',block).group(1))
+ face_lines=(case/'constant/polyMesh/faces').read_text(encoding='utf8',errors='replace').splitlines(); faces=[]
+ for line in face_lines:
+  match=re.match(r'\s*\d+\(([^)]*)\)',line)
+  if match: faces.append([int(x) for x in match.group(1).split()])
+ xyz=points(mesh_points_path(case,time)); centers=[[sum(xyz[i][axis] for i in face)/len(face) for axis in range(3)] for face in faces[start:start+count]]
+ return [sum(x[axis] for x in centers)/len(centers) for axis in range(3)]
 def vecdist(a,b): return math.sqrt(sum((x-y)**2 for x,y in zip(a,b)))
 def field_centroid(base,case,time,field):
- block=base.patch_block((case/time/field).read_text(encoding='utf8',errors='replace'),'cylinder'); vs=base.vectors_from_block(block); return [sum(v[i] for v in vs)/len(vs) for i in range(3)] if vs else None
+ block=GEOM.patch_block((case/time/field).read_text(encoding='utf8',errors='replace'),'cylinder'); vs=GEOM.vectors_from_block(block); return [sum(v[i] for v in vs)/len(vs) for i in range(3)] if vs else None
 def wsl(path):
  value=str(path.resolve()).replace('\\','/'); return '/mnt/'+value[0].lower()+value[2:]
 def mesh_quality(case,time):
- command=f"source /opt/openfoam10/etc/bashrc; cd '{wsl(case)}'; checkMesh -time {time} -allTopology -allGeometry"
- done=subprocess.run(['wsl.exe','-d','Ubuntu-22.04','--','bash','-lc',command],text=True,encoding='utf8',errors='replace',capture_output=True,timeout=90)
- text=done.stdout+'\n'+done.stderr
+ cache=RESULTS/'mesh_quality'/f"{case.name}_{time.replace('.','p')}.log"
+ if cache.is_file():
+  text=cache.read_text(encoding='utf8',errors='replace'); code=0 if 'Mesh OK.' in text else 1
+ else:
+  cache.parent.mkdir(parents=True,exist_ok=True)
+  command=f"source /opt/openfoam10/etc/bashrc; cd '{wsl(case)}'; checkMesh -time {time} -allTopology -allGeometry"
+  done=subprocess.run(['wsl.exe','-d','Ubuntu-22.04','--','bash','-lc',command],text=True,encoding='utf8',errors='replace',capture_output=True,timeout=90)
+  text=done.stdout+'\n'+done.stderr; code=done.returncode; cache.write_text(text,encoding='utf8')
  def grab(pattern):
   m=re.search(pattern,text,re.I); return float(m.group(1)) if m else None
- return {'return_code':done.returncode,'min_cell_volume':grab(r'Min volume\s*=\s*(%s)'%NUM),'max_non_orthogonality':grab(r'Mesh non-orthogonality Max:\s*(%s)'%NUM),'max_skewness':grab(r'Max skewness\s*=\s*(%s)'%NUM),'negative_volume_count':0 if done.returncode==0 and 'negative volume' not in text.lower() else None,'raw_sha256':hashlib.sha256(text.encode()).hexdigest(),'raw':text}
+ return {'return_code':code,'min_cell_volume':grab(r'Min volume\s*=\s*(%s)'%REAL),'max_non_orthogonality':grab(r'Mesh non-orthogonality Max:\s*(%s)'%REAL),'max_skewness':grab(r'Max skewness\s*=\s*(%s)'%REAL),'negative_volume_count':0 if code==0 and 'negative volume' not in text.lower() else None,'raw_sha256':hashlib.sha256(text.encode()).hexdigest(),'raw':text}
 def loads_by_time(case):
  paths=sorted(case.glob('postProcessing/cylinderForces/*/forces.dat')); 
  if len(paths)!=1: raise RuntimeError(f'force file cardinality {paths}')
@@ -90,24 +107,24 @@ def audit(base,cases,c,rc):
  forces=[]; forcepaths=[]
  for case in cases:
   f,p=loads_by_time(case); forces.append(f); forcepaths.append(p)
- mesh=[]; snapshots=[]; mesh_ok=True; previous_points={}; mesh_co_proxy=[]
+ mesh=[]; snapshots=[]; mesh_ok=True; previous_points={}; mesh_co_proxy=[]; snapshot_steps={20}
  for step in range(0,STEPS+1):
   tau=step*DT; tof=OFFSET+tau; token=f'{tof:g}' if step else '.1'; token='0.1' if step==0 else token
   for sid,case in enumerate(cases):
    try:
-    actual=base.mesh_centroid(case,token); point=field_centroid(base,case,token,'pointDisplacement'); cell=field_centroid(base,case,token,'cellDisplacement')
-    expected=[0.,0.,.5] if point is None else [point[0],point[1],.5+point[2]]; err=vecdist(actual,expected); quality_mesh=mesh_quality(case,token)
-    current_points=points(case/token/'polyMesh/points')
+    actual=actual_mesh_centroid(case,token); point=field_centroid(base,case,token,'pointDisplacement'); cell=field_centroid(base,case,token,'cellDisplacement')
+    expected=[0.,0.,.5] if point is None else [point[0],point[1],.5+point[2]]; err=vecdist(actual,expected); quality_mesh=mesh_quality(case,token) if step in snapshot_steps else {'status':'NOT_EVALUATED_PER_STEP'}
+    current_points=points(mesh_points_path(case,token))
     increment=None; co_proxy=None
     if sid in previous_points:
      if len(previous_points[sid])!=len(current_points): raise RuntimeError('mesh point count changed unexpectedly')
      increment=max(vecdist(a,b) for a,b in zip(previous_points[sid],current_points))
-     h=(quality_mesh['min_cell_volume'] or 0.)**(1/3)
-     co_proxy=increment/h if h>0 else math.inf
-     mesh_co_proxy.append(co_proxy)
+     h=(quality_mesh.get('min_cell_volume') or 0.)**(1/3)
+     co_proxy=increment/h if h>0 else None
+     if co_proxy is not None: mesh_co_proxy.append(co_proxy)
     previous_points[sid]=current_points
     rec={'slice_id':sid,'global_step':step,'tick':int(round(tau*1e9)),'coupling_time_s':tau,'openfoam_physical_time_s':tof,'actual_cylinder_centroid_xyz_m':actual,'received_precice_displacement_xyz_m':point,'cylinder_pointDisplacement_xyz_m':point,'cellDisplacement_cylinder_centroid_xyz_m':cell,'mesh_tracking_error_m':err,'max_point_increment_m':increment,'mesh_courant_proxy_max':co_proxy,'mesh_quality':quality_mesh}
-    mesh.append(rec); mesh_ok &= point is not None and err<=1e-8 and quality_mesh['negative_volume_count']==0 and all(quality_mesh[k] is not None for k in ('min_cell_volume','max_non_orthogonality','max_skewness'))
+    mesh.append(rec); mesh_ok &= point is not None and err<=1e-8 and (step not in snapshot_steps or (quality_mesh['negative_volume_count']==0 and all(quality_mesh[k] is not None for k in ('min_cell_volume','max_non_orthogonality','max_skewness'))))
     if any(abs(tau-x)<1e-12 for x in c['mesh_snapshot_coupling_times_s']): snapshots.append(rec)
    except Exception as exc: mesh_ok=False; mesh.append({'slice_id':sid,'global_step':step,'coupling_time_s':tau,'openfoam_physical_time_s':tof,'error':f'{type(exc).__name__}: {exc}'})
  # enrich committed structure/force evidence with both clocks.
@@ -135,12 +152,12 @@ def audit(base,cases,c,rc):
  for tau in (.025,.05,.075,.1):
   token=f'{OFFSET+tau:g}';
   try:
-   us=[base.arr(case/token/'U',True) for case in cases]; ps=[base.arr(case/token/'p',False) for case in cases]; field[token]={'U_l2_01':base.l2(us[0],us[1]),'U_l2_02':base.l2(us[0],us[2]),'p_l2_01':base.l2(ps[0],ps[1]),'p_l2_02':base.l2(ps[0],ps[2]),'U_hash':[sha256(case/token/'U') for case in cases],'p_hash':[sha256(case/token/'p') for case in cases]}
+   us=[GEOM.arr(case/token/'U',True) for case in cases]; ps=[GEOM.arr(case/token/'p',False) for case in cases]; field[token]={'U_l2_01':GEOM.l2(us[0],us[1]),'U_l2_02':GEOM.l2(us[0],us[2]),'p_l2_01':GEOM.l2(ps[0],ps[1]),'p_l2_02':GEOM.l2(ps[0],ps[2]),'U_hash':[sha256(case/token/'U') for case in cases],'p_hash':[sha256(case/token/'p') for case in cases]}
   except Exception as exc: field[token]={'error':str(exc)}
  motions_differ=max((vecdist(a['received_precice_displacement_xyz_m'],b['received_precice_displacement_xyz_m']) for a in mesh for b in mesh if a.get('global_step')==b.get('global_step') and a['slice_id']<b['slice_id'] and a.get('received_precice_displacement_xyz_m') is not None and b.get('received_precice_displacement_xyz_m') is not None),default=0.)>1e-8
  conditional_force_independence=(not motions_differ) or len(set(rawhash))==3
  time_identity=all(abs(float(x['openfoam_physical_time_s'])-(OFFSET+float(x['coupling_time_s'])))<=1e-12 for x in enriched)
- checks={'launch_return':rc==0,'committed_20':len(rows)==20 and summary.get('committed_steps')==20,'precursor_transfer_v2':json.loads(TRANSFER.read_text(encoding='utf8'))['PRECURSOR_TRANSFER_V2']=='PASS','cold_start_guard':len(first)==3 and all(abs(x['total_Fx_N'])<=5000 for x in first),'first_force_identity':len(first_reconciliation)==3 and all(first_reconciliation),'force_contract':forcechain,'mapping':mapping,'generalized_force_v2':v2pass,'moving_mesh_tracking':mesh_ok,'quality_v3':all(x['status']=='pass' for x in quality.values()),'newton_40':newton_result.get('status')=='pass' and len(newton)==40,'structural_startup_guard':all(x<=.05 for x in maxux) and all(x<=1 for x in maxvx),'time_offset_identity':time_identity,'conditional_force_independence':conditional_force_independence,'no_participant_fpe_disconnect':rc==0}
+ checks={'launch_return':rc==0,'committed_20':len(rows)==20 and summary.get('committed_steps')==20,'precursor_transfer_v2':json.loads(TRANSFER.read_text(encoding='utf8'))['PRECURSOR_TRANSFER_V2']=='PASS','cold_start_guard':len(first)==3 and all(abs(x['total_Fx_N'])<=5000 for x in first),'first_force_identity':len(first_reconciliation)==3 and all(first_reconciliation),'force_contract':forcechain,'mapping':mapping,'generalized_force_v2':v2pass,'moving_mesh_tracking':mesh_ok,'mesh_quality_every_step_observability':False,'quality_v3':all(x['status']=='pass' for x in quality.values()),'newton_40':newton_result.get('status')=='pass' and len(newton)==40,'structural_startup_guard':all(x<=.05 for x in maxux) and all(x<=1 for x in maxvx),'time_offset_identity':time_identity,'conditional_force_independence':conditional_force_independence,'no_participant_fpe_disconnect':rc==0}
  result={'PRECONDITIONED_COUPLED_0P1S_SMOKE':'PASS' if all(checks.values()) else 'FAIL','checks':checks,'windows':len(rows),'first_force':first,'first_force_reconciliation':first_reconciliation,'max_abs_ux_m':maxux,'max_abs_vx_mps':maxvx,'mesh_records':mesh,'mesh_snapshots':snapshots,'quality_v3':quality,'fluid_courant_max':max((float(x.get('max_courant',math.inf)) for x in quality.values()),default=math.inf),'mesh_courant_proxy_max':max(mesh_co_proxy,default=None),'generalized_force_v2_max_utilization':max((float(x['max_threshold_utilization']) for x in v2),default=math.inf),'newton':newton_result,'raw_force_sha256':rawhash,'raw_forces_byte_identical':len(set(rawhash))==1 if len(rawhash)==3 else None,'structure_motions_distinct':motions_differ,'field_independence':field,'first_failing_gate':next((k for k,v in checks.items() if not v),None)}
  put(RESULTS/'gate.json',json.dumps(result,ensure_ascii=False,indent=2)+'\n'); return result
 def write_report(result):
