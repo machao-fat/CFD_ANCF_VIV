@@ -27,7 +27,7 @@ def put(path,text):
 def load(path,name):
  s=importlib.util.spec_from_file_location(name,path); m=importlib.util.module_from_spec(s); assert s and s.loader; s.loader.exec_module(m); return m
 def contract():
- old=json.loads((ROOT/'tools/generalized_force_metric_v2_and_0p1s_micro_smoke_v1/generalized_force_metric_v2_and_0p1s_micro_smoke_v1_contract.json').read_text())
+ old=json.loads((ROOT/'tools/generalized_force_metric_v2_and_0p1s_micro_smoke_v1/generalized_force_metric_v2_and_0p1s_micro_smoke_v1_contract.json').read_text(encoding='utf8'))
  old.update({'schema_version':'preconditioned-coupled-0p1s-smoke-v1','run_id':RUN,'case_id':'preconditioned_coupled_0p1s_smoke_v1_case_001','git_commit':subprocess.check_output(['git','rev-parse','HEAD'],cwd=ROOT,text=True).strip(),'duration_s':.1,'number_of_steps':20,'openfoam_physical_time_offset_s':OFFSET,'initial_structure_state':'NO_FLOW_EQUILIBRIUM','initialization_policy':'zero-geometry precursor state; mean-drag equilibrium explicitly prohibited','quality_contract_v3':{'source':str(QUALITY),'sha256':sha256(QUALITY),'frozen_before_run':True},'precursor_state':{'source':str(PRECURSOR),'manifest_sha256':sha256(PRECURSOR/'manifest.json'),'source_openfoam_time_s':.1,'U_p_phi':'exact manifest hashes','Uf':'OpenFOAM reconstruction','meshPhi':'zero under initial zero motion'},'cold_start_guard':{'raw_first_abs_Fx_max_N':5000.,'basis':'inherited precursor startup-balanced contract'},'structural_startup_sanity_guard':{'max_abs_ux_m':.05,'max_abs_vx_mps':1.,'basis':'10x ANCF-only normal-drag 0.1 s reference (0.004209 m, 0.07482 m/s); runaway screen only'},'mesh_snapshot_coupling_times_s':[0,.025,.05,.075,.1],'formal_status':{'VIV':'not_evaluated','LOCK_IN':'not_evaluated','STROUHAL':'not_evaluated'}})
  old['generalized_force_metric_v2']=freeze_contract(50/16)
  return old
@@ -36,7 +36,7 @@ def control(base): return base.CONTROL.replace('startFrom startTime; startTime 0
 
 def prepare():
  if RUNTIME.exists() or RESULTS.exists(): raise RuntimeError('refusing to reuse fresh runtime/results')
- manifest=json.loads((PRECURSOR/'manifest.json').read_text()); c=contract();
+ manifest=json.loads((PRECURSOR/'manifest.json').read_text(encoding='utf8')); c=contract();
  if sha256(STATE)!=c['ANCF']['initial_state']['sha256']: raise RuntimeError('no-flow initial state hash mismatch')
  if manifest.get('status')!='pass': raise RuntimeError('precursor manifest is not pass')
  base=load(BASE,'base_launcher'); base.RUNTIME,base.RESULTS=RUNTIME,RESULTS; base.CONTRACT=HERE/'preconditioned_coupled_0p1s_smoke_v1_contract.json'; base.STATE=STATE
@@ -63,10 +63,10 @@ def prepare():
  if any(values!=[manifest['field_hashes'][field]]*3 for field,values in hashes.items()): raise RuntimeError('precursor field-copy identity fail')
  return base,cases,c
 
-def points(path): return [[float(x) for x in p] for p in re.findall(r'\(\s*(%s)\s+(%s)\s+(%s)\s*\)'%(NUM,NUM,NUM),path.read_text())]
+def points(path): return [[float(x) for x in p] for p in re.findall(r'\(\s*(%s)\s+(%s)\s+(%s)\s*\)'%(NUM,NUM,NUM),path.read_text(encoding='utf8',errors='replace'))]
 def vecdist(a,b): return math.sqrt(sum((x-y)**2 for x,y in zip(a,b)))
 def field_centroid(base,case,time,field):
- block=base.patch_block((case/time/field).read_text(),'cylinder'); vs=base.vectors_from_block(block); return [sum(v[i] for v in vs)/len(vs) for i in range(3)] if vs else None
+ block=base.patch_block((case/time/field).read_text(encoding='utf8',errors='replace'),'cylinder'); vs=base.vectors_from_block(block); return [sum(v[i] for v in vs)/len(vs) for i in range(3)] if vs else None
 def wsl(path):
  value=str(path.resolve()).replace('\\','/'); return '/mnt/'+value[0].lower()+value[2:]
 def mesh_quality(case,time):
@@ -82,11 +82,11 @@ def loads_by_time(case):
  return parse_forces(paths[0]),paths[0]
 
 def audit(base,cases,c,rc):
- rows=[json.loads(line) for line in (RUNTIME/'records.jsonl').read_text().splitlines()] if (RUNTIME/'records.jsonl').exists() else []
- attempts=[json.loads(line) for line in (RUNTIME/'correction_attempts.jsonl').read_text().splitlines()] if (RUNTIME/'correction_attempts.jsonl').exists() else []
- newton=[json.loads(line) for line in (RUNTIME/'newton_evidence.jsonl').read_text().splitlines()] if (RUNTIME/'newton_evidence.jsonl').exists() else []
- summary=json.loads((RUNTIME/'structure_summary.json').read_text()) if (RUNTIME/'structure_summary.json').exists() else {}
- qcon=json.loads(QUALITY.read_text()); quality={str(i):evaluate_quality_v3(audit_log(RUNTIME/'logs'/f'fluid_{i:04d}.stdout',case/'system/fvSolution'),qcon) for i,case in enumerate(cases)}
+ rows=[json.loads(line) for line in (RUNTIME/'records.jsonl').read_text(encoding='utf8').splitlines()] if (RUNTIME/'records.jsonl').exists() else []
+ attempts=[json.loads(line) for line in (RUNTIME/'correction_attempts.jsonl').read_text(encoding='utf8').splitlines()] if (RUNTIME/'correction_attempts.jsonl').exists() else []
+ newton=[json.loads(line) for line in (RUNTIME/'newton_evidence.jsonl').read_text(encoding='utf8').splitlines()] if (RUNTIME/'newton_evidence.jsonl').exists() else []
+ summary=json.loads((RUNTIME/'structure_summary.json').read_text(encoding='utf8')) if (RUNTIME/'structure_summary.json').exists() else {}
+ qcon=json.loads(QUALITY.read_text(encoding='utf8')); quality={str(i):evaluate_quality_v3(audit_log(RUNTIME/'logs'/f'fluid_{i:04d}.stdout',case/'system/fvSolution'),qcon) for i,case in enumerate(cases)}
  forces=[]; forcepaths=[]
  for case in cases:
   f,p=loads_by_time(case); forces.append(f); forcepaths.append(p)
@@ -129,7 +129,7 @@ def audit(base,cases,c,rc):
  except Exception as exc: newton_result={'status':'fail','error':str(exc)}
  ux=[[] for _ in range(3)]; vx=[[] for _ in range(3)]
  for r in rows:
-  for sid,m in enumerate(r['motion']): ux[sid].append(abs(float(m['ux_m']))); vx[sid].append(abs(float(m['vx_m'])))
+  for sid,m in enumerate(r['motion']): ux[sid].append(abs(float(m['ux_m']))); vx[sid].append(abs(float(m['vx_mps'])))
  maxux=[max(x,default=math.inf) for x in ux]; maxvx=[max(x,default=math.inf) for x in vx]
  rawhash=[sha256(p) for p in forcepaths]; field={}
  for tau in (.025,.05,.075,.1):
@@ -140,7 +140,7 @@ def audit(base,cases,c,rc):
  motions_differ=max((vecdist(a['received_precice_displacement_xyz_m'],b['received_precice_displacement_xyz_m']) for a in mesh for b in mesh if a.get('global_step')==b.get('global_step') and a['slice_id']<b['slice_id'] and a.get('received_precice_displacement_xyz_m') is not None and b.get('received_precice_displacement_xyz_m') is not None),default=0.)>1e-8
  conditional_force_independence=(not motions_differ) or len(set(rawhash))==3
  time_identity=all(abs(float(x['openfoam_physical_time_s'])-(OFFSET+float(x['coupling_time_s'])))<=1e-12 for x in enriched)
- checks={'launch_return':rc==0,'committed_20':len(rows)==20 and summary.get('committed_steps')==20,'precursor_transfer_v2':json.loads(TRANSFER.read_text())['PRECURSOR_TRANSFER_V2']=='PASS','cold_start_guard':len(first)==3 and all(abs(x['total_Fx_N'])<=5000 for x in first),'first_force_identity':len(first_reconciliation)==3 and all(first_reconciliation),'force_contract':forcechain,'mapping':mapping,'generalized_force_v2':v2pass,'moving_mesh_tracking':mesh_ok,'quality_v3':all(x['status']=='pass' for x in quality.values()),'newton_40':newton_result.get('status')=='pass' and len(newton)==40,'structural_startup_guard':all(x<=.05 for x in maxux) and all(x<=1 for x in maxvx),'time_offset_identity':time_identity,'conditional_force_independence':conditional_force_independence,'no_participant_fpe_disconnect':rc==0}
+ checks={'launch_return':rc==0,'committed_20':len(rows)==20 and summary.get('committed_steps')==20,'precursor_transfer_v2':json.loads(TRANSFER.read_text(encoding='utf8'))['PRECURSOR_TRANSFER_V2']=='PASS','cold_start_guard':len(first)==3 and all(abs(x['total_Fx_N'])<=5000 for x in first),'first_force_identity':len(first_reconciliation)==3 and all(first_reconciliation),'force_contract':forcechain,'mapping':mapping,'generalized_force_v2':v2pass,'moving_mesh_tracking':mesh_ok,'quality_v3':all(x['status']=='pass' for x in quality.values()),'newton_40':newton_result.get('status')=='pass' and len(newton)==40,'structural_startup_guard':all(x<=.05 for x in maxux) and all(x<=1 for x in maxvx),'time_offset_identity':time_identity,'conditional_force_independence':conditional_force_independence,'no_participant_fpe_disconnect':rc==0}
  result={'PRECONDITIONED_COUPLED_0P1S_SMOKE':'PASS' if all(checks.values()) else 'FAIL','checks':checks,'windows':len(rows),'first_force':first,'first_force_reconciliation':first_reconciliation,'max_abs_ux_m':maxux,'max_abs_vx_mps':maxvx,'mesh_records':mesh,'mesh_snapshots':snapshots,'quality_v3':quality,'fluid_courant_max':max((float(x.get('max_courant',math.inf)) for x in quality.values()),default=math.inf),'mesh_courant_proxy_max':max(mesh_co_proxy,default=None),'generalized_force_v2_max_utilization':max((float(x['max_threshold_utilization']) for x in v2),default=math.inf),'newton':newton_result,'raw_force_sha256':rawhash,'raw_forces_byte_identical':len(set(rawhash))==1 if len(rawhash)==3 else None,'structure_motions_distinct':motions_differ,'field_independence':field,'first_failing_gate':next((k for k,v in checks.items() if not v),None)}
  put(RESULTS/'gate.json',json.dumps(result,ensure_ascii=False,indent=2)+'\n'); return result
 def write_report(result):
