@@ -88,8 +88,10 @@ def main() -> int:
         code = 0 if all(int(value) == 0 for value in re.findall(r"=(\d+)", returns)) else 1
     else:
         launcher = base.load_launcher(RUNTIME, RESULTS, CONTRACT, 0.1)
-        # Write at 0.05 and 0.10 only; the solve still advances exactly twenty windows.
-        launcher.CONTROL = launcher.CONTROL.replace("writeInterval 20;", "writeInterval 10;")
+        # Preserve pressure/viscous/total forces.dat decomposition at every
+        # startup window.  Sparse function-object output made the first force
+        # exchange non-auditable in run_001.
+        launcher.CONTROL = launcher.CONTROL.replace("writeInterval 20;", "writeInterval 1;")
         cases = launcher.prepare()
         preflight = {str(sid): patch_audit(case) for sid, case in enumerate(cases)}
         RESULTS.mkdir(parents=True, exist_ok=True)
