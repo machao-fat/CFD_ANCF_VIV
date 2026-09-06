@@ -26,10 +26,16 @@ def required_fields(case: Path) -> list[str]:
         m=re.search(rf'\b{key}\s+(\w+)\s*;',precice)
         if m and m.group(1)!='unused': fields.append(m.group(1))
     return list(dict.fromkeys(fields))
-def audit(case: Path) -> dict[str,object]:
+def audit(case: Path, field_directory: str='0') -> dict[str,object]:
+    """Audit the actual OpenFOAM initial-time field directory.
+
+    ``0`` remains the default for ordinary fresh starts; a precursor transfer
+    that deliberately preserves OpenFOAM physical time must pass its real
+    start directory (for example ``0.1``) explicitly.
+    """
     patches=inventory(case/'constant/polyMesh/boundary'); fields=required_fields(case); issues=[]; details={}
     for field in fields:
-        path=case/'0'/field
+        path=case/field_directory/field
         if not path.is_file(): issues.append(f'missing field {field}'); continue
         text=path.read_text(encoding='utf-8',errors='replace'); row={}
         for patch,mesh_type in patches.items():
@@ -40,4 +46,4 @@ def audit(case: Path) -> dict[str,object]:
             ftype=m.group(1); row[patch]=ftype
             if mesh_type in ('symmetryPlane','empty') and ftype!=mesh_type: issues.append(f'{field}/{patch}: mesh={mesh_type}, field={ftype}')
         details[field]=row
-    return {'case':str(case),'mesh_patch_inventory':patches,'required_motion_fields':fields,'field_patch_types':details,'issues':issues,'MESH_FIELD_PATCH_COMPATIBILITY':'PASS' if not issues else 'FAIL'}
+    return {'case':str(case),'field_directory':field_directory,'mesh_patch_inventory':patches,'required_motion_fields':fields,'field_patch_types':details,'issues':issues,'MESH_FIELD_PATCH_COMPATIBILITY':'PASS' if not issues else 'FAIL'}

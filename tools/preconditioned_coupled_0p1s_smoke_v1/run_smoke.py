@@ -11,7 +11,7 @@ from coupling.openfoam_numerical_quality_contract_v2.audit import audit_log
 from coupling.openfoam_numerical_quality_contract_v3.audit import evaluate_quality_v3
 from coupling.slice_independence_audit_v1.audit import parse_forces,sha256
 
-HERE=Path(__file__).parent; RUN='preconditioned_coupled_0p1s_smoke_v1_run_001'; RUNTIME=ROOT/'runtime'/RUN; RESULTS=ROOT/'results'/RUN
+HERE=Path(__file__).parent; RUN='preconditioned_coupled_0p1s_smoke_v1_run_002'; RUNTIME=ROOT/'runtime'/RUN; RESULTS=ROOT/'results'/RUN
 REPORT=ROOT/'docs/preconditioned_coupled_0p1s_smoke_v1/PRECONDITIONED_COUPLED_0P1S_SMOKE_V1_REPORT.md'
 STATE=ROOT/'runtime/stage4f_d_cpp_worker_initialization_v1/run_20260827_cpp_only/ancf_t0_state_cpp.json'
 PRECURSOR=ROOT/'results/fixed_cylinder_precursor_initialization_contract_v1_run_002/PRECURSOR_STATE_V1'
@@ -54,7 +54,7 @@ def prepare():
   put(case/'system/preciceDict',f'FoamFile {{ format ascii; class dictionary; object preciceDict; }}\npreciceConfig "precice-config.xml"; participant Fluid_{sid:04d}; modules (FSI); FSI {{ solverType incompressible; rho rho [1 -3 0 0 0 0 0] 1000; nu nu [0 2 -1 0 0 0 0] 0.01; namePointDisplacement pointDisplacement; nameCellDisplacement cellDisplacement; nameForce Force; }} interfaces {{ Interface1 {{ mesh Fluid-Mesh; patches (cylinder); locations faceCenters; readData (Displacement); writeData (Force); }} }}\n')
   put(case/'precice-config.xml',cfg_xml(base,sid)); cases.append(case)
  (RUNTIME/'logs').mkdir(parents=True); (RUNTIME/'precice-sockets').mkdir()
- pre={str(i):patch_audit(case) for i,case in enumerate(cases)}
+ pre={str(i):patch_audit(case,field_directory='.1') for i,case in enumerate(cases)}
  identity={'manifest':manifest,'copied_hashes':hashes,'patch_preflight':pre,'state_sha256':sha256(STATE),'initial_openfoam_time_s':OFFSET,'initial_coupling_time_s':0.0}
  RESULTS.mkdir(parents=True); put(RESULTS/'preflight.json',json.dumps(identity,ensure_ascii=False,indent=2)+'\n')
  if not all(item['MESH_FIELD_PATCH_COMPATIBILITY']=='PASS' for item in pre.values()): raise RuntimeError('MESH_FIELD_PATCH_COMPATIBILITY fail')
