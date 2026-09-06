@@ -14,6 +14,7 @@ ROOT = Path(__file__).resolve().parents[2]
 sys.path.insert(0, str(ROOT / "src"))
 from coupling.openfoam_quality_contract_v3.audit import audit_records
 from coupling.convergence_observability_v1.openfoam_log import OpenFOAMLogParser
+from coupling.moving_mesh_openfoam10_case_contract_v1 import ensure_solver_entries
 
 STAGE = "stage_force_contract_smoke_v1"
 RUNTIME = ROOT / "runtime" / (STAGE + "_run_008")
@@ -44,12 +45,8 @@ def put(path: Path, text: str) -> None:
 
 
 def ensure_cell_displacement_final(case: Path) -> None:
-    """Supply the OpenFOAM 10 mover's final motion-solve control."""
-    path = case / "system" / "fvSolution"
-    text = path.read_text(encoding="utf-8")
-    if "cellDisplacementFinal" not in text:
-        text = text.replace("\n}\n\nPIMPLE\n{", "\n    cellDisplacementFinal\n    {\n        $cellMotionUx;\n        relTol 0;\n    }\n}\n\nPIMPLE\n{")
-        put(path, text)
+    """Apply the shared OpenFOAM-10 displacementLaplacian solver contract."""
+    ensure_solver_entries(case / "system" / "fvSolution")
 
 
 def xml(sid: int) -> str:
