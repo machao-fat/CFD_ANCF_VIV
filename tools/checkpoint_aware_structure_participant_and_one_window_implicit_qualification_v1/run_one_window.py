@@ -7,13 +7,13 @@ ROOT=Path(__file__).resolve().parents[2]; HERE=Path(__file__).parent; sys.path.i
 from coupling.openfoam_numerical_quality_contract_v2.audit import audit_log
 from coupling.slice_independence_audit_v1.audit import parse_forces, sha256
 from coupling.ancf_newton_evidence_v1 import validate_records
-from tools.parallel_explicit_fsi_timestep_stability_diagnostic_v1.quality_v4 import evaluate_quality_v4
 RUN='implicit_one_window_v1_run_001'; RUNTIME=ROOT/'runtime'/RUN; RESULTS=ROOT/'results'/RUN
 CONTRACT=HERE/'one_window_implicit_qualification_contract_v1.json'; V4=ROOT/'tools/parallel_explicit_fsi_timestep_stability_diagnostic_v1/openfoam_quality_contract_v4.json'
 PART=HERE/'implicit_structure_participant.py'; WORKER=ROOT/'runtime/parallel_implicit_coupling_readiness_and_0p05s_diagnostic_v1/cpp_worker_build/cfd_ancf_ancf_kernel_worker'
 OUT=ROOT/'docs/checkpoint_aware_structure_participant_and_one_window_implicit_qualification_v1/CHECKPOINT_AWARE_STRUCTURE_PARTICIPANT_AND_ONE_WINDOW_IMPLICIT_QUALIFICATION_V1_REPORT.md'
 def load(path,name):
  s=importlib.util.spec_from_file_location(name,path); m=importlib.util.module_from_spec(s); assert s and s.loader; s.loader.exec_module(m); return m
+evaluate_quality_v4=load(ROOT/'tools/parallel_explicit_fsi_timestep_stability_diagnostic_v1/quality_v4.py','one_window_quality_v4').evaluate_quality_v4
 def write(path,value): path.parent.mkdir(parents=True,exist_ok=True); path.write_text(json.dumps(value,ensure_ascii=False,indent=2)+'\n',encoding='utf8')
 def implicit_xml(base,sid):
  original=base.xml(sid); replacement=(f'<coupling-scheme:parallel-implicit><participants first="Structure_{sid:04d}" second="Fluid_{sid:04d}"/>'
