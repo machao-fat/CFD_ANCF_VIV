@@ -1,0 +1,47 @@
+{
+  "schema_version": "openfoam-numerical-quality-contract-v3",
+  "purpose": "dynamic zero-motion precursor state-transfer quality",
+  "source_fvSolution": "D:\\\u7814\u4e8c\u6587\u4ef6\\\u5f00\u9898\u51c6\u5907\\CFD_ANCF_VIV\\runtime\\fixed_cylinder_precursor_initialization_v1_run_002\\zero_motion_dynamic_restart\\system\\fvSolution",
+  "source_fvSolution_sha256": "94d0728deacc1ac779aae2e787864c240cb7409dbd349738e40a588de97c40e2",
+  "primary_terminal_residual_limit": {
+    "Ux": 0.001,
+    "Uy": 0.001,
+    "p": 0.001
+  },
+  "courant_max_limit": 1.0,
+  "continuity_global_abs_limit": 1e-06,
+  "solve_groups": {
+    "fluid_primary": {
+      "fields": [
+        "Ux",
+        "Uy",
+        "p"
+      ],
+      "absolute_tolerance": 1e-08,
+      "relative_tolerance": 0.01,
+      "max_iterations": 200,
+      "semantics": "fluid momentum and pressure equations; terminal residual is a hard PIMPLE gate"
+    },
+    "mesh_motion_auxiliary": {
+      "fields": [
+        "cellDisplacementx",
+        "cellDisplacementy"
+      ],
+      "absolute_tolerance": 1e-08,
+      "relative_tolerance": 0.0,
+      "max_iterations": 200,
+      "semantics": "displacementLaplacian mesh-motion equations. Exact zero residual with zero iterations is explicitly trivial convergence, not a missing solve."
+    },
+    "flux_correction_auxiliary": {
+      "fields": [
+        "pcorr"
+      ],
+      "absolute_tolerance": 0.01,
+      "relative_tolerance": 0.0,
+      "max_iterations": 200,
+      "semantics": "correctPhi/correctMeshPhi flux correction; health is assessed against pcorrFinal's real fvSolution tolerance."
+    }
+  },
+  "unknown_solve_policy": "fail_closed",
+  "v2_history": "unchanged; this contract does not reclassify any V2 result"
+}
