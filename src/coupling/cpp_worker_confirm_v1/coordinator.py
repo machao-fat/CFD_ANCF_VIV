@@ -70,7 +70,8 @@ class KernelWorker:
 
     def __init__(self, executable: Path, runtime: Path, run_id: str, case_id: str,
                  timeout_s: float = 30.0,
-                 expected_model_contract_sha256: str | None = None) -> None:
+                 expected_model_contract_sha256: str | None = None,
+                 allow_implicit_retry: bool = False) -> None:
         if not isinstance(timeout_s, (int, float)) or isinstance(timeout_s, bool) or not math.isfinite(float(timeout_s)) or timeout_s <= 0.0:
             raise ConfirmError("C++ worker timeout must be a positive finite value")
         self.executable = executable.resolve()
@@ -85,6 +86,9 @@ class KernelWorker:
             raise ConfirmError("expected C++ model contract hash is invalid")
         self.expected_model_contract_sha256 = (expected_model_contract_sha256.lower()
                                                if expected_model_contract_sha256 is not None else None)
+        if not isinstance(allow_implicit_retry, bool):
+            raise ConfirmError("allow_implicit_retry must be boolean")
+        self.allow_implicit_retry = allow_implicit_retry
         self.process: subprocess.Popen[bytes] | None = None
         self.start_count = 0
         self.audit: dict[str, Any] = {}
@@ -212,6 +216,9 @@ class KernelWorker:
         # full ANCF worker, even when the parent shell used a fixture.
         environment.pop("CFD_ANCF_OFFLINE_DIRECT_WORKER", None)
         environment.pop("CFD_ANCF_OFFLINE_LEGACY_TRANSPORT", None)
+        environment.pop("CFD_ANCF_ALLOW_IMPLICIT_RETRY", None)
+        if self.allow_implicit_retry:
+            environment["CFD_ANCF_ALLOW_IMPLICIT_RETRY"] = "1"
         if self.expected_model_contract_sha256 is not None:
             environment["CFD_ANCF_EXPECTED_MODEL_CONTRACT_SHA256"] = self.expected_model_contract_sha256
         else:
@@ -226,6 +233,7 @@ class KernelWorker:
             "parent_pid": os.getpid(), "command_line": [str(self.executable)],
             "cwd": str(self.runtime), "owned": True, "start_time_ns": time.time_ns(),
             "expected_model_contract_sha256": self.expected_model_contract_sha256,
+            "allow_implicit_retry": self.allow_implicit_retry,
         }
         try:
             self.process.stdin.write(encode_control(MESSAGE_INITIALIZE))

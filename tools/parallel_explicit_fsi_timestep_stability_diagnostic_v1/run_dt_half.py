@@ -31,11 +31,15 @@ def containment_monitor(done):
                 force=float(row['loads'][sid]['openfoam_force_x_N'])
                 if abs(force)>limits['openfoam_force_x_N']: breached.append({'slice_id':sid,'quantity':'raw_Fx_N','value':force,'limit':limits['openfoam_force_x_N']})
             if breached:
-                event.write_text(json.dumps({'global_step':row['global_step'],'tau_s':row['time_s'],'breaches':breached},indent=2)+'\n',encoding='utf8')
+                temporary=event.with_suffix(event.suffix+'.tmp')
+                with temporary.open('w',encoding='utf8',newline='\n') as stream:
+                    stream.write(json.dumps({'global_step':row['global_step'],'tau_s':row['time_s'],'breaches':breached},indent=2)+'\n')
+                    stream.flush(); __import__('os').fsync(stream.fileno())
+                temporary.replace(event)
                 pids=RUNTIME/'pids.txt'
                 if pids.is_file():
-                    values=' '.join(pids.read_text(encoding='utf8').split())
-                    if values: subprocess.run(['wsl.exe','-d','Ubuntu-22.04','--','bash','-lc',f'kill {values} 2>/dev/null || true'],check=False)
+                    values=re.findall(r'(?:structure_pid|fluid_\d+_pid)=(\d+)', pids.read_text(encoding='utf8'))
+                    if values: subprocess.run(['wsl.exe','-d','Ubuntu-22.04','--','bash','-lc',f"kill {' '.join(values)} 2>/dev/null || true"],check=False)
                 return
         seen=len(lines)
 def main():

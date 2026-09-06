@@ -206,6 +206,7 @@ int process_step(const std::vector<char>& payload, std::vector<char>& response,
                  int& lineage_mode,
                  std::array<unsigned char, 32>& expected_full_contract_digest,
                  const std::array<unsigned char, 32>* external_contract_digest,
+                 const bool allow_implicit_retry,
                  std::unordered_set<std::uint64_t>& seen_request_ids,
                  std::unordered_set<std::uint64_t>& seen_transaction_ids) {
   std::size_t offset = 0;
@@ -391,6 +392,14 @@ int process_step(const std::vector<char>& payload, std::vector<char>& response,
       }
     }
   } else if (lineage_mode == 2 && expected_sequence % 2 == 0) {
+    if (global_step != expected_global_step || bridge_step != expected_bridge_step ||
+        integer_tick != expected_tick || std::abs(time_s - expected_time_s) > 1.0e-12 ||
+        std::abs(dt_s - expected_dt_s) > 1.0e-15) return 16;
+  } else if (allow_implicit_retry && lineage_mode == 2 && expected_sequence % 2 == 1) {
+    // A parallel-implicit retry restores the physical window state but must
+    // issue fresh binary request/transaction IDs. The odd sequence starts a
+    // new trial of the same physical window; the following even sequence is
+    // checked by the previous branch. This is opt-in at process launch.
     if (global_step != expected_global_step || bridge_step != expected_bridge_step ||
         integer_tick != expected_tick || std::abs(time_s - expected_time_s) > 1.0e-12 ||
         std::abs(dt_s - expected_dt_s) > 1.0e-15) return 16;
@@ -591,6 +600,7 @@ int main() {
   std::unordered_set<std::uint64_t> seen_request_ids, seen_transaction_ids;
   bool initialized = false;
   const bool allow_offline_direct = environment_is_one("CFD_ANCF_OFFLINE_DIRECT_WORKER");
+  const bool allow_implicit_retry = environment_is_one("CFD_ANCF_ALLOW_IMPLICIT_RETRY");
   while (true) {
     std::array<char, 8> magic{}; std::uint32_t length = 0, message_type = 0;
     // A clean worker exit requires the explicit SHUTDOWN control frame.  EOF
@@ -639,6 +649,7 @@ int main() {
                             expected_slices, expected_model_digest, lineage_mode,
                             expected_full_contract_digest,
                             has_expected_contract ? &expected_contract_digest : nullptr,
+                            allow_implicit_retry,
                             seen_request_ids, seen_transaction_ids);
     } catch (const std::exception& error) {
       std::cerr << "worker exception: " << error.what() << '\n';

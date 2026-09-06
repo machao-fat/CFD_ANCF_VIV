@@ -92,11 +92,14 @@ class CppKernelCampaignAdapter:
                  base_load: Sequence[float], slice_count: int = 3,
                  mass_matrix: Sequence[float] = (),
                  strict_numerical_contract: bool = False,
-                 expected_model_contract_sha256: str | None = None) -> None:
+                 expected_model_contract_sha256: str | None = None,
+                 implicit_rollback_transport: bool = False) -> None:
         if isinstance(slice_count, bool) or not isinstance(slice_count, int) or slice_count != 3:
             raise CppAdapterError("C++ confirm requires exactly three slices")
         if not isinstance(strict_numerical_contract, bool):
             raise CppAdapterError("strict_numerical_contract must be boolean")
+        if not isinstance(implicit_rollback_transport, bool):
+            raise CppAdapterError("implicit_rollback_transport must be boolean")
         if not isinstance(run_id, str) or not run_id or any(ord(char) < 0x20 for char in run_id):
             raise CppAdapterError("run_id is invalid")
         if not isinstance(case_id, str) or not case_id or any(ord(char) < 0x20 for char in case_id):
@@ -150,6 +153,14 @@ class CppKernelCampaignAdapter:
             raise CppAdapterError("source mass_matrix must be exactly symmetric")
         self.mass_matrix = mass
         self.strict_numerical_contract = strict_numerical_contract
+        # A persistent worker intentionally rejects a duplicate binary request
+        # identity.  A parallel-implicit coupling retry repeats one *physical*
+        # window after restoring q/qdot/qddot, but it is a new transport trial.
+        # Keep the legacy mapping unchanged by default; the opt-in path gives
+        # every retry a monotonic wire sequence without changing the physical
+        # step, tick, or Newmark state identity.
+        self.implicit_rollback_transport = implicit_rollback_transport
+        self._next_wire_sequence = 1
         if strict_numerical_contract and not mass:
             raise CppAdapterError("strict C++ numerical contract requires source mass_matrix")
         if strict_numerical_contract:
@@ -386,8 +397,11 @@ class CppKernelCampaignAdapter:
     def _request(self, *, sequence: int, step: int, bridge: int, tick: int,
                  time_s: float, force: tuple[float, ...],
                  state: Mapping[str, Sequence[float]]):
-        request_id, transaction_id = 100000 + sequence, 200000 + sequence
-        request = self.request_factory(sequence=sequence, global_step=int(step),
+        wire_sequence = self._next_wire_sequence if self.implicit_rollback_transport else sequence
+        if self.implicit_rollback_transport:
+            self._next_wire_sequence += 1
+        request_id, transaction_id = 100000 + wire_sequence, 200000 + wire_sequence
+        request = self.request_factory(sequence=wire_sequence, global_step=int(step),
             case_local_bridge_step=bridge, integer_tick=tick, time_s=float(time_s),
             dt_s=self.dt_s, request_id=request_id, transaction_id=transaction_id,
             run_id=self.run_id, case_id=self.case_id, model=self.model,
@@ -413,7 +427,7 @@ class CppKernelCampaignAdapter:
             for key, expected in (("global_step", step), ("case_local_bridge_step", bridge),
                                   ("integer_tick", tick), ("request_id", request_id),
                                   ("transaction_id", transaction_id), ("run_id", self.run_id),
-                                  ("case_id", self.case_id), ("sequence", sequence)):
+                                  ("case_id", self.case_id), ("sequence", wire_sequence)):
                 if getattr(response, key, None) != expected:
                     raise CppAdapterError(f"C++ worker response identity mismatch: {key}")
             if not math.isclose(float(response.time_s), float(time_s), rel_tol=0.0, abs_tol=1e-12):
@@ -444,7 +458,7 @@ class CppKernelCampaignAdapter:
             self._terminal = True
             raise
         self.responses.append({"phase": "prediction" if sequence % 2 else "correction",
-                               "transport_sequence": sequence, "step": int(step),
+                               "transport_sequence": sequence, "wire_sequence": wire_sequence, "step": int(step),
                                "time_s": float(time_s), "integer_tick": tick,
                                "case_local_bridge_step": bridge,
                                "payload_hash": response.payload_hash.hex(),
@@ -454,7 +468,7 @@ class CppKernelCampaignAdapter:
                                "newton_final_residual": float(residual),
                                "newton_converged": True,
                                "newton_converged_semantics": "derived_from_zero_return_code; kernel throws when Newton does not converge"})
-        return response, state_out, request_id, transaction_id, request_payload_sha256
+        return response, state_out, request_id, transaction_id, request_payload_sha256, wire_sequence
 
     def predict(self, step: int, time_s: float, previous_slice_forces: Sequence[Sequence[float]]):
         if self._terminal or not self._started:
@@ -466,7 +480,7 @@ class CppKernelCampaignAdapter:
         if self.pending_kind is not None:
             raise CppAdapterError("prediction requested with pending state")
         force = self._flatten_forces(previous_slice_forces)
-        response, predictor, request_id, transaction_id, request_payload_sha256 = self._request(
+        response, predictor, request_id, transaction_id, request_payload_sha256, wire_sequence = self._request(
             sequence=2 * bridge - 1, step=int(step), bridge=bridge, tick=tick,
             time_s=float(time_s), force=force, state=self._committed_state)
         # The protected MATLAB prediction operation calls ancf_advance_step
@@ -486,7 +500,8 @@ class CppKernelCampaignAdapter:
         return {"step": int(step), "global_step": int(step), "case_local_bridge_step": bridge,
                 "time_s": float(time_s), "integer_tick": tick, "run_id": self.run_id,
                 "case_id": self.case_id, "request_id": request_id, "transaction_id": transaction_id,
-                "sequence": 2 * bridge - 1, "transport_sequence": 2 * bridge - 1, "ack": response.ack,
+                "sequence": wire_sequence, "wire_sequence": wire_sequence,
+                "transport_sequence": 2 * bridge - 1, "ack": response.ack,
                 "payload_hash": response.payload_hash.hex(), "request_payload_sha256": request_payload_sha256,
                 "finite_value_audit": True,
                 "worker_return_code": int(response.return_code), "newton_iterations": int(response.iterations),
@@ -507,7 +522,7 @@ class CppKernelCampaignAdapter:
             self._terminal = True
             raise CppAdapterError("prediction state is missing for correction")
         force = self._flatten_forces(integrated_slice_forces)
-        response, corrected, request_id, transaction_id, request_payload_sha256 = self._request(
+        response, corrected, request_id, transaction_id, request_payload_sha256, wire_sequence = self._request(
             sequence=2 * bridge, step=int(step), bridge=bridge, tick=tick,
             time_s=float(time_s), force=force, state=self._committed_state)
         self._state = corrected
@@ -525,7 +540,7 @@ class CppKernelCampaignAdapter:
         return {"step": int(step), "global_step": int(step), "case_local_bridge_step": bridge,
                 "time_s": float(time_s), "integer_tick": tick, "run_id": self.run_id,
                 "case_id": self.case_id, "request_id": request_id, "transaction_id": transaction_id,
-                "sequence": int(getattr(response, "sequence", 2 * bridge)),
+                "sequence": wire_sequence, "wire_sequence": wire_sequence,
                 "transport_sequence": 2 * bridge,
                 "ack": response.ack, "return_code": int(response.return_code),
                 "payload_hash": response.payload_hash.hex(), "finite_value_audit": True,

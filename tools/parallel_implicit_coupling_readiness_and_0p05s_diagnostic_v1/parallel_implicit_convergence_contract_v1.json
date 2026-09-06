@@ -1,0 +1,37 @@
+{
+  "schema_version": "parallel-implicit-convergence-contract-v1",
+  "status": "FROZEN_NOT_EXECUTED",
+  "coupling_scheme": "parallel-implicit",
+  "dt_s": 0.005,
+  "horizon_s": 0.05,
+  "time_windows": 10,
+  "min_coupling_iterations": 2,
+  "max_coupling_iterations": 8,
+  "acceleration": "none",
+  "convergence_measures": [
+    {
+      "data": "Displacement",
+      "mesh": "Structure-Mesh",
+      "abs_limit": 1e-08,
+      "rel_limit": 1e-05,
+      "basis": "2D interface coordinates are metres; absolute tolerance is below mesh/adapter tracking evidence and relative tolerance screens material trial-to-trial change."
+    },
+    {
+      "data": "Force",
+      "mesh": "Structure-Mesh",
+      "abs_limit": 0.001,
+      "rel_limit": 1e-05,
+      "basis": "Interface force is N on the 1 m CFD span; this is an exchange-consistency tolerance, not a structural force scaling change."
+    }
+  ],
+  "physical_time_rule": "A window commits exactly once after both measures converge; all intermediate trials are rollback evidence, not physical samples.",
+  "fail_closed": [
+    "missing checkpoint callback",
+    "missing checkpoint restore",
+    "max iterations reached",
+    "unknown convergence field",
+    "nonfinite trial state",
+    "negative cell",
+    "participant FPE"
+  ]
+}
