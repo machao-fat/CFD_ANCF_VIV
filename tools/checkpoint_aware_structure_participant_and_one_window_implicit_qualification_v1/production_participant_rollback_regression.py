@@ -12,7 +12,7 @@ HERE=Path(__file__).parent
 def load(path,name):
     s=importlib.util.spec_from_file_location(name,path); m=importlib.util.module_from_spec(s); assert s and s.loader; s.loader.exec_module(m); return m
 PART=load(HERE/'implicit_structure_participant.py','checkpoint_participant')
-RUN='implicit_participant_rb_reg_v1_run_002'
+RUN='implicit_participant_rb_reg_v1_run_003'
 LOAD_A=((22503.305595427,0.,0.),)*3; LOAD_B=((11251.6527977135,0.,0.),)*3
 def sha(x): return hashlib.sha256(json.dumps(x,sort_keys=True,separators=(',',':'),allow_nan=False).encode()).hexdigest()
 

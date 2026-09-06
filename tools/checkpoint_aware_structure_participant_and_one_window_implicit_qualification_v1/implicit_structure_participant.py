@@ -164,7 +164,7 @@ def main() -> int:
                 raw=force_sum(participant.read_data("Structure-Mesh","Force",meshids[sid],0.0),args.vertex_count)
                 loads.append(LoadRecord.from_conversion(case_id=manifest.case_id,step=window,time_s=dt,slice_definition=definitions[sid],unit_span_m=definitions[sid].unit_span_m,openfoam_force_N=raw,cfd_time_step_s=dt,R_GL=manifest.R_GL))
             mapping=map_integrated_slice_forces(manifest,H,{x.slice_id:x for x in loads},delta_q=tuple(pq[i]-before["q"][i] for i in range(len(pq))))
-            pre={"event":"pre_cpp_correction","window_index":window,"iteration_index":iteration,"physical_tau_target_s":dt,"state_sha256":canonical(before),"prediction_state_sha256":canonical({"q":pq,"qdot":pv,"qddot":pa}),"forces_N":[list(x.force_N) for x in loads],"H_by_slice":{str(s):[list(r) for r in H[s] for r in []] for s in range(3)},"Q_formal_N":list(mapping.generalized_force),"checkpoint_id":cp.value["checkpoint_id"]}
+            pre={"event":"pre_cpp_correction","window_index":window,"iteration_index":iteration,"physical_tau_target_s":dt,"state_sha256":canonical(before),"prediction_state_sha256":canonical({"q":pq,"qdot":pv,"qddot":pa}),"forces_N":[list(x.force_N) for x in loads],"H_by_slice":{str(s):[list(r) for r in H[s]] for s in range(3)},"Q_formal_N":list(mapping.generalized_force),"checkpoint_id":cp.value["checkpoint_id"]}
             append_jsonl(runtime/"implicit_iterations.jsonl",pre)
             correction,_=adapter.correct(window,dt,[x.force_N for x in loads])
             qcpp=tuple(float(x)-base[i] for i,x in enumerate(correction["generalized_force"])); metric=evaluate_gf_v2(mapping.generalized_force,qcpp,mapping.slice_contributions,contract=contract["generalized_force_metric_v2"])
