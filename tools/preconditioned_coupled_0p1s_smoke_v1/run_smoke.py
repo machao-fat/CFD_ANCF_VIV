@@ -22,7 +22,8 @@ TRANSFER=ROOT/'results/precursor_transfer_and_structural_mean_load_closure_v1_ru
 DT=.005; OFFSET=.1; STEPS=20; NUM=r'[-+0-9.eE]+'
 
 def put(path,text):
- path.parent.mkdir(parents=True,exist_ok=True); path.write_text(text,encoding='utf8',newline='\n')
+ path.parent.mkdir(parents=True,exist_ok=True)
+ with path.open('w',encoding='utf8',newline='\n') as stream: stream.write(text)
 def load(path,name):
  s=importlib.util.spec_from_file_location(name,path); m=importlib.util.module_from_spec(s); assert s and s.loader; s.loader.exec_module(m); return m
 def contract():
