@@ -1,0 +1,46 @@
+{
+  "schema_version": "precursor-transfer-contract-v2",
+  "source_runtime": "D:\\\u7814\u4e8c\u6587\u4ef6\\\u5f00\u9898\u51c6\u5907\\CFD_ANCF_VIV\\runtime\\fixed_cylinder_precursor_initialization_v1_run_002",
+  "historical_v1": {
+    "status": "FAIL",
+    "absolute_first_step_jump_limit_N": 100.0,
+    "dynamic_first_step_jump_N": 101.9944113307,
+    "rule": "immutable; never reclassified"
+  },
+  "scales": {
+    "force_reference_N": 500.0,
+    "precursor_terminal_force_N": 1350.1983357254,
+    "recent_tail_max_successive_variation_N": 40.2321052284
+  },
+  "gates": {
+    "restart_force_not_cold_impulse": {
+      "max_abs_first_advanced_force_N": 5000.0,
+      "basis": "10 times dynamic-pressure force scale F_ref; screens O(1e5 N) cold impulse"
+    },
+    "normalized_terminal_jump": {
+      "max_fraction": 0.1,
+      "basis": "restart continuity is meaningful relative to the finite terminal load, not a dimensioned one-size-fits-all number"
+    },
+    "fixed_dynamic_branch_difference": {
+      "max_abs_N": 100.0,
+      "basis": "independent 0.2 F_ref branch-path bound already frozen in V1 contract"
+    },
+    "branch_difference_decay": {
+      "require_monotone_non_increasing": true,
+      "basis": "a zero-motion dynamic reconstruction transient must decay rather than grow across all four continuation steps"
+    },
+    "state_identity": {
+      "required_fields": [
+        "U",
+        "p",
+        "phi"
+      ],
+      "require_dynamic_Uf": true,
+      "require_zero_meshPhi": true
+    },
+    "quality": "OPENFOAM_QUALITY_V3 must pass"
+  },
+  "diagnostics_only": {
+    "jump_over_tail_variation": "reported, not a hard gate because the four terminal fixed-cylinder samples are a monotonic decay rather than stationary variation"
+  }
+}
