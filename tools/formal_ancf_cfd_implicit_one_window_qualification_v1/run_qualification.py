@@ -79,7 +79,9 @@ def wsl_process(command: list[str], **kwargs):
 def put(path: Path, value: object) -> None:
     path.parent.mkdir(parents=True, exist_ok=True)
     text = value if isinstance(value, str) else json.dumps(value, ensure_ascii=False, indent=2) + "\n"
-    path.write_text(text, encoding="utf-8", newline="\n")
+    # The host-side launcher also supports the pinned Python 3.9 runtime,
+    # whose Path.write_text() has no newline= keyword.
+    path.write_text(text, encoding="utf-8")
 
 
 def load(path: Path, name: str):
