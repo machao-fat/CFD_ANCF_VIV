@@ -1,16 +1,16 @@
 --- a/Adapter.C
 +++ b/Adapter.C
 @@ -4,8 +4,58 @@
- 
+
  #include "IOstreams.H"
- 
+
 +#include <cstdlib>
 +#include <fstream>
 +#include <iomanip>
 +#include <sstream>
 +
  using namespace Foam;
- 
+
 +namespace
 +{
 +std::string rollbackFNV1a64(const std::string& text)
@@ -67,7 +67,7 @@
          readCheckpoint();
 +        writeRollbackDiagnostic("POST_ROLLBACK_BEFORE_NEXT_INPUT");
      }
- 
+
      // Write checkpoint if required
 @@ -452,6 +504,9 @@
      SETUP_TIMER();
@@ -82,7 +82,7 @@
 @@ -1270,6 +1325,9 @@
          storeMeshPoints();
      }
- 
+
 +    writeRollbackDiagnostic("CHECKPOINT_WRITE");
 +    ++rollbackDiagnosticIteration_;
 +
@@ -92,7 +92,7 @@
 @@ -1341,6 +1399,44 @@
      return;
  }
- 
+
 +void preciceAdapter::Adapter::writeRollbackDiagnostic(const std::string& event)
 +{
 +    const char* path = std::getenv("PRECICE_ADAPTER_ROLLBACK_DIAGNOSTICS_PATH");
@@ -139,7 +139,7 @@
 @@ -143,6 +143,10 @@
      Foam::pointField oldMeshPoints_;
      bool meshCheckPointed = false;
- 
+
 +    // Diagnostic-only counters; never part of a checkpoint or coupling data.
 +    unsigned long long rollbackDiagnosticWindow_ = 1;
 +    unsigned long long rollbackDiagnosticIteration_ = 0;
@@ -150,7 +150,7 @@
 @@ -368,6 +372,9 @@
      //- Write the checkpoint - store the fields and time
      void writeCheckpoint();
- 
+
 +    // Opt-in, read-only state fingerprinting for rollback qualification.
 +    void writeRollbackDiagnostic(const std::string& event);
 +

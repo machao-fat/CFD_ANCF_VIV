@@ -1,0 +1,7 @@
+{
+  "return_code": 1,
+  "adapter_trace": [],
+  "participant": {},
+  "runtime": "D:\\\u7814\u4e8c\u6587\u4ef6\\\u5f00\u9898\u51c6\u5907\\CFD_ANCF_VIV\\runtime\\reproducible_openfoam10_adapter_rollback_qualification_v1_run_002",
+  "diagnostic_library_sha256": "65a7e25619a97832034a5f4ec41c633a069d7ebcf48508be79946469da89ab51"
+}
