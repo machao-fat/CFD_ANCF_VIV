@@ -20,6 +20,14 @@ def evaluate_quality_v4(audit: Mapping[str,Any], contract: Mapping[str,Any]) -> 
     failures=[]; warnings=[]; classifications=[]; max_final={}; max_co=0.; max_cont=0.
     for rec in records:
         time=_n(rec['time_s'],'time')
+        # A log cut off by another participant is not a completed physical
+        # solve.  Its last p line is an intermediate correction, not a PIMPLE
+        # terminal residual.  Preserve a fail-closed quality result, but do
+        # not mislabel the intermediate line as a terminal numerical failure.
+        if not bool(rec.get('physical_timestep_completed', False)):
+            failures.append(f'incomplete physical timestep at {time}')
+            classifications.append({'time_s': time, 'group': 'timestep_completion', 'solver_validity': 'fail'})
+            continue
         if rec.get('courant_max') is None: failures.append(f'missing Courant at {time}')
         else: max_co=max(max_co,_n(rec['courant_max'],'Courant'))
         cont=rec.get('continuity')
