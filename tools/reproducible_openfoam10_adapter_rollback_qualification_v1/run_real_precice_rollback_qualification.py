@@ -21,12 +21,12 @@ ROOT = Path(__file__).resolve().parents[2]
 sys.path.insert(0, str(ROOT / "src"))
 from coupling.moving_mesh_openfoam10_case_contract_v1 import ensure_solver_entries, preflight
 
-RUN = "reproducible_openfoam10_adapter_rollback_qualification_v1_run_002"
+RUN = "precice_rollback_fixture_configuration_fix_and_qualification_v1_run_001"
 RUNTIME, RESULTS = ROOT / "runtime" / RUN, ROOT / "results" / RUN
 PRECURSOR = ROOT / "results" / "fixed_cylinder_precursor_initialization_contract_v1_run_002" / "PRECURSOR_STATE_V1"
 SOURCE = ROOT / "runtime" / "generalized_force_metric_v2_0p1s_micro_smoke_v1_run_001" / "cases" / "slice_0000"
 PYDEPS = ROOT / "runtime" / "284_precice_single_slice_smoke_real_v1" / "python_deps"
-DIAG_LIBRARY_WSL = "/home/machao/OpenFOAM/reproducible_adapter_rollback_qualification_v1/diagnostic_build_002/lib"
+DIAG_LIBRARY_WSL = "/home/machao/OpenFOAM/reproducible_adapter_rollback_qualification_v1/diagnostic_build_003/lib"
 DIAG_LIBRARY = Path(r"\\wsl$\Ubuntu-22.04") / DIAG_LIBRARY_WSL.lstrip("/").replace("/", "\\")
 DIAG_LIBRARY_FILE = DIAG_LIBRARY / "libpreciceAdapterFunctionObject.so"
 DT = 0.005
@@ -60,7 +60,7 @@ def xml(exchange_dir: Path) -> str:
         # The bounds are deliberately permissive for a restoration test; this
         # is not a physical coupling-convergence contract. min=2 guarantees a
         # genuine rollback/retry with two distinct prescribed inputs.
-        '<coupling-scheme:parallel-implicit><participants first="Structure" second="Fluid"/><time-window-size value="0.005"/><max-time value="0.005"/><min-iterations value="2"/><max-iterations value="3"/><absolute-or-relative-convergence-measure data="Displacement" mesh="Structure-Mesh" abs-limit="1" rel-limit="1"/><absolute-or-relative-convergence-measure data="Force" mesh="Structure-Mesh" abs-limit="10000000" rel-limit="1"/><exchange data="Displacement" mesh="Structure-Mesh" from="Structure" to="Fluid"/><exchange data="Force" mesh="Structure-Mesh" from="Fluid" to="Structure"/></coupling-scheme:parallel-implicit>',
+        '<coupling-scheme:parallel-implicit><participants first="Structure" second="Fluid"/><time-window-size value="0.005"/><max-time value="0.005"/><min-iterations value="2"/><max-iterations value="8"/><absolute-or-relative-convergence-measure data="Displacement" mesh="Structure-Mesh" abs-limit="1" rel-limit="1"/><absolute-or-relative-convergence-measure data="Force" mesh="Structure-Mesh" abs-limit="10000000" rel-limit="1"/><exchange data="Displacement" mesh="Structure-Mesh" from="Structure" to="Fluid" substeps="false"/><exchange data="Force" mesh="Structure-Mesh" from="Fluid" to="Structure" substeps="false"/></coupling-scheme:parallel-implicit>',
         '</precice-configuration>',
     ))
 
@@ -145,6 +145,7 @@ def run(case: Path) -> int:
         f"export LD_LIBRARY_PATH='{DIAG_LIBRARY_WSL}':$LD_LIBRARY_PATH",
         f"export PYTHONPATH='{wsl(PYDEPS)}'",
         f"export PRECICE_ADAPTER_ROLLBACK_DIAGNOSTICS_PATH='{wsl(log)}'",
+        f"export PRECICE_ADAPTER_BUILD_SHA256='{sha256(DIAG_LIBRARY_FILE)}'",
         f"python3 '{wsl(RUNTIME / 'participant.py')}' '{wsl(case / 'precice-config.xml')}' '{wsl(RUNTIME / 'participant_evidence.json')}' > '{wsl(RUNTIME / 'structure.stdout')}' 2> '{wsl(RUNTIME / 'structure.stderr')}' & structure_pid=$!",
         f"(cd '{wsl(case)}' && pimpleFoam > '{wsl(RUNTIME / 'fluid.stdout')}' 2> '{wsl(RUNTIME / 'fluid.stderr')}') & fluid_pid=$!",
         "wait $structure_pid; structure_rc=$?",

@@ -1,6 +1,6 @@
 --- a/Adapter.C
 +++ b/Adapter.C
-@@ -4,8 +4,58 @@
+@@ -4,8 +4,68 @@
 
  #include "IOstreams.H"
 
@@ -47,19 +47,29 @@
 +
 +void rollbackPointsFingerprint(std::ostream& out, const std::string& name, const Foam::pointField& points)
 +{
++    Foam::vector centroid(0, 0, 0);
++    forAll(points, pointIndex)
++    {
++        centroid += points[pointIndex];
++    }
++    if (points.size() > 0)
++    {
++        centroid /= Foam::scalar(points.size());
++    }
 +    Foam::OStringStream serialized;
 +    serialized << points;
 +    const std::string payload(serialized.str().c_str());
 +    out << "\"" << name << "\":{\"classification\":\"PERSISTENT_RESTORED\","
 +        << "\"count\":" << points.size() << ",\"finite\":true,"
-+        << "\"canonical_hash_fnv1a64\":\"" << rollbackFNV1a64(payload) << "\"}";
++        << "\"canonical_hash_fnv1a64\":\"" << rollbackFNV1a64(payload) << "\","
++        << "\"centroid_xyz\":[" << centroid.x() << ',' << centroid.y() << ',' << centroid.z() << "]}";
 +}
 +}
 +
  preciceAdapter::Adapter::Adapter(const Time& runTime, const fvMesh& mesh)
  : runTime_(runTime),
    mesh_(mesh)
-@@ -435,7 +485,9 @@
+@@ -435,7 +495,9 @@
      // Read checkpoint if required
      if (requiresReadingCheckpoint())
      {
@@ -69,7 +79,7 @@
      }
 
      // Write checkpoint if required
-@@ -452,6 +504,9 @@
+@@ -452,6 +514,9 @@
      SETUP_TIMER();
      if (checkpointing_ && isCouplingTimeWindowComplete())
      {
@@ -79,7 +89,7 @@
          // Check if the time directory already exists
          // (i.e. the solver wrote results that need to be updated)
          if (runTime_.timePath().type() == fileType::directory)
-@@ -1270,6 +1325,9 @@
+@@ -1270,6 +1335,9 @@
          storeMeshPoints();
      }
 
@@ -89,13 +99,14 @@
      // Store all the fields of type volScalarField
      for (uint i = 0; i < volScalarFields_.size(); i++)
      {
-@@ -1341,6 +1399,44 @@
+@@ -1341,6 +1409,46 @@
      return;
  }
 
 +void preciceAdapter::Adapter::writeRollbackDiagnostic(const std::string& event)
 +{
 +    const char* path = std::getenv("PRECICE_ADAPTER_ROLLBACK_DIAGNOSTICS_PATH");
++    const char* buildSha = std::getenv("PRECICE_ADAPTER_BUILD_SHA256");
 +    if (path == nullptr || *path == '\0')
 +    {
 +        return;
@@ -116,7 +127,8 @@
 +           << ",\"iteration_id\":" << rollbackDiagnosticIteration_
 +           << ",\"physical_time\":" << std::setprecision(17) << runTime_.value()
 +           << ",\"time_index\":" << runTime_.timeIndex()
-+           << ",\"adapter_build_identity\":\"openfoam10-d53753b1-rollback-diagnostic-v1\",\"states\":{";
++           << ",\"adapter_build_identity\":\"openfoam10-d53753b1-rollback-diagnostic-v1\","
++           << "\"adapter_build_sha256\":\"" << (buildSha == nullptr ? "UNSET" : buildSha) << "\",\"states\":{";
 +    rollbackFieldFingerprint(output, "U", U); output << ',';
 +    rollbackFieldFingerprint(output, "p", p); output << ',';
 +    rollbackFieldFingerprint(output, "phi", phi); output << ',';

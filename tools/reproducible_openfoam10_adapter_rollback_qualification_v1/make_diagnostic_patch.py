@@ -61,12 +61,22 @@ void rollbackFieldFingerprint(std::ostream& out, const std::string& name, const 
 
 void rollbackPointsFingerprint(std::ostream& out, const std::string& name, const Foam::pointField& points)
 {
+    Foam::vector centroid(0, 0, 0);
+    forAll(points, pointIndex)
+    {
+        centroid += points[pointIndex];
+    }
+    if (points.size() > 0)
+    {
+        centroid /= Foam::scalar(points.size());
+    }
     Foam::OStringStream serialized;
     serialized << points;
     const std::string payload(serialized.str().c_str());
     out << "\"" << name << "\":{\"classification\":\"PERSISTENT_RESTORED\","
         << "\"count\":" << points.size() << ",\"finite\":true,"
-        << "\"canonical_hash_fnv1a64\":\"" << rollbackFNV1a64(payload) << "\"}";
+        << "\"canonical_hash_fnv1a64\":\"" << rollbackFNV1a64(payload) << "\","
+        << "\"centroid_xyz\":[" << centroid.x() << ',' << centroid.y() << ',' << centroid.z() << "]}";
 }
 }
 '''
@@ -80,6 +90,7 @@ void rollbackPointsFingerprint(std::ostream& out, const std::string& name, const
 void preciceAdapter::Adapter::writeRollbackDiagnostic(const std::string& event)
 {
     const char* path = std::getenv("PRECICE_ADAPTER_ROLLBACK_DIAGNOSTICS_PATH");
+    const char* buildSha = std::getenv("PRECICE_ADAPTER_BUILD_SHA256");
     if (path == nullptr || *path == '\0')
     {
         return;
@@ -100,7 +111,8 @@ void preciceAdapter::Adapter::writeRollbackDiagnostic(const std::string& event)
            << ",\"iteration_id\":" << rollbackDiagnosticIteration_
            << ",\"physical_time\":" << std::setprecision(17) << runTime_.value()
            << ",\"time_index\":" << runTime_.timeIndex()
-           << ",\"adapter_build_identity\":\"openfoam10-d53753b1-rollback-diagnostic-v1\",\"states\":{";
+           << ",\"adapter_build_identity\":\"openfoam10-d53753b1-rollback-diagnostic-v1\","
+           << "\"adapter_build_sha256\":\"" << (buildSha == nullptr ? "UNSET" : buildSha) << "\",\"states\":{";
     rollbackFieldFingerprint(output, "U", U); output << ',';
     rollbackFieldFingerprint(output, "p", p); output << ',';
     rollbackFieldFingerprint(output, "phi", phi); output << ',';
