@@ -274,7 +274,15 @@ def audit(cases: list[Path], return_code: int) -> dict:
         mesh_ok = bool(checkpoint and restored) and all(persistent_equal(checkpoint, item, "mesh_points") for item in restored)
         derived_ok = bool(checkpoint and restored) and all(item["states"]["meshPhi"]["classification"] in ("PERSISTENT_RESTORED", "NOT_OBSERVABLE_NOT_REGISTERED") for item in restored)
         rollback[str(sid)] = {"events": [row.get("event") for row in trace], "field_identity": field_ok, "mesh_identity": mesh_ok, "derived_history": derived_ok, "checkpoint": checkpoint, "restores": restored}
-    quality = {str(sid): quality_module.evaluate_quality_v4(audit_log(RUNTIME / "logs" / f"fluid_{sid:04d}.stdout", case / "system" / "fvSolution"), quality_contract) for sid, case in enumerate(cases)}
+    quality = {}
+    for sid, case in enumerate(cases):
+        try:
+            parsed = audit_log(RUNTIME / "logs" / f"fluid_{sid:04d}.stdout", case / "system" / "fvSolution")
+            quality[str(sid)] = quality_module.evaluate_quality_v4(parsed, quality_contract)
+        except Exception as exc:
+            # A pre-solve failure is a failed Quality V4 gate, not a reason to
+            # discard the immutable runtime's first-blocker evidence.
+            quality[str(sid)] = {"status": "fail", "error": f"{type(exc).__name__}: {exc}"}
     forces = []
     for case in cases:
         files = list(case.glob("postProcessing/cylinderForces/*/forces.dat"))
