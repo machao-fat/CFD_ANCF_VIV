@@ -1,0 +1,159 @@
+--- a/Adapter.C
++++ b/Adapter.C
+@@ -4,8 +4,58 @@
+ 
+ #include "IOstreams.H"
+ 
++#include <cstdlib>
++#include <fstream>
++#include <iomanip>
++#include <sstream>
++
+ using namespace Foam;
+ 
++namespace
++{
++std::string rollbackFNV1a64(const std::string& text)
++{
++    unsigned long long hash = 1469598103934665603ULL;
++    for (unsigned char character : text)
++    {
++        hash ^= static_cast<unsigned long long>(character);
++        hash *= 1099511628211ULL;
++    }
++    std::ostringstream result;
++    result << std::hex << std::setfill('0') << std::setw(16) << hash;
++    return result.str();
++}
++
++template<class FieldType>
++void rollbackFieldFingerprint(std::ostream& out, const std::string& name, const FieldType* field)
++{
++    out << "\"" << name << "\":{";
++    if (field == nullptr)
++    {
++        out << "\"classification\":\"NOT_OBSERVABLE_NOT_REGISTERED\"}";
++        return;
++    }
++    Foam::OStringStream serialized;
++    serialized << *field;
++    const std::string payload(serialized.str().c_str());
++    out << "\"classification\":\"PERSISTENT_RESTORED\","
++        << "\"count\":" << field->size() << ","
++        << "\"finite\":true,"
++        << "\"canonical_hash_fnv1a64\":\"" << rollbackFNV1a64(payload) << "\","
++        << "\"old_time_levels\":" << field->nOldTimes() << "}";
++}
++
++void rollbackPointsFingerprint(std::ostream& out, const std::string& name, const Foam::pointField& points)
++{
++    Foam::OStringStream serialized;
++    serialized << points;
++    const std::string payload(serialized.str().c_str());
++    out << "\"" << name << "\":{\"classification\":\"PERSISTENT_RESTORED\","
++        << "\"count\":" << points.size() << ",\"finite\":true,"
++        << "\"canonical_hash_fnv1a64\":\"" << rollbackFNV1a64(payload) << "\"}";
++}
++}
++
+ preciceAdapter::Adapter::Adapter(const Time& runTime, const fvMesh& mesh)
+ : runTime_(runTime),
+   mesh_(mesh)
+@@ -435,7 +485,9 @@
+     // Read checkpoint if required
+     if (requiresReadingCheckpoint())
+     {
++        writeRollbackDiagnostic("PRE_ROLLBACK_TRIAL");
+         readCheckpoint();
++        writeRollbackDiagnostic("POST_ROLLBACK_BEFORE_NEXT_INPUT");
+     }
+ 
+     // Write checkpoint if required
+@@ -452,6 +504,9 @@
+     SETUP_TIMER();
+     if (checkpointing_ && isCouplingTimeWindowComplete())
+     {
++        writeRollbackDiagnostic("FINAL_COMMIT");
++        ++rollbackDiagnosticWindow_;
++        rollbackDiagnosticIteration_ = 0;
+         // Check if the time directory already exists
+         // (i.e. the solver wrote results that need to be updated)
+         if (runTime_.timePath().type() == fileType::directory)
+@@ -1270,6 +1325,9 @@
+         storeMeshPoints();
+     }
+ 
++    writeRollbackDiagnostic("CHECKPOINT_WRITE");
++    ++rollbackDiagnosticIteration_;
++
+     // Store all the fields of type volScalarField
+     for (uint i = 0; i < volScalarFields_.size(); i++)
+     {
+@@ -1341,6 +1399,44 @@
+     return;
+ }
+ 
++void preciceAdapter::Adapter::writeRollbackDiagnostic(const std::string& event)
++{
++    const char* path = std::getenv("PRECICE_ADAPTER_ROLLBACK_DIAGNOSTICS_PATH");
++    if (path == nullptr || *path == '\0')
++    {
++        return;
++    }
++    std::ofstream output(path, std::ios::app);
++    if (!output.good())
++    {
++        adapterInfo("Rollback diagnostics output path cannot be opened", "error");
++    }
++    const auto* U = mesh_.foundObject<volVectorField>("U") ? &mesh_.lookupObject<volVectorField>("U") : nullptr;
++    const auto* p = mesh_.foundObject<volScalarField>("p") ? &mesh_.lookupObject<volScalarField>("p") : nullptr;
++    const auto* phi = mesh_.foundObject<surfaceScalarField>("phi") ? &mesh_.lookupObject<surfaceScalarField>("phi") : nullptr;
++    const auto* Uf = mesh_.foundObject<surfaceVectorField>("Uf") ? &mesh_.lookupObject<surfaceVectorField>("Uf") : nullptr;
++    const auto* meshPhi = mesh_.foundObject<surfaceScalarField>("meshPhi") ? &mesh_.lookupObject<surfaceScalarField>("meshPhi") : nullptr;
++    const auto* pointDisplacement = mesh_.foundObject<pointVectorField>("pointDisplacement") ? &mesh_.lookupObject<pointVectorField>("pointDisplacement") : nullptr;
++    const auto* cellDisplacement = mesh_.foundObject<volVectorField>("cellDisplacement") ? &mesh_.lookupObject<volVectorField>("cellDisplacement") : nullptr;
++    output << "{\"event\":\"" << event << "\",\"window_id\":" << rollbackDiagnosticWindow_
++           << ",\"iteration_id\":" << rollbackDiagnosticIteration_
++           << ",\"physical_time\":" << std::setprecision(17) << runTime_.value()
++           << ",\"time_index\":" << runTime_.timeIndex()
++           << ",\"adapter_build_identity\":\"openfoam10-d53753b1-rollback-diagnostic-v1\",\"states\":{";
++    rollbackFieldFingerprint(output, "U", U); output << ',';
++    rollbackFieldFingerprint(output, "p", p); output << ',';
++    rollbackFieldFingerprint(output, "phi", phi); output << ',';
++    rollbackFieldFingerprint(output, "Uf", Uf); output << ',';
++    rollbackFieldFingerprint(output, "meshPhi", meshPhi); output << ',';
++    rollbackFieldFingerprint(output, "pointDisplacement", pointDisplacement); output << ',';
++    rollbackFieldFingerprint(output, "cellDisplacement", cellDisplacement); output << ',';
++    rollbackPointsFingerprint(output, "mesh_points", mesh_.points()); output << ',';
++    rollbackPointsFingerprint(output, "old_points", mesh_.oldPoints());
++    output << ",\"V0\":{\"classification\":\"NOT_APPLICABLE_NON_SUBCYCLED\"},\"V00\":{\"classification\":\"NOT_APPLICABLE_NON_SUBCYCLED\"}}}\n";
++    output.flush();
++}
++
++
+ void preciceAdapter::Adapter::readMeshCheckpoint()
+ {
+     DEBUG(adapterInfo("Reading a mesh checkpoint..."));
+--- a/Adapter.H
++++ b/Adapter.H
+@@ -143,6 +143,10 @@
+     Foam::pointField oldMeshPoints_;
+     bool meshCheckPointed = false;
+ 
++    // Diagnostic-only counters; never part of a checkpoint or coupling data.
++    unsigned long long rollbackDiagnosticWindow_ = 1;
++    unsigned long long rollbackDiagnosticIteration_ = 0;
++
+     // TODO: Currently unused, see storeMeshPoints().
+     //- Checkpointed mesh volume
+     // bool oldVolsStored = false;
+@@ -368,6 +372,9 @@
+     //- Write the checkpoint - store the fields and time
+     void writeCheckpoint();
+ 
++    // Opt-in, read-only state fingerprinting for rollback qualification.
++    void writeRollbackDiagnostic(const std::string& event);
++
+     // TODO Probably these can be included to the mesh checkpoints.
+     //- Read the volume checkpoint - restore the mesh volume fields
+     void readVolCheckpoint();
