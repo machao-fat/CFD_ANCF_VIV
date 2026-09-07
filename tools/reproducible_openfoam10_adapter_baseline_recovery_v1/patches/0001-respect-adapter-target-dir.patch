@@ -1,0 +1,5 @@
+--- a/Allwmake
++++ b/Allwmake
+@@ -20 +20 @@
+-ADAPTER_TARGET_DIR="${FOAM_USER_LIBBIN:-}"
++ADAPTER_TARGET_DIR="${ADAPTER_TARGET_DIR:-${FOAM_USER_LIBBIN:-}}"

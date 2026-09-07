@@ -1,0 +1,49 @@
+{
+  "schema_version": "reproducible-openfoam10-adapter-baseline-v1",
+  "classification": "REPRODUCIBLE_ADAPTER_BASELINE_V1",
+  "upstream": {
+    "repository": "https://github.com/precice/openfoam-adapter",
+    "branch": "OpenFOAM10",
+    "commit": "d53753b1c927b2413b02299c9da15725b3e772f0",
+    "commit_subject": "Various fixes for OpenFOAM 10",
+    "archive_sha256": "e3db4a1aa52b0e318117bbbe90336afd183b2105ed78fe527aea8436f3da4251"
+  },
+  "local_patch_set": [
+    {
+      "path": "patches/0001-respect-adapter-target-dir.patch",
+      "purpose": "Allow ADAPTER_TARGET_DIR to select an isolated diagnostic output directory.",
+      "runtime_semantics_changed": false
+    }
+  ],
+  "build_environment": {
+    "openfoam_vendor": "Foundation",
+    "openfoam_version": "10",
+    "openfoam_build": "10-c4cf895ad8fa",
+    "wm_project_dir": "/opt/openfoam10",
+    "wm_options": "linux64GccDPInt32Opt",
+    "compiler": "g++ (Ubuntu 11.4.0-1ubuntu1~22.04.3) 11.4.0",
+    "precice_pkg_config_version": "3.4.1",
+    "precice_pkg_config_libs": "-lprecice",
+    "python_binding_in_build_shell": "not installed; not a build input"
+  },
+  "builds": {
+    "build_d": {
+      "library": "/home/machao/OpenFOAM/reproducible_adapter_baseline_v1/build_d/lib/libpreciceAdapterFunctionObject.so",
+      "sha256": "5e5cb644a072c7eee87217f674b57a1421b66c13fc5817d1d51b684884350ede",
+      "elf_build_id": "024b00833eb69048e2d48327f58cc0bf8d61043e"
+    },
+    "build_e": {
+      "library": "/home/machao/OpenFOAM/reproducible_adapter_baseline_v1/build_e/lib/libpreciceAdapterFunctionObject.so",
+      "sha256": "5e5cb644a072c7eee87217f674b57a1421b66c13fc5817d1d51b684884350ede",
+      "elf_build_id": "024b00833eb69048e2d48327f58cc0bf8d61043e"
+    },
+    "byte_identical": true
+  },
+  "legacy_deployed_adapter": {
+    "path": "/home/machao/OpenFOAM/stage315_adapter_build/libpreciceAdapterFunctionObject.so",
+    "sha256": "26ad8529822f96ca8ddfb3370f85257b0d19b56958538d6073cf8af897aac572",
+    "elf_build_id": "e76f7d6491a2f32cf9d6d5712c79b1ce55cd862b",
+    "source_provenance": "UNRECOVERED",
+    "relationship_to_new_baseline": "not claimed to be the same source or binary"
+  }
+}
