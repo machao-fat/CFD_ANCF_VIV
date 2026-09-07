@@ -7,6 +7,7 @@ the caller's current platform before classification.
 from __future__ import annotations
 
 import os
+import posixpath
 import re
 import subprocess
 from pathlib import Path, PurePosixPath
@@ -22,7 +23,10 @@ def canonical_wsl_path(path: str | Path) -> str:
         raise ValueError("path must not be empty")
     if raw.startswith("/"):
         # Includes /mnt/<drive>/..., /home/... and any valid Linux absolute path.
-        return os.path.normpath(raw)
+        # Do not use os.path here: when this production preflight is invoked
+        # from the Windows-side launcher, os.path.normpath would mutate a
+        # already canonical Linux path into backslash-separated text.
+        return posixpath.normpath(raw)
     match = _WINDOWS_DRIVE.match(raw)
     if match:
         drive, tail = match.groups()
@@ -30,7 +34,7 @@ def canonical_wsl_path(path: str | Path) -> str:
     resolved = Path(raw).resolve()
     resolved_text = str(resolved)
     if resolved_text.startswith("/"):
-        return os.path.normpath(resolved_text)
+        return posixpath.normpath(resolved_text)
     match = _WINDOWS_DRIVE.match(resolved_text)
     if match:
         drive, tail = match.groups()

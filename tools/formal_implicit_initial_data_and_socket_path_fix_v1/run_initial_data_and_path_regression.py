@@ -34,11 +34,15 @@ REGRESSION_ID = os.environ.get(
 RUN = ROOT / "runtime" / REGRESSION_ID
 RESULTS = ROOT / "results" / REGRESSION_ID
 DT = 0.005
+PYDEPS = ROOT / "runtime" / "284_precice_single_slice_smoke_real_v1" / "python_deps"
 
 
 def put(path: Path, text: str) -> None:
     path.parent.mkdir(parents=True, exist_ok=True)
-    path.write_text(text, encoding="utf-8", newline="\n")
+    # This helper is also executed by the pinned host-side Python 3.9 runtime,
+    # where Path.write_text() has no newline keyword.
+    with path.open("w", encoding="utf-8", newline="\n") as stream:
+        stream.write(text)
 
 
 def xml(socket: Path) -> str:
@@ -91,13 +95,16 @@ def execute_case(name: str, value: float, missing: bool = False) -> dict:
     (directory / "sockets").mkdir()
     put(directory / "precice-config.xml", xml(directory / "sockets"))
     put(directory / "role.py", role_code())
+    def wsl_call(command: list[str]) -> list[str]:
+        return ["wsl.exe", "-d", "Ubuntu-22.04", "--", *command] if os.name == "nt" else command
+    config_wsl, role_wsl = canonical_wsl_path(directory / "precice-config.xml"), canonical_wsl_path(directory / "role.py")
     if missing:
         # The project-level fail-closed check happens immediately after the
         # real API reports requires_initial_data(), before initialize() opens
         # any coupling transport.  Keep this negative test single-sided so a
         # peer cannot wait indefinitely after the deliberate rejection.
-        call = ["python3", str(directory / "role.py"), "Structure", str(directory / "precice-config.xml"), str(directory / "structure.json"), str(value), "1"]
-        done = subprocess.run(call, text=True, capture_output=True, timeout=10)
+        call = ["env", f"PYTHONPATH={canonical_wsl_path(PYDEPS)}", "python3", role_wsl, "Structure", config_wsl, canonical_wsl_path(directory / "structure.json"), str(value), "1"]
+        done = subprocess.run(wsl_call(call), text=True, encoding="utf-8", errors="replace", capture_output=True, timeout=10)
         put(directory / "stdout", done.stdout); put(directory / "stderr", done.stderr)
         return {"return_code": done.returncode, "fluid": None, "structure_stderr": done.stderr,
                 "received_matches": False,
@@ -105,12 +112,16 @@ def execute_case(name: str, value: float, missing: bool = False) -> dict:
     commands = []
     for role in ("Structure", "Fluid"):
         missing_flag = "1" if missing and role == "Structure" else "0"
-        cmd = f"python3 '{directory / 'role.py'}' {role} '{directory / 'precice-config.xml'}' '{directory / (role.lower()+'.json')}' {value} {missing_flag} > '{directory / (role.lower()+'.stdout')}' 2> '{directory / (role.lower()+'.stderr')}' & {role.lower()}_pid=$!"
+        output_wsl = canonical_wsl_path(directory / (role.lower()+'.json'))
+        stdout_wsl = canonical_wsl_path(directory / (role.lower()+'.stdout'))
+        stderr_wsl = canonical_wsl_path(directory / (role.lower()+'.stderr'))
+        cmd = f"PYTHONPATH='{canonical_wsl_path(PYDEPS)}' python3 '{role_wsl}' {role} '{config_wsl}' '{output_wsl}' {value} {missing_flag} > '{stdout_wsl}' 2> '{stderr_wsl}' & {role.lower()}_pid=$!"
         commands.append(cmd)
     commands += ["wait $structure_pid; sr=$?", "wait $fluid_pid; fr=$?", "exit $((sr || fr))"]
     launcher = directory / "launch.sh"; put(launcher, "\n".join(commands) + "\n")
     try:
-        done = subprocess.run(["bash", str(launcher)], text=True, capture_output=True, timeout=30, start_new_session=True)
+        done = subprocess.run(wsl_call(["bash", canonical_wsl_path(launcher)]), text=True, encoding="utf-8", errors="replace",
+                              capture_output=True, timeout=30, start_new_session=True)
     except subprocess.TimeoutExpired as exc:
         os.killpg(exc.pid, signal.SIGTERM)
         raise RuntimeError(f"{name} participant fixture timed out") from exc

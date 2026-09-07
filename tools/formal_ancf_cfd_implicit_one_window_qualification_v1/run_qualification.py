@@ -1,8 +1,9 @@
-"""One and only one formal three-slice ANCF--CFD implicit window.
+"""Authoritative bounded production launcher for formal ANCF--CFD windows.
 
-This launcher deliberately inherits frozen physics and numerics, but binds all
-Fluid participants to the source-pinned patch-0005 diagnostic library by an
-absolute path.  It never launches a second window.
+The default remains the frozen single parallel-implicit qualification.  The
+paired short-horizon diagnostic may opt into its strictly allowlisted 10-window
+mode through environment variables, while reusing this exact preparation,
+library binding, preflight, and process-launch path.
 """
 from __future__ import annotations
 
@@ -43,6 +44,20 @@ LIB_FILE = Path(LIB_WSL) / "libpreciceAdapterFunctionObject.so"
 UPSTREAM = "d53753b1c927b2413b02299c9da15725b3e772f0"
 PATCH_SET = ["0001-respect-adapter-target-dir", "0002-diagnostic-rollback-fingerprints", "0004-registry-safe-rollback-and-motion-timing", "0005-precice-time-layer-and-different-input-rollback"]
 DT = 0.005
+SCHEME = os.environ.get("FORMAL_COUPLING_SCHEME", "parallel-implicit")
+DURATION_S = float(os.environ.get("FORMAL_PHYSICAL_HORIZON_S", str(DT)))
+PAIRED_MODE = os.environ.get("FORMAL_PAIRED_DIAGNOSTIC", "0") == "1"
+if SCHEME not in ("parallel-explicit", "parallel-implicit"):
+    raise RuntimeError("FORMAL_COUPLING_SCHEME must be parallel-explicit or parallel-implicit")
+if DURATION_S <= 0.0 or abs(DURATION_S / DT - round(DURATION_S / DT)) > 1e-12:
+    raise RuntimeError("FORMAL_PHYSICAL_HORIZON_S must be a positive integral number of frozen dt")
+STEPS = int(round(DURATION_S / DT))
+if PAIRED_MODE:
+    if STEPS != 10 or abs(DURATION_S - 0.05) > 1e-12:
+        raise RuntimeError("paired diagnostic is authorized only for exactly 0.050 s / 10 windows")
+else:
+    if SCHEME != "parallel-implicit" or STEPS != 1:
+        raise RuntimeError("formal qualification default remains exactly one parallel-implicit window")
 
 
 def sha256(path: Path) -> str:
@@ -102,31 +117,40 @@ def wsl(path: Path) -> str:
     return canonical_wsl_path(path)
 
 
-def implicit_xml(base, sid: int) -> str:
+def coupling_xml(base, sid: int) -> str:
     original = base.xml(sid)
-    replacement = (
-        f'<coupling-scheme:parallel-implicit><participants first="Structure_{sid:04d}" second="Fluid_{sid:04d}"/>'
-        '<max-time value="0.005"/><time-window-size value="0.005"/><min-iterations value="2"/><max-iterations value="8"/>'
-        '<absolute-or-relative-convergence-measure data="Displacement" mesh="Structure-Mesh" abs-limit="1e-8" rel-limit="1e-5"/>'
-        '<absolute-or-relative-convergence-measure data="Force" mesh="Structure-Mesh" abs-limit="1e-3" rel-limit="1e-5"/>'
+    exchanges = (
         f'<exchange data="Displacement" mesh="Structure-Mesh" from="Structure_{sid:04d}" to="Fluid_{sid:04d}" initialize="yes" substeps="false"/>'
         f'<exchange data="Force" mesh="Structure-Mesh" from="Fluid_{sid:04d}" to="Structure_{sid:04d}" substeps="false"/>'
-        '</coupling-scheme:parallel-implicit>'
     )
+    if SCHEME == "parallel-implicit":
+        replacement = (
+            f'<coupling-scheme:parallel-implicit><participants first="Structure_{sid:04d}" second="Fluid_{sid:04d}"/>'
+            f'<max-time value="{DURATION_S:g}"/><time-window-size value="{DT:g}"/><min-iterations value="2"/><max-iterations value="8"/>'
+            '<absolute-or-relative-convergence-measure data="Displacement" mesh="Structure-Mesh" abs-limit="1e-8" rel-limit="1e-5"/>'
+            '<absolute-or-relative-convergence-measure data="Force" mesh="Structure-Mesh" abs-limit="1e-3" rel-limit="1e-5"/>'
+            + exchanges + '</coupling-scheme:parallel-implicit>'
+        )
+    else:
+        replacement = (
+            f'<coupling-scheme:parallel-explicit><participants first="Structure_{sid:04d}" second="Fluid_{sid:04d}"/>'
+            f'<max-time value="{DURATION_S:g}"/><time-window-size value="{DT:g}"/>'
+            + exchanges + '</coupling-scheme:parallel-explicit>'
+        )
     return re.sub(r'<coupling-scheme:parallel-explicit>.*?</coupling-scheme:parallel-explicit>', replacement, original, flags=re.S)
 
 
 def control(base) -> str:
     text = base.CONTROL.replace(
         "startFrom startTime; startTime 0; stopAt endTime; endTime 1;",
-        "startFrom startTime; startTime 0.1; stopAt endTime; endTime 0.105;",
+        f"startFrom startTime; startTime 0.1; stopAt endTime; endTime {0.1 + DURATION_S:g};",
     )
     return text.replace('libs ("libpreciceAdapterFunctionObject.so");', f'libs ("{LIB_WSL}/libpreciceAdapterFunctionObject.so");')
 
 
 def structure_contract(original: dict) -> dict:
     contract = dict(original)
-    human_case_name = "formal_ancf_cfd_implicit_one_window_qualification_v1_case_001"
+    human_case_name = os.environ.get("FORMAL_HUMAN_CASE_NAME", "formal_ancf_cfd_implicit_one_window_qualification_v1_case_001")
     ipc_identity = build_identity(RUN, human_case_name, str(RUNTIME))
     ledger = RUNTIME / "ipc_identity_contract_v1.json"
     if ledger.is_file():
@@ -134,15 +158,15 @@ def structure_contract(original: dict) -> dict:
     else:
         assert_ledger_compatible(ipc_identity)
     contract.update({
-        "schema_version": "formal-ancf-cfd-implicit-one-window-qualification-v1",
+        "schema_version": "formal-ancf-cfd-production-window-v1",
         "run_id": ipc_identity["run_id"],
         "case_id": ipc_identity["case_id"],
         "ipc_identity": ipc_identity,
-        "duration_s": DT,
+        "duration_s": DURATION_S,
         "dt_s": DT,
-        "number_of_steps": 1,
+        "number_of_steps": STEPS,
         "openfoam_physical_time_offset_s": 0.1,
-        "coupling_scheme": "parallel-implicit",
+        "coupling_scheme": SCHEME,
         "initial_structure_state": "NO_FLOW_EQUILIBRIUM",
         "implicit_convergence": {
             "min_iterations": 2,
@@ -156,8 +180,13 @@ def structure_contract(original: dict) -> dict:
         "openfoam_quality_v4": {"path": str(QUALITY_V4), "sha256": sha256(QUALITY_V4)},
         "adapter": {"library_wsl": LIB_WSL, "sha256": sha256(LIB_FILE), "upstream_commit": UPSTREAM, "patch_set": PATCH_SET},
         "time_layer": {"initial_read_relative_time_s": 0.0, "post_advance_retry_read": "getMaxTimeStepSize()", "openfoam_time_relation": "t_OF=0.100 s+tau"},
-        "containment": "ARMED_BY_FROZEN_REGRESSION",
-        "scope": "exactly one coupled physical window; no automatic continuation",
+        "containment_limits": {
+            "max_abs_ux_m": 0.1,
+            "max_abs_vx_mps": 20.0,
+            "max_abs_raw_Fx_N": 2000000.0,
+        },
+        "containment": "ARMED_BY_FROZEN_REGRESSION_AND_PRODUCTION_PARTICIPANT",
+        "scope": f"exactly {STEPS} coupled physical window(s), {DURATION_S:g} s; no automatic continuation",
     })
     return contract
 
@@ -183,14 +212,14 @@ def prepare():
         raise RuntimeError("IPC identity contract preflight fails")
     if quality_completion.get("QUALITY_V4_COMPLETION_CLASSIFICATION") != "PASS":
         raise RuntimeError("Quality V4 completion-classification preflight fails")
-    ipc_identity = build_identity(RUN, "formal_ancf_cfd_implicit_one_window_qualification_v1_case_001", str(RUNTIME))
+    ipc_identity = build_identity(RUN, os.environ.get("FORMAL_HUMAN_CASE_NAME", "formal_ancf_cfd_implicit_one_window_qualification_v1_case_001"), str(RUNTIME))
     assert_ledger_compatible(ipc_identity)
     smoke = load(ROOT / "tools" / "preconditioned_coupled_0p1s_smoke_v1" / "run_smoke.py", "formal_implicit_preconditioned")
     original = smoke.contract
     smoke.RUN, smoke.RUNTIME, smoke.RESULTS = RUN, RUNTIME, RESULTS
-    smoke.HERE, smoke.STEPS, smoke.DT, smoke.QUALITY = HERE, 1, DT, QUALITY_V4
+    smoke.HERE, smoke.STEPS, smoke.DT, smoke.QUALITY = HERE, STEPS, DT, QUALITY_V4
     smoke.contract = lambda: structure_contract(original())
-    smoke.cfg_xml = implicit_xml
+    smoke.cfg_xml = coupling_xml
     smoke.control = control
     base, cases, contract = smoke.prepare()
     put(RUNTIME / "ipc_identity_contract_v1.json", ipc_identity)
@@ -208,6 +237,8 @@ def prepare():
         "patch_set": PATCH_SET,
         "OpenFOAM": "Foundation 10 /opt/openfoam10 linux64GccDPInt32Opt",
         "preCICE": "3.4.1",
+        "coupling_scheme": SCHEME,
+        "physical_horizon_s": DURATION_S,
         "socket_directory": socket_preflight,
         "fluid_cases": {str(sid): {"controlDict_adapter_library": LIB_WSL + "/libpreciceAdapterFunctionObject.so", "preflight": preflight[str(sid)]} for sid in range(3)},
     }
@@ -292,13 +323,19 @@ def audit(cases: list[Path], return_code: int) -> dict:
         trace = trace_rows(sid); traces[str(sid)] = trace
         by_event = {}
         for row in trace: by_event.setdefault(row.get("event"), []).append(row)
-        checkpoint = by_event.get("CHECKPOINT_WRITE", [None])[0]
+        checkpoints = {int(row.get("window_id", -1)): row for row in by_event.get("CHECKPOINT_WRITE", [])}
         restored = by_event.get("POST_ROLLBACK_BEFORE_NEXT_INPUT", [])
         persistent = ("U", "p", "phi", "Uf", "cellDisplacement", "mesh_points")
-        field_ok = bool(checkpoint and restored) and all(all(persistent_equal(checkpoint, item, name) for name in persistent) and checkpoint["physical_time"] == item["physical_time"] and checkpoint["time_index"] == item["time_index"] for item in restored)
-        mesh_ok = bool(checkpoint and restored) and all(persistent_equal(checkpoint, item, "mesh_points") for item in restored)
-        derived_ok = bool(checkpoint and restored) and all(item["states"]["meshPhi"]["classification"] in ("PERSISTENT_RESTORED", "NOT_OBSERVABLE_NOT_REGISTERED") for item in restored)
-        rollback[str(sid)] = {"events": [row.get("event") for row in trace], "field_identity": field_ok, "mesh_identity": mesh_ok, "derived_history": derived_ok, "checkpoint": checkpoint, "restores": restored}
+        field_ok = bool(checkpoints and restored) and all(
+            (checkpoint := checkpoints.get(int(item.get("window_id", -1)))) is not None and
+            all(persistent_equal(checkpoint, item, name) for name in persistent) and
+            checkpoint["physical_time"] == item["physical_time"] and checkpoint["time_index"] == item["time_index"]
+            for item in restored)
+        mesh_ok = bool(checkpoints and restored) and all(
+            (checkpoint := checkpoints.get(int(item.get("window_id", -1)))) is not None and
+            persistent_equal(checkpoint, item, "mesh_points") for item in restored)
+        derived_ok = bool(checkpoints and restored) and all(item["states"]["meshPhi"]["classification"] in ("PERSISTENT_RESTORED", "NOT_OBSERVABLE_NOT_REGISTERED") for item in restored)
+        rollback[str(sid)] = {"events": [row.get("event") for row in trace], "field_identity": field_ok, "mesh_identity": mesh_ok, "derived_history": derived_ok, "checkpoints": checkpoints, "restores": restored}
     quality = {}
     for sid, case in enumerate(cases):
         try:
@@ -312,31 +349,31 @@ def audit(cases: list[Path], return_code: int) -> dict:
     for case in cases:
         files = list(case.glob("postProcessing/cylinderForces/*/forces.dat"))
         forces.append(parse_force(files[0]) if len(files) == 1 else None)
-    final_loads = records[0]["loads"] if len(records) == 1 else []
+    final_loads = records[-1]["loads"] if records else []
     v2 = [row for row in iterations if row.get("event") == "post_cpp_correction"]
     restores = [row for row in iterations if row.get("event") == "checkpoint_restore"]
     wires = [row.get("wire_sequence") for row in v2]
     try:
-        newton_ok = validate_records(newton, expected_steps=1).get("status") == "pass"
+        newton_ok = validate_records(newton, expected_steps=STEPS).get("status") == "pass"
     except Exception:
         newton_ok = False
     max_ux, max_vx = [], []
-    if records:
-        for motion in records[0]["motion"]:
-            max_ux.append(abs(float(motion["ux_m"]))); max_vx.append(abs(float(motion["vx_mps"])))
+    for sid in range(3):
+        max_ux.append(max((abs(float(row["motion"][sid]["ux_m"])) for row in records), default=math.inf))
+        max_vx.append(max((abs(float(row["motion"][sid]["vx_mps"])) for row in records), default=math.inf))
     checks = {
         "three_adapter_manifests": (RUNTIME / "adapter_manifest.json").is_file(),
         "return_codes": return_code == 0 and summary.get("status") == "completed",
-        "structure_rollback": bool(restores) and all(row.get("checkpoint_state_sha256") == row.get("post_restore_state_sha256") for row in restores),
-        "unique_wire_ids": len(wires) >= 2 and len(wires) == len(set(wires)),
-        "fluid_field_history_rollback": all(item["field_identity"] and item["derived_history"] for item in rollback.values()),
-        "dynamic_mesh_rollback": all(item["mesh_identity"] for item in rollback.values()),
-        "two_to_eight_iterations": 2 <= int(summary.get("coupling_iterations", 0)) <= 8,
-        "single_commit": len(records) == 1 and summary.get("committed_steps") == 1,
-        "final_of_time": all(trace and abs(float(trace[-1].get("physical_time", math.inf)) - 0.105) <= 1e-12 for trace in traces.values()),
-        "force_contract": len(final_loads) == 3 and all(abs(float(load["force_x_N"]) - float(load["force_2d_x_Npm"]) * float(load["slice_length_m"])) <= 1e-10 for load in final_loads),
+        "structure_rollback": (not SCHEME == "parallel-implicit") or (bool(restores) and all(row.get("checkpoint_state_sha256") == row.get("post_restore_state_sha256") for row in restores)),
+        "unique_wire_ids": len(wires) >= 2 * STEPS and len(wires) == len(set(wires)),
+        "fluid_field_history_rollback": (not SCHEME == "parallel-implicit") or all(item["field_identity"] and item["derived_history"] for item in rollback.values()),
+        "dynamic_mesh_rollback": (not SCHEME == "parallel-implicit") or all(item["mesh_identity"] for item in rollback.values()),
+        "two_to_eight_iterations": (not SCHEME == "parallel-implicit") or all(2 <= int(row.get("coupling_iteration_final", 0)) <= 8 for row in records),
+        "physical_commits": len(records) == STEPS and summary.get("committed_steps") == STEPS,
+        "final_of_time": all(trace and abs(float(trace[-1].get("physical_time", math.inf)) - (0.1 + DURATION_S)) <= 1e-12 for trace in traces.values()),
+        "force_contract": len(final_loads) == 3 and all(abs(float(load["force_x_N"]) - float(load["force_2d_x_Npm"]) * float(load["slice_length_m"])) <= 1e-10 for row in records for load in row["loads"]),
         "generalized_force_v2": bool(v2) and all(row["generalized_force_metric_v2"]["GENERALIZED_FORCE_MAPPING_V2"] == "PASS" for row in v2),
-        "newton": newton_ok,
+        "newton": newton_ok and len(newton) == 2 * STEPS,
         "quality_v4": all(item["status"] == "pass" for item in quality.values()),
         "no_fpe": return_code == 0,
         "forces_available": all(force is not None for force in forces),
@@ -344,9 +381,9 @@ def audit(cases: list[Path], return_code: int) -> dict:
     result = {
         "FORMAL_IMPLICIT_ONE_WINDOW": "PASS" if all(checks.values()) else "FAIL",
         "checks": checks, "return_code": return_code, "adapter_manifest": json.loads((RUNTIME / "adapter_manifest.json").read_text(encoding="utf-8")),
-        "structure_summary": summary, "iteration_count": summary.get("coupling_iterations"), "iteration_evidence": iterations,
+        "structure_summary": summary, "iteration_count": summary.get("coupling_iterations_total"), "iteration_evidence": iterations,
         "fluid_rollback": rollback, "quality_v4": quality, "final_raw_force": forces, "integrated_structural_force": final_loads,
-        "max_abs_ux_m": max_ux, "max_abs_vx_mps": max_vx,
+        "max_abs_ux_m": max_ux, "max_abs_vx_mps": max_vx, "coupling_scheme": SCHEME,
         "first_blocker": next((name for name, value in checks.items() if not value), None),
     }
     put(RESULTS / "formal_one_window_gate.json", result)
