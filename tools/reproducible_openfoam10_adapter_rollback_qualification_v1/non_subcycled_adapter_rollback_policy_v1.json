@@ -1,0 +1,31 @@
+{
+  "schema_version": "non-subcycled-adapter-rollback-policy-v1",
+  "scope": {
+    "openfoam": "Foundation 10",
+    "solver": "pimpleFoam",
+    "physical_timestep_s": 0.005,
+    "coupling_window_s": 0.005,
+    "coupling_scheme": "parallel-implicit qualification only"
+  },
+  "definitions": {
+    "physical_timestep": "one OpenFOAM physical advance",
+    "pimple_outer_iterations": "nonlinear iterations within one physical timestep",
+    "precice_implicit_iterations": "fixed-point trials restoring the same physical-window checkpoint",
+    "fluid_subcycling": "more than one OpenFOAM physical advance within one preCICE coupling window"
+  },
+  "FLUID_SUBCYCLING": "FORBIDDEN",
+  "required_configuration": {
+    "one_fluid_advance_per_coupling_window": true,
+    "data_waveform_degree": 0,
+    "exchange_substeps": false
+  },
+  "volume_history_policy": {
+    "V0": "NOT_APPLICABLE_NON_SUBCYCLED",
+    "V00": "NOT_APPLICABLE_NON_SUBCYCLED",
+    "mesh_volume_history_restore": "requires a separately scoped subcycling qualification"
+  },
+  "fail_closed": [
+    "Any exchange tag using waveform-degree 0 without substeps=false is configuration-invalid in preCICE 3.4.",
+    "Any proposed fluid subcycling requires a new volume-history policy and independent rollback qualification."
+  ]
+}
