@@ -80,8 +80,10 @@ def put(path: Path, value: object) -> None:
     path.parent.mkdir(parents=True, exist_ok=True)
     text = value if isinstance(value, str) else json.dumps(value, ensure_ascii=False, indent=2) + "\n"
     # The host-side launcher also supports the pinned Python 3.9 runtime,
-    # whose Path.write_text() has no newline= keyword.
-    path.write_text(text, encoding="utf-8")
+    # whose Path.write_text() has no newline= keyword.  Explicitly retain LF
+    # because this file is executed by bash inside WSL.
+    with path.open("w", encoding="utf-8", newline="\n") as stream:
+        stream.write(text)
 
 
 def load(path: Path, name: str):
