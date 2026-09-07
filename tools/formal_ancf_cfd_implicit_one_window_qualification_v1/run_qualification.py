@@ -23,9 +23,13 @@ sys.path.insert(0, str(ROOT / "src"))
 from coupling.moving_mesh_openfoam10_case_contract_v1 import preflight as case_preflight
 from coupling.openfoam_numerical_quality_contract_v2.audit import audit_log
 from coupling.ancf_newton_evidence_v1 import validate_records
+from coupling.precice_path_v1 import canonical_wsl_path, socket_directory_preflight
 
 
-RUN = "formal_ancf_cfd_implicit_one_window_qualification_v1_run_001"
+RUN = os.environ.get(
+    "FORMAL_IMPLICIT_RUN_ID",
+    "formal_implicit_initial_data_and_socket_path_fix_v1_run_001",
+)
 RUNTIME, RESULTS = ROOT / "runtime" / RUN, ROOT / "results" / RUN
 PARTICIPANT = ROOT / "tools" / "checkpoint_aware_structure_participant_and_one_window_implicit_qualification_v1" / "implicit_structure_participant.py"
 WORKER = ROOT / "runtime" / "parallel_implicit_coupling_readiness_and_0p05s_diagnostic_v1" / "cpp_worker_build" / "cfd_ancf_ancf_kernel_worker"
@@ -56,10 +60,7 @@ def load(path: Path, name: str):
 
 
 def wsl(path: Path) -> str:
-    if os.name != "nt":
-        return str(path.resolve())
-    value = str(path.resolve()).replace("\\", "/")
-    return "/mnt/" + value[0].lower() + value[2:]
+    return canonical_wsl_path(path)
 
 
 def implicit_xml(base, sid: int) -> str:
@@ -128,6 +129,9 @@ def prepare():
     smoke.control = control
     base, cases, contract = smoke.prepare()
     base.PARTICIPANT_SCRIPT, base.WORKER = PARTICIPANT, WORKER
+    socket_preflight = socket_directory_preflight(RUNTIME / "precice-sockets")
+    if socket_preflight["status"] != "PASS":
+        raise RuntimeError("preCICE socket directory preflight fails")
     preflight = {str(sid): case_preflight(case, "0.1") for sid, case in enumerate(cases)}
     if not all(item.get("MOVING_MESH_CASE_PREFLIGHT") == "PASS" for item in preflight.values()):
         raise RuntimeError("moving-mesh production preflight fails")
@@ -138,6 +142,7 @@ def prepare():
         "patch_set": PATCH_SET,
         "OpenFOAM": "Foundation 10 /opt/openfoam10 linux64GccDPInt32Opt",
         "preCICE": "3.4.1",
+        "socket_directory": socket_preflight,
         "fluid_cases": {str(sid): {"controlDict_adapter_library": LIB_WSL + "/libpreciceAdapterFunctionObject.so", "preflight": preflight[str(sid)]} for sid in range(3)},
     }
     put(RUNTIME / "adapter_manifest.json", adapter_manifest)

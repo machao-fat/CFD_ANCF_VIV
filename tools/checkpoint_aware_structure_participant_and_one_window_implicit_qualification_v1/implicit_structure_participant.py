@@ -145,6 +145,35 @@ def main() -> int:
         adapter.start()
         for sid, config in enumerate(args.config):
             participant=precice.Participant(f"Structure_{sid:04d}", config, 0, 1); participants.append(participant); meshids.append(participant.set_mesh_vertices("Structure-Mesh",vertices))
+        # preCICE initial data is a separate protocol layer.  It is derived
+        # from the frozen no-flow state rather than from a later prediction or
+        # an uninitialised transport buffer.
+        initial_motion = [motion_from_ancf_state(
+            manifest, sid, H[sid], q, qdot, qddot, step=0, time_s=0.0,
+            reference_position_m=(0.0, 0.0, definitions[sid].s_ref_m),
+        ) for sid in range(3)]
+        initial_state_sha256 = hashlib.sha256(Path(args.state).read_bytes()).hexdigest()
+        for sid, participant in enumerate(participants):
+            motion0 = initial_motion[sid]
+            values = [[float(motion0.ux_m), float(motion0.uy_m)] for _ in vertices]
+            if len(values) != args.vertex_count or any(len(row) != 2 or not all(math.isfinite(x) for x in row) for row in values):
+                raise RuntimeError("initial Displacement shape/dtype/finite validation fails")
+            # The formal zero-geometry precursor requires the no-flow state to
+            # describe zero interface displacement at this time layer.
+            if max(abs(motion0.ux_m), abs(motion0.uy_m), abs(motion0.uz_m)) > 1e-12:
+                raise RuntimeError("NO_FLOW_EQUILIBRIUM does not map to zero initial interface displacement")
+            required = participant.requires_initial_data()
+            initial_evidence = {"event":"initial_data_write","slice_id":sid,"required":required,
+                "mesh_name":"Structure-Mesh","data_name":"Displacement","units":"m",
+                "vertex_count":args.vertex_count,"components":2,"vertex_order":"registered Structure-Mesh order",
+                "initial_state_sha256":initial_state_sha256,"displacement_xy_m":values[0],
+                "payload_sha256":canonical(values)}
+            if required:
+                participant.write_data("Structure-Mesh","Displacement",meshids[sid],values)
+                initial_evidence["written"] = True
+            else:
+                initial_evidence["written"] = False
+            append_jsonl(runtime/"initial_data_evidence.jsonl", initial_evidence)
         for participant in participants: participant.initialize()
         while any(participant.is_coupling_ongoing() for participant in participants):
             flags_w=[participant.requires_writing_checkpoint() for participant in participants]

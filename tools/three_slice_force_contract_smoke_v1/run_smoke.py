@@ -15,6 +15,7 @@ sys.path.insert(0, str(ROOT / "src"))
 from coupling.openfoam_quality_contract_v3.audit import audit_records
 from coupling.convergence_observability_v1.openfoam_log import OpenFOAMLogParser
 from coupling.moving_mesh_openfoam10_case_contract_v1 import ensure_solver_entries
+from coupling.precice_path_v1 import canonical_wsl_path
 
 STAGE = "stage_force_contract_smoke_v1"
 RUNTIME = ROOT / "runtime" / (STAGE + "_run_008")
@@ -34,8 +35,7 @@ CELL = 'FoamFile { format ascii; class volVectorField; location "0"; object cell
 
 
 def wsl(path: Path) -> str:
-    value = str(path.resolve()).replace("\\", "/")
-    return "/mnt/" + value[0].lower() + value[2:]
+    return canonical_wsl_path(path)
 
 
 def put(path: Path, text: str) -> None:
