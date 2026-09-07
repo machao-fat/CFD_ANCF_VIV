@@ -1,6 +1,6 @@
 --- a/Adapter.C
 +++ b/Adapter.C
-@@ -4,8 +4,68 @@
+@@ -4,8 +4,77 @@
 
  #include "IOstreams.H"
 
@@ -42,7 +42,16 @@
 +        << "\"count\":" << field->size() << ","
 +        << "\"finite\":true,"
 +        << "\"canonical_hash_fnv1a64\":\"" << rollbackFNV1a64(payload) << "\","
-+        << "\"old_time_levels\":" << field->nOldTimes() << "}";
++        << "\"old_time_levels\":" << field->nOldTimes();
++    if (field->nOldTimes() > 0)
++    {
++        Foam::OStringStream oldSerialized;
++        oldSerialized << field->oldTime();
++        const std::string oldPayload(oldSerialized.str().c_str());
++        out << ",\"old_time_canonical_hash_fnv1a64\":\""
++            << rollbackFNV1a64(oldPayload) << "\"";
++    }
++    out << "}";
 +}
 +
 +void rollbackPointsFingerprint(std::ostream& out, const std::string& name, const Foam::pointField& points)
@@ -69,7 +78,7 @@
  preciceAdapter::Adapter::Adapter(const Time& runTime, const fvMesh& mesh)
  : runTime_(runTime),
    mesh_(mesh)
-@@ -435,7 +495,9 @@
+@@ -435,7 +504,9 @@
      // Read checkpoint if required
      if (requiresReadingCheckpoint())
      {
@@ -79,7 +88,7 @@
      }
 
      // Write checkpoint if required
-@@ -452,6 +514,9 @@
+@@ -452,6 +523,9 @@
      SETUP_TIMER();
      if (checkpointing_ && isCouplingTimeWindowComplete())
      {
@@ -89,7 +98,7 @@
          // Check if the time directory already exists
          // (i.e. the solver wrote results that need to be updated)
          if (runTime_.timePath().type() == fileType::directory)
-@@ -1270,6 +1335,9 @@
+@@ -1270,6 +1344,9 @@
          storeMeshPoints();
      }
 
@@ -99,7 +108,7 @@
      // Store all the fields of type volScalarField
      for (uint i = 0; i < volScalarFields_.size(); i++)
      {
-@@ -1341,6 +1409,46 @@
+@@ -1341,6 +1418,46 @@
      return;
  }
 

@@ -3,6 +3,7 @@ from __future__ import annotations
 
 import hashlib
 import json
+import os
 import shutil
 import subprocess
 from pathlib import Path
@@ -16,6 +17,8 @@ DIAG_UNC = Path(r"\\wsl$\Ubuntu-22.04") / DIAG_WSL.lstrip("/").replace("/", "\\"
 
 
 def wsl(path: Path) -> str:
+    if os.name != "nt":
+        return str(path.resolve())
     value = str(path.resolve()).replace("\\", "/")
     return "/mnt/" + value[0].lower() + value[2:]
 
@@ -55,7 +58,9 @@ def run(label: str, case: Path) -> dict:
         "pimpleFoam > run.stdout 2> run.stderr",
     )) + "\n"
     write(case / "launch.sh", launch)
-    result = subprocess.run(["wsl.exe", "-d", "Ubuntu-22.04", "--", "bash", wsl(case / "launch.sh")], text=True, encoding="utf-8", errors="replace", capture_output=True, timeout=120)
+    command = (["wsl.exe", "-d", "Ubuntu-22.04", "--", "bash", wsl(case / "launch.sh")]
+               if os.name == "nt" else ["bash", wsl(case / "launch.sh")])
+    result = subprocess.run(command, text=True, encoding="utf-8", errors="replace", capture_output=True, timeout=120)
     write(case / "launcher.stdout", result.stdout); write(case / "launcher.stderr", result.stderr)
     targets = [case / "0.005" / name for name in ("U", "p", "phi")]
     targets.extend((case / "0.005" / "polyMesh" / "points", case / "postProcessing" / "cylinderForces" / "0" / "forces.dat"))

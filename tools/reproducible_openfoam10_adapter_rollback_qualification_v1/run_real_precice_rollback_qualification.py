@@ -44,6 +44,8 @@ def write(path: Path, text: str) -> None:
 
 
 def wsl(path: Path) -> str:
+    if os.name != "nt":
+        return str(path.resolve())
     value = str(path.resolve()).replace("\\", "/")
     return "/mnt/" + value[0].lower() + value[2:]
 
@@ -154,7 +156,9 @@ def run(case: Path) -> int:
         "[ $structure_rc -eq 0 ] && [ $fluid_rc -eq 0 ]",
     )) + "\n"
     write(RUNTIME / "launch.sh", script)
-    done = subprocess.run(["wsl.exe", "-d", "Ubuntu-22.04", "--", "bash", wsl(RUNTIME / "launch.sh")], text=True, encoding="utf-8", errors="replace", capture_output=True, timeout=300)
+    command = (["wsl.exe", "-d", "Ubuntu-22.04", "--", "bash", wsl(RUNTIME / "launch.sh")]
+               if os.name == "nt" else ["bash", wsl(RUNTIME / "launch.sh")])
+    done = subprocess.run(command, text=True, encoding="utf-8", errors="replace", capture_output=True, timeout=300)
     write(RUNTIME / "launcher.stdout", done.stdout); write(RUNTIME / "launcher.stderr", done.stderr)
     return done.returncode
 

@@ -1,0 +1,240 @@
+--- a/Adapter.C
++++ b/Adapter.C
+@@ -515,6 +515,13 @@
+         writeCheckpoint();
+     }
+ 
++    // Apply the data made available by advance() before the next tentative solve.
++    // A rollback has already restored the window-start physical state above.
++    if (isCouplingOngoing())
++    {
++        readCouplingData(0.0);
++    }
++
+     // As soon as OpenFOAM writes the results, it will not try to write again
+     // if the time takes the same value again. Therefore, during an implicit
+     // coupling, we write again when the coupling timestep is complete.
+@@ -619,6 +626,10 @@
+ 
+     DEBUG(adapterInfo("Initializing preCICE data..."));
+     precice_->initialize();
++    // Read initial coupling data after preCICE has completed its initial-data exchange.
++    // Displacement is a total field in the FSI module and must be available before
++    // the first tentative OpenFOAM solve.
++    readCouplingData(0.0);
+     preciceInitialized_ = true;
+     ACCUMULATE_TIMER(timeInInitialize_);
+ 
+@@ -834,17 +845,16 @@
+     */
+ 
+     DEBUG(adapterInfo("Stored mesh points."));
+-    if (mesh_.moving())
++    // mesh_.moving() is false at the window-start checkpoint.  Nevertheless,
++    // a dynamic-mesh trial may create meshPhi, so register it through the
++    // normal fvMesh API before the checkpoint.
++    if (!meshCheckPointed)
+     {
+-        if (!meshCheckPointed)
+-        {
+-            // Set up the checkpoint for the mesh flux: meshPhi
+-            setupMeshCheckpointing();
+-            meshCheckPointed = true;
+-        }
+-        writeMeshCheckpoint();
+-        writeVolCheckpoint(); // Does not write anything unless subcycling.
++        setupMeshCheckpointing();
++        meshCheckPointed = true;
+     }
++    writeMeshCheckpoint();
++    writeVolCheckpoint(); // Does not write anything unless subcycling.
+ }
+ 
+ void preciceAdapter::Adapter::reloadMeshPoints()
+@@ -1162,7 +1172,7 @@
+         {
+             volScalarFields_.at(i)->oldTime() == volScalarFieldCopies_.at(i)->oldTime();
+         }
+-        if (nOldTimes == 2)
++        if (nOldTimes >= 2)
+         {
+             volScalarFields_.at(i)->oldTime().oldTime() == volScalarFieldCopies_.at(i)->oldTime().oldTime();
+         }
+@@ -1179,7 +1189,7 @@
+         {
+             volVectorFields_.at(i)->oldTime() == volVectorFieldCopies_.at(i)->oldTime();
+         }
+-        if (nOldTimes == 2)
++        if (nOldTimes >= 2)
+         {
+             volVectorFields_.at(i)->oldTime().oldTime() == volVectorFieldCopies_.at(i)->oldTime().oldTime();
+         }
+@@ -1195,7 +1205,7 @@
+         {
+             surfaceScalarFields_.at(i)->oldTime() == surfaceScalarFieldCopies_.at(i)->oldTime();
+         }
+-        if (nOldTimes == 2)
++        if (nOldTimes >= 2)
+         {
+             surfaceScalarFields_.at(i)->oldTime().oldTime() == surfaceScalarFieldCopies_.at(i)->oldTime().oldTime();
+         }
+@@ -1211,7 +1221,7 @@
+         {
+             surfaceVectorFields_.at(i)->oldTime() == surfaceVectorFieldCopies_.at(i)->oldTime();
+         }
+-        if (nOldTimes == 2)
++        if (nOldTimes >= 2)
+         {
+             surfaceVectorFields_.at(i)->oldTime().oldTime() == surfaceVectorFieldCopies_.at(i)->oldTime().oldTime();
+         }
+@@ -1227,7 +1237,7 @@
+         {
+             pointScalarFields_.at(i)->oldTime() == pointScalarFieldCopies_.at(i)->oldTime();
+         }
+-        if (nOldTimes == 2)
++        if (nOldTimes >= 2)
+         {
+             pointScalarFields_.at(i)->oldTime().oldTime() == pointScalarFieldCopies_.at(i)->oldTime().oldTime();
+         }
+@@ -1244,7 +1254,7 @@
+         {
+             pointVectorFields_.at(i)->oldTime() == pointVectorFieldCopies_.at(i)->oldTime();
+         }
+-        if (nOldTimes == 2)
++        if (nOldTimes >= 2)
+         {
+             pointVectorFields_.at(i)->oldTime().oldTime() == pointVectorFieldCopies_.at(i)->oldTime().oldTime();
+         }
+@@ -1261,7 +1271,7 @@
+         {
+             volTensorFields_.at(i)->oldTime() == volTensorFieldCopies_.at(i)->oldTime();
+         }
+-        if (nOldTimes == 2)
++        if (nOldTimes >= 2)
+         {
+             volTensorFields_.at(i)->oldTime().oldTime() == volTensorFieldCopies_.at(i)->oldTime().oldTime();
+         }
+@@ -1277,7 +1287,7 @@
+         {
+             surfaceTensorFields_.at(i)->oldTime() == surfaceTensorFieldCopies_.at(i)->oldTime();
+         }
+-        if (nOldTimes == 2)
++        if (nOldTimes >= 2)
+         {
+             surfaceTensorFields_.at(i)->oldTime().oldTime() == surfaceTensorFieldCopies_.at(i)->oldTime().oldTime();
+         }
+@@ -1293,7 +1303,7 @@
+         {
+             pointTensorFields_.at(i)->oldTime() == pointTensorFieldCopies_.at(i)->oldTime();
+         }
+-        if (nOldTimes == 2)
++        if (nOldTimes >= 2)
+         {
+             pointTensorFields_.at(i)->oldTime().oldTime() == pointTensorFieldCopies_.at(i)->oldTime().oldTime();
+         }
+@@ -1310,7 +1320,7 @@
+         {
+             volSymmTensorFields_.at(i)->oldTime() == volSymmTensorFieldCopies_.at(i)->oldTime();
+         }
+-        if (nOldTimes == 2)
++        if (nOldTimes >= 2)
+         {
+             volSymmTensorFields_.at(i)->oldTime().oldTime() == volSymmTensorFieldCopies_.at(i)->oldTime().oldTime();
+         }
+@@ -1344,6 +1354,32 @@
+         storeMeshPoints();
+     }
+ 
++    // Stabilize old-time object lifetime before a tentative solve can create it.
++    // This invokes the documented GeometricField::oldTime() API only on fields
++    // that are already registered for checkpointing; no registry ownership is changed.
++#define PRECICE_ENSURE_OLD_TIME(fields) \
++    for (uint i = 0; i < fields.size(); ++i) \
++    { \
++        if (fields.at(i)->nOldTimes() == 0) \
++        { \
++            fields.at(i)->oldTime(); \
++        } \
++    }
++    PRECICE_ENSURE_OLD_TIME(volScalarFields_);
++    PRECICE_ENSURE_OLD_TIME(volVectorFields_);
++    PRECICE_ENSURE_OLD_TIME(volTensorFields_);
++    PRECICE_ENSURE_OLD_TIME(volSymmTensorFields_);
++    PRECICE_ENSURE_OLD_TIME(surfaceScalarFields_);
++    PRECICE_ENSURE_OLD_TIME(surfaceVectorFields_);
++    PRECICE_ENSURE_OLD_TIME(surfaceTensorFields_);
++    PRECICE_ENSURE_OLD_TIME(pointScalarFields_);
++    PRECICE_ENSURE_OLD_TIME(pointVectorFields_);
++    PRECICE_ENSURE_OLD_TIME(pointTensorFields_);
++    PRECICE_ENSURE_OLD_TIME(meshSurfaceScalarFields_);
++    PRECICE_ENSURE_OLD_TIME(meshSurfaceVectorFields_);
++    PRECICE_ENSURE_OLD_TIME(meshVolVectorFields_);
++#undef PRECICE_ENSURE_OLD_TIME
++
+     writeRollbackDiagnostic("CHECKPOINT_WRITE");
+     ++rollbackDiagnosticIteration_;
+ 
+@@ -1406,6 +1442,36 @@
+     {
+         *(pointTensorFieldCopies_.at(i)) == *(pointTensorFields_.at(i));
+     }
++    // Checkpoint numerical values of all pre-existing old-time levels.  The
++    // lifecycle above makes their existence deterministic before trial #1.
++#define PRECICE_STORE_OLD_TIME(fields, copies) \
++    for (uint i = 0; i < fields.size(); ++i) \
++    { \
++        const int oldTimes(fields.at(i)->nOldTimes()); \
++        if (oldTimes >= 1) \
++        { \
++            copies.at(i)->oldTime() == fields.at(i)->oldTime(); \
++        } \
++        if (oldTimes >= 2) \
++        { \
++            copies.at(i)->oldTime().oldTime() == fields.at(i)->oldTime().oldTime(); \
++        } \
++    }
++    PRECICE_STORE_OLD_TIME(volScalarFields_, volScalarFieldCopies_);
++    PRECICE_STORE_OLD_TIME(volVectorFields_, volVectorFieldCopies_);
++    PRECICE_STORE_OLD_TIME(volTensorFields_, volTensorFieldCopies_);
++    PRECICE_STORE_OLD_TIME(volSymmTensorFields_, volSymmTensorFieldCopies_);
++    PRECICE_STORE_OLD_TIME(surfaceScalarFields_, surfaceScalarFieldCopies_);
++    PRECICE_STORE_OLD_TIME(surfaceVectorFields_, surfaceVectorFieldCopies_);
++    PRECICE_STORE_OLD_TIME(surfaceTensorFields_, surfaceTensorFieldCopies_);
++    PRECICE_STORE_OLD_TIME(pointScalarFields_, pointScalarFieldCopies_);
++    PRECICE_STORE_OLD_TIME(pointVectorFields_, pointVectorFieldCopies_);
++    PRECICE_STORE_OLD_TIME(pointTensorFields_, pointTensorFieldCopies_);
++    PRECICE_STORE_OLD_TIME(meshSurfaceScalarFields_, meshSurfaceScalarFieldCopies_);
++    PRECICE_STORE_OLD_TIME(meshSurfaceVectorFields_, meshSurfaceVectorFieldCopies_);
++    PRECICE_STORE_OLD_TIME(meshVolVectorFields_, meshVolVectorFieldCopies_);
++#undef PRECICE_STORE_OLD_TIME
++
+     // NOTE: Add here other types to write, if needed.
+ 
+ #ifdef ADAPTER_DEBUG_MODE
+@@ -1474,7 +1540,7 @@
+         {
+             meshSurfaceScalarFields_.at(i)->oldTime() == meshSurfaceScalarFieldCopies_.at(i)->oldTime();
+         }
+-        if (nOldTimes == 2)
++        if (nOldTimes >= 2)
+         {
+             meshSurfaceScalarFields_.at(i)->oldTime().oldTime() == meshSurfaceScalarFieldCopies_.at(i)->oldTime().oldTime();
+         }
+@@ -1491,7 +1557,7 @@
+         {
+             meshSurfaceVectorFields_.at(i)->oldTime() == meshSurfaceVectorFieldCopies_.at(i)->oldTime();
+         }
+-        if (nOldTimes == 2)
++        if (nOldTimes >= 2)
+         {
+             meshSurfaceVectorFields_.at(i)->oldTime().oldTime() == meshSurfaceVectorFieldCopies_.at(i)->oldTime().oldTime();
+         }
+@@ -1508,7 +1574,7 @@
+         {
+             meshVolVectorFields_.at(i)->oldTime() == meshVolVectorFieldCopies_.at(i)->oldTime();
+         }
+-        if (nOldTimes == 2)
++        if (nOldTimes >= 2)
+         {
+             meshVolVectorFields_.at(i)->oldTime().oldTime() == meshVolVectorFieldCopies_.at(i)->oldTime().oldTime();
+         }

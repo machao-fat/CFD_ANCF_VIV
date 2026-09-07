@@ -56,7 +56,16 @@ void rollbackFieldFingerprint(std::ostream& out, const std::string& name, const 
         << "\"count\":" << field->size() << ","
         << "\"finite\":true,"
         << "\"canonical_hash_fnv1a64\":\"" << rollbackFNV1a64(payload) << "\","
-        << "\"old_time_levels\":" << field->nOldTimes() << "}";
+        << "\"old_time_levels\":" << field->nOldTimes();
+    if (field->nOldTimes() > 0)
+    {
+        Foam::OStringStream oldSerialized;
+        oldSerialized << field->oldTime();
+        const std::string oldPayload(oldSerialized.str().c_str());
+        out << ",\"old_time_canonical_hash_fnv1a64\":\""
+            << rollbackFNV1a64(oldPayload) << "\"";
+    }
+    out << "}";
 }
 
 void rollbackPointsFingerprint(std::ostream& out, const std::string& name, const Foam::pointField& points)
