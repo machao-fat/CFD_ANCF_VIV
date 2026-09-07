@@ -8,7 +8,8 @@ from __future__ import annotations
 
 import os
 import re
-from pathlib import Path
+import subprocess
+from pathlib import Path, PurePosixPath
 
 
 _WINDOWS_DRIVE = re.compile(r"^([A-Za-z]):[\\/](.*)$")
@@ -40,6 +41,26 @@ def canonical_wsl_path(path: str | Path) -> str:
 def socket_directory_preflight(path: str | Path) -> dict[str, object]:
     """Check the parent used by preCICE before it attempts to create sockets."""
     canonical = canonical_wsl_path(path)
+    if os.name == "nt" and canonical.startswith("/"):
+        # pathlib on Windows correctly classified the *input* above, but cannot
+        # stat a Linux namespace path.  Check the target namespace exactly
+        # once through WSL rather than reinterpret /mnt/... as \mnt\....
+        parent_text = str(PurePosixPath(canonical).parent)
+        parent_exists = subprocess.run(
+            ["wsl.exe", "-d", "Ubuntu-22.04", "--", "test", "-d", parent_text],
+            capture_output=True,
+        ).returncode == 0
+        parent_writable = parent_exists and subprocess.run(
+            ["wsl.exe", "-d", "Ubuntu-22.04", "--", "test", "-w", parent_text, "-a", "-x", parent_text],
+            capture_output=True,
+        ).returncode == 0
+        return {
+            "canonical_socket_path": canonical,
+            "parent": parent_text,
+            "parent_exists": parent_exists,
+            "parent_writable": parent_writable,
+            "status": "PASS" if parent_exists and parent_writable else "FAIL",
+        }
     parent = Path(canonical).parent
     return {
         "canonical_socket_path": canonical,
