@@ -42,7 +42,38 @@ DT = 0.005
 
 
 def sha256(path: Path) -> str:
+    if path.as_posix().startswith("/") and os.name == "nt":
+        completed = subprocess.run(
+            ["wsl.exe", "-d", "Ubuntu-22.04", "--", "sha256sum", path.as_posix()],
+            check=True, text=True, encoding="utf-8", errors="replace", capture_output=True,
+        )
+        return completed.stdout.split()[0]
     return hashlib.sha256(path.read_bytes()).hexdigest()
+
+
+def linux_file_exists(path: Path) -> bool:
+    if path.as_posix().startswith("/") and os.name == "nt":
+        return subprocess.run(
+            ["wsl.exe", "-d", "Ubuntu-22.04", "--", "test", "-f", path.as_posix()],
+            capture_output=True,
+        ).returncode == 0
+    return path.is_file()
+
+
+def linux_realpath(path: Path) -> str:
+    if path.as_posix().startswith("/") and os.name == "nt":
+        completed = subprocess.run(
+            ["wsl.exe", "-d", "Ubuntu-22.04", "--", "realpath", path.as_posix()],
+            check=True, text=True, encoding="utf-8", errors="replace", capture_output=True,
+        )
+        return completed.stdout.strip()
+    return str(path.resolve())
+
+
+def wsl_process(command: list[str], **kwargs):
+    if os.name == "nt":
+        command = ["wsl.exe", "-d", "Ubuntu-22.04", "--", *command]
+    return subprocess.run(command, **kwargs)
 
 
 def put(path: Path, value: object) -> None:
@@ -118,7 +149,7 @@ def structure_contract(original: dict) -> dict:
 def prepare():
     if RUNTIME.exists() or RESULTS.exists():
         raise RuntimeError("refusing to overwrite immutable formal runtime")
-    if not LIB_FILE.is_file():
+    if not linux_file_exists(LIB_FILE):
         raise RuntimeError("patch-0005 adapter library is absent")
     smoke = load(ROOT / "tools" / "preconditioned_coupled_0p1s_smoke_v1" / "run_smoke.py", "formal_implicit_preconditioned")
     original = smoke.contract
@@ -136,7 +167,7 @@ def prepare():
     if not all(item.get("MOVING_MESH_CASE_PREFLIGHT") == "PASS" for item in preflight.values()):
         raise RuntimeError("moving-mesh production preflight fails")
     adapter_manifest = {
-        "realpath": str(LIB_FILE.resolve()),
+        "realpath": linux_realpath(LIB_FILE),
         "sha256": sha256(LIB_FILE),
         "upstream_commit": UPSTREAM,
         "patch_set": PATCH_SET,
@@ -181,7 +212,7 @@ def launch(base, cases: list[Path]) -> int:
     ]
     launch_file = RUNTIME / "launch.sh"
     put(launch_file, "\n".join(script) + "\n")
-    result = subprocess.run(["wsl.exe", "-d", "Ubuntu-22.04", "--", "bash", wsl(launch_file)], cwd=ROOT, text=True, encoding="utf-8", errors="replace", capture_output=True, timeout=900)
+    result = wsl_process(["bash", wsl(launch_file)], cwd=ROOT, text=True, encoding="utf-8", errors="replace", capture_output=True, timeout=900)
     put(logs / "launcher.stdout", result.stdout); put(logs / "launcher.stderr", result.stderr)
     return result.returncode
 
