@@ -1,0 +1,42 @@
+--- a/Adapter.C
++++ b/Adapter.C
+@@ -515,6 +515,14 @@
+         writeCheckpoint();
+     }
+ 
++    // After advance(), a rollback retry must consume the sample at the
++    // end of this coupling window.  Reading 0.0 here would instead
++    // reuse the window-start value and contaminate different-input trials.
++    if (isCouplingOngoing())
++    {
++        readCouplingData(precice_->getMaxTimeStepSize());
++    }
++
+     // As soon as OpenFOAM writes the results, it will not try to write again
+     // if the time takes the same value again. Therefore, during an implicit
+     // coupling, we write again when the coupling timestep is complete.
+@@ -619,6 +627,8 @@
+ 
+     DEBUG(adapterInfo("Initializing preCICE data..."));
+     precice_->initialize();
++    // Initial coupling data belongs to the window-start sample.
++    readCouplingData(0.0);
+     preciceInitialized_ = true;
+     ACCUMULATE_TIMER(timeInInitialize_);
+ 
+@@ -866,6 +876,15 @@
+     const_cast<fvMesh&>(mesh_).move();
+     const_cast<fvMesh&>(mesh_).movePoints(meshPoints_);
+ 
++    // meshPhi is a derived OF10 mesh-motion flux, created by movePoints().
++    // Do not create or delete registry objects at the window-start checkpoint.
++    // Once a trial has created it, normal API access reconstructs its
++    // restored-time value (zero on the restored time layer when appropriate).
++    if (mesh_.foundObject<surfaceScalarField>("meshPhi"))
++    {
++        mesh_.phi();
++    }
++
+     DEBUG(adapterInfo("Moved mesh points to their previous locations."));
+ 
+     // TODO The if statement can be removed in this case, but it is still included for clarity
