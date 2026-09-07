@@ -1,0 +1,32 @@
+{
+  "schema_version": "OF10_ROLLBACK_STATE_EQUIVALENCE_CONTRACT_V1",
+  "scope": "Foundation OpenFOAM 10, non-subcycled one-physical-window dynamic-mesh rollback",
+  "persistent_exact": [
+    "U",
+    "p",
+    "phi",
+    "cellDisplacement",
+    "mesh points",
+    "time",
+    "timeIndex"
+  ],
+  "derived_reconstructed": {
+    "meshPhi": "created by fvMesh::movePoints; after rollback it is valid if the next same-input trial reproduces U/p/force/mesh and does not inherit trial-1 flux",
+    "pointDisplacement": "adapter face-to-point interpolation of restored cellDisplacement and the next received total displacement; equivalence is established at the next solve input",
+    "oldPoints": "recreated by OF10 movePoints on the next physical time layer; equivalence is established by next-trial mesh and fluid identity",
+    "U/Uf oldTime created after a zero-history checkpoint": "natural lazy OF10 history; equivalence requires same-input next-trial identity and no different-input contamination"
+  },
+  "not_applicable": [
+    "V0",
+    "V00",
+    "fluid subcycling"
+  ],
+  "hard_fail": [
+    "nonfinite state",
+    "registry ownership error",
+    "same-input mismatch",
+    "different-input contamination",
+    "more than one physical commit"
+  ],
+  "frozen_numeric_identity": "canonical diagnostic fingerprints for persistent fields; exact output-file SHA256 for OFF/ON; same-input replay uses canonical field/mesh/force equality at the same physical time"
+}

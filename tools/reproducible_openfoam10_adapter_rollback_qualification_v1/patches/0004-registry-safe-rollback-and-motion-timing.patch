@@ -1,0 +1,42 @@
+--- a/Adapter.C
++++ b/Adapter.C
+@@ -515,6 +515,13 @@
+         writeCheckpoint();
+     }
+ 
++    // advance() makes the next total displacement available. If a rollback
++    // occurred above, the physical state has already been restored first.
++    if (isCouplingOngoing())
++    {
++        readCouplingData(0.0);
++    }
++
+     // As soon as OpenFOAM writes the results, it will not try to write again
+     // if the time takes the same value again. Therefore, during an implicit
+     // coupling, we write again when the coupling timestep is complete.
+@@ -619,6 +626,9 @@
+ 
+     DEBUG(adapterInfo("Initializing preCICE data..."));
+     precice_->initialize();
++    // Initial data has now been exchanged. Apply total displacement before
++    // the first tentative OpenFOAM solve.
++    readCouplingData(0.0);
+     preciceInitialized_ = true;
+     ACCUMULATE_TIMER(timeInInitialize_);
+ 
+@@ -866,6 +876,15 @@
+     const_cast<fvMesh&>(mesh_).move();
+     const_cast<fvMesh&>(mesh_).movePoints(meshPoints_);
+ 
++    // meshPhi is a derived OF10 mesh-motion flux, created by movePoints().
++    // Do not create or delete registry objects at the window-start checkpoint.
++    // Once a trial has created it, this normal API access reconstructs its
++    // restored-time value (zero on the restored time layer when appropriate).
++    if (mesh_.foundObject<surfaceScalarField>("meshPhi"))
++    {
++        mesh_.phi();
++    }
++
+     DEBUG(adapterInfo("Moved mesh points to their previous locations."));
+ 
+     // TODO The if statement can be removed in this case, but it is still included for clarity
