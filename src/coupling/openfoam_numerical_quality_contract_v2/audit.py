@@ -25,6 +25,7 @@ _SOLVE = re.compile(
 _CONTINUITY = re.compile(
     r"^time step continuity errors\s*:\s*sum local = ([^,]+), global = ([^,]+), cumulative = ([^\s]+)\s*$"
 )
+_EXECUTION_TIME = re.compile(r"^ExecutionTime\s*=")
 _ANSI = re.compile(r"\x1b\[[0-?]*[ -/]*[@-~]")
 
 
@@ -115,6 +116,7 @@ def parse_fv_solution(path: Path) -> dict[str, Any]:
 
 def _record(time_s: float, *, courant_max: float | None, pimple: Mapping[str, Any]) -> dict[str, Any]:
     return {"time_s": time_s, "courant_max": courant_max, "solves": [], "continuity": [],
+            "physical_timestep_completed": False,
             "outer_corrector": 1 if pimple["nOuterCorrectors"] == 1 else "unknown",
             "pressure_corrector": "unknown",
             "non_orthogonal_corrector": 0 if pimple["nNonOrthogonalCorrectors"] == 0 else "unknown"}
@@ -159,6 +161,9 @@ def audit_log(log_path: Path, fv_solution_path: Path) -> dict[str, Any]:
             active["continuity"].append({"local": _finite(continuity.group(1), "continuity local"),
                 "global": _finite(continuity.group(2), "continuity global"),
                 "cumulative": _finite(continuity.group(3), "continuity cumulative")})
+            continue
+        if _EXECUTION_TIME.match(line):
+            active["physical_timestep_completed"] = True
     if not records:
         raise AuditError("no OpenFOAM time records were parsed")
     previous = -math.inf
@@ -181,7 +186,7 @@ def audit_log(log_path: Path, fv_solution_path: Path) -> dict[str, Any]:
             "field_terminal_final_residual": {field: rows[-1]["final_residual"] for field, rows in by_field.items()},
             "field_terminal_reduction_ratio": {field: rows[-1]["reduction_ratio"] for field, rows in by_field.items()},
         }
-    return {"schema_version": "openfoam-numerical-quality-evidence-v2", "parser_version": "1.0.1",
+    return {"schema_version": "openfoam-numerical-quality-evidence-v2", "parser_version": "1.0.2",
             "source_log": str(log_path), "source_log_sha256": hashlib.sha256(raw).hexdigest(),
             "fvSolution": cfg, "time_records": records}
 

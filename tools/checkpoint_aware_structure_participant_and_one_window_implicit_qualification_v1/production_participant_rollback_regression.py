@@ -1,6 +1,6 @@
 """Offline regression for the production checkpoint schema; no CFD/preCICE process."""
 from __future__ import annotations
-import hashlib, importlib.util, json, shutil, struct, sys
+import hashlib, importlib.util, json, os, shutil, struct, sys
 from pathlib import Path
 
 ROOT=Path(__file__).resolve().parents[2]; sys.path.insert(0,str(ROOT/'src'))
@@ -12,7 +12,7 @@ HERE=Path(__file__).parent
 def load(path,name):
     s=importlib.util.spec_from_file_location(name,path); m=importlib.util.module_from_spec(s); assert s and s.loader; s.loader.exec_module(m); return m
 PART=load(HERE/'implicit_structure_participant.py','checkpoint_participant')
-RUN='implicit_participant_rb_reg_v1_run_003'
+RUN=os.environ.get('PRODUCTION_PARTICIPANT_ROLLBACK_RUN_ID','implicit_participant_rb_reg_v1_run_003')
 LOAD_A=((22503.305595427,0.,0.),)*3; LOAD_B=((11251.6527977135,0.,0.),)*3
 def sha(x): return hashlib.sha256(json.dumps(x,sort_keys=True,separators=(',',':'),allow_nan=False).encode()).hexdigest()
 
@@ -20,8 +20,8 @@ def main():
     runtime=ROOT/'runtime'/RUN
     if runtime.exists(): raise RuntimeError(f'refusing to overwrite {runtime}')
     runtime.mkdir(parents=True)
-    contract=json.loads((ROOT/'tools/preconditioned_coupled_0p1s_smoke_v1/preconditioned_coupled_0p1s_smoke_v1_contract.json').read_text())
-    state=json.loads((ROOT/'runtime/stage4f_d_cpp_worker_initialization_v1/run_20260827_cpp_only/ancf_t0_state_cpp.json').read_text())
+    contract=json.loads((ROOT/'tools/preconditioned_coupled_0p1s_smoke_v1/preconditioned_coupled_0p1s_smoke_v1_contract.json').read_text(encoding='utf-8'))
+    state=json.loads((ROOT/'runtime/stage4f_d_cpp_worker_initialization_v1/run_20260827_cpp_only/ancf_t0_state_cpp.json').read_text(encoding='utf-8'))
     model=PART.model_from_contract(contract); q,qdot,qddot=(tuple(float(x) for x in state[k]) for k in ('q','qdot','qddot')); mass=tuple(float(x) for x in state['mass_matrix']); base=tuple(float(x) for x in state['base_load'])
     model_hash=hashlib.sha256(model.bytes()+struct.pack('<'+'d'*len(mass),*mass)).hexdigest(); worker_path=ROOT/'runtime/parallel_implicit_coupling_readiness_and_0p05s_diagnostic_v1/cpp_worker_build/cfd_ancf_ancf_kernel_worker'
     worker=KernelWorker(worker_path,runtime/'cpp_worker',RUN,'implicit_participant_rb_reg_v1',expected_model_contract_sha256=model_hash,allow_implicit_retry=True)

@@ -24,6 +24,7 @@ from coupling.moving_mesh_openfoam10_case_contract_v1 import preflight as case_p
 from coupling.openfoam_numerical_quality_contract_v2.audit import audit_log
 from coupling.ancf_newton_evidence_v1 import validate_records
 from coupling.precice_path_v1 import canonical_wsl_path, socket_directory_preflight
+from coupling.cpp_worker_persistent_ipc_v1.identity_contract import build_identity, assert_ledger_compatible
 
 
 RUN = os.environ.get(
@@ -35,6 +36,8 @@ PARTICIPANT = ROOT / "tools" / "checkpoint_aware_structure_participant_and_one_w
 WORKER = ROOT / "runtime" / "parallel_implicit_coupling_readiness_and_0p05s_diagnostic_v1" / "cpp_worker_build" / "cfd_ancf_ancf_kernel_worker"
 QUALITY_V4 = ROOT / "tools" / "parallel_explicit_fsi_timestep_stability_diagnostic_v1" / "openfoam_quality_contract_v4.json"
 INITIAL_DATA_REGRESSION = ROOT / "results" / "formal_implicit_projected_initial_state_guard_closure_v1_regression_002" / "initial_data_and_path_regression.json"
+IPC_REGRESSION = ROOT / "results" / "formal_implicit_ipc_and_first_step_quality_closure_v1_ipc_regression_004" / "ipc_contract_regression.json"
+QUALITY_COMPLETION_REGRESSION = ROOT / "results" / "formal_implicit_ipc_quality_v4_completion_regression_001" / "quality_v4_completion_regression.json"
 LIB_WSL = "/home/machao/OpenFOAM/reproducible_adapter_rollback_qualification_v1/diagnostic_build_006/lib"
 LIB_FILE = Path(LIB_WSL) / "libpreciceAdapterFunctionObject.so"
 UPSTREAM = "d53753b1c927b2413b02299c9da15725b3e772f0"
@@ -123,10 +126,18 @@ def control(base) -> str:
 
 def structure_contract(original: dict) -> dict:
     contract = dict(original)
+    human_case_name = "formal_ancf_cfd_implicit_one_window_qualification_v1_case_001"
+    ipc_identity = build_identity(RUN, human_case_name, str(RUNTIME))
+    ledger = RUNTIME / "ipc_identity_contract_v1.json"
+    if ledger.is_file():
+        assert_ledger_compatible(ipc_identity, json.loads(ledger.read_text(encoding="utf-8")))
+    else:
+        assert_ledger_compatible(ipc_identity)
     contract.update({
         "schema_version": "formal-ancf-cfd-implicit-one-window-qualification-v1",
-        "run_id": RUN,
-        "case_id": "formal_ancf_cfd_implicit_one_window_qualification_v1_case_001",
+        "run_id": ipc_identity["run_id"],
+        "case_id": ipc_identity["case_id"],
+        "ipc_identity": ipc_identity,
         "duration_s": DT,
         "dt_s": DT,
         "number_of_steps": 1,
@@ -158,12 +169,22 @@ def prepare():
         raise RuntimeError("patch-0005 adapter library is absent")
     if not INITIAL_DATA_REGRESSION.is_file():
         raise RuntimeError("projected initial-data regression evidence is absent")
+    if not IPC_REGRESSION.is_file() or not QUALITY_COMPLETION_REGRESSION.is_file():
+        raise RuntimeError("IPC or Quality V4 completion regression evidence is absent")
     initial_data_regression = json.loads(INITIAL_DATA_REGRESSION.read_text(encoding="utf-8"))
     projected = initial_data_regression.get("projected_initial_state_guard", {})
     if (initial_data_regression.get("INITIAL_DATA_PROTOCOL") != "PASS" or
             initial_data_regression.get("SOCKET_PATH_CANONICALIZATION") != "PASS" or
             projected.get("status") != "PASS"):
         raise RuntimeError("projected initial-data/socket preflight fails")
+    ipc_regression = json.loads(IPC_REGRESSION.read_text(encoding="utf-8"))
+    quality_completion = json.loads(QUALITY_COMPLETION_REGRESSION.read_text(encoding="utf-8"))
+    if ipc_regression.get("IPC_IDENTITY_CONTRACT_V1") != "PASS":
+        raise RuntimeError("IPC identity contract preflight fails")
+    if quality_completion.get("QUALITY_V4_COMPLETION_CLASSIFICATION") != "PASS":
+        raise RuntimeError("Quality V4 completion-classification preflight fails")
+    ipc_identity = build_identity(RUN, "formal_ancf_cfd_implicit_one_window_qualification_v1_case_001", str(RUNTIME))
+    assert_ledger_compatible(ipc_identity)
     smoke = load(ROOT / "tools" / "preconditioned_coupled_0p1s_smoke_v1" / "run_smoke.py", "formal_implicit_preconditioned")
     original = smoke.contract
     smoke.RUN, smoke.RUNTIME, smoke.RESULTS = RUN, RUNTIME, RESULTS
@@ -172,6 +193,7 @@ def prepare():
     smoke.cfg_xml = implicit_xml
     smoke.control = control
     base, cases, contract = smoke.prepare()
+    put(RUNTIME / "ipc_identity_contract_v1.json", ipc_identity)
     base.PARTICIPANT_SCRIPT, base.WORKER = PARTICIPANT, WORKER
     socket_preflight = socket_directory_preflight(RUNTIME / "precice-sockets")
     if socket_preflight["status"] != "PASS":
@@ -203,6 +225,9 @@ def prepare():
         "quality_v4_sha256": sha256(QUALITY_V4),
         "generalized_force_metric_v2": contract["generalized_force_metric_v2"],
         "structure_participant": {"path": str(PARTICIPANT), "sha256": sha256(PARTICIPANT), "checkpoint_schema": "structure-participant-checkpoint-schema-v1", "prior_rollback_regression": "PASS (immutable run_003)", "wire_identity": "monotonic/non-restorable PASS (frozen regression)", "time_layer_contract": "PASS (frozen contract)", "realtime_containment": "PASS (frozen regression)"},
+        "ipc_identity_contract": ipc_identity,
+        "ipc_contract_regression": {"path": str(IPC_REGRESSION), "sha256": sha256(IPC_REGRESSION), "status": ipc_regression["IPC_IDENTITY_CONTRACT_V1"]},
+        "quality_v4_completion_regression": {"path": str(QUALITY_COMPLETION_REGRESSION), "sha256": sha256(QUALITY_COMPLETION_REGRESSION), "status": quality_completion["QUALITY_V4_COMPLETION_CLASSIFICATION"]},
     })
     return base, cases, contract
 
