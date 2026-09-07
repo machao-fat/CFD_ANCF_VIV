@@ -1,0 +1,47 @@
+{
+  "schema_version": "reproducible-openfoam10-adapter-baseline-recovery-v1",
+  "NONCOUPLED_REGRESSION": "PASS",
+  "clean_builds": {
+    "build_d_sha256": "5e5cb644a072c7eee87217f674b57a1421b66c13fc5817d1d51b684884350ede",
+    "build_e_sha256": "5e5cb644a072c7eee87217f674b57a1421b66c13fc5817d1d51b684884350ede",
+    "byte_identical": true
+  },
+  "zero_motion_dynamic_startup": {
+    "completed": true,
+    "ordinary_cell_displacement_solve_observed": true
+  },
+  "small_prescribed_motion": {
+    "completed": true,
+    "force_decomposition_observed": true,
+    "point_displacement_written": true,
+    "mesh_points_written": true
+  },
+  "load_only_ab": {
+    "paths": {
+      "0.005/U": {
+        "new": "d1a1fa2fe8c51cf6bd1a49447eed487361c2d1d8c12f4c94e372ee8c128a28ed",
+        "legacy": "d1a1fa2fe8c51cf6bd1a49447eed487361c2d1d8c12f4c94e372ee8c128a28ed"
+      },
+      "0.005/p": {
+        "new": "846f4b5a7b8c3210a9f744f49b10f4a3a16d787cfcc9fab55a3c50eeb49d9a88",
+        "legacy": "846f4b5a7b8c3210a9f744f49b10f4a3a16d787cfcc9fab55a3c50eeb49d9a88"
+      },
+      "0.005/polyMesh/points": {
+        "new": "283bb578fa9113356ebf804cb7349fc33f78a79021d53a134f47cfb7c35d52e8",
+        "legacy": "283bb578fa9113356ebf804cb7349fc33f78a79021d53a134f47cfb7c35d52e8"
+      },
+      "postProcessing/cylinderForces/0/forces.dat": {
+        "new": "79ce70e58b53bc15c2afe19286b4efe872cce10393b3eb410fe6777fcdfcfc4f",
+        "legacy": "79ce70e58b53bc15c2afe19286b4efe872cce10393b3eb410fe6777fcdfcfc4f"
+      }
+    },
+    "pass": true
+  },
+  "function_object_construction": {
+    "adapter_banner_observed": true,
+    "read_precice_dict_observed": true,
+    "expected_negative_config": true,
+    "no_participant_initialized": true,
+    "note": "The intentionally empty-module configuration is a constructor-only negative control; it must terminate before any preCICE initialize/advance."
+  }
+}
