@@ -14,6 +14,7 @@ RUN=os.environ.get('QUALITY_V4_COMPLETION_REGRESSION_RUN_ID','formal_implicit_ip
 RESULTS=ROOT/'results'/RUN
 HIST=ROOT/'runtime/formal_implicit_projected_initial_state_guard_closure_v1_run_001'
 CFD=ROOT/'runtime/formal_implicit_ipc_quality_cfd_only_reproduction_v1_run_002/case'
+IMPLICIT=ROOT/'runtime/formal_implicit_ipc_and_first_step_quality_closure_v1_run_001'
 CONTRACT=ROOT/'tools/parallel_explicit_fsi_timestep_stability_diagnostic_v1/openfoam_quality_contract_v4.json'
 MODULE=ROOT/'tools/parallel_explicit_fsi_timestep_stability_diagnostic_v1/quality_v4.py'
 
@@ -25,15 +26,20 @@ def main():
     q=load(); contract=json.loads(CONTRACT.read_text(encoding='utf-8'))
     historical=audit_log(HIST/'logs/fluid_0000.stdout',HIST/'cases/slice_0000/system/fvSolution')
     complete=audit_log(CFD/'cfd_only.stdout',CFD/'system/fvSolution')
+    implicit=audit_log(IMPLICIT/'logs/fluid_0000.stdout',IMPLICIT/'cases/slice_0000/system/fvSolution')
     historic_result=q.evaluate_quality_v4(historical,contract); complete_result=q.evaluate_quality_v4(complete,contract)
     hrec=historical['time_records'][0]; crec=complete['time_records'][0]
+    implicit_result=q.evaluate_quality_v4(implicit,contract)
     p_rows=[row for row in crec['solves'] if row['field']=='p']
     passed=(not hrec['physical_timestep_completed'] and historic_result['status']=='fail' and
             historic_result['failures']==['incomplete physical timestep at 0.105'] and
             crec['physical_timestep_completed'] and complete_result['status']=='pass' and
-            len(p_rows)==2 and not p_rows[0]['terminal_for_field'] and p_rows[1]['terminal_for_field'])
+            len(p_rows)==2 and not p_rows[0]['terminal_for_field'] and p_rows[1]['terminal_for_field'] and
+            len(implicit['time_records'])==2 and all(row['physical_timestep_completed'] for row in implicit['time_records']) and
+            implicit_result['status']=='pass' and [row['physical_trial_index'] for row in implicit['time_records']]==[1,2])
     result={'QUALITY_V4_COMPLETION_CLASSIFICATION':'PASS' if passed else 'FAIL','historical_incomplete_audit':historical,
-            'historical_quality':historic_result,'cfd_only_complete_audit':complete,'cfd_only_quality':complete_result}
+            'historical_quality':historic_result,'cfd_only_complete_audit':complete,'cfd_only_quality':complete_result,
+            'implicit_same_physical_time_audit':implicit,'implicit_same_physical_time_quality':implicit_result}
     RESULTS.mkdir(parents=True); (RESULTS/'quality_v4_completion_regression.json').write_text(json.dumps(result,ensure_ascii=False,indent=2)+'\n',encoding='utf-8')
     print(json.dumps({'QUALITY_V4_COMPLETION_CLASSIFICATION':result['QUALITY_V4_COMPLETION_CLASSIFICATION']},ensure_ascii=False)); return 0 if passed else 1
 if __name__=='__main__': raise SystemExit(main())

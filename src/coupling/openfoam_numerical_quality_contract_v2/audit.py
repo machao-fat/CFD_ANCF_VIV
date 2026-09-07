@@ -167,10 +167,19 @@ def audit_log(log_path: Path, fv_solution_path: Path) -> dict[str, Any]:
     if not records:
         raise AuditError("no OpenFOAM time records were parsed")
     previous = -math.inf
+    physical_trial_index = 0
     for record in records:
-        if record["time_s"] <= previous:
-            raise AuditError("time records are not strictly increasing")
+        if record["time_s"] < previous:
+            raise AuditError("time records regress")
+        if record["time_s"] == previous:
+            # parallel-implicit rollback legitimately repeats the same target
+            # physical time.  The prior solve must have completed; otherwise
+            # this is ambiguous/truncated output rather than a new trial.
+            if not records[physical_trial_index - 1]["physical_timestep_completed"]:
+                raise AuditError("same-time record follows an incomplete timestep")
         previous = record["time_s"]
+        physical_trial_index += 1
+        record["physical_trial_index"] = physical_trial_index
         if not record["solves"]:
             raise AuditError(f"time {record['time_s']} has no solver lines")
         by_field: dict[str, list[dict[str, Any]]] = {}
@@ -186,7 +195,7 @@ def audit_log(log_path: Path, fv_solution_path: Path) -> dict[str, Any]:
             "field_terminal_final_residual": {field: rows[-1]["final_residual"] for field, rows in by_field.items()},
             "field_terminal_reduction_ratio": {field: rows[-1]["reduction_ratio"] for field, rows in by_field.items()},
         }
-    return {"schema_version": "openfoam-numerical-quality-evidence-v2", "parser_version": "1.0.2",
+    return {"schema_version": "openfoam-numerical-quality-evidence-v2", "parser_version": "1.0.3",
             "source_log": str(log_path), "source_log_sha256": hashlib.sha256(raw).hexdigest(),
             "fvSolution": cfg, "time_records": records}
 
