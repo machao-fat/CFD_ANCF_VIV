@@ -32,6 +32,52 @@ def canonical(value: object) -> str:
                                        allow_nan=False).encode("utf-8")).hexdigest()
 
 
+# Structure-Mesh is the frozen 2D x/y preCICE interface.  z remains part of
+# the full ANCF state, but is not an exchanged Displacement component.
+INTERFACE_COMPONENTS = ("ux_m", "uy_m")
+INITIAL_INTERFACE_ZERO_TOLERANCE_M = 1.0e-12
+
+
+def validate_frozen_no_flow_state(state: dict[str, object], state_path: Path,
+                                  expected_sha256: str) -> None:
+    """Validate the complete frozen ANCF state independently of its interface projection."""
+    if state.get("equilibrated") is not True:
+        raise RuntimeError("NO_FLOW_EQUILIBRIUM state is not marked equilibrated")
+    if hashlib.sha256(state_path.read_bytes()).hexdigest() != expected_sha256:
+        # This protects all physical DOFs, including untransmitted z, against
+        # silently substituting a state to satisfy an interface-only guard.
+        raise RuntimeError("frozen no-flow ANCF state provenance/hash mismatch")
+    for name in ("q", "qdot", "qddot"):
+        values = state.get(name)
+        if not isinstance(values, list) or not values or not all(math.isfinite(float(value)) for value in values):
+            raise RuntimeError(f"frozen no-flow ANCF {name} is absent or non-finite")
+
+
+def projected_interface_payload(motion: object, vertex_count: int) -> list[list[float]]:
+    """Project a full ANCF motion onto the actual 2D Structure-Mesh contract."""
+    if vertex_count <= 0:
+        raise RuntimeError("Structure-Mesh vertex count must be positive")
+    values = [[float(getattr(motion, component)) for component in INTERFACE_COMPONENTS]
+              for _ in range(vertex_count)]
+    if len(values) != vertex_count or any(len(row) != 2 or not all(math.isfinite(item) for item in row) for row in values):
+        raise RuntimeError("initial Displacement shape/dtype/finite validation fails")
+    return values
+
+
+def validate_zero_projected_initial_interface(payload: object, vertex_ids: object,
+                                              expected_vertex_count: int) -> None:
+    """Enforce zero only for the transmitted x/y initial Displacement array."""
+    if not isinstance(payload, list) or not hasattr(vertex_ids, "__len__"):
+        raise RuntimeError("initial Displacement payload/vertex IDs are malformed")
+    if len(payload) != expected_vertex_count or len(vertex_ids) != expected_vertex_count:
+        raise RuntimeError("initial Displacement vertex count/order mismatch")
+    for row in payload:
+        if not isinstance(row, list) or len(row) != 2 or not all(math.isfinite(float(item)) for item in row):
+            raise RuntimeError("initial Displacement shape/dtype/finite validation fails")
+        if max(abs(float(item)) for item in row) > INITIAL_INTERFACE_ZERO_TOLERANCE_M:
+            raise RuntimeError("NO_FLOW_EQUILIBRIUM does not map to zero projected x/y interface displacement")
+
+
 def write_json(path: Path, value: object) -> None:
     path.parent.mkdir(parents=True, exist_ok=True)
     tmp = path.with_suffix(path.suffix + ".tmp")
@@ -124,8 +170,7 @@ def main() -> int:
     args = p.parse_args(); contract = json.loads(Path(args.contract).read_text(encoding="utf-8")); state = json.loads(Path(args.state).read_text(encoding="utf-8"))
     dt, steps = float(contract["dt_s"]), int(contract["number_of_steps"])
     if steps != 1 or abs(float(contract["duration_s"])-dt) > 1e-12: raise RuntimeError("one-window contract required")
-    if state.get("equilibrated") is not True or hashlib.sha256(Path(args.state).read_bytes()).hexdigest() != contract["ANCF"]["initial_state"]["sha256"]:
-        raise RuntimeError("invalid frozen no-flow equilibrium state")
+    validate_frozen_no_flow_state(state, Path(args.state), str(contract["ANCF"]["initial_state"]["sha256"]))
     items = contract["slices"]["items"]; assert isinstance(items, list)
     partition = bounded_midpoint_voronoi([x["s_ref_m"] for x in items], contract["slices"]["represented_interval_m"])
     definitions = tuple(SliceDefinition(int(x["slice_id"]), float(x["s_ref_m"]), right-left, float(x["unit_span_m"])) for x, (left, _, right) in zip(items, partition))
@@ -155,18 +200,17 @@ def main() -> int:
         initial_state_sha256 = hashlib.sha256(Path(args.state).read_bytes()).hexdigest()
         for sid, participant in enumerate(participants):
             motion0 = initial_motion[sid]
-            values = [[float(motion0.ux_m), float(motion0.uy_m)] for _ in vertices]
-            if len(values) != args.vertex_count or any(len(row) != 2 or not all(math.isfinite(x) for x in row) for row in values):
-                raise RuntimeError("initial Displacement shape/dtype/finite validation fails")
-            # The formal zero-geometry precursor requires the no-flow state to
-            # describe zero interface displacement at this time layer.
-            if max(abs(motion0.ux_m), abs(motion0.uy_m), abs(motion0.uz_m)) > 1e-12:
-                raise RuntimeError("NO_FLOW_EQUILIBRIUM does not map to zero initial interface displacement")
+            values = projected_interface_payload(motion0, args.vertex_count)
+            # The zero-geometry precursor has a 2D x/y interface.  Keep the
+            # full-state z component observable, but do not treat it as a
+            # third transmitted interface component.
+            validate_zero_projected_initial_interface(values, meshids[sid], args.vertex_count)
             required = participant.requires_initial_data()
             initial_evidence = {"event":"initial_data_write","slice_id":sid,"required":required,
                 "mesh_name":"Structure-Mesh","data_name":"Displacement","units":"m",
                 "vertex_count":args.vertex_count,"components":2,"vertex_order":"registered Structure-Mesh order",
                 "initial_state_sha256":initial_state_sha256,"displacement_xy_m":values[0],
+                "untransmitted_uz_m":float(motion0.uz_m),"projection":"P_xy[r(q)-r_reference]",
                 "payload_sha256":canonical(values)}
             if required:
                 participant.write_data("Structure-Mesh","Displacement",meshids[sid],values)

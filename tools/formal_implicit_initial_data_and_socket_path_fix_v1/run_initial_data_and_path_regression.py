@@ -6,12 +6,25 @@ import os
 import signal
 import subprocess
 import sys
+from importlib.util import module_from_spec, spec_from_file_location
 from pathlib import Path
+from types import SimpleNamespace
 
 
 ROOT = Path(__file__).resolve().parents[2]
 sys.path.insert(0, str(ROOT / "src"))
 from coupling.precice_path_v1 import canonical_wsl_path, socket_directory_preflight
+from coupling.multi_slice_mapping.mapping import SliceDefinition, SliceManifest, build_H_for_manifest, motion_from_ancf_state
+from coupling.three_slice_force_contract_smoke_v1.contract import bounded_midpoint_voronoi
+
+
+def load_production_participant():
+    path = ROOT / "tools" / "checkpoint_aware_structure_participant_and_one_window_implicit_qualification_v1" / "implicit_structure_participant.py"
+    spec = spec_from_file_location("projected_initial_state_production", path)
+    assert spec and spec.loader
+    module = module_from_spec(spec)
+    spec.loader.exec_module(module)
+    return module
 
 
 REGRESSION_ID = os.environ.get(
@@ -109,6 +122,36 @@ def execute_case(name: str, value: float, missing: bool = False) -> dict:
             "expected_fail": bool(missing and done.returncode != 0 and "required initial Displacement" in structure_stderr)}
 
 
+def projected_guard_regression() -> dict:
+    """Exercise the actual production projection and full-state provenance guards."""
+    production = load_production_participant()
+    formal_contract = ROOT / "runtime" / "formal_implicit_initial_data_and_socket_path_fix_v1_run_006" / "preconditioned_coupled_0p1s_smoke_v1_contract.json"
+    source_contract = json.loads(formal_contract.read_text(encoding="utf-8"))
+    state_path = ROOT / source_contract["ANCF"]["initial_state"]["source"]
+    state = json.loads(state_path.read_text(encoding="utf-8"))
+    production.validate_frozen_no_flow_state(state, state_path, source_contract["ANCF"]["initial_state"]["sha256"])
+    items = source_contract["slices"]["items"]
+    partition = bounded_midpoint_voronoi([item["s_ref_m"] for item in items], source_contract["slices"]["represented_interval_m"])
+    definitions = tuple(SliceDefinition(int(item["slice_id"]), float(item["s_ref_m"]), right-left, float(item["unit_span_m"])) for item, (left, _, right) in zip(items, partition))
+    length, elements = float(source_contract["ANCF"]["length_m"]), int(source_contract["ANCF"]["elements"])
+    manifest = SliceManifest("0.2.1", str(source_contract["case_id"]), length, length, definitions)
+    H = build_H_for_manifest(manifest, tuple(length * index / elements for index in range(elements + 1)))
+    motion = [motion_from_ancf_state(manifest, sid, H[sid], state["q"], state["qdot"], state["qddot"], step=0, time_s=0.0, reference_position_m=(0.0, 0.0, definitions[sid].s_ref_m)) for sid in range(3)]
+    payload = production.projected_interface_payload(motion[0], 40)
+    production.validate_zero_projected_initial_interface(payload, list(range(40)), 40)
+    checks = {"valid_nonzero_untransmitted_z": True}
+    checks["xy_nonzero_rejected"] = _raises(lambda: production.validate_zero_projected_initial_interface([[1.0e-6, 0.0] for _ in range(40)], list(range(40)), 40))
+    checks["nan_rejected"] = _raises(lambda: production.validate_zero_projected_initial_interface([[float("nan"), 0.0] for _ in range(40)], list(range(40)), 40))
+    checks["vertex_count_rejected"] = _raises(lambda: production.validate_zero_projected_initial_interface(payload, list(range(39)), 40))
+    checks["dimension_rejected"] = _raises(lambda: production.validate_zero_projected_initial_interface([[0.0, 0.0, 0.0] for _ in range(40)], list(range(40)), 40))
+    checks["projection_nonfinite_rejected"] = _raises(lambda: production.projected_interface_payload(SimpleNamespace(ux_m=float("inf"), uy_m=0.0), 40))
+    mutated = RUN / "mutated_invalid_z_state.json"
+    modified = dict(state); modified_q = list(state["q"]); modified_q[2] += 1.0; modified["q"] = modified_q
+    put(mutated, json.dumps(modified))
+    checks["invalid_full_state_rejected"] = _raises(lambda: production.validate_frozen_no_flow_state(modified, mutated, source_contract["ANCF"]["initial_state"]["sha256"]))
+    return {"checks": checks, "actual_motion": [{"slice_id": item.slice_id, "ux_m": item.ux_m, "uy_m": item.uy_m, "uz_m": item.uz_m} for item in motion], "status": "PASS" if all(checks.values()) else "FAIL"}
+
+
 def main() -> int:
     if RUN.exists() or RESULTS.exists():
         raise RuntimeError("refusing to overwrite initial-data regression")
@@ -121,11 +164,12 @@ def main() -> int:
         "missing_parent": socket_directory_preflight("/tmp/formal_implicit_missing_parent_zz/socket"),
         "unwritable_parent": socket_directory_preflight("/proc/precice.sock"),
     }
+    projected = projected_guard_regression()
     zero = execute_case("zero", 0.0)
     nonzero = execute_case("nonzero", 0.002)
     missing = execute_case("missing", 0.0, missing=True)
-    result = {"path_cases": path_cases, "zero_initial": zero, "nonzero_initial": nonzero, "missing_initial": missing,
-              "INITIAL_DATA_PROTOCOL": "PASS" if zero["return_code"] == 0 and zero["received_matches"] and nonzero["return_code"] == 0 and nonzero["received_matches"] and missing["expected_fail"] else "FAIL",
+    result = {"path_cases": path_cases, "projected_initial_state_guard": projected, "zero_initial": zero, "nonzero_initial": nonzero, "missing_initial": missing,
+              "INITIAL_DATA_PROTOCOL": "PASS" if projected["status"] == "PASS" and zero["return_code"] == 0 and zero["received_matches"] and nonzero["return_code"] == 0 and nonzero["received_matches"] and missing["expected_fail"] else "FAIL",
               "SOCKET_PATH_CANONICALIZATION": "PASS" if path_cases["windows_drive"] == "/mnt/d/work/socket" and path_cases["wsl_mount"] == "/mnt/d/work/socket" and path_cases["linux_absolute"] == "/home/machao/socket" and path_cases["invalid_empty"] == "FAIL" and path_cases["missing_parent"]["status"] == "FAIL" and path_cases["unwritable_parent"]["status"] == "FAIL" else "FAIL"}
     RESULTS.mkdir(parents=True); put(RESULTS / "initial_data_and_path_regression.json", json.dumps(result, indent=2) + "\n")
     print(json.dumps({key: result[key] for key in ("INITIAL_DATA_PROTOCOL", "SOCKET_PATH_CANONICALIZATION")}))
@@ -135,7 +179,7 @@ def main() -> int:
 def _raises(fn) -> bool:
     try:
         fn()
-    except ValueError:
+    except (RuntimeError, ValueError):
         return True
     return False
 

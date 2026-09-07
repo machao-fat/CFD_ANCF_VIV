@@ -34,6 +34,7 @@ RUNTIME, RESULTS = ROOT / "runtime" / RUN, ROOT / "results" / RUN
 PARTICIPANT = ROOT / "tools" / "checkpoint_aware_structure_participant_and_one_window_implicit_qualification_v1" / "implicit_structure_participant.py"
 WORKER = ROOT / "runtime" / "parallel_implicit_coupling_readiness_and_0p05s_diagnostic_v1" / "cpp_worker_build" / "cfd_ancf_ancf_kernel_worker"
 QUALITY_V4 = ROOT / "tools" / "parallel_explicit_fsi_timestep_stability_diagnostic_v1" / "openfoam_quality_contract_v4.json"
+INITIAL_DATA_REGRESSION = ROOT / "results" / "formal_implicit_projected_initial_state_guard_closure_v1_regression_002" / "initial_data_and_path_regression.json"
 LIB_WSL = "/home/machao/OpenFOAM/reproducible_adapter_rollback_qualification_v1/diagnostic_build_006/lib"
 LIB_FILE = Path(LIB_WSL) / "libpreciceAdapterFunctionObject.so"
 UPSTREAM = "d53753b1c927b2413b02299c9da15725b3e772f0"
@@ -155,6 +156,14 @@ def prepare():
         raise RuntimeError("refusing to overwrite immutable formal runtime")
     if not linux_file_exists(LIB_FILE):
         raise RuntimeError("patch-0005 adapter library is absent")
+    if not INITIAL_DATA_REGRESSION.is_file():
+        raise RuntimeError("projected initial-data regression evidence is absent")
+    initial_data_regression = json.loads(INITIAL_DATA_REGRESSION.read_text(encoding="utf-8"))
+    projected = initial_data_regression.get("projected_initial_state_guard", {})
+    if (initial_data_regression.get("INITIAL_DATA_PROTOCOL") != "PASS" or
+            initial_data_regression.get("SOCKET_PATH_CANONICALIZATION") != "PASS" or
+            projected.get("status") != "PASS"):
+        raise RuntimeError("projected initial-data/socket preflight fails")
     smoke = load(ROOT / "tools" / "preconditioned_coupled_0p1s_smoke_v1" / "run_smoke.py", "formal_implicit_preconditioned")
     original = smoke.contract
     smoke.RUN, smoke.RUNTIME, smoke.RESULTS = RUN, RUNTIME, RESULTS
@@ -182,11 +191,18 @@ def prepare():
     }
     put(RUNTIME / "adapter_manifest.json", adapter_manifest)
     put(RESULTS / "production_preflight.json", {
+        "projected_initial_data_regression": {
+            "path": str(INITIAL_DATA_REGRESSION),
+            "sha256": sha256(INITIAL_DATA_REGRESSION),
+            "initial_data_protocol": initial_data_regression["INITIAL_DATA_PROTOCOL"],
+            "socket_path_canonicalization": initial_data_regression["SOCKET_PATH_CANONICALIZATION"],
+            "projected_initial_state_guard": projected.get("status"),
+        },
         "adapter_manifest": adapter_manifest,
         "precursor_transfer": json.loads((RESULTS / "preflight.json").read_text(encoding="utf-8")),
         "quality_v4_sha256": sha256(QUALITY_V4),
         "generalized_force_metric_v2": contract["generalized_force_metric_v2"],
-        "structure_participant": {"path": str(PARTICIPANT), "sha256": sha256(PARTICIPANT), "checkpoint_schema": "structure-participant-checkpoint-schema-v1", "prior_rollback_regression": "PASS (immutable run_003)"},
+        "structure_participant": {"path": str(PARTICIPANT), "sha256": sha256(PARTICIPANT), "checkpoint_schema": "structure-participant-checkpoint-schema-v1", "prior_rollback_regression": "PASS (immutable run_003)", "wire_identity": "monotonic/non-restorable PASS (frozen regression)", "time_layer_contract": "PASS (frozen contract)", "realtime_containment": "PASS (frozen regression)"},
     })
     return base, cases, contract
 
