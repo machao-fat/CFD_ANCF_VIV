@@ -235,6 +235,52 @@ states; it is not another coupled run.
 - `NEXT_FORMAL_TWO_WINDOW = NOT_AUTHORIZED`
 - `NEXT_IMPLICIT_0P05S = NOT_AUTHORIZED`
 
+### Read-only remaining-state audit: fixture_008
+
+This audit changes neither the frozen reset adapter
+`5f7c75d6fc650dd425e8b0edca3e0ba9a69b320546b667b5024246495b433a2d` nor
+the OF10 owner-managed implementation. It re-reads only immutable fixture_008
+trace and source, then runs standard `checkMesh` against the already-written
+`0.105` case. The clean utility result is preserved at
+`results/of10_owned_atomic_mesh_history_restore_prototype_v1/fixture_008_checkMesh_0p105_clean_environment.log`.
+
+| State | source/runtime contract in this fixture | disposition |
+| --- | --- | --- |
+| `polyMesh::curMotionTimeIndex_` | private; `polyMesh::movePoints()` compares it to `Time::timeIndex()` before creating `oldPoints`, and the owner snapshot copies/restores it exactly. No public non-mutating inspector exists. | required and source-restored, but not directly runtime-observable under the frozen interface |
+| `fvMesh::curTimeIndex_` | private; `fvMesh::move()` writes it after mover update; `storeOldVol()` consumes it to decide V0 update. The owner snapshot copies/restores it exactly. No public non-mutating inspector exists. | required and source-restored, but not directly runtime-observable under the frozen interface |
+| V0/V00 | private demand-driven pointers. The owner snapshot preserves presence and deep copies any allocated values. `EulerDdtScheme` calls `Vsc0()`, which calls V0 even outside subcycling; V00 is not consumed by this Euler/non-subcycled path. Public `V0()` fatals if absent and `V00()` allocates if absent. | V0 required; V00 non-applicable; runtime presence/value remains unobservable |
+| `oldCellCentres` | its public getter mutates `storeOldCellCentres_` and may fatal. The snapshot preserves flag, presence, and values. In OF10 source its consumer is the lagrangian Cloud path; this pimpleFoam case creates no lagrangian cloud. | not consumed in the current path; no mutating probe was used |
+| U/Uf oldTime | fixture checkpoint has zero levels. After each rollback the trace has one level with hash exactly equal to the restored checkpoint current field. OF10 `GeometricField::oldTime()` constructs a copy when absent; the adapter reaches it only after Time is reset to `0.100/index=0`. Euler moving-mesh ddt consumes that level in the next true solve. | lawful lazy reconstruction with observed numeric equivalence; no trial value remains |
+| `meshPhi` | absent at checkpoint and after each restore. Snapshot preserves that absence. `fvMesh::movePoints()` creates it on the next actual motion; both B trials have one current level and the same full hash `b37c51b180954283`. | lawful demand-driven reconstruction, observed deterministic across B replay |
+| geometry quality | standard OF10 `checkMesh -allTopology -allGeometry` at `0.105` completed with `Mesh OK`. Min/max cell volume `0.00159231047206/0.144397225`, max non-orthogonality `30.6073129682`, max skewness `0.503086727177`; topology and geometry checks all pass. | pass for written final B geometry |
+
+The first utility attempt retained its adapter-library warning as immutable
+evidence. `run_standard_checkmesh.sh` is the corrected utility-only runner:
+it sources the independent ABI prefix and prepends the already-frozen adapter
+directory. The clean result has no adapter-load warning and does not modify
+the case, launch a solver, or create a new CFD trajectory.
+
+#### Decision
+
+`FULL_OF10_MESH_HISTORY_QUALIFICATION` cannot be marked PASS under the stated
+criterion. The single first blocker is
+`OWNER_PRIVATE_MESH_HISTORY_RUNTIME_OBSERVABILITY_UNAVAILABLE`: the frozen
+OF10-owned interface intentionally exposes no const, non-lazy view of the two
+motion indices or V0/V00 pointer existence/value. Adapter access would violate
+private ownership; public getters either create state or can abort. Running
+another identical fixture would not add those observations. A future,
+separately authorized design task would need an OF10-owner-provided const
+diagnostic snapshot view, with no restore-semantic change, before a runtime
+identity qualification can close these fields.
+
+- `CHECKMESH_FIXTURE_008_0P105 = PASS`
+- `U_UF_OLDTIME_RESTORE_SEMANTICS = DERIVED_NUMERICALLY_EQUIVALENT`
+- `MESHPHI_RESTORE_SEMANTICS = DEMAND_DRIVEN_REPLAY_EQUIVALENT`
+- `FULL_OF10_MESH_HISTORY_QUALIFICATION = FAIL`
+- `FIRST_BLOCKER = OWNER_PRIVATE_MESH_HISTORY_RUNTIME_OBSERVABILITY_UNAVAILABLE`
+- `NEXT_FORMAL_TWO_WINDOW = NOT_AUTHORIZED`
+- `NEXT_IMPLICIT_0P05S = NOT_AUTHORIZED`
+
 ## 2026-09-09 pointVectorField reset prototype: controlled repair result
 
 ### Minimal production change and ownership
@@ -766,5 +812,28 @@ not the current repaired result.
 - `A_RESTORE_B_RESTORE_B_FIXTURE_COVERAGE = PASS`
 - `EXPLICIT_ONE_STEP_REGRESSION = PASS_FOR_NONROLLBACK_NORMAL_PATH_SCOPE`
 - `FULL_OF10_MESH_HISTORY_QUALIFICATION = NOT_CLOSED`
+- `NEXT_FORMAL_TWO_WINDOW = NOT_AUTHORIZED`
+- `NEXT_IMPLICIT_0P05S = NOT_AUTHORIZED`
+
+### Final current status: remaining-state closure audit
+
+The current state is superseded by the read-only fixture_008 audit above.
+`checkMesh` now runs in the isolated ABI environment without an adapter-load
+warning and reports `Mesh OK` at OF `0.105`. U/Uf old-time is source-proven
+and trace-observed as a derived copy of restored checkpoint current values;
+meshPhi absence at checkpoint/restore and deterministic creation on B replay
+is source-proven and trace-observed.
+
+Full qualification nevertheless fails on the one remaining evidence blocker:
+the frozen owner-managed interface has no non-mutating public observation for
+the two private motion indices and V0/V00 pointer/value state. The applicable
+public getters create state or can abort, while adapter access would violate
+the required owner boundary. No additional fixture was launched because it
+could not resolve that gap without a separately authorized owner diagnostic
+API.
+
+- `CHECKMESH_FIXTURE_008_0P105 = PASS`
+- `FULL_OF10_MESH_HISTORY_QUALIFICATION = FAIL`
+- `FIRST_BLOCKER = OWNER_PRIVATE_MESH_HISTORY_RUNTIME_OBSERVABILITY_UNAVAILABLE`
 - `NEXT_FORMAL_TWO_WINDOW = NOT_AUTHORIZED`
 - `NEXT_IMPLICIT_0P05S = NOT_AUTHORIZED`

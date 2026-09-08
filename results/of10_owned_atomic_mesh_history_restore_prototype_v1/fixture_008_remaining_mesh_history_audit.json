@@ -1,0 +1,26 @@
+{
+  "schema_version": "of10-owned-atomic-mesh-history-remaining-state-audit-v1",
+  "source_runtime": "runtime/of10_owned_atomic_mesh_history_restore_prototype_v1_precice_fixture_008_abb_min3",
+  "adapter_sha256": "5f7c75d6fc650dd425e8b0edca3e0ba9a69b320546b667b5024246495b433a2d",
+  "read_only": true,
+  "new_cfd_fixture_started": false,
+  "mesh_quality": {
+    "status": "PASS",
+    "time_s": 0.105,
+    "min_cell_volume": 0.00159231047206,
+    "max_cell_volume": 0.144397225,
+    "max_non_orthogonality": 30.6073129682,
+    "max_skewness": 0.503086727177,
+    "topology_valid": true,
+    "negative_volume_cells": 0,
+    "evidence": "fixture_008_checkMesh_0p105_clean_environment.log"
+  },
+  "derived_state": {
+    "U_Uf_oldTime": "DERIVED_NUMERICALLY_EQUIVALENT",
+    "meshPhi": "DEMAND_DRIVEN_REPLAY_EQUIVALENT"
+  },
+  "full_qualification": "FAIL",
+  "first_blocker": "OWNER_PRIVATE_MESH_HISTORY_RUNTIME_OBSERVABILITY_UNAVAILABLE",
+  "next_formal_two_window": "NOT_AUTHORIZED",
+  "next_implicit_0p05s": "NOT_AUTHORIZED"
+}
