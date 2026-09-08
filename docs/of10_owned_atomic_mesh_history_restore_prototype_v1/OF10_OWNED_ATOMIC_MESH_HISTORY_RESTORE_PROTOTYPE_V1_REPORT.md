@@ -127,6 +127,69 @@ Current statuses:
 - `NEXT_FORMAL_TWO_WINDOW = NOT_AUTHORIZED`
 - `NEXT_IMPLICIT_0P05S = NOT_AUTHORIZED`
 
+## 2026-09-09 final authoritative update: copy mechanism not reproduced
+
+The preceding localization describes the runtime observation accurately, but
+the no-CFD numerical probe above supersedes its tentative operator-level
+interpretation.  With the actual fixture_005 checkpoint (`0.100`) and nonzero
+post-solve (`0.105`) fields, the exact `pointVectorField` copy construction,
+forced `==`, ordinary `=`, and `reset` mechanisms are all component-wise
+identical for internal values and every value-backed actual patch.  The
+runtime failure is therefore an unresolved adapter lifecycle condition, not a
+proven field-copy operator defect.  No production adapter patch is authorized
+by this evidence.
+
+Current authoritative statuses:
+
+- `POINT_DISPLACEMENT_ROLLBACK_IDENTITY_FAILURE: ADAPTER_LIFECYCLE_CONDITION_UNRESOLVED`
+- `REAL_PRECICE_JOINT_FIXTURE = FAIL`
+- `EXPLICIT_ONE_STEP_REGRESSION = NOT_RUN`
+- `NEXT_FORMAL_TWO_WINDOW = NOT_AUTHORIZED`
+- `NEXT_IMPLICIT_0P05S = NOT_AUTHORIZED`
+
+## 2026-09-09 no-CFD pointVectorField copy semantics test
+
+The earlier runtime trace localized the first observed mutation to the generic
+adapter point-vector copy assignment.  It did **not**, by itself, prove that
+Foundation OF10 `GeometricField::operator==` is defective.  A fresh no-CFD
+probe was therefore compiled in the independent ABI prefix from the actual
+build005 adapter source contract and OF10 headers.  It reads, but never writes,
+the immutable fixture_005 case field and never loads preCICE, an adapter, or a
+CFD solver.
+
+| item | value |
+| --- | --- |
+| executable | `pointDisplacementFieldCopyProbe` |
+| SHA-256 | `0d8b89596eefded26b1fe24f0f8da12f19091fedf9199df314ec32eb46f8e17d` |
+| ABI closure | independent `libOpenFOAM`, `libfiniteVolume`, and `libmeshTools`; `ldd -r` has no unresolved symbols |
+| inputs | fixture_005 actual `pointDisplacement` at both checkpoint `0.100` and nonzero final state `0.105` |
+| methods | copy construction, `operator==`, `operator=`, `reset`, and forced/reset restore from a deliberately modified local copy |
+
+For both time layers the internal field has 16,524 vectors and all tested
+methods produce `max_abs=0`, `L2=0` against the untouched live field.  Actual
+case patch types were read as `empty`, `symmetryPlane`, and `fixedValue`;
+the value-backed `outlet` (122), `inlet` (122), and `cylinder` (80) patches
+also have zero component-wise difference for every tested method.  The fields
+have zero old-time levels at these read-only layers; the probe reports that
+fact rather than fabricating one.
+
+This falsifies the proposed mechanism that the ordinary standalone
+`pointVectorField` `operator==` call intrinsically corrupts the copy.  The
+runtime phenomenon depends on an unobserved adapter/checkpoint-lifecycle
+condition not reproduced by the exact field operation.  Consequently there
+is no proven safe production copy mechanism to substitute, and no adapter
+source was modified.  In particular, replacing `==` with `=` is unsupported:
+OF10 uses distinct forced and constraint-preserving point-boundary assignment
+semantics, and this probe shows both are numerically correct in isolation.
+
+No post-fix fixture or explicit regression was run.  The first blocker is
+therefore refined, not cleared:
+
+`POINT_DISPLACEMENT_ROLLBACK_IDENTITY_FAILURE: ADAPTER_LIFECYCLE_CONDITION_UNRESOLVED`.
+
+The legacy runtime remains immutable and both formal gates remain
+`NOT_AUTHORIZED`.
+
 ## 2026-09-08 lifecycle-harness build-configuration audit
 
 The approved Make/options audit was completed against the isolated Foundation
@@ -316,9 +379,16 @@ assignment changes the copy internal state.  Therefore an exact safe
 production repair is **not proven**.  No production adapter patch, no fresh
 post-fix validation fixture, and no explicit regression were run.
 
-Current authoritative statuses remain:
+### Current authoritative update
 
-- `POINT_DISPLACEMENT_ROLLBACK_IDENTITY_FAILURE = FAIL`
+The no-CFD numerical probe supersedes the tentative operator-level
+interpretation above: the exact `pointVectorField` copy construction, forced
+`==`, ordinary `=`, and `reset` mechanisms are component-wise identical at
+fixture_005 `0.100` and `0.105`.  The runtime failure is consequently an
+unresolved adapter lifecycle condition, not a proven field-copy operator
+defect.  No production adapter patch was generated or run.
+
+- `POINT_DISPLACEMENT_ROLLBACK_IDENTITY_FAILURE: ADAPTER_LIFECYCLE_CONDITION_UNRESOLVED`
 - `REAL_PRECICE_JOINT_FIXTURE = FAIL`
 - `EXPLICIT_ONE_STEP_REGRESSION = NOT_RUN`
 - `NEXT_FORMAL_TWO_WINDOW = NOT_AUTHORIZED`

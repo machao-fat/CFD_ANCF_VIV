@@ -1,0 +1,3 @@
+pointDisplacementFieldCopyProbe.C
+
+EXE = $(FOAM_APPBIN)/pointDisplacementFieldCopyProbe
