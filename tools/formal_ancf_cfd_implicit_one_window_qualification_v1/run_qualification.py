@@ -34,11 +34,19 @@ RUN = os.environ.get(
 )
 RUNTIME, RESULTS = ROOT / "runtime" / RUN, ROOT / "results" / RUN
 PARTICIPANT = ROOT / "tools" / "checkpoint_aware_structure_participant_and_one_window_implicit_qualification_v1" / "implicit_structure_participant.py"
-WORKER = ROOT / "runtime" / "parallel_implicit_coupling_readiness_and_0p05s_diagnostic_v1" / "cpp_worker_build" / "cfd_ancf_ancf_kernel_worker"
+# The historical default remains intact.  A bounded cross-window qualification
+# may pass a separately built, manifest-recorded worker through the explicit
+# opt-in below; it must never silently select a diagnostic binary.
+WORKER = Path(os.environ.get(
+    "FORMAL_CPP_WORKER",
+    str(ROOT / "runtime" / "parallel_implicit_coupling_readiness_and_0p05s_diagnostic_v1" /
+        "cpp_worker_build" / "cfd_ancf_ancf_kernel_worker"),
+))
 QUALITY_V4 = ROOT / "tools" / "parallel_explicit_fsi_timestep_stability_diagnostic_v1" / "openfoam_quality_contract_v4.json"
 INITIAL_DATA_REGRESSION = ROOT / "results" / "formal_implicit_projected_initial_state_guard_closure_v1_regression_002" / "initial_data_and_path_regression.json"
 IPC_REGRESSION = ROOT / "results" / "formal_implicit_ipc_and_first_step_quality_closure_v1_ipc_regression_004" / "ipc_contract_regression.json"
 QUALITY_COMPLETION_REGRESSION = ROOT / "results" / "formal_implicit_ipc_quality_v4_completion_regression_001" / "quality_v4_completion_regression.json"
+CROSS_WINDOW_IPC_REGRESSION = ROOT / "runtime" / "implicit_cross_window_ipc_lifecycle_closure_v1" / "real_worker_multiwindow_regression_002" / "real_worker_multiwindow_regression.json"
 LIB_WSL = "/home/machao/OpenFOAM/reproducible_adapter_rollback_qualification_v1/diagnostic_build_006/lib"
 LIB_FILE = Path(LIB_WSL) / "libpreciceAdapterFunctionObject.so"
 UPSTREAM = "d53753b1c927b2413b02299c9da15725b3e772f0"
@@ -47,14 +55,20 @@ DT = 0.005
 SCHEME = os.environ.get("FORMAL_COUPLING_SCHEME", "parallel-implicit")
 DURATION_S = float(os.environ.get("FORMAL_PHYSICAL_HORIZON_S", str(DT)))
 PAIRED_MODE = os.environ.get("FORMAL_PAIRED_DIAGNOSTIC", "0") == "1"
+TWO_WINDOW_IPC_MODE = os.environ.get("FORMAL_CROSS_WINDOW_IPC_QUALIFICATION", "0") == "1"
 if SCHEME not in ("parallel-explicit", "parallel-implicit"):
     raise RuntimeError("FORMAL_COUPLING_SCHEME must be parallel-explicit or parallel-implicit")
 if DURATION_S <= 0.0 or abs(DURATION_S / DT - round(DURATION_S / DT)) > 1e-12:
     raise RuntimeError("FORMAL_PHYSICAL_HORIZON_S must be a positive integral number of frozen dt")
 STEPS = int(round(DURATION_S / DT))
+if PAIRED_MODE and TWO_WINDOW_IPC_MODE:
+    raise RuntimeError("paired diagnostic and cross-window qualification modes are mutually exclusive")
 if PAIRED_MODE:
     if STEPS != 10 or abs(DURATION_S - 0.05) > 1e-12:
         raise RuntimeError("paired diagnostic is authorized only for exactly 0.050 s / 10 windows")
+elif TWO_WINDOW_IPC_MODE:
+    if SCHEME != "parallel-implicit" or STEPS != 2 or abs(DURATION_S - 0.01) > 1e-12:
+        raise RuntimeError("cross-window IPC qualification is authorized only for exactly two implicit windows / 0.010 s")
 else:
     if SCHEME != "parallel-implicit" or STEPS != 1:
         raise RuntimeError("formal qualification default remains exactly one parallel-implicit window")
@@ -103,6 +117,31 @@ def put(path: Path, value: object) -> None:
     # because this file is executed by bash inside WSL.
     with path.open("w", encoding="utf-8", newline="\n") as stream:
         stream.write(text)
+
+
+def production_identity_snapshot() -> dict[str, object]:
+    """Persist the code actually launched; a dirty Git tree is not a commit ID."""
+    def git(*arguments: str) -> str:
+        completed = subprocess.run(["git", *arguments], cwd=ROOT, check=True,
+                                   text=True, encoding="utf-8", errors="replace",
+                                   capture_output=True)
+        return completed.stdout
+    status = git("status", "--porcelain=v1")
+    relevant_diff = git("diff", "--no-ext-diff", "--",
+                        "src/coupling/cpp_worker_persistent_ipc_v1/ancf_worker_main.cpp",
+                        "tools/implicit_cross_window_ipc_lifecycle_closure_v1",
+                        "tools/formal_ancf_cfd_implicit_one_window_qualification_v1/run_qualification.py")
+    put(RUNTIME / "running_code_relevant.diff", relevant_diff)
+    return {
+        "git_commit": git("rev-parse", "HEAD").strip(),
+        "dirty": bool(status.strip()),
+        "git_status_porcelain_sha256": hashlib.sha256(status.encode("utf-8")).hexdigest(),
+        "relevant_diff_sha256": hashlib.sha256(relevant_diff.encode("utf-8")).hexdigest(),
+        "relevant_diff_path": str(RUNTIME / "running_code_relevant.diff"),
+        "launcher": {"path": str(Path(__file__).resolve()), "sha256": sha256(Path(__file__).resolve())},
+        "structure_participant": {"path": str(PARTICIPANT), "sha256": sha256(PARTICIPANT)},
+        "cpp_worker": {"path": str(WORKER), "sha256": sha256(WORKER)},
+    }
 
 
 def load(path: Path, name: str):
@@ -200,6 +239,8 @@ def prepare():
         raise RuntimeError("projected initial-data regression evidence is absent")
     if not IPC_REGRESSION.is_file() or not QUALITY_COMPLETION_REGRESSION.is_file():
         raise RuntimeError("IPC or Quality V4 completion regression evidence is absent")
+    if TWO_WINDOW_IPC_MODE and not CROSS_WINDOW_IPC_REGRESSION.is_file():
+        raise RuntimeError("cross-window real-worker regression evidence is absent")
     initial_data_regression = json.loads(INITIAL_DATA_REGRESSION.read_text(encoding="utf-8"))
     projected = initial_data_regression.get("projected_initial_state_guard", {})
     if (initial_data_regression.get("INITIAL_DATA_PROTOCOL") != "PASS" or
@@ -212,6 +253,13 @@ def prepare():
         raise RuntimeError("IPC identity contract preflight fails")
     if quality_completion.get("QUALITY_V4_COMPLETION_CLASSIFICATION") != "PASS":
         raise RuntimeError("Quality V4 completion-classification preflight fails")
+    cross_window_regression = None
+    if TWO_WINDOW_IPC_MODE:
+        cross_window_regression = json.loads(CROSS_WINDOW_IPC_REGRESSION.read_text(encoding="utf-8"))
+        if (cross_window_regression.get("CROSS_WINDOW_IPC_LIFECYCLE") != "PASS" or
+                cross_window_regression.get("windows_committed") != 3 or
+                cross_window_regression.get("real_cpp_worker") is not True):
+            raise RuntimeError("cross-window real-worker IPC lifecycle preflight fails")
     ipc_identity = build_identity(RUN, os.environ.get("FORMAL_HUMAN_CASE_NAME", "formal_ancf_cfd_implicit_one_window_qualification_v1_case_001"), str(RUNTIME))
     assert_ledger_compatible(ipc_identity)
     smoke = load(ROOT / "tools" / "preconditioned_coupled_0p1s_smoke_v1" / "run_smoke.py", "formal_implicit_preconditioned")
@@ -222,6 +270,7 @@ def prepare():
     smoke.cfg_xml = coupling_xml
     smoke.control = control
     base, cases, contract = smoke.prepare()
+    code_identity = production_identity_snapshot()
     put(RUNTIME / "ipc_identity_contract_v1.json", ipc_identity)
     base.PARTICIPANT_SCRIPT, base.WORKER = PARTICIPANT, WORKER
     socket_preflight = socket_directory_preflight(RUNTIME / "precice-sockets")
@@ -239,6 +288,7 @@ def prepare():
         "preCICE": "3.4.1",
         "coupling_scheme": SCHEME,
         "physical_horizon_s": DURATION_S,
+        "cpp_worker": {"path": str(WORKER), "sha256": sha256(WORKER)},
         "socket_directory": socket_preflight,
         "fluid_cases": {str(sid): {"controlDict_adapter_library": LIB_WSL + "/libpreciceAdapterFunctionObject.so", "preflight": preflight[str(sid)]} for sid in range(3)},
     }
@@ -252,6 +302,7 @@ def prepare():
             "projected_initial_state_guard": projected.get("status"),
         },
         "adapter_manifest": adapter_manifest,
+        "running_code_identity": code_identity,
         "precursor_transfer": json.loads((RESULTS / "preflight.json").read_text(encoding="utf-8")),
         "quality_v4_sha256": sha256(QUALITY_V4),
         "generalized_force_metric_v2": contract["generalized_force_metric_v2"],
@@ -259,6 +310,12 @@ def prepare():
         "ipc_identity_contract": ipc_identity,
         "ipc_contract_regression": {"path": str(IPC_REGRESSION), "sha256": sha256(IPC_REGRESSION), "status": ipc_regression["IPC_IDENTITY_CONTRACT_V1"]},
         "quality_v4_completion_regression": {"path": str(QUALITY_COMPLETION_REGRESSION), "sha256": sha256(QUALITY_COMPLETION_REGRESSION), "status": quality_completion["QUALITY_V4_COMPLETION_CLASSIFICATION"]},
+        "cross_window_ipc_regression": None if cross_window_regression is None else {
+            "path": str(CROSS_WINDOW_IPC_REGRESSION),
+            "sha256": sha256(CROSS_WINDOW_IPC_REGRESSION),
+            "status": cross_window_regression["CROSS_WINDOW_IPC_LIFECYCLE"],
+            "worker_sha256": cross_window_regression.get("worker_sha256"),
+        },
     })
     return base, cases, contract
 
@@ -378,8 +435,9 @@ def audit(cases: list[Path], return_code: int) -> dict:
         "no_fpe": return_code == 0,
         "forces_available": all(force is not None for force in forces),
     }
+    gate_name = "FORMAL_IMPLICIT_TWO_WINDOW" if TWO_WINDOW_IPC_MODE else "FORMAL_IMPLICIT_ONE_WINDOW"
     result = {
-        "FORMAL_IMPLICIT_ONE_WINDOW": "PASS" if all(checks.values()) else "FAIL",
+        gate_name: "PASS" if all(checks.values()) else "FAIL",
         "checks": checks, "return_code": return_code, "adapter_manifest": json.loads((RUNTIME / "adapter_manifest.json").read_text(encoding="utf-8")),
         "structure_summary": summary, "iteration_count": summary.get("coupling_iterations_total"), "iteration_evidence": iterations,
         "fluid_rollback": rollback, "quality_v4": quality, "final_raw_force": forces, "integrated_structural_force": final_loads,
@@ -394,8 +452,9 @@ def main() -> int:
     base, cases, _ = prepare()
     code = launch(base, cases)
     result = audit(cases, code)
-    print(json.dumps({"gate": result["FORMAL_IMPLICIT_ONE_WINDOW"], "iterations": result["iteration_count"], "blocker": result["first_blocker"]}, ensure_ascii=False))
-    return 0 if result["FORMAL_IMPLICIT_ONE_WINDOW"] == "PASS" else 1
+    gate_name = "FORMAL_IMPLICIT_TWO_WINDOW" if TWO_WINDOW_IPC_MODE else "FORMAL_IMPLICIT_ONE_WINDOW"
+    print(json.dumps({"gate": result[gate_name], "iterations": result["iteration_count"], "blocker": result["first_blocker"]}, ensure_ascii=False))
+    return 0 if result[gate_name] == "PASS" else 1
 
 
 if __name__ == "__main__":
