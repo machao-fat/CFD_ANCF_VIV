@@ -127,6 +127,114 @@ Current statuses:
 - `NEXT_FORMAL_TWO_WINDOW = NOT_AUTHORIZED`
 - `NEXT_IMPLICIT_0P05S = NOT_AUTHORIZED`
 
+### Current authoritative update: repaired multi-restore coverage and explicit normal path
+
+The frozen point-vector reset adapter was retained unchanged at
+`/home/machao/OpenFOAM/of10_owned_atomic_mesh_history_restore_prototype_v1/adapter_pointvector_reset_build_001/lib/libpreciceAdapterFunctionObject.so`,
+SHA256 `5f7c75d6fc650dd425e8b0edca3e0ba9a69b320546b667b5024246495b433a2d`.
+It uses the independent prototype OF10 ABI prefix.  The frozen build005,
+historical build006, rejected build007, and all earlier runtimes remain
+unchanged.
+
+#### Test-only implicit A/B/B coverage
+
+One new immutable no-ANCF fixture was run at
+`runtime/of10_owned_atomic_mesh_history_restore_prototype_v1_precice_fixture_008_abb_min3`.
+Its copied XML, not the legacy field retained in the generated JSON manifest,
+is authoritative for the test-only iteration override: it contains
+`min-iterations=3`, `max-iterations=8`, unchanged convergence measures, no
+acceleration, `dt=0.005 s`, and OF `0.100 -> 0.105 s`.  This did not alter the
+production `min/max=2/8` contract.
+
+The actual event sequence is
+`CHECKPOINT_WRITE -> A -> restore -> B -> restore -> B -> FINAL_COMMIT`:
+
+- Both restores use the one checkpoint generation and return time/index to
+  `0.100/0`.  `U`, `p`, `phi`, `Uf`, `pointDisplacement`,
+  `cellDisplacement`, `mesh points`, and `oldPoints` return to their recorded
+  checkpoint fingerprints.
+- The repaired generic `pointVectorField` copy and live
+  `pointDisplacement` have the same checkpoint fingerprint
+  `b92b3b2e4e49feda`; their internal values and every value-backed fixed patch
+  have zero max-absolute and L2 difference at checkpoint and after either
+  restore.  There is no aliasing of the live and copy objects or internal
+  storage.
+- Each post-restore B input is observed on the normal adapter read path: the
+  cylinder fixed-value patch differs from the checkpoint by exactly `0.004 m`
+  in y (max-absolute; L2 `0.0357770876399966`).  Thus B is not an invented
+  final-commit value.
+- The two B trials have identical monitored fingerprints for
+  `U/p/phi/Uf/pointDisplacement/cellDisplacement`, current/old mesh points,
+  and the demand-created `meshPhi` (`b37c51b180954283`); the B centroid y is
+  `0.17655882894725095` versus checkpoint `0.17720998354325726`.  This is
+  same-input replay evidence and different-input isolation from A.
+- Structure and Fluid both returned zero; the fixture completed three trials,
+  two restores, and one physical commit.  The final Structure force sum is
+  `(1307.373036058385, 61964.05802667059) N`.  Terminal fluid solves completed
+  without an FPE report; maximum reported Co is `0.350303474526`.
+
+The fixture exposes one manifest inconsistency without rewriting immutable
+evidence: its generated `contract.json` still has the inherited
+`fixed_point_iterations.min=2`, while the copied XML and explicit
+`test_only_min_iterations=3` prove the actual setting.  The reusable wrapper
+now writes `min=3` plus a separate production `min=2` field for future runs;
+fixture_008 itself is not modified or rerun.
+
+#### Explicit prescribed-motion one-step regression
+
+No standalone explicit launcher existed in the prototype tree, so the same
+existing fixture wrapper was given a `parallel-explicit` XML mode; case
+preparation, Structure participant, normal preCICE input path, adapter,
+isolated ABI environment, and `pimpleFoam` launch path are reused.  It is not
+a second launcher and does not invoke ANCF.
+
+The one authorized run is immutable at
+`runtime/of10_owned_atomic_mesh_history_restore_prototype_v1_explicit_prescribed_one_step_001`:
+
+- actual XML: `parallel-explicit`, initialized displacement exchange,
+  one `0.005 s` window, OF `0.100 -> 0.105`;
+- actual input: initial and trial `+0.002 m`; one commit and zero rollbacks;
+- Structure/Fluid return codes: `0/0`; final OF time: `0.105 s`;
+- final mapped force sum: `(1287.3019701129388, -62092.29254189502) N`;
+  the force function object gives pressure `(572.1613776045,
+  -61392.62632618) N`, viscous `(715.1405925084, -699.6662157170) N`, and the
+  same total (roundoff only);
+- the final field contains actual `+0.002 m` cylinder displacement; the
+  reported maximum Co is `0.350303474526`; no solver error or FPE was
+  reported.
+
+`pimpleFoam`, `libOpenFOAM.so`, `libfiniteVolume.so`, and `libmeshTools.so`
+loaded from the independent prototype prefix.  The launch script places the
+reset adapter library above that prefix and records its full SHA256 above.
+
+#### Remaining qualification limits and decision
+
+This is a successful core rollback replay and a successful non-rollback
+explicit normal-path regression, but it is not a complete OF10 mesh-history
+qualification.  The trace still does not directly observe both motion time
+indices, V0/V00 existence and numeric values, `oldCellCentres`, or a full
+mesh-quality sweep.  `meshPhi` is absent from the registry at checkpoint and
+restore and is only shown demand-created and deterministic across B trials.
+At restore, `U` and `Uf` acquire one old-time layer where checkpoint recorded
+zero; their new layer hashes equal the checkpoint current hashes, but that
+creation/lifecycle has not been independently qualified.  No conclusion is
+drawn from a missing field merely because the path is non-subcycled.
+
+Accordingly, historical harness/API failures and all historical gates remain
+immutable; the repaired fixture closes the specific
+`POINT_DISPLACEMENT_ROLLBACK_IDENTITY_FAILURE`, but the remaining state
+inventory prevents a recommendation to authorize formal three-slice
+continuous two-window coupling.  The minimal next action is read-only/source
+and runtime instrumentation that directly accounts for those remaining
+states; it is not another coupled run.
+
+- `POINT_DISPLACEMENT_RESET_REPAIR = PASS_FOR_OBSERVED_MULTIRESTORE_SCOPE`
+- `A_RESTORE_B_RESTORE_B_FIXTURE_COVERAGE = PASS`
+- `EXPLICIT_ONE_STEP_REGRESSION = PASS_FOR_NONROLLBACK_NORMAL_PATH_SCOPE`
+- `FULL_OF10_MESH_HISTORY_QUALIFICATION = NOT_CLOSED`
+- `NEXT_FORMAL_TWO_WINDOW = NOT_AUTHORIZED`
+- `NEXT_IMPLICIT_0P05S = NOT_AUTHORIZED`
+
 ## 2026-09-09 pointVectorField reset prototype: controlled repair result
 
 ### Minimal production change and ownership
@@ -639,5 +747,24 @@ not permission to rerun with altered settings.
 - `POINT_DISPLACEMENT_RESET_REPAIR = PARTIAL_PASS`
 - `A_RESTORE_B_RESTORE_B_FIXTURE_COVERAGE = FAIL`
 - `EXPLICIT_ONE_STEP_REGRESSION = NOT_RUN`
+- `NEXT_FORMAL_TWO_WINDOW = NOT_AUTHORIZED`
+- `NEXT_IMPLICIT_0P05S = NOT_AUTHORIZED`
+
+### Final current status (supersedes every earlier historical status block)
+
+The authoritative results are the repaired multi-restore and explicit
+normal-path section above: fixture_008 provides actual
+`A -> restore -> B -> restore -> B -> commit` coverage with exact observed
+point-displacement restoration; the reset adapter remains
+`5f7c75d6fc650dd425e8b0edca3e0ba9a69b320546b667b5024246495b433a2d`; and
+the one explicit normal-path regression completed at OF `0.105 s` with both
+participants returning zero.  Earlier `NOT_RUN`, partial-coverage, and
+point-displacement-failure statements describe immutable historical evidence,
+not the current repaired result.
+
+- `POINT_DISPLACEMENT_RESET_REPAIR = PASS_FOR_OBSERVED_MULTIRESTORE_SCOPE`
+- `A_RESTORE_B_RESTORE_B_FIXTURE_COVERAGE = PASS`
+- `EXPLICIT_ONE_STEP_REGRESSION = PASS_FOR_NONROLLBACK_NORMAL_PATH_SCOPE`
+- `FULL_OF10_MESH_HISTORY_QUALIFICATION = NOT_CLOSED`
 - `NEXT_FORMAL_TWO_WINDOW = NOT_AUTHORIZED`
 - `NEXT_IMPLICIT_0P05S = NOT_AUTHORIZED`

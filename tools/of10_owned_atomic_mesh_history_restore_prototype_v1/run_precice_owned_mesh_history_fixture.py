@@ -11,6 +11,7 @@ from __future__ import annotations
 import hashlib
 import json
 import os
+import re
 import subprocess
 import sys
 from pathlib import Path
@@ -30,6 +31,7 @@ RUN = os.environ.get(
 )
 PROTOTYPE_ROOT_WSL = "/home/machao/OpenFOAM/of10_owned_atomic_mesh_history_restore_prototype_v1"
 ADAPTER_BUILD = os.environ.get("OF10_OWNED_ADAPTER_BUILD", "adapter_build_005")
+FIXTURE_MODE = os.environ.get("OF10_OWNED_FIXTURE_MODE", "implicit-abb-min3")
 ADAPTER_LIBRARY_WSL = PROTOTYPE_ROOT_WSL + f"/{ADAPTER_BUILD}/lib"
 ENV_SCRIPT_WSL = (
     "/mnt/d/研二文件/开题准备/CFD_ANCF_VIV/tools/"
@@ -76,6 +78,35 @@ def participant_code_a_restore_b_restore_b() -> str:
     return code
 
 
+def test_only_xml_min_three(exchange_dir: Path) -> str:
+    """Require the third, already-scheduled B trial without changing gates."""
+    source = lifecycle.xml(exchange_dir)
+    marker = '<min-iterations value="2"/>'
+    if source.count(marker) != 1:
+        raise RuntimeError("unexpected frozen lifecycle XML min-iterations")
+    return source.replace(marker, '<min-iterations value="3"/>')
+
+
+def explicit_one_step_xml(exchange_dir: Path) -> str:
+    """Reuse the fixture plumbing for the existing non-rollback explicit check."""
+    source = lifecycle.xml(exchange_dir)
+    implicit = re.compile(
+        r'<coupling-scheme:parallel-implicit>.*?</coupling-scheme:parallel-implicit>'
+    )
+    replacement = (
+        '<coupling-scheme:parallel-explicit><participants first="Structure" '
+        'second="Fluid"/><time-window-size value="0.005"/><max-time '
+        'value="0.005"/><exchange data="Displacement" mesh="Structure-Mesh" '
+        'from="Structure" to="Fluid" initialize="yes" substeps="false"/>'
+        '<exchange data="Force" mesh="Structure-Mesh" from="Fluid" '
+        'to="Structure" substeps="false"/></coupling-scheme:parallel-explicit>'
+    )
+    result, count = implicit.subn(replacement, source)
+    if count != 1:
+        raise RuntimeError("unexpected frozen lifecycle XML coupling scheme")
+    return result
+
+
 def run(case: Path) -> int:
     runtime = base.RUNTIME
     write(runtime / "participant.py", base.participant_code())
@@ -116,8 +147,30 @@ def main() -> int:
     base.DIAG_LIBRARY = host_path(ADAPTER_LIBRARY_WSL)
     base.DIAG_LIBRARY_FILE = base.DIAG_LIBRARY / "libpreciceAdapterFunctionObject.so"
     base.TRIAL_Y_M = (lifecycle.AMPLITUDE_Y_M, -lifecycle.AMPLITUDE_Y_M)
-    base.xml = lifecycle.xml
-    base.participant_code = participant_code_a_restore_b_restore_b
+    if FIXTURE_MODE == "implicit-abb-min3":
+        base.xml = test_only_xml_min_three
+        base.participant_code = participant_code_a_restore_b_restore_b
+        fixture_metadata = {
+            "participant_write_schedule_y_m": [-0.002, -0.002, -0.002],
+            "expected_fluid_trial_inputs_y_m": [0.002, -0.002, -0.002],
+            "test_only_min_iterations": 3,
+            "production_min_iterations": 2,
+            "test_only_reason": "force scheduled B replay coverage; convergence criteria unchanged",
+            "fixed_point_iterations": {"min": 3, "max": 8},
+            "production_fixed_point_iterations": {"min": 2, "max": 8},
+        }
+    elif FIXTURE_MODE == "explicit-one-step":
+        base.xml = explicit_one_step_xml
+        base.participant_code = lifecycle.participant_code
+        fixture_metadata = {
+            "participant_write_schedule_y_m": [0.002],
+            "expected_fluid_trial_inputs_y_m": [0.002],
+            "test_only_reason": "existing prescribed-motion normal-path explicit regression",
+            "fixed_point_iterations": "NOT_APPLICABLE_PARALLEL_EXPLICIT",
+            "production_fixed_point_iterations": {"min": 2, "max": 8},
+        }
+    else:
+        raise RuntimeError(f"unsupported OF10-owned fixture mode: {FIXTURE_MODE}")
 
     case = base.prepare()
     contract_path = base.RUNTIME / "contract.json"
@@ -125,17 +178,16 @@ def main() -> int:
     contract.update({
         "schema_version": "of10-owned-atomic-mesh-history-restore-prototype-v1",
         "fixture": "real-precice-no-ancf-prescribed-motion",
-        "participant_write_schedule_y_m": [-0.002, -0.002, -0.002],
-        "expected_fluid_trial_inputs_y_m": [0.002, -0.002, -0.002],
+        "fixture_mode": FIXTURE_MODE,
         "adapter_library_sha256": sha256(base.DIAG_LIBRARY_FILE),
         "openfoam_abi_prefix": PROTOTYPE_ROOT_WSL + "/openfoam10",
         "physical_windows": 1,
         "source_openfoam_time_s": 0.100,
         "target_openfoam_time_s": 0.105,
         "dt_s": 0.005,
-        "fixed_point_iterations": {"min": 2, "max": 8},
         "acceleration": "forbidden",
     })
+    contract.update(fixture_metadata)
     write(contract_path, json.dumps(contract, indent=2) + "\n")
 
     code = run(case)
