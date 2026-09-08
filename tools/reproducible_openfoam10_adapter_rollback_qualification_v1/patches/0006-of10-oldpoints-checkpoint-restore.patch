@@ -1,0 +1,23 @@
+--- a/Adapter.C
++++ b/Adapter.C
+@@ -873,4 +873,18 @@ void preciceAdapter::Adapter::reloadMeshPoints()
+     // Switch oldpoints on for pure physics. (is this required?). Switch off for better mesh deformation capabilities?
+     // const_cast<pointField&>(mesh_.points()) = oldMeshPoints_;
+-    const_cast<fvMesh&>(mesh_).move();
+-    const_cast<fvMesh&>(mesh_).movePoints(meshPoints_);
++    //
++    // In OF10, fvMesh::move() calls the mover, which calls movePoints().
++    // Calling it while restoring a checkpoint would therefore apply the
++    // trial displacement once more.  A subsequent movePoints(meshPoints_)
++    // then leaves polyMesh::oldPoints() holding trial geometry.
++    //
++    // Restore the checkpointed old/current geometry pair using only public
++    // OF10 lifecycle APIs. setPoints() establishes the stored old geometry
++    // without recording swept volumes; resetMotion() clears the trial motion
++    // cache; one movePoints() establishes the checkpointed old-to-current
++    // relation and the corresponding mesh-motion flux. readMeshCheckpoint()
++    // below then restores the checkpointed mesh fields.
++    fvMesh& mutableMesh = const_cast<fvMesh&>(mesh_);
++    mutableMesh.setPoints(oldMeshPoints_);
++    mutableMesh.resetMotion();
++    mutableMesh.movePoints(meshPoints_);
