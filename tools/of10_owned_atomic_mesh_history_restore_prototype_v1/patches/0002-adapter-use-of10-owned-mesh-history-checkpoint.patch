@@ -1,0 +1,134 @@
+--- a/Adapter.H
++++ b/Adapter.H
+@@ -20,6 +20,7 @@
+ // OpenFOAM header files
+ #include "Time.H"
+ #include "fvMesh.H"
++#include "meshHistoryCheckpoint.H"
+ 
+ // preCICE Solver Interface
+ #include <precice/precice.hpp>
+@@ -143,6 +144,9 @@
+     Foam::pointField oldMeshPoints_;
+     bool meshCheckPointed = false;
+ 
++    //- OF10-owned mesh-motion snapshot; adapter has no private-state access.
++    Foam::autoPtr<Foam::meshHistoryCheckpoint> meshHistoryCheckpoint_;
++
+     // Diagnostic-only counters; never part of a checkpoint or coupling data.
+     unsigned long long rollbackDiagnosticWindow_ = 1;
+     unsigned long long rollbackDiagnosticIteration_ = 0;
+--- a/Adapter.C
++++ b/Adapter.C
+@@ -828,9 +828,11 @@
+ void preciceAdapter::Adapter::storeMeshPoints()
+ {
+     DEBUG(adapterInfo("Storing mesh points..."));
+-    // TODO: In foam-extend, we would need "allPoints()". Check if this gives the same data.
++    // Legacy point copies remain diagnostic compatibility state.  The
++    // OF10-owned snapshot below is the sole authority for mesh history.
+     meshPoints_ = mesh_.points();
+     oldMeshPoints_ = mesh_.oldPoints();
++    meshHistoryCheckpoint_ = mesh_.checkpointMeshHistory();
+ 
+     /*
+     // TODO  This is only required for subcycling. It should not be called when not subcycling!!
+@@ -843,63 +845,23 @@
+     // Update any volume fields from the buffer to the checkpointed values (if already exists.)
+     */
+ 
+-    DEBUG(adapterInfo("Stored mesh points."));
+-    if (mesh_.moving())
+-    {
+-        if (!meshCheckPointed)
+-        {
+-            // Set up the checkpoint for the mesh flux: meshPhi
+-            setupMeshCheckpointing();
+-            meshCheckPointed = true;
+-        }
+-        writeMeshCheckpoint();
+-        writeVolCheckpoint(); // Does not write anything unless subcycling.
+-    }
++    // meshPhi, its old-time levels, V0/V00, motion indices, and geometry
++    // belong exclusively to meshHistoryCheckpoint_.  Do not create a second
++    // adapter-owned meshPhi checkpoint or perform a second mesh restore.
++    DEBUG(adapterInfo("Stored OF10-owned mesh-history checkpoint."));
+ }
+ 
+ void preciceAdapter::Adapter::reloadMeshPoints()
+ {
+-    if (!mesh_.moving())
+-    {
+-        DEBUG(adapterInfo("Mesh points not moved as the mesh is not moving"));
+-        return;
+-    }
+-
+-    // In Foam::polyMesh::movePoints.
+-    // TODO: The function movePoints overwrites the pointer to the old mesh.
+-    // Therefore, if you revert the mesh, the oldpointer will be set to the points, which are the new values.
+-    DEBUG(adapterInfo("Moving mesh points to their previous locations..."));
+-
+-    // TODO
+-    // Switch oldpoints on for pure physics. (is this required?). Switch off for better mesh deformation capabilities?
+-    // const_cast<pointField&>(mesh_.points()) = oldMeshPoints_;
+-    const_cast<fvMesh&>(mesh_).move();
+-    const_cast<fvMesh&>(mesh_).movePoints(meshPoints_);
+-
+-    // meshPhi is a derived OF10 mesh-motion flux, created by movePoints().
+-    // Do not create or delete registry objects at the window-start checkpoint.
+-    // Once a trial has created it, normal API access reconstructs its
+-    // restored-time value (zero on the restored time layer when appropriate).
+-    if (mesh_.foundObject<surfaceScalarField>("meshPhi"))
+-    {
+-        mesh_.phi();
+-    }
+-
+-    DEBUG(adapterInfo("Moved mesh points to their previous locations."));
+-
+-    // TODO The if statement can be removed in this case, but it is still included for clarity
+-    if (meshCheckPointed)
++    DEBUG(adapterInfo("Restoring OF10-owned mesh-history checkpoint..."));
++    if (!meshHistoryCheckpoint_.valid())
+     {
+-        readMeshCheckpoint();
++        FatalErrorInFunction
++            << "No OF10-owned mesh-history checkpoint is available"
++            << abort(FatalError);
+     }
+-
+-    /*  // TODO This part should only be used when sybcycling. See the description in 'storeMeshPoints()'
+-        // The if statement can be removed in this case, but it is still included for clarity
+-    if ( oldVolsStored )
+-    {
+-        readVolCheckpoint();
+-    }
+-    */
++    const_cast<fvMesh&>(mesh_).restoreMeshHistory(meshHistoryCheckpoint_());
++    DEBUG(adapterInfo("Restored OF10-owned mesh-history checkpoint."));
+ }
+ 
+ void preciceAdapter::Adapter::setupMeshCheckpointing()
+@@ -1000,7 +962,22 @@
+     doLocalCode(volTensorField);
+     doLocalCode(volSymmTensorField);
+ 
+-    doLocalCode(surfaceScalarField);
++    // meshPhi is a mesh-owned demand-driven field.  It is restored only by
++    // fvMesh::restoreMeshHistory(), never by the adapter's generic copies.
++    for (const word& obj : mesh_.lookupClass<surfaceScalarField>().sortedToc())
++    {
++        if (obj == "meshPhi")
++        {
++            DEBUG(adapterInfo("Delegating meshPhi checkpointing to fvMesh."));
++            continue;
++        }
++        addCheckpointField
++        (
++            &(const_cast<surfaceScalarField&>
++              (mesh_.thisDb().lookupObject<surfaceScalarField>(obj)))
++        );
++        DEBUG(adapterInfo("Checkpoint " + obj + " : surfaceScalarField"));
++    }
+     doLocalCode(surfaceVectorField);
+     doLocalCode(surfaceTensorField);
+ 

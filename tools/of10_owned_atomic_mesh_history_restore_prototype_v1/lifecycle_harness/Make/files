@@ -1,0 +1,3 @@
+meshHistoryLifecycleHarness.C
+
+EXE = $(FOAM_APPBIN)/meshHistoryLifecycleHarness

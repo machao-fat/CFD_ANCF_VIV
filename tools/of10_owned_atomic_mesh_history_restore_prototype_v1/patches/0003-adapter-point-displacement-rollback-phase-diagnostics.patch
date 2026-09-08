@@ -1,0 +1,140 @@
+--- a/Adapter.C
++++ b/Adapter.C
+@@ -54,6 +54,26 @@
+     out << "}";
+ }
+ 
++template<class FieldType>
++void rollbackPointDisplacementParts(std::ostream& out, const FieldType* field)
++{
++    out << "\"pointDisplacement_parts\":{";
++    if (field == nullptr)
++    {
++        out << "\"classification\":\"NOT_OBSERVABLE_NOT_REGISTERED\"}";
++        return;
++    }
++    Foam::OStringStream internalSerialized;
++    internalSerialized << field->internalField();
++    Foam::OStringStream boundarySerialized;
++    boundarySerialized << field->boundaryField();
++    out << "\"internal_hash_fnv1a64\":\""
++        << rollbackFNV1a64(std::string(internalSerialized.str().c_str()))
++        << "\",\"boundary_hash_fnv1a64\":\""
++        << rollbackFNV1a64(std::string(boundarySerialized.str().c_str()))
++        << "\"}";
++}
++
+ void rollbackPointsFingerprint(std::ostream& out, const std::string& name, const Foam::pointField& points)
+ {
+     Foam::vector centroid(0, 0, 0);
+@@ -521,6 +541,9 @@
+     if (isCouplingOngoing())
+     {
+         readCouplingData(precice_->getMaxTimeStepSize());
++        // Diagnostic-only: makes the incoming preCICE sample distinct from
++        // checkpoint restoration in the trace.
++        writeRollbackDiagnostic("POST_NEXT_COUPLING_INPUT");
+     }
+ 
+     // As soon as OpenFOAM writes the results, it will not try to write again
+@@ -1139,12 +1162,20 @@
+     // Reload the runTime
+     reloadCheckpointTime();
+ 
++    // Diagnostic-only phase boundary. It occurs before the owner-managed
++    // mesh-history restore and before any ordinary-field assignment.
++    writeRollbackDiagnostic("PRE_OWNER_MESH_HISTORY_RESTORE");
++
+     // Reload the meshPoints (if FSI is enabled)
+     if (FSIenabled_)
+     {
+         reloadMeshPoints();
+     }
+ 
++    // Diagnostic-only phase boundary. It isolates the effect of the
++    // owner-managed mesh-history restore from generic field restoration.
++    writeRollbackDiagnostic("POST_OWNER_MESH_HISTORY_RESTORE");
++
+     // Reload all the fields of type volScalarField
+     for (uint i = 0; i < volScalarFields_.size(); i++)
+     {
+@@ -1312,6 +1343,10 @@
+         }
+     }
+ 
++    // Diagnostic-only phase boundary. No new coupling input has been read at
++    // this point, so it identifies the state produced by ordinary restoration.
++    writeRollbackDiagnostic("POST_GENERIC_FIELD_RESTORE");
++
+     // NOTE: Add here other field types to read, if needed.
+ 
+ #ifdef ADAPTER_DEBUG_MODE
+@@ -1394,7 +1429,15 @@
+     // Store all the fields of type pointVectorField
+     for (uint i = 0; i < pointVectorFields_.size(); i++)
+     {
++        if (pointVectorFields_.at(i)->name() == "pointDisplacement")
++        {
++            writeRollbackDiagnostic("PRE_POINT_DISPLACEMENT_COPY_ASSIGNMENT");
++        }
+         *(pointVectorFieldCopies_.at(i)) == *(pointVectorFields_.at(i));
++        if (pointVectorFields_.at(i)->name() == "pointDisplacement")
++        {
++            writeRollbackDiagnostic("POST_POINT_DISPLACEMENT_COPY_ASSIGNMENT");
++        }
+     }
+ 
+     // Store all the fields of type pointTensorField
+@@ -1404,6 +1447,11 @@
+     }
+     // NOTE: Add here other types to write, if needed.
+ 
++    // The preceding generic copies are complete. Record this separately from
++    // CHECKPOINT_WRITE, whose existing event intentionally occurs before the
++    // copy loops for its established lifecycle meaning.
++    writeRollbackDiagnostic("POST_GENERIC_FIELD_CHECKPOINT_STORE");
++
+ #ifdef ADAPTER_DEBUG_MODE
+     adapterInfo(
+         "Checkpoint for time t = " + std::to_string(runTime_.value()) + " was stored.");
+@@ -1434,18 +1482,39 @@
+     const auto* meshPhi = mesh_.foundObject<surfaceScalarField>("meshPhi") ? &mesh_.lookupObject<surfaceScalarField>("meshPhi") : nullptr;
+     const auto* pointDisplacement = mesh_.foundObject<pointVectorField>("pointDisplacement") ? &mesh_.lookupObject<pointVectorField>("pointDisplacement") : nullptr;
+     const auto* cellDisplacement = mesh_.foundObject<volVectorField>("cellDisplacement") ? &mesh_.lookupObject<volVectorField>("cellDisplacement") : nullptr;
++    bool pointDisplacementInGenericCheckpoint = false;
++    for (const pointVectorField* field : pointVectorFields_)
++    {
++        if (field != nullptr && field->name() == "pointDisplacement")
++        {
++            pointDisplacementInGenericCheckpoint = true;
++            break;
++        }
++    }
+     output << "{\"event\":\"" << event << "\",\"window_id\":" << rollbackDiagnosticWindow_
+            << ",\"iteration_id\":" << rollbackDiagnosticIteration_
+            << ",\"physical_time\":" << std::setprecision(17) << runTime_.value()
+            << ",\"time_index\":" << runTime_.timeIndex()
+            << ",\"adapter_build_identity\":\"openfoam10-d53753b1-rollback-diagnostic-v1\","
+-           << "\"adapter_build_sha256\":\"" << (buildSha == nullptr ? "UNSET" : buildSha) << "\",\"states\":{";
++           << "\"adapter_build_sha256\":\"" << (buildSha == nullptr ? "UNSET" : buildSha) << "\",\"checkpoint_inventory\":{\"pointDisplacement_generic_pointVector\":" << (pointDisplacementInGenericCheckpoint ? "true" : "false") << "},\"states\":{";
+     rollbackFieldFingerprint(output, "U", U); output << ',';
+     rollbackFieldFingerprint(output, "p", p); output << ',';
+     rollbackFieldFingerprint(output, "phi", phi); output << ',';
+     rollbackFieldFingerprint(output, "Uf", Uf); output << ',';
+     rollbackFieldFingerprint(output, "meshPhi", meshPhi); output << ',';
+     rollbackFieldFingerprint(output, "pointDisplacement", pointDisplacement); output << ',';
++    rollbackPointDisplacementParts(output, pointDisplacement); output << ',';
++    const Foam::pointVectorField* pointDisplacementCopy = nullptr;
++    for (std::size_t i = 0; i < pointVectorFields_.size(); ++i)
++    {
++        if (pointVectorFields_[i] == pointDisplacement && i < pointVectorFieldCopies_.size())
++        {
++            pointDisplacementCopy = pointVectorFieldCopies_[i];
++            break;
++        }
++    }
++    rollbackFieldFingerprint(output, "pointDisplacement_checkpoint_copy", pointDisplacementCopy); output << ',';
++    rollbackPointDisplacementParts(output, pointDisplacementCopy); output << ',';
+     rollbackFieldFingerprint(output, "cellDisplacement", cellDisplacement); output << ',';
+     rollbackPointsFingerprint(output, "mesh_points", mesh_.points()); output << ',';
+     rollbackPointsFingerprint(output, "old_points", mesh_.oldPoints());

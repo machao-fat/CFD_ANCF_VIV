@@ -1,0 +1,310 @@
+diff --git a/src/OpenFOAM/meshes/polyMesh/polyMesh.H b/src/OpenFOAM/meshes/polyMesh/polyMesh.H
+index 0000000..1111111 100644
+--- a/src/OpenFOAM/meshes/polyMesh/polyMesh.H
++++ b/src/OpenFOAM/meshes/polyMesh/polyMesh.H
+@@ -65,6 +65,7 @@ class globalMeshData;
+ class polyTopoChangeMap;
+ class polyMeshMap;
+ class polyDistributionMap;
++class meshHistoryCheckpoint;
+ class polyMeshTetDecomposition;
+ class treeDataCell;
+ template<class Type> class indexedOctree;
+@@ -78,6 +79,8 @@ class polyMesh
+     public objectRegistry,
+     public primitiveMesh
+ {
++    friend class meshHistoryCheckpoint;
++
+ 
+ public:
+ 
+diff --git a/src/finiteVolume/fvMesh/fvMesh.H b/src/finiteVolume/fvMesh/fvMesh.H
+index 0000000..1111111 100644
+--- a/src/finiteVolume/fvMesh/fvMesh.H
++++ b/src/finiteVolume/fvMesh/fvMesh.H
+@@ -73,6 +73,7 @@ class fvMeshTopoChanger;
+ class fvMeshDistributor;
+ class fvMeshMover;
+ class volMesh;
++class meshHistoryCheckpoint;
+ class polyDistributionMap;
+ 
+ template<class Type, template<class> class PatchField, class GeoMesh>
+@@ -98,6 +99,8 @@ class fvMesh
+     public surfaceInterpolation,
+     public data
+ {
++    friend class meshHistoryCheckpoint;
++
+ public:
+ 
+@@ -512,6 +515,16 @@ public:
+            bool move();
++
++            //- Capture OF10-owned mesh-motion history for a retry checkpoint.
++            //  This excludes Time and registered flow fields, which remain
++            //  participant responsibilities.
++            autoPtr<meshHistoryCheckpoint> checkpointMeshHistory() const;
++
++            //- Restore a checkpoint created by checkpointMeshHistory().
++            //  The operation restores points, motion indices, old volumes and
++            //  meshPhi as one owner-managed transaction.
++            void restoreMeshHistory(const meshHistoryCheckpoint&);
+ 
+diff --git a/src/finiteVolume/Make/files b/src/finiteVolume/Make/files
+index 0000000..1111111 100644
+--- a/src/finiteVolume/Make/files
++++ b/src/finiteVolume/Make/files
+@@ -1,4 +1,5 @@
+ fvMesh.C
++meshHistoryCheckpoint/meshHistoryCheckpoint.C
+ 
+diff --git a/src/finiteVolume/fvMesh/meshHistoryCheckpoint/meshHistoryCheckpoint.H b/src/finiteVolume/fvMesh/meshHistoryCheckpoint/meshHistoryCheckpoint.H
+new file mode 100644
+--- /dev/null
++++ b/src/finiteVolume/fvMesh/meshHistoryCheckpoint/meshHistoryCheckpoint.H
+@@ -0,0 +1,47 @@
++#ifndef meshHistoryCheckpoint_H
++#define meshHistoryCheckpoint_H
++
++#include "autoPtr.H"
++#include "pointField.H"
++#include "volFields.H"
++#include "surfaceFields.H"
++
++namespace Foam
++{
++
++class fvMesh;
++
++//- Owner-managed snapshot of the persistent OF10 mesh-motion state.
++//  It is intentionally not a general solver checkpoint: Time and registered
++//  fields are restored by the caller in their existing transaction.
++class meshHistoryCheckpoint
++{
++    pointField points_;
++    bool moving_;
++    label curMotionTimeIndex_;
++    bool hasOldPoints_;
++    pointField oldPoints_;
++    bool hasOldCellCentres_;
++    pointField oldCellCentres_;
++    bool storeOldCellCentres_;
++
++    label curTimeIndex_;
++    autoPtr<DimensionedField<scalar, volMesh>> V0_;
++    autoPtr<DimensionedField<scalar, volMesh>> V00_;
++
++    autoPtr<surfaceScalarField> meshPhi_;
++    autoPtr<surfaceScalarField> meshPhi0_;
++    autoPtr<surfaceScalarField> meshPhi00_;
++    label meshPhiNOldTimes_;
++
++    meshHistoryCheckpoint(const meshHistoryCheckpoint&) = delete;
++    void operator=(const meshHistoryCheckpoint&) = delete;
++
++public:
++    explicit meshHistoryCheckpoint(const fvMesh&);
++    void restore(fvMesh&) const;
++};
++
++}
++
++#endif
+diff --git a/src/finiteVolume/fvMesh/meshHistoryCheckpoint/meshHistoryCheckpoint.C b/src/finiteVolume/fvMesh/meshHistoryCheckpoint/meshHistoryCheckpoint.C
+new file mode 100644
+--- /dev/null
++++ b/src/finiteVolume/fvMesh/meshHistoryCheckpoint/meshHistoryCheckpoint.C
+@@ -0,0 +1,191 @@
++#include "meshHistoryCheckpoint.H"
++#include "fvMesh.H"
++#include "IOobject.H"
++
++namespace Foam
++{
++namespace
++{
++
++autoPtr<DimensionedField<scalar, volMesh>> copyVolume
++(
++    const fvMesh& mesh,
++    const DimensionedField<scalar, volMesh>& source,
++    const word& name
++)
++{
++    return autoPtr<DimensionedField<scalar, volMesh>>
++    (
++        new DimensionedField<scalar, volMesh>
++        (
++            IOobject(name, mesh.time().timeName(), mesh, IOobject::NO_READ,
++                     IOobject::NO_WRITE, false),
++            source
++        )
++    );
++}
++
++autoPtr<surfaceScalarField> copyMeshPhi
++(
++    const fvMesh& mesh,
++    const surfaceScalarField& source,
++    const word& name
++)
++{
++    return autoPtr<surfaceScalarField>
++    (
++        new surfaceScalarField
++        (
++            IOobject(name, mesh.time().timeName(), mesh, IOobject::NO_READ,
++                     IOobject::NO_WRITE, false),
++            source
++        )
++    );
++}
++
++}
++
++meshHistoryCheckpoint::meshHistoryCheckpoint(const fvMesh& mesh)
++:
++    points_(mesh.points()),
++    moving_(mesh.moving_),
++    curMotionTimeIndex_(mesh.curMotionTimeIndex_),
++    hasOldPoints_(mesh.oldPointsPtr_.valid()),
++    oldPoints_(hasOldPoints_ ? mesh.oldPointsPtr_() : pointField()),
++    hasOldCellCentres_(mesh.oldCellCentresPtr_.valid()),
++    oldCellCentres_
++    (
++        hasOldCellCentres_ ? mesh.oldCellCentresPtr_() : pointField()
++    ),
++    storeOldCellCentres_(mesh.storeOldCellCentres_),
++    curTimeIndex_(mesh.curTimeIndex_),
++    V0_(nullptr),
++    V00_(nullptr),
++    meshPhi_(nullptr),
++    meshPhi0_(nullptr),
++    meshPhi00_(nullptr),
++    meshPhiNOldTimes_(0)
++{
++    if (mesh.topoChanged_)
++    {
++        FatalErrorInFunction
++            << "Topology-changing meshes are outside this checkpoint prototype"
++            << abort(FatalError);
++    }
++
++    if (mesh.V0Ptr_)
++    {
++        V0_ = copyVolume(mesh, *mesh.V0Ptr_, "meshHistoryCheckpointV0");
++    }
++    if (mesh.V00Ptr_)
++    {
++        V00_ = copyVolume(mesh, *mesh.V00Ptr_, "meshHistoryCheckpointV00");
++    }
++
++    if (mesh.phiPtr_)
++    {
++        meshPhi_ = copyMeshPhi(mesh, *mesh.phiPtr_, "meshHistoryCheckpointPhi");
++        meshPhiNOldTimes_ = mesh.phiPtr_->nOldTimes();
++        if (meshPhiNOldTimes_ > 2)
++        {
++            FatalErrorInFunction
++                << "meshPhi has more than two old-time levels"
++                << abort(FatalError);
++        }
++        if (meshPhiNOldTimes_ >= 1)
++        {
++            meshPhi0_ = copyMeshPhi
++            (
++                mesh, mesh.phiPtr_->oldTime(), "meshHistoryCheckpointPhi0"
++            );
++        }
++        if (meshPhiNOldTimes_ >= 2)
++        {
++            meshPhi00_ = copyMeshPhi
++            (
++                mesh, mesh.phiPtr_->oldTime().oldTime(),
++                "meshHistoryCheckpointPhi00"
++            );
++        }
++    }
++}
++
++void meshHistoryCheckpoint::restore(fvMesh& mesh) const
++{
++    if (mesh.topoChanged_)
++    {
++        FatalErrorInFunction
++            << "Topology changed during a mesh-history retry"
++            << abort(FatalError);
++    }
++
++    // OF10-owned reset of current geometry, without manufacturing a motion.
++    mesh.setPoints(points_);
++
++    mesh.moving_ = moving_;
++    mesh.curMotionTimeIndex_ = curMotionTimeIndex_;
++    mesh.oldPointsPtr_.clear();
++    if (hasOldPoints_)
++    {
++        mesh.oldPointsPtr_.reset(new pointField(oldPoints_));
++    }
++    mesh.oldCellCentresPtr_.clear();
++    if (hasOldCellCentres_)
++    {
++        mesh.oldCellCentresPtr_.reset(new pointField(oldCellCentres_));
++    }
++    mesh.storeOldCellCentres_ = storeOldCellCentres_;
++
++    deleteDemandDrivenData(mesh.V0Ptr_);
++    deleteDemandDrivenData(mesh.V00Ptr_);
++    if (V0_.valid())
++    {
++        mesh.V0Ptr_ = new DimensionedField<scalar, volMesh>
++        (
++            IOobject("V0", mesh.time().timeName(), mesh, IOobject::NO_READ,
++                     IOobject::NO_WRITE, false),
++            V0_()
++        );
++    }
++    if (V00_.valid())
++    {
++        mesh.V00Ptr_ = new DimensionedField<scalar, volMesh>
++        (
++            IOobject("V00", mesh.time().timeName(), mesh, IOobject::NO_READ,
++                     IOobject::NO_WRITE, false),
++            V00_()
++        );
++    }
++    mesh.curTimeIndex_ = curTimeIndex_;
++
++    deleteDemandDrivenData(mesh.phiPtr_);
++    if (meshPhi_.valid())
++    {
++        mesh.phiPtr_ = new surfaceScalarField
++        (
++            IOobject("meshPhi", mesh.time().timeName(), mesh,
++                     IOobject::NO_READ, IOobject::NO_WRITE, true),
++            meshPhi_()
++        );
++        if (meshPhiNOldTimes_ >= 1)
++        {
++            mesh.phiPtr_->oldTime() == meshPhi0_();
++        }
++        if (meshPhiNOldTimes_ >= 2)
++        {
++            mesh.phiPtr_->oldTime().oldTime() == meshPhi00_();
++        }
++    }
++}
++
++autoPtr<meshHistoryCheckpoint> fvMesh::checkpointMeshHistory() const
++{
++    return autoPtr<meshHistoryCheckpoint>(new meshHistoryCheckpoint(*this));
++}
++
++void fvMesh::restoreMeshHistory(const meshHistoryCheckpoint& checkpoint)
++{
++    checkpoint.restore(*this);
++}
++
++}
