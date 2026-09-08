@@ -26,6 +26,7 @@ from coupling.openfoam_numerical_quality_contract_v2.audit import audit_log
 from coupling.ancf_newton_evidence_v1 import validate_records
 from coupling.precice_path_v1 import canonical_wsl_path, socket_directory_preflight
 from coupling.cpp_worker_persistent_ipc_v1.identity_contract import build_identity, assert_ledger_compatible
+from coupling.implicit_rollback_audit_correlation_v1 import correlate_rollback_trace
 
 
 RUN = os.environ.get(
@@ -47,6 +48,7 @@ INITIAL_DATA_REGRESSION = ROOT / "results" / "formal_implicit_projected_initial_
 IPC_REGRESSION = ROOT / "results" / "formal_implicit_ipc_and_first_step_quality_closure_v1_ipc_regression_004" / "ipc_contract_regression.json"
 QUALITY_COMPLETION_REGRESSION = ROOT / "results" / "formal_implicit_ipc_quality_v4_completion_regression_001" / "quality_v4_completion_regression.json"
 CROSS_WINDOW_IPC_REGRESSION = ROOT / "runtime" / "implicit_cross_window_ipc_lifecycle_closure_v1" / "real_worker_multiwindow_regression_002" / "real_worker_multiwindow_regression.json"
+ROLLBACK_AUDIT_CORRELATION_REGRESSION = ROOT / "results" / "implicit_rollback_audit_correlation_closure_v1_regression_001" / "rollback_audit_correlation_regression.json"
 LIB_WSL = "/home/machao/OpenFOAM/reproducible_adapter_rollback_qualification_v1/diagnostic_build_006/lib"
 LIB_FILE = Path(LIB_WSL) / "libpreciceAdapterFunctionObject.so"
 UPSTREAM = "d53753b1c927b2413b02299c9da15725b3e772f0"
@@ -237,7 +239,7 @@ def prepare():
         raise RuntimeError("patch-0005 adapter library is absent")
     if not INITIAL_DATA_REGRESSION.is_file():
         raise RuntimeError("projected initial-data regression evidence is absent")
-    if not IPC_REGRESSION.is_file() or not QUALITY_COMPLETION_REGRESSION.is_file():
+    if not IPC_REGRESSION.is_file() or not QUALITY_COMPLETION_REGRESSION.is_file() or not ROLLBACK_AUDIT_CORRELATION_REGRESSION.is_file():
         raise RuntimeError("IPC or Quality V4 completion regression evidence is absent")
     if TWO_WINDOW_IPC_MODE and not CROSS_WINDOW_IPC_REGRESSION.is_file():
         raise RuntimeError("cross-window real-worker regression evidence is absent")
@@ -249,10 +251,13 @@ def prepare():
         raise RuntimeError("projected initial-data/socket preflight fails")
     ipc_regression = json.loads(IPC_REGRESSION.read_text(encoding="utf-8"))
     quality_completion = json.loads(QUALITY_COMPLETION_REGRESSION.read_text(encoding="utf-8"))
+    rollback_correlation_regression = json.loads(ROLLBACK_AUDIT_CORRELATION_REGRESSION.read_text(encoding="utf-8"))
     if ipc_regression.get("IPC_IDENTITY_CONTRACT_V1") != "PASS":
         raise RuntimeError("IPC identity contract preflight fails")
     if quality_completion.get("QUALITY_V4_COMPLETION_CLASSIFICATION") != "PASS":
         raise RuntimeError("Quality V4 completion-classification preflight fails")
+    if rollback_correlation_regression.get("ROLLBACK_AUDIT_CORRELATION_REGRESSION") != "PASS":
+        raise RuntimeError("rollback-audit correlation regression preflight fails")
     cross_window_regression = None
     if TWO_WINDOW_IPC_MODE:
         cross_window_regression = json.loads(CROSS_WINDOW_IPC_REGRESSION.read_text(encoding="utf-8"))
@@ -310,6 +315,7 @@ def prepare():
         "ipc_identity_contract": ipc_identity,
         "ipc_contract_regression": {"path": str(IPC_REGRESSION), "sha256": sha256(IPC_REGRESSION), "status": ipc_regression["IPC_IDENTITY_CONTRACT_V1"]},
         "quality_v4_completion_regression": {"path": str(QUALITY_COMPLETION_REGRESSION), "sha256": sha256(QUALITY_COMPLETION_REGRESSION), "status": quality_completion["QUALITY_V4_COMPLETION_CLASSIFICATION"]},
+        "rollback_audit_correlation_regression": {"path": str(ROLLBACK_AUDIT_CORRELATION_REGRESSION), "sha256": sha256(ROLLBACK_AUDIT_CORRELATION_REGRESSION), "status": rollback_correlation_regression["ROLLBACK_AUDIT_CORRELATION_REGRESSION"]},
         "cross_window_ipc_regression": None if cross_window_regression is None else {
             "path": str(CROSS_WINDOW_IPC_REGRESSION),
             "sha256": sha256(CROSS_WINDOW_IPC_REGRESSION),
@@ -378,21 +384,12 @@ def audit(cases: list[Path], return_code: int) -> dict:
     traces, rollback = {}, {}
     for sid, case in enumerate(cases):
         trace = trace_rows(sid); traces[str(sid)] = trace
-        by_event = {}
-        for row in trace: by_event.setdefault(row.get("event"), []).append(row)
-        checkpoints = {int(row.get("window_id", -1)): row for row in by_event.get("CHECKPOINT_WRITE", [])}
-        restored = by_event.get("POST_ROLLBACK_BEFORE_NEXT_INPUT", [])
-        persistent = ("U", "p", "phi", "Uf", "cellDisplacement", "mesh_points")
-        field_ok = bool(checkpoints and restored) and all(
-            (checkpoint := checkpoints.get(int(item.get("window_id", -1)))) is not None and
-            all(persistent_equal(checkpoint, item, name) for name in persistent) and
-            checkpoint["physical_time"] == item["physical_time"] and checkpoint["time_index"] == item["time_index"]
-            for item in restored)
-        mesh_ok = bool(checkpoints and restored) and all(
-            (checkpoint := checkpoints.get(int(item.get("window_id", -1)))) is not None and
-            persistent_equal(checkpoint, item, "mesh_points") for item in restored)
-        derived_ok = bool(checkpoints and restored) and all(item["states"]["meshPhi"]["classification"] in ("PERSISTENT_RESTORED", "NOT_OBSERVABLE_NOT_REGISTERED") for item in restored)
-        rollback[str(sid)] = {"events": [row.get("event") for row in trace], "field_identity": field_ok, "mesh_identity": mesh_ok, "derived_history": derived_ok, "checkpoints": checkpoints, "restores": restored}
+        correlated = correlate_rollback_trace(trace)
+        pairs = correlated.get("restore_pairs", [])
+        field_ok = correlated.get("status") == "PASS" and bool(pairs) and all(item.get("field_history_identity") for item in pairs)
+        mesh_ok = correlated.get("status") == "PASS" and bool(pairs) and all(item.get("mesh_identity") for item in pairs)
+        derived_ok = correlated.get("status") == "PASS" and bool(pairs) and all(item.get("meshPhi", {}).get("pass") for item in pairs)
+        rollback[str(sid)] = {"events": [row.get("event") for row in trace], "field_identity": field_ok, "mesh_identity": mesh_ok, "derived_history": derived_ok, "correlation": correlated}
     quality = {}
     for sid, case in enumerate(cases):
         try:

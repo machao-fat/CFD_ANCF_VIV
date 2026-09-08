@@ -1,0 +1,27 @@
+{
+  "schema_version": "rollback-generation-correlation-contract-v1",
+  "trace_order": "append-only JSONL line order is the canonical event sequence when the adapter does not emit event_sequence",
+  "checkpoint_generation": "every CHECKPOINT_WRITE creates one new active generation",
+  "restore_binding": "each POST_ROLLBACK_BEFORE_NEXT_INPUT binds only to the latest chronologically preceding active generation",
+  "identity_checks": [
+    "physical_time",
+    "time_index",
+    "adapter_build_sha256",
+    "U",
+    "p",
+    "phi",
+    "Uf",
+    "pointDisplacement",
+    "cellDisplacement",
+    "mesh_points",
+    "old_points",
+    "relevant oldTime semantic identity",
+    "meshPhi persistent or approved deterministic reconstruction"
+  ],
+  "forbidden": [
+    "keying checkpoints only by adapter window_id",
+    "choosing a closest checkpoint when lifecycle order is missing or ambiguous",
+    "treating missing state inventory as pass"
+  ],
+  "failure_policy": "missing checkpoint, restore before checkpoint, nonmonotonic sequence, time/timeIndex mismatch, missing inventory, or state mismatch is FAIL"
+}
