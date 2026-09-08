@@ -241,6 +241,46 @@ int main(int argc, char *argv[])
     resetRestore.boundaryFieldRef() == vector(1.0, -2.0, 3.0);
     resetRestore.reset(tmp<pointVectorField>(copyConstructed));
 
+    // Reproduce the adapter's lifecycle condition locally, without changing
+    // the registered field or running CFD: a fixed-value boundary can differ
+    // from its adjacent internal points.  This is the state in which a
+    // checkpoint copy must preserve RHS boundary values, rather than rebuild
+    // them from the destination's patchInternalField().
+    pointVectorField lifecycleSource(live);
+    lifecycleSource.primitiveFieldRef() = vector(0, 0.002, 0);
+    label cylinderPatch = -1;
+    forAll(points.boundary(), patchi)
+    {
+        if (points.boundary()[patchi].name() == "cylinder")
+        {
+            cylinderPatch = patchi;
+            break;
+        }
+    }
+    if (cylinderPatch < 0)
+    {
+        FatalErrorInFunction
+            << "real case has no cylinder point patch" << exit(FatalError);
+    }
+    auto* lifecycleCylinder = dynamic_cast<valuePointPatchField<vector>*>
+    (
+        &lifecycleSource.boundaryFieldRef()[cylinderPatch]
+    );
+    if (lifecycleCylinder == nullptr)
+    {
+        FatalErrorInFunction
+            << "cylinder point patch is not value-backed" << exit(FatalError);
+    }
+    *lifecycleCylinder == vector::zero;
+
+    pointVectorField lifecycleConstructor(lifecycleSource);
+    pointVectorField lifecycleForced(lifecycleSource);
+    lifecycleForced == lifecycleSource;
+    pointVectorField lifecycleOrdinary(lifecycleSource);
+    lifecycleOrdinary = lifecycleSource;
+    pointVectorField lifecycleReset(lifecycleSource);
+    lifecycleReset.reset(tmp<pointVectorField>(lifecycleSource));
+
     const fileName outputPath
     (
         args.optionLookupOrDefault<fileName>
@@ -264,6 +304,16 @@ int main(int argc, char *argv[])
     writeMethod(output, "reset", live, resetAssignment, points.boundary()); output << ',';
     writeMethod(output, "forced_restore", live, forcedRestore, points.boundary()); output << ',';
     writeMethod(output, "reset_restore", live, resetRestore, points.boundary());
+    output << ",\"lifecycle_condition\":{"
+           << "\"source_vs_constructor\":";
+    writeFieldComparison(output, lifecycleSource, lifecycleConstructor, points.boundary());
+    output << ",\"source_vs_forced_operator_eq\":";
+    writeFieldComparison(output, lifecycleSource, lifecycleForced, points.boundary());
+    output << ",\"source_vs_ordinary_operator_assign\":";
+    writeFieldComparison(output, lifecycleSource, lifecycleOrdinary, points.boundary());
+    output << ",\"source_vs_reset\":";
+    writeFieldComparison(output, lifecycleSource, lifecycleReset, points.boundary());
+    output << '}';
     output << "}}\n";
     output.close();
 

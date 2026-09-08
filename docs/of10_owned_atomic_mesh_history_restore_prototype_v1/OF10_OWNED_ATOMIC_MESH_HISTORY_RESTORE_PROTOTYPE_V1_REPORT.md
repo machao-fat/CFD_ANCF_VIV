@@ -127,6 +127,122 @@ Current statuses:
 - `NEXT_FORMAL_TWO_WINDOW = NOT_AUTHORIZED`
 - `NEXT_IMPLICIT_0P05S = NOT_AUTHORIZED`
 
+## 2026-09-09 lifecycle-condition closure: fixed-value boundary preservation
+
+This continuation was limited to the unresolved lifecycle condition.  It did
+not modify the production checkpoint implementation, OF10-owned interface,
+case, solver controls, ANCF, or IPC.  No formal ANCF--CFD run, two-window run,
+or `0.05 s` run was started.
+
+### Fingerprint contract and diagnostic limitation
+
+The field fingerprint serializes the `GeometricField` internal field plus its
+`boundaryField` entry.  Its canonical hash therefore covers internal values,
+the written boundary types/configuration, and written value-backed boundary
+values.  It does not include object address, field name, instance, or time
+index.  `count`, `finite`, and `old_time_levels` are emitted as separate trace
+members; old-time content is separately serialized only if a pre-existing
+level is reported.  The observed `pointDisplacement` and copy have zero
+old-time levels throughout this fixture.
+
+The only new no-ANCF physical invocation was immutable
+`runtime/of10_owned_atomic_mesh_history_restore_prototype_v1_precice_fixture_006`,
+using diagnostic adapter
+`adapter_diagnostic_point_displacement_lifecycle_004` with SHA-256
+`bfa0dd11708abe9bb48809e29f81b45f095d5d7f1392cb044bdf6cc9c84c871d`.
+Its fluid and prescribed-motion participant both returned zero; no FPE or
+solver process failure was observed.  This adapter is diagnostic-only and is
+not a production baseline.  Its new JSON writer has one extra closing brace
+in each lifecycle-comparison object, so the wrapper correctly rejected its
+trace as non-JSON.  The original trace is preserved unchanged; the numerical
+facts below were extracted read-only by removing only that known surplus
+delimiter in memory, never by rewriting the runtime evidence.  Consequently
+the fixture is **not** a validation PASS and must not authorize subsequent
+tests.
+
+### Exact numeric lifecycle evidence
+
+The live and checkpoint-copy fields are distinct objects with distinct
+internal storage.  Their name, instance (`0.1`), time index (`0`), patch
+types/sizes, and zero old-time-level count agree.  Before the adapter's
+generic `pointVectorField` store assignment, all compared quantities agree:
+
+| component | difference before assignment |
+| --- | --- |
+| internal field, 16,524 points | max abs `0`, L2 `0` |
+| outlet fixedValue, 122 points | max abs `0`, L2 `0` |
+| inlet fixedValue, 122 points | max abs `0`, L2 `0` |
+| cylinder fixedValue, 80 points | max abs `0`, L2 `0` |
+
+Immediately after
+`*pointVectorFieldCopies_[i] == *pointVectorFields_[i]`, the live field is
+unchanged but the copy differs only at the cylinder value patch: max abs
+`0.002 m`, L2 `0.0178885438199983`, first maximal component `y` at local
+index `0`.  The internal field remains exact (`max abs=0`, `L2=0`), as do
+the outlet and inlet fixed-value patches.  Owner mesh-history restoration
+does not change either value.  Generic field restore then makes the live
+field equal to this already-corrupt copy.  The incoming preCICE sample occurs
+only after that restore boundary; it is not the cause of the copied checkpoint
+value.  The serialization pre/post observations are numerically identical,
+so fingerprint serialization is not the mutation source.
+
+### Source-level causal mechanism
+
+This is now an exact OF10 point-field lifecycle defect, rather than an
+unexplained hash discrepancy.  The adapter stores and restores generic
+`pointVectorField`s with forced `==`.  `GeometricField::operator==` calls
+`boundaryFieldRef() == gf.boundaryField()`.  At a fixed-value point patch,
+virtual dispatch reaches
+`valuePointPatchField::operator==(const pointPatchField&)`, whose actual
+implementation assigns `this->patchInternalField()` -- the *destination*
+patch's internal values -- rather than the RHS patch's stored values.  In the
+checkpoint condition, the cylinder boundary value is zero while its associated
+internal point value is `+0.002 m`; forced assignment therefore overwrites the
+copy's boundary checkpoint value with `+0.002 m`.
+
+A separate no-CFD lifecycle-condition probe was built in the same isolated
+OF10 ABI (executable SHA-256
+`c2c01864dd02928658f69cb556e21fbac07faf9140b0223dcd2282a603dac305`) and
+read the real `fixture_005` `0.100 s` field without writing the case or
+running the adapter.  It creates only local fields with this exact mismatch:
+internal `y=+0.002 m` and cylinder stored fixed value `0`.  The result is:
+
+| OF10 mechanism | cylinder max abs / L2 vs source |
+| --- | --- |
+| copy constructor | `0` / `0` |
+| forced `==` | `0.002` / `0.0178885438199983` |
+| ordinary `=` | `0.002` / `0.0178885438199983` |
+| `reset(tmp<pointVectorField>)` | `0` / `0` |
+
+This also explains why the earlier offline probe disproved an *unconditional*
+operator defect: its ordinary file-read field had equal internal and boundary
+values, so the lifecycle precondition was absent.  It does not invalidate the
+runtime failure.
+
+### Decision
+
+The smallest candidate repair is to use an OF10-supported full-field reset
+for the affected generic `pointVectorField` checkpoint-copy and restore
+paths, because it reconstructs the boundary-field clones from the source
+rather than assigning through `pointPatchField`.  It has **not** been applied:
+this continuation was authorized to locate the lifecycle condition, and the
+one permitted diagnostic fixture has already been consumed and failed its
+diagnostic-output format contract.  A future, separately authorized repair
+must first correct the diagnostic serialization, implement the narrowly
+scoped `pointVectorField` change in a new adapter build, repeat the targeted
+no-CFD regression, and then obtain explicit authorization for one fresh
+preCICE fixture.  `meshPhi` ownership and the OF10-owned mesh-history API are
+not implicated by this result.
+
+Current authoritative statuses are:
+
+- `POINT_DISPLACEMENT_ROLLBACK_IDENTITY_FAILURE: ROOT_CAUSE_CONFIRMED`
+- `REAL_PRECICE_JOINT_FIXTURE = FAIL` (the original field identity failure;
+  fixture_006 is diagnostic-evidence-only with malformed trace output)
+- `EXPLICIT_ONE_STEP_REGRESSION = NOT_RUN`
+- `NEXT_FORMAL_TWO_WINDOW = NOT_AUTHORIZED`
+- `NEXT_IMPLICIT_0P05S = NOT_AUTHORIZED`
+
 ## 2026-09-09 final authoritative update: copy mechanism not reproduced
 
 The preceding localization describes the runtime observation accurately, but
@@ -390,6 +506,24 @@ defect.  No production adapter patch was generated or run.
 
 - `POINT_DISPLACEMENT_ROLLBACK_IDENTITY_FAILURE: ADAPTER_LIFECYCLE_CONDITION_UNRESOLVED`
 - `REAL_PRECICE_JOINT_FIXTURE = FAIL`
+- `EXPLICIT_ONE_STEP_REGRESSION = NOT_RUN`
+- `NEXT_FORMAL_TWO_WINDOW = NOT_AUTHORIZED`
+- `NEXT_IMPLICIT_0P05S = NOT_AUTHORIZED`
+
+### Superseding authoritative status (after lifecycle-condition probe)
+
+The immediately preceding `ADAPTER_LIFECYCLE_CONDITION_UNRESOLVED` status is
+superseded by the later `fixture_006` component trace and the no-CFD
+lifecycle-condition probe recorded above.  The earlier probe was correct only
+for its equal-internal/equal-boundary input; it did not exercise the actual
+fixed-value boundary condition present at checkpoint assignment.  The precise
+root cause is now confirmed as the generic point-field `==`/`=` lifecycle
+copying of a fixed-value boundary from the destination patch internal value.
+No production repair has been applied in this continuation.
+
+- `POINT_DISPLACEMENT_ROLLBACK_IDENTITY_FAILURE: ROOT_CAUSE_CONFIRMED`
+- `REAL_PRECICE_JOINT_FIXTURE = FAIL` (historical identity failure retained;
+  fixture_006 is diagnostic-only and has malformed JSON evidence output)
 - `EXPLICIT_ONE_STEP_REGRESSION = NOT_RUN`
 - `NEXT_FORMAL_TWO_WINDOW = NOT_AUTHORIZED`
 - `NEXT_IMPLICIT_0P05S = NOT_AUTHORIZED`

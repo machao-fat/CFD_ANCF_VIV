@@ -1,0 +1,348 @@
+--- a/Adapter.C
++++ b/Adapter.C
+@@ -1,9 +1,11 @@
+ #include "Adapter.H"
+ #include "Interface.H"
+ #include "Utilities.H"
++#include "valuePointPatchField.H"
+ 
+ #include "IOstreams.H"
+ 
++#include <cmath>
+ #include <cstdlib>
+ #include <fstream>
+ #include <iomanip>
+@@ -54,6 +56,195 @@
+     out << "}";
+ }
+ 
++template<class FieldType>
++void rollbackPointDisplacementParts(std::ostream& out, const FieldType* field)
++{
++    out << "\"pointDisplacement_parts\":{";
++    if (field == nullptr)
++    {
++        out << "\"classification\":\"NOT_OBSERVABLE_NOT_REGISTERED\"}";
++        return;
++    }
++    Foam::OStringStream internalSerialized;
++    internalSerialized << field->internalField();
++    Foam::OStringStream boundarySerialized;
++    boundarySerialized << field->boundaryField();
++    out << "\"internal_hash_fnv1a64\":\""
++        << rollbackFNV1a64(std::string(internalSerialized.str().c_str()))
++        << "\",\"boundary_hash_fnv1a64\":\""
++        << rollbackFNV1a64(std::string(boundarySerialized.str().c_str()))
++        << "\"}";
++}
++
++struct rollbackVectorDifference
++{
++    Foam::scalar maxAbs{0};
++    Foam::scalar l2{0};
++    Foam::label maxIndex{-1};
++    Foam::direction maxComponent{0};
++};
++
++
++Foam::scalar rollbackVectorComponentAbs
++(
++    const Foam::vector& value,
++    Foam::direction& component
++)
++{
++    Foam::scalar result = Foam::mag(value.x());
++    component = 0;
++    for (Foam::direction cmpt = 1; cmpt < Foam::vector::nComponents; ++cmpt)
++    {
++        const Foam::scalar candidate = Foam::mag(value.component(cmpt));
++        if (candidate > result)
++        {
++            result = candidate;
++            component = cmpt;
++        }
++    }
++    return result;
++}
++
++
++rollbackVectorDifference rollbackVectorDifferenceOf
++(
++    const Foam::UList<Foam::vector>& expected,
++    const Foam::UList<Foam::vector>& actual
++)
++{
++    rollbackVectorDifference result;
++    if (expected.size() != actual.size())
++    {
++        result.maxAbs = Foam::GREAT;
++        return result;
++    }
++
++    forAll(expected, index)
++    {
++        const Foam::vector delta = actual[index] - expected[index];
++        Foam::direction component = 0;
++        const Foam::scalar componentAbs = rollbackVectorComponentAbs(delta, component);
++        result.l2 += Foam::magSqr(delta);
++        if (componentAbs > result.maxAbs)
++        {
++            result.maxAbs = componentAbs;
++            result.maxIndex = index;
++            result.maxComponent = component;
++        }
++    }
++    result.l2 = std::sqrt(result.l2);
++    return result;
++}
++
++
++void writeRollbackVectorDifference
++(
++    std::ostream& out,
++    const Foam::UList<Foam::vector>& expected,
++    const Foam::UList<Foam::vector>& actual
++)
++{
++    if (expected.size() != actual.size())
++    {
++        out << "{\"classification\":\"SIZE_MISMATCH\",\"expected_count\":"
++            << expected.size() << ",\"actual_count\":" << actual.size() << '}';
++        return;
++    }
++    const rollbackVectorDifference difference = rollbackVectorDifferenceOf(expected, actual);
++    out << "{\"classification\":\"NUMERIC_COMPARISON\",\"count\":"
++        << expected.size() << ",\"max_abs\":" << difference.maxAbs
++        << ",\"l2\":" << difference.l2
++        << ",\"max_index\":" << difference.maxIndex
++        << ",\"max_component\":" << difference.maxComponent << '}';
++}
++
++
++void rollbackPointDisplacementLifecycleComparison
++(
++    std::ostream& out,
++    const std::string& name,
++    const Foam::pointVectorField* live,
++    const Foam::pointVectorField* copy
++)
++{
++    out << "\"" << name << "\":{";
++    if (live == nullptr || copy == nullptr)
++    {
++        out << "\"classification\":\"NOT_OBSERVABLE_NOT_REGISTERED\"}";
++        return;
++    }
++
++    out << "\"classification\":\"READ_ONLY_LIFECYCLE_COMPARISON\","
++        << "\"live_object\":\"" << static_cast<const void*>(live) << "\","
++        << "\"copy_object\":\"" << static_cast<const void*>(copy) << "\","
++        << "\"same_object\":" << (live == copy ? "true" : "false") << ','
++        << "\"live_internal_storage\":\""
++        << static_cast<const void*>(live->primitiveField().cdata()) << "\","
++        << "\"copy_internal_storage\":\""
++        << static_cast<const void*>(copy->primitiveField().cdata()) << "\","
++        << "\"same_internal_storage\":"
++        << (live->primitiveField().cdata() == copy->primitiveField().cdata() ? "true" : "false") << ','
++        << "\"live_metadata\":{\"name\":\"" << live->name()
++        << "\",\"instance\":\"" << live->instance()
++        << "\",\"time_index\":" << live->time().timeIndex()
++        << ",\"old_time_levels\":" << live->nOldTimes() << "},"
++        << "\"copy_metadata\":{\"name\":\"" << copy->name()
++        << "\",\"instance\":\"" << copy->instance()
++        << "\",\"time_index\":" << copy->time().timeIndex()
++        << ",\"old_time_levels\":" << copy->nOldTimes() << "},"
++        << "\"internal\":";
++    writeRollbackVectorDifference(out, live->primitiveField(), copy->primitiveField());
++    out << ",\"patches\":[";
++    forAll(live->boundaryField(), patchi)
++    {
++        if (patchi)
++        {
++            out << ',';
++        }
++        const Foam::pointPatchField<Foam::vector>& livePatch = live->boundaryField()[patchi];
++        const Foam::pointPatchField<Foam::vector>& copyPatch = copy->boundaryField()[patchi];
++        out << "{\"name\":\"" << live->mesh().boundary()[patchi].name()
++            << "\",\"live_type\":\"" << livePatch.type()
++            << "\",\"copy_type\":\"" << copyPatch.type()
++            << "\",\"live_size\":" << livePatch.size()
++            << ",\"copy_size\":" << copyPatch.size()
++            << ",\"live_fixes_value\":" << (livePatch.fixesValue() ? "true" : "false")
++            << ",\"copy_fixes_value\":" << (copyPatch.fixesValue() ? "true" : "false")
++            << ",\"live_updated\":" << (livePatch.updated() ? "true" : "false")
++            << ",\"copy_updated\":" << (copyPatch.updated() ? "true" : "false") << ',';
++        const auto* liveValue = dynamic_cast<const Foam::valuePointPatchField<Foam::vector>*>(&livePatch);
++        const auto* copyValue = dynamic_cast<const Foam::valuePointPatchField<Foam::vector>*>(&copyPatch);
++        if (liveValue != nullptr && copyValue != nullptr)
++        {
++            out << "\"value_storage\":\"valuePointPatchField\",\"values\":";
++            writeRollbackVectorDifference
++            (
++                out,
++                static_cast<const Foam::Field<Foam::vector>&>(*liveValue),
++                static_cast<const Foam::Field<Foam::vector>&>(*copyValue)
++            );
++        }
++        else
++        {
++            out << "\"value_storage\":\"NOT_VALUE_BACKED\"";
++        }
++        out << '}';
++    }
++    out << "],\"old_time\":{\"live_levels\":" << live->nOldTimes()
++        << ",\"copy_levels\":" << copy->nOldTimes();
++    if (live->nOldTimes() > 0 && copy->nOldTimes() > 0)
++    {
++        out << ",\"internal\":";
++        writeRollbackVectorDifference
++        (
++            out,
++            live->oldTime().primitiveField(),
++            copy->oldTime().primitiveField()
++        );
++    }
++    out << "}}}";
++}
++
+ void rollbackPointsFingerprint(std::ostream& out, const std::string& name, const Foam::pointField& points)
+ {
+     Foam::vector centroid(0, 0, 0);
+@@ -521,6 +712,9 @@
+     if (isCouplingOngoing())
+     {
+         readCouplingData(precice_->getMaxTimeStepSize());
++        // Diagnostic-only: makes the incoming preCICE sample distinct from
++        // checkpoint restoration in the trace.
++        writeRollbackDiagnostic("POST_NEXT_COUPLING_INPUT");
+     }
+ 
+     // As soon as OpenFOAM writes the results, it will not try to write again
+@@ -1080,6 +1274,10 @@
+     {
+         pointVectorFields_.push_back(field);
+         pointVectorFieldCopies_.push_back(new pointVectorField(*field));
++        if (field->name() == "pointDisplacement")
++        {
++            writeRollbackDiagnostic("POINT_DISPLACEMENT_COPY_CONSTRUCTED");
++        }
+         // TODO: Old time
+         // pointVectorFieldsOld_.push_back(const_cast<pointVectorField&>(field->oldTime())));
+         // pointVectorFieldCopiesOld_.push_back(new pointVectorField(field->oldTime()));
+@@ -1139,12 +1337,20 @@
+     // Reload the runTime
+     reloadCheckpointTime();
+ 
++    // Diagnostic-only phase boundary. It occurs before the owner-managed
++    // mesh-history restore and before any ordinary-field assignment.
++    writeRollbackDiagnostic("PRE_OWNER_MESH_HISTORY_RESTORE");
++
+     // Reload the meshPoints (if FSI is enabled)
+     if (FSIenabled_)
+     {
+         reloadMeshPoints();
+     }
+ 
++    // Diagnostic-only phase boundary. It isolates the effect of the
++    // owner-managed mesh-history restore from generic field restoration.
++    writeRollbackDiagnostic("POST_OWNER_MESH_HISTORY_RESTORE");
++
+     // Reload all the fields of type volScalarField
+     for (uint i = 0; i < volScalarFields_.size(); i++)
+     {
+@@ -1312,6 +1518,10 @@
+         }
+     }
+ 
++    // Diagnostic-only phase boundary. No new coupling input has been read at
++    // this point, so it identifies the state produced by ordinary restoration.
++    writeRollbackDiagnostic("POST_GENERIC_FIELD_RESTORE");
++
+     // NOTE: Add here other field types to read, if needed.
+ 
+ #ifdef ADAPTER_DEBUG_MODE
+@@ -1394,7 +1604,15 @@
+     // Store all the fields of type pointVectorField
+     for (uint i = 0; i < pointVectorFields_.size(); i++)
+     {
++        if (pointVectorFields_.at(i)->name() == "pointDisplacement")
++        {
++            writeRollbackDiagnostic("PRE_POINT_DISPLACEMENT_COPY_ASSIGNMENT");
++        }
+         *(pointVectorFieldCopies_.at(i)) == *(pointVectorFields_.at(i));
++        if (pointVectorFields_.at(i)->name() == "pointDisplacement")
++        {
++            writeRollbackDiagnostic("POST_POINT_DISPLACEMENT_COPY_ASSIGNMENT");
++        }
+     }
+ 
+     // Store all the fields of type pointTensorField
+@@ -1404,6 +1622,11 @@
+     }
+     // NOTE: Add here other types to write, if needed.
+ 
++    // The preceding generic copies are complete. Record this separately from
++    // CHECKPOINT_WRITE, whose existing event intentionally occurs before the
++    // copy loops for its established lifecycle meaning.
++    writeRollbackDiagnostic("POST_GENERIC_FIELD_CHECKPOINT_STORE");
++
+ #ifdef ADAPTER_DEBUG_MODE
+     adapterInfo(
+         "Checkpoint for time t = " + std::to_string(runTime_.value()) + " was stored.");
+@@ -1434,18 +1657,55 @@
+     const auto* meshPhi = mesh_.foundObject<surfaceScalarField>("meshPhi") ? &mesh_.lookupObject<surfaceScalarField>("meshPhi") : nullptr;
+     const auto* pointDisplacement = mesh_.foundObject<pointVectorField>("pointDisplacement") ? &mesh_.lookupObject<pointVectorField>("pointDisplacement") : nullptr;
+     const auto* cellDisplacement = mesh_.foundObject<volVectorField>("cellDisplacement") ? &mesh_.lookupObject<volVectorField>("cellDisplacement") : nullptr;
++    bool pointDisplacementInGenericCheckpoint = false;
++    for (const pointVectorField* field : pointVectorFields_)
++    {
++        if (field != nullptr && field->name() == "pointDisplacement")
++        {
++            pointDisplacementInGenericCheckpoint = true;
++            break;
++        }
++    }
+     output << "{\"event\":\"" << event << "\",\"window_id\":" << rollbackDiagnosticWindow_
+            << ",\"iteration_id\":" << rollbackDiagnosticIteration_
+            << ",\"physical_time\":" << std::setprecision(17) << runTime_.value()
+            << ",\"time_index\":" << runTime_.timeIndex()
+            << ",\"adapter_build_identity\":\"openfoam10-d53753b1-rollback-diagnostic-v1\","
+-           << "\"adapter_build_sha256\":\"" << (buildSha == nullptr ? "UNSET" : buildSha) << "\",\"states\":{";
++           << "\"adapter_build_sha256\":\"" << (buildSha == nullptr ? "UNSET" : buildSha) << "\",\"checkpoint_inventory\":{\"pointDisplacement_generic_pointVector\":" << (pointDisplacementInGenericCheckpoint ? "true" : "false") << "},\"states\":{";
++    const Foam::pointVectorField* pointDisplacementCopy = nullptr;
++    for (std::size_t i = 0; i < pointVectorFields_.size(); ++i)
++    {
++        if (pointVectorFields_[i] == pointDisplacement && i < pointVectorFieldCopies_.size())
++        {
++            pointDisplacementCopy = pointVectorFieldCopies_[i];
++            break;
++        }
++    }
++    rollbackPointDisplacementLifecycleComparison
++    (
++        output,
++        "pointDisplacement_lifecycle_pre_fingerprint",
++        pointDisplacement,
++        pointDisplacementCopy
++    );
++    output << ',';
+     rollbackFieldFingerprint(output, "U", U); output << ',';
+     rollbackFieldFingerprint(output, "p", p); output << ',';
+     rollbackFieldFingerprint(output, "phi", phi); output << ',';
+     rollbackFieldFingerprint(output, "Uf", Uf); output << ',';
+     rollbackFieldFingerprint(output, "meshPhi", meshPhi); output << ',';
+     rollbackFieldFingerprint(output, "pointDisplacement", pointDisplacement); output << ',';
++    rollbackPointDisplacementParts(output, pointDisplacement); output << ',';
++    rollbackFieldFingerprint(output, "pointDisplacement_checkpoint_copy", pointDisplacementCopy); output << ',';
++    rollbackPointDisplacementParts(output, pointDisplacementCopy); output << ',';
++    rollbackPointDisplacementLifecycleComparison
++    (
++        output,
++        "pointDisplacement_lifecycle_post_fingerprint",
++        pointDisplacement,
++        pointDisplacementCopy
++    );
++    output << ',';
+     rollbackFieldFingerprint(output, "cellDisplacement", cellDisplacement); output << ',';
+     rollbackPointsFingerprint(output, "mesh_points", mesh_.points()); output << ',';
+     rollbackPointsFingerprint(output, "old_points", mesh_.oldPoints());
