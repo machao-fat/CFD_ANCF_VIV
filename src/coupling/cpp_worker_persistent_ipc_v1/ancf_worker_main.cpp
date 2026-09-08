@@ -397,12 +397,29 @@ int process_step(const std::vector<char>& payload, std::vector<char>& response,
         std::abs(dt_s - expected_dt_s) > 1.0e-15) return 16;
   } else if (allow_implicit_retry && lineage_mode == 2 && expected_sequence % 2 == 1) {
     // A parallel-implicit retry restores the physical window state but must
-    // issue fresh binary request/transaction IDs. The odd sequence starts a
-    // new trial of the same physical window; the following even sequence is
-    // checked by the previous branch. This is opt-in at process launch.
-    if (global_step != expected_global_step || bridge_step != expected_bridge_step ||
-        integer_tick != expected_tick || std::abs(time_s - expected_time_s) > 1.0e-12 ||
-        std::abs(dt_s - expected_dt_s) > 1.0e-15) return 16;
+    // issue fresh binary request/transaction IDs.  After an accepted retry
+    // correction, however, the next odd wire sequence is the prediction for
+    // the *next* physical window, not another retry.  Both states are legal,
+    // but only with their exact, distinct physical identities.
+    const bool same_window_retry =
+        global_step == expected_global_step && bridge_step == expected_bridge_step &&
+        integer_tick == expected_tick &&
+        std::abs(time_s - expected_time_s) <= 1.0e-12 &&
+        std::abs(dt_s - expected_dt_s) <= 1.0e-15;
+    std::uint64_t expected_next_tick = 0;
+    const bool next_window_prediction =
+        global_step == expected_global_step + 1 &&
+        bridge_step == expected_bridge_step + 1 &&
+        next_tick(expected_tick, expected_dt_s, expected_next_tick) &&
+        integer_tick == expected_next_tick &&
+        canonical_time_tick(time_s, request_tick) && integer_tick == request_tick &&
+        std::abs(time_s - (expected_time_s + expected_dt_s)) <= 1.0e-12 &&
+        std::abs(dt_s - expected_dt_s) <= 1.0e-15;
+    if (!same_window_retry && !next_window_prediction) {
+      std::cerr << "worker implicit retry-or-next-window identity mismatch at sequence "
+                << sequence << '\n';
+      return 16;
+    }
   } else {
     std::uint64_t expected_next_tick = 0;
     if (global_step != expected_global_step + 1 || bridge_step != expected_bridge_step + 1 ||

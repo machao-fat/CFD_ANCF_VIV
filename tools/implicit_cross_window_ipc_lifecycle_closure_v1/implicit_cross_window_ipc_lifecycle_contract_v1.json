@@ -1,0 +1,25 @@
+{
+  "schema_version": "implicit-cross-window-ipc-lifecycle-contract-v1",
+  "scope": "persistent C++ ANCF worker in parallel-implicit transport only",
+  "physical_identity": {
+    "run_id": "stable for the complete process lifetime",
+    "global_step": "increments only after a correction is committed",
+    "case_local_bridge_step": "increments with global_step",
+    "integer_tick_and_time": "advance exactly one frozen dt at a next-window prediction"
+  },
+  "transport_identity": {
+    "wire_sequence": "globally contiguous and monotonic; never restored",
+    "request_id": "globally unique and never restored",
+    "transaction_id": "globally unique and never restored"
+  },
+  "legal_after_implicit_retry_correction": [
+    "same physical window retry prediction with the same physical identity and a fresh odd wire sequence",
+    "next physical window prediction with global_step/bridge_step incremented by one and time/tick incremented by one frozen dt"
+  ],
+  "rejected": [
+    "any other physical identity",
+    "reused wire/request/transaction identity",
+    "physical advance before correction commit"
+  ],
+  "worker_return_code_16": "identity/contract violation; the worker terminates fail-closed"
+}
