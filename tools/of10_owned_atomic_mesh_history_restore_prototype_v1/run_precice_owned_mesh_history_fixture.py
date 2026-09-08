@@ -55,9 +55,30 @@ def write(path: Path, text: str) -> None:
         stream.write(text)
 
 
+def participant_code_a_restore_b_restore_b() -> str:
+    """Keep the normal preCICE participant, but freeze the intended trials.
+
+    preCICE delivers the initialized +A sample to Fluid for trial one.  The
+    write before that first advance is delivered after rollback, so its first
+    scheduled value must already be B.  The resulting Fluid inputs are
+    +A, -A, -A: checkpoint -> A -> restore -> B -> restore -> B.
+    """
+    code = lifecycle.participant_code()
+    marker = "schedule=(A,-A,-A)"
+    if marker not in code:
+        raise RuntimeError("unexpected frozen lifecycle participant source")
+    code = code.replace(
+        "# after each advance, producing trial inputs +A, +A, -A, -A.\n"
+        "schedule=(A,-A,-A)",
+        "# after each advance, producing Fluid trial inputs +A, -A, -A.\n"
+        "schedule=(-A,-A,-A)",
+    )
+    return code
+
+
 def run(case: Path) -> int:
     runtime = base.RUNTIME
-    write(runtime / "participant.py", lifecycle.participant_code())
+    write(runtime / "participant.py", base.participant_code())
     trace = runtime / "adapter_rollback_trace.jsonl"
     adapter_sha = sha256(base.DIAG_LIBRARY_FILE)
     script = "\n".join((
@@ -96,7 +117,7 @@ def main() -> int:
     base.DIAG_LIBRARY_FILE = base.DIAG_LIBRARY / "libpreciceAdapterFunctionObject.so"
     base.TRIAL_Y_M = (lifecycle.AMPLITUDE_Y_M, -lifecycle.AMPLITUDE_Y_M)
     base.xml = lifecycle.xml
-    base.participant_code = lifecycle.participant_code
+    base.participant_code = participant_code_a_restore_b_restore_b
 
     case = base.prepare()
     contract_path = base.RUNTIME / "contract.json"
@@ -104,7 +125,8 @@ def main() -> int:
     contract.update({
         "schema_version": "of10-owned-atomic-mesh-history-restore-prototype-v1",
         "fixture": "real-precice-no-ancf-prescribed-motion",
-        "frozen_schedule_y_m": [0.002, 0.002, -0.002, -0.002],
+        "participant_write_schedule_y_m": [-0.002, -0.002, -0.002],
+        "expected_fluid_trial_inputs_y_m": [0.002, -0.002, -0.002],
         "adapter_library_sha256": sha256(base.DIAG_LIBRARY_FILE),
         "openfoam_abi_prefix": PROTOTYPE_ROOT_WSL + "/openfoam10",
         "physical_windows": 1,

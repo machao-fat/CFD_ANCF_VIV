@@ -281,6 +281,32 @@ int main(int argc, char *argv[])
     pointVectorField lifecycleReset(lifecycleSource);
     lifecycleReset.reset(tmp<pointVectorField>(lifecycleSource));
 
+    // Exercise both production directions with independently-owned temporary
+    // fields.  No registered field is passed to tmp<>, so reset() may safely
+    // consume the temporary while the live/checkpoint objects retain identity.
+    pointVectorField lifecycleCheckpoint(lifecycleSource);
+    lifecycleCheckpoint.reset
+    (
+        tmp<pointVectorField>(new pointVectorField(lifecycleSource))
+    );
+    pointVectorField lifecycleRestored(lifecycleSource);
+    lifecycleRestored.primitiveFieldRef() = vector(0, -0.004, 0);
+    auto* restoredCylinder = dynamic_cast<valuePointPatchField<vector>*>
+    (
+        &lifecycleRestored.boundaryFieldRef()[cylinderPatch]
+    );
+    if (restoredCylinder == nullptr)
+    {
+        FatalErrorInFunction
+            << "restored cylinder point patch is not value-backed"
+            << exit(FatalError);
+    }
+    *restoredCylinder == vector(0, -0.004, 0);
+    lifecycleRestored.reset
+    (
+        tmp<pointVectorField>(new pointVectorField(lifecycleCheckpoint))
+    );
+
     const fileName outputPath
     (
         args.optionLookupOrDefault<fileName>
@@ -313,6 +339,14 @@ int main(int argc, char *argv[])
     writeFieldComparison(output, lifecycleSource, lifecycleOrdinary, points.boundary());
     output << ",\"source_vs_reset\":";
     writeFieldComparison(output, lifecycleSource, lifecycleReset, points.boundary());
+    output << ",\"checkpoint_store_via_owned_tmp\":";
+    writeFieldComparison(output, lifecycleSource, lifecycleCheckpoint, points.boundary());
+    output << ",\"restore_via_owned_tmp\":";
+    writeFieldComparison(output, lifecycleSource, lifecycleRestored, points.boundary());
+    output << ",\"old_time_levels\":{\"source\":"
+           << lifecycleSource.nOldTimes()
+           << ",\"checkpoint\":" << lifecycleCheckpoint.nOldTimes()
+           << ",\"restored\":" << lifecycleRestored.nOldTimes() << '}';
     output << '}';
     output << "}}\n";
     output.close();

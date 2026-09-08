@@ -242,7 +242,28 @@ void rollbackPointDisplacementLifecycleComparison
             copy->oldTime().primitiveField()
         );
     }
-    out << "}}}";
+    out << "}}";
+}
+
+
+// The generic pointVectorField path must preserve the complete point-patch
+// state.  In particular, direct assignment through pointPatchField rebuilds a
+// fixed-value patch from the destination patchInternalField().  Reset from an
+// independently-owned full-field temporary clones the source internal and
+// boundary state without exposing the registered source field to transfer.
+void resetCheckpointPointVectorField
+(
+    Foam::pointVectorField& target,
+    const Foam::pointVectorField& source
+)
+{
+    target.reset
+    (
+        Foam::tmp<Foam::pointVectorField>
+        (
+            new Foam::pointVectorField(source)
+        )
+    );
 }
 
 void rollbackPointsFingerprint(std::ostream& out, const std::string& name, const Foam::pointField& points)
@@ -1439,16 +1460,28 @@ void preciceAdapter::Adapter::readCheckpoint()
     for (uint i = 0; i < pointVectorFields_.size(); i++)
     {
         // Load the volume field
-        *(pointVectorFields_.at(i)) == *(pointVectorFieldCopies_.at(i));
+        resetCheckpointPointVectorField
+        (
+            *(pointVectorFields_.at(i)),
+            *(pointVectorFieldCopies_.at(i))
+        );
 
         int nOldTimes(pointVectorFields_.at(i)->nOldTimes());
         if (nOldTimes >= 1)
         {
-            pointVectorFields_.at(i)->oldTime() == pointVectorFieldCopies_.at(i)->oldTime();
+            resetCheckpointPointVectorField
+            (
+                pointVectorFields_.at(i)->oldTime(),
+                pointVectorFieldCopies_.at(i)->oldTime()
+            );
         }
         if (nOldTimes == 2)
         {
-            pointVectorFields_.at(i)->oldTime().oldTime() == pointVectorFieldCopies_.at(i)->oldTime().oldTime();
+            resetCheckpointPointVectorField
+            (
+                pointVectorFields_.at(i)->oldTime().oldTime(),
+                pointVectorFieldCopies_.at(i)->oldTime().oldTime()
+            );
         }
     }
 
@@ -1606,12 +1639,33 @@ void preciceAdapter::Adapter::writeCheckpoint()
     {
         if (pointVectorFields_.at(i)->name() == "pointDisplacement")
         {
-            writeRollbackDiagnostic("PRE_POINT_DISPLACEMENT_COPY_ASSIGNMENT");
+            writeRollbackDiagnostic("PRE_POINT_DISPLACEMENT_CHECKPOINT_RESET");
         }
-        *(pointVectorFieldCopies_.at(i)) == *(pointVectorFields_.at(i));
+        resetCheckpointPointVectorField
+        (
+            *(pointVectorFieldCopies_.at(i)),
+            *(pointVectorFields_.at(i))
+        );
+        int nOldTimes(pointVectorFields_.at(i)->nOldTimes());
+        if (nOldTimes >= 1)
+        {
+            resetCheckpointPointVectorField
+            (
+                pointVectorFieldCopies_.at(i)->oldTime(),
+                pointVectorFields_.at(i)->oldTime()
+            );
+        }
+        if (nOldTimes == 2)
+        {
+            resetCheckpointPointVectorField
+            (
+                pointVectorFieldCopies_.at(i)->oldTime().oldTime(),
+                pointVectorFields_.at(i)->oldTime().oldTime()
+            );
+        }
         if (pointVectorFields_.at(i)->name() == "pointDisplacement")
         {
-            writeRollbackDiagnostic("POST_POINT_DISPLACEMENT_COPY_ASSIGNMENT");
+            writeRollbackDiagnostic("POST_POINT_DISPLACEMENT_CHECKPOINT_RESET");
         }
     }
 

@@ -127,6 +127,105 @@ Current statuses:
 - `NEXT_FORMAL_TWO_WINDOW = NOT_AUTHORIZED`
 - `NEXT_IMPLICIT_0P05S = NOT_AUTHORIZED`
 
+## 2026-09-09 pointVectorField reset prototype: controlled repair result
+
+### Minimal production change and ownership
+
+The repair is based on the real build005 adapter source only.  It changes no
+OF10-owned mesh-history code, no meshPhi ownership, and no ANCF, IPC,
+preCICE, mesh, time-step, physical, PIMPLE, or coupling-convergence setting.
+Only the existing generic `pointVectorField` checkpoint store/restore loops
+and their existing old-time branches were changed.
+
+The helper `resetCheckpointPointVectorField(target, source)` constructs
+`new pointVectorField(source)` and passes that independently-owned temporary
+to `target.reset(...)`.  Thus `reset()` consumes only the temporary; it never
+receives a registered live or checkpoint field as an owning `tmp`.  Both the
+checkpoint object and the registered live field retain their object identity.
+The full-field reset clones source internal storage and point-patch state,
+avoiding the `pointPatchField` forced-assignment behavior that rebuilds a
+fixed-value boundary from the destination `patchInternalField()`.
+
+Patch `0005-adapter-point-vector-reset-checkpoint-fix.patch` was generated
+from this actual source delta, passes `git apply --check --whitespace=error`
+and `patch --dry-run --fuzz=0` against a clean real build005 `Adapter.C`.
+The diagnostic JSON writer was also corrected from `}}}` to `}}`; immutable
+fixture_006 evidence was not touched.
+
+### No-CFD save and restore regression
+
+The isolated ABI executable
+`pointDisplacementCheckpointResetProbe` has SHA-256
+`495e184581dc0b47081e8596dacd7342293f5600c9d1f2104182a8fe0a7e4129`.
+It reads the real fixture_005 0.100-s field without running CFD or loading the
+adapter.  It creates local-only lifecycle state with internal `y=+0.002 m`
+and cylinder stored fixed value `y=0`, then covers checkpoint store and
+restore using independently-owned `tmp<pointVectorField>` values.
+
+| operation | internal max abs | cylinder max abs / L2 |
+| --- | ---: | ---: |
+| old forced `==` | `0` | `0.002` / `0.0178885438199983` |
+| old ordinary `=` | `0` | `0.002` / `0.0178885438199983` |
+| reset checkpoint store | `0` | `0` / `0` |
+| reset restore after perturbation | `0` | `0` / `0` |
+
+The actual empty, symmetryPlane, and fixedValue patch types are retained.  At
+this fixture state source/checkpoint/restored `nOldTimes=0`; no old-time layer
+exists to qualify.  The production helper applies the same reset mechanism to
+the existing `nOldTimes >= 1/2` branches, but numeric multi-old-time behavior
+remains a stated qualification gap rather than an asserted PASS.
+
+### New adapter and ABI
+
+| item | value |
+| --- | --- |
+| adapter path | `/home/machao/OpenFOAM/of10_owned_atomic_mesh_history_restore_prototype_v1/adapter_pointvector_reset_build_001/lib/libpreciceAdapterFunctionObject.so` |
+| SHA-256 | `5f7c75d6fc650dd425e8b0edca3e0ba9a69b320546b667b5024246495b433a2d` |
+| core ABI | isolated prototype `libOpenFOAM`, `libfiniteVolume`, and `libmeshTools` |
+| closure check | `ldd -r` clean; no legacy `/opt/openfoam10` or user OF10 library path |
+
+### One real preCICE fixture: partial positive evidence, no qualification PASS
+
+One new immutable no-ANCF fixture was run:
+`runtime/of10_owned_atomic_mesh_history_restore_prototype_v1_precice_fixture_007_pointvector_reset`.
+It used OF `0.100 -> 0.105 s`, `dt=0.005 s`, one physical window, min/max
+iterations 2/8, and no acceleration.  The test-only participant source was
+changed before launch to write `-A,-A,-A` after initialized `+A`, explicitly
+targeting Fluid trial inputs `+A,-A,-A` (A -> restore -> B -> restore -> B).
+This uses normal preCICE and adapter input; it does not write mesh points or
+bypass the mover.
+
+Both participant and Fluid returned zero, and the repaired JSON trace parses.
+The one observed restore has time/timeIndex `0.100/0`; checkpoint versus
+post-generic-restore is exact for `pointDisplacement`, its internal field and
+cylinder boundary, U, p, phi, Uf current values, cellDisplacement, points,
+and oldPoints.  `meshPhi` is absent at both compared states.  The post-restore
+input changes the cylinder boundary by `0.004 m` relative to checkpoint,
+which proves B (`-0.002 m`) entered the real CFD path after restore rather
+than being substituted only at final commit.  The final CFD solve completed
+without FPE; maximum Co was `0.350303474526`.
+
+However, preCICE converged on iteration 2.  The trace/participant evidence
+therefore contains only one rollback and two trials, not the required second
+restore followed by a repeated B trial.  The requested same-input B replay,
+different-input isolation after *two* restores, and multi-restore mesh-history
+qualification are consequently **NOT_EVALUABLE**, not PASS.  No convergence
+threshold, input schedule, or physics setting was changed to force another
+trial, and no retry was run.
+
+The subsequent explicit prescribed-motion one-step regression is `NOT_RUN`.
+Remaining direct-observability gaps include motion indices, V0/V00 (not
+applicable in this non-subcycled path), numeric multi-old-time restoration,
+and full standalone checkMesh/mesh-quality inventory.
+
+### Current decision
+
+- `POINT_DISPLACEMENT_RESET_REPAIR = PARTIAL_PASS` (one real restore exact)
+- `A_RESTORE_B_RESTORE_B_FIXTURE_COVERAGE = FAIL` (only A -> restore -> B)
+- `EXPLICIT_ONE_STEP_REGRESSION = NOT_RUN`
+- `NEXT_FORMAL_TWO_WINDOW = NOT_AUTHORIZED`
+- `NEXT_IMPLICIT_0P05S = NOT_AUTHORIZED`
+
 ## 2026-09-09 lifecycle-condition closure: fixed-value boundary preservation
 
 This continuation was limited to the unresolved lifecycle condition.  It did
@@ -524,6 +623,21 @@ No production repair has been applied in this continuation.
 - `POINT_DISPLACEMENT_ROLLBACK_IDENTITY_FAILURE: ROOT_CAUSE_CONFIRMED`
 - `REAL_PRECICE_JOINT_FIXTURE = FAIL` (historical identity failure retained;
   fixture_006 is diagnostic-only and has malformed JSON evidence output)
+- `EXPLICIT_ONE_STEP_REGRESSION = NOT_RUN`
+- `NEXT_FORMAL_TWO_WINDOW = NOT_AUTHORIZED`
+- `NEXT_IMPLICIT_0P05S = NOT_AUTHORIZED`
+
+### Superseding current decision: reset repair fixture
+
+The preceding statement that no repair was applied is historical.  The
+controlled reset repair and its no-CFD regression are recorded above.  The
+new adapter proves exact `pointDisplacement` restoration for its one observed
+rollback, but the fixture converged on its B trial and therefore did not
+produce the authorized second rollback/B replay.  This is a coverage failure,
+not permission to rerun with altered settings.
+
+- `POINT_DISPLACEMENT_RESET_REPAIR = PARTIAL_PASS`
+- `A_RESTORE_B_RESTORE_B_FIXTURE_COVERAGE = FAIL`
 - `EXPLICIT_ONE_STEP_REGRESSION = NOT_RUN`
 - `NEXT_FORMAL_TWO_WINDOW = NOT_AUTHORIZED`
 - `NEXT_IMPLICIT_0P05S = NOT_AUTHORIZED`
