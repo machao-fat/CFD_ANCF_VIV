@@ -1,0 +1,221 @@
+--- a/src/finiteVolume/fvMesh/meshHistoryCheckpoint/meshHistoryCheckpoint.H
++++ b/src/finiteVolume/fvMesh/meshHistoryCheckpoint/meshHistoryCheckpoint.H
+@@ -5,12 +5,48 @@
+ #include "pointField.H"
+ #include "volFields.H"
+ #include "surfaceFields.H"
++#include <string>
+
+ namespace Foam
+ {
+
+ class fvMesh;
+
++//- Value-only diagnostic summaries. Constructing these never calls a
++//  demand-driven mesh-history getter.
++struct meshHistoryScalarDiagnostic
++{
++    bool present;
++    label size;
++    bool finite;
++    scalar minValue;
++    scalar maxValue;
++    label nOldTimes;
++    std::string fingerprint;
++};
++
++struct meshHistoryPointDiagnostic
++{
++    bool present;
++    label size;
++    bool finite;
++    scalar maxComponentAbs;
++    std::string fingerprint;
++};
++
++struct meshHistoryStateDiagnostic
++{
++    bool moving;
++    label curMotionTimeIndex;
++    label curTimeIndex;
++    bool storeOldCellCentres;
++    meshHistoryPointDiagnostic oldPoints;
++    meshHistoryPointDiagnostic oldCellCentres;
++    meshHistoryScalarDiagnostic V0;
++    meshHistoryScalarDiagnostic V00;
++    meshHistoryScalarDiagnostic meshPhi;
++};
++
+ //- Owner-managed snapshot of the persistent OF10 mesh-motion state.
+ //  It is intentionally not a general solver checkpoint: Time and registered
+ //  fields are restored by the caller in their existing transaction.
+@@ -40,6 +76,9 @@
+ public:
+     explicit meshHistoryCheckpoint(const fvMesh&);
+     void restore(fvMesh&) const;
++
++    //- Copy private state into a value-only, non-lazy diagnostic snapshot.
++    static meshHistoryStateDiagnostic diagnostic(const fvMesh&);
+ };
+
+ }
+--- a/src/finiteVolume/fvMesh/meshHistoryCheckpoint/meshHistoryCheckpoint.C
++++ b/src/finiteVolume/fvMesh/meshHistoryCheckpoint/meshHistoryCheckpoint.C
+@@ -1,12 +1,100 @@
+ #include "meshHistoryCheckpoint.H"
+ #include "fvMesh.H"
+ #include "IOobject.H"
++#include "OStringStream.H"
++
++#include <cmath>
++#include <iomanip>
++#include <sstream>
+
+ namespace Foam
+ {
+ namespace
+ {
+
++std::string diagnosticHash(const std::string& text)
++{
++    unsigned long long hash = 1469598103934665603ULL;
++    for (const unsigned char c : text)
++    {
++        hash ^= static_cast<unsigned long long>(c);
++        hash *= 1099511628211ULL;
++    }
++
++    std::ostringstream output;
++    output << std::hex << std::setfill('0') << std::setw(16) << hash;
++    return output.str();
++}
++
++template<class FieldType>
++meshHistoryScalarDiagnostic inspectVolume(const FieldType* field)
++{
++    meshHistoryScalarDiagnostic result{false, 0, true, 0, 0, 0, ""};
++    if (!field)
++    {
++        return result;
++    }
++
++    result.present = true;
++    result.size = field->size();
++    result.minValue = GREAT;
++    result.maxValue = -GREAT;
++    forAll(*field, i)
++    {
++        const scalar value = (*field)[i];
++        result.finite = result.finite && std::isfinite(value);
++        result.minValue = min(result.minValue, value);
++        result.maxValue = max(result.maxValue, value);
++    }
++    if (!result.size)
++    {
++        result.minValue = result.maxValue = 0;
++    }
++
++    OStringStream serialized;
++    serialized << *field;
++    result.fingerprint = diagnosticHash(std::string(serialized.str().c_str()));
++    return result;
++}
++
++meshHistoryScalarDiagnostic inspectMeshPhi(const surfaceScalarField* field)
++{
++    meshHistoryScalarDiagnostic result = inspectVolume(field);
++    if (field)
++    {
++        // nOldTimes() only reads the already-existing history chain.
++        result.nOldTimes = field->nOldTimes();
++    }
++    return result;
++}
++
++meshHistoryPointDiagnostic inspectPoints(const pointField* points)
++{
++    meshHistoryPointDiagnostic result{false, 0, true, 0, ""};
++    if (!points)
++    {
++        return result;
++    }
++
++    result.present = true;
++    result.size = points->size();
++    forAll(*points, i)
++    {
++        const point& value = (*points)[i];
++        for (direction d = 0; d < point::nComponents; ++d)
++        {
++            const scalar component = value.component(d);
++            result.finite = result.finite && std::isfinite(component);
++            result.maxComponentAbs = max(result.maxComponentAbs, mag(component));
++        }
++    }
++
++    OStringStream serialized;
++    serialized << *points;
++    result.fingerprint = diagnosticHash(std::string(serialized.str().c_str()));
++    return result;
++}
++
+ autoPtr<DimensionedField<scalar, volMesh>> copyVolume
+ (
+     const fvMesh& mesh,
+@@ -178,6 +266,27 @@
+     }
+ }
+
++meshHistoryStateDiagnostic meshHistoryCheckpoint::diagnostic(const fvMesh& mesh)
++{
++    return meshHistoryStateDiagnostic
++    {
++        mesh.moving_,
++        mesh.curMotionTimeIndex_,
++        mesh.curTimeIndex_,
++        mesh.storeOldCellCentres_,
++        inspectPoints(mesh.oldPointsPtr_.valid() ? &mesh.oldPointsPtr_() : nullptr),
++        inspectPoints
++        (
++            mesh.oldCellCentresPtr_.valid()
++          ? &mesh.oldCellCentresPtr_()
++          : nullptr
++        ),
++        inspectVolume(mesh.V0Ptr_),
++        inspectVolume(mesh.V00Ptr_),
++        inspectMeshPhi(mesh.phiPtr_)
++    };
++}
++
+ autoPtr<meshHistoryCheckpoint> fvMesh::checkpointMeshHistory() const
+ {
+     return autoPtr<meshHistoryCheckpoint>(new meshHistoryCheckpoint(*this));
+@@ -188,4 +297,9 @@
+     checkpoint.restore(*this);
+ }
+
++meshHistoryStateDiagnostic fvMesh::meshHistoryDiagnostic() const
++{
++    return meshHistoryCheckpoint::diagnostic(*this);
++}
++
+ }
+--- a/src/finiteVolume/fvMesh/fvMesh.H
++++ b/src/finiteVolume/fvMesh/fvMesh.H
+@@ -76,6 +76,7 @@
+ class fvMeshMover;
+ class volMesh;
+ class meshHistoryCheckpoint;
++struct meshHistoryStateDiagnostic;
+ class polyDistributionMap;
+
+ template<class Type, template<class> class PatchField, class GeoMesh>
+@@ -522,6 +523,9 @@
+             //- Restore a checkpoint created by checkpointMeshHistory().
+             void restoreMeshHistory(const meshHistoryCheckpoint&);
+
++            //- Return a value-only, non-lazy owner diagnostic snapshot.
++            meshHistoryStateDiagnostic meshHistoryDiagnostic() const;
++
+             //- Clear all geometry and addressing
+             void clearOut();

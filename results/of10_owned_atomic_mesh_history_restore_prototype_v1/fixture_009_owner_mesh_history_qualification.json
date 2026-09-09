@@ -1,0 +1,56 @@
+{
+  "schema_version": "of10-owner-nonlazy-mesh-history-qualification-v1",
+  "scope": "Foundation OF10, Euler, non-subcycled pimpleFoam moving-mesh path only",
+  "runtime": "runtime/of10_owned_atomic_mesh_history_restore_prototype_v1_precice_fixture_009_owner_observability",
+  "physical_window": {
+    "of_time_start_s": 0.1,
+    "of_time_end_s": 0.105,
+    "dt_s": 0.005,
+    "test_only_min_iterations": 3,
+    "max_iterations": 8,
+    "trials": ["A:+0.002m", "B:-0.002m", "B:-0.002m"],
+    "rollbacks": 2,
+    "physical_commits": 1
+  },
+  "owner_diagnostic": {
+    "side_effect_probe": "PASS",
+    "source_rule": "direct private-pointer reads only; no V0(), V00(), oldCellCentres(), meshPhi(), oldTime(), or mesh movement",
+    "checkpoint": {
+      "moving": false,
+      "cur_motion_time_index": -1,
+      "cur_time_index": 0,
+      "old_points_present": false,
+      "old_cell_centres_present": false,
+      "V0_present": false,
+      "V00_present": false,
+      "meshPhi_present": false
+    },
+    "both_restores_equal_checkpoint": true,
+    "B_replay": {
+      "mesh_points_hash": "73319a1a883723ec",
+      "old_points_hash": "ed1aa23b4b22b94a",
+      "V0_hash": "e310bfc1a7dc104f",
+      "meshPhi_hash": "b37c51b180954283",
+      "V00_present": false
+    }
+  },
+  "derived_or_inapplicable": {
+    "U_Uf_oldTime": "source-proven derived current-field copy; fixture_009 records one existing level after restore without reading values",
+    "meshPhi": "absent at checkpoint/restore and demand-created deterministically by the next normal move/solve",
+    "V00": "not allocated or consumed by the current Euler path; backward/Crank-Nicolson are explicitly outside scope",
+    "oldCellCentres": "not allocated; only Lagrangian cloud paths consume it and this pimpleFoam case has no cloud"
+  },
+  "mesh_quality": {
+    "source_runtime": "fixture_008_abb_min3",
+    "status": "PASS",
+    "negative_volume_cells": 0,
+    "min_cell_volume": 0.00159231047206,
+    "max_non_orthogonality": 30.6073129682,
+    "max_skewness": 0.503086727177,
+    "topology_valid": true,
+    "applicability": "fixture_009 final B mesh-points hash matches fixture_008 final B mesh-points hash"
+  },
+  "qualification": "PASS_FOR_CURRENT_EULER_NON_SUBCYCLED_SCOPE",
+  "next_formal_two_window": "NOT_AUTHORIZED",
+  "next_implicit_0p05s": "NOT_AUTHORIZED"
+}

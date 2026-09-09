@@ -1,0 +1,131 @@
+--- a/Adapter.C
++++ b/Adapter.C
+@@ -44,15 +44,8 @@
+         << "\"count\":" << field->size() << ","
+         << "\"finite\":true,"
+         << "\"canonical_hash_fnv1a64\":\"" << rollbackFNV1a64(payload) << "\","
+-        << "\"old_time_levels\":" << field->nOldTimes();
+-    if (field->nOldTimes() > 0)
+-    {
+-        Foam::OStringStream oldSerialized;
+-        oldSerialized << field->oldTime();
+-        const std::string oldPayload(oldSerialized.str().c_str());
+-        out << ",\"old_time_canonical_hash_fnv1a64\":\""
+-            << rollbackFNV1a64(oldPayload) << "\"";
+-    }
++        << "\"old_time_levels\":" << field->nOldTimes()
++        << ",\"old_time_value_observation\":\"OMITTED_NON_LAZY\"";
+     out << "}";
+ }
+
+@@ -232,17 +225,7 @@
+     }
+     out << "],\"old_time\":{\"live_levels\":" << live->nOldTimes()
+         << ",\"copy_levels\":" << copy->nOldTimes();
+-    if (live->nOldTimes() > 0 && copy->nOldTimes() > 0)
+-    {
+-        out << ",\"internal\":";
+-        writeRollbackVectorDifference
+-        (
+-            out,
+-            live->oldTime().primitiveField(),
+-            copy->oldTime().primitiveField()
+-        );
+-    }
+-    out << "}}";
++    out << ",\"value_comparison\":\"OMITTED_NON_LAZY\"}}";
+ }
+
+
+@@ -285,6 +268,62 @@
+         << "\"canonical_hash_fnv1a64\":\"" << rollbackFNV1a64(payload) << "\","
+         << "\"centroid_xyz\":[" << centroid.x() << ',' << centroid.y() << ',' << centroid.z() << "]}";
+ }
++
++void rollbackOwnerPointDiagnostic
++(
++    std::ostream& out,
++    const std::string& name,
++    const Foam::meshHistoryPointDiagnostic& diagnostic
++)
++{
++    out << "\"" << name << "\":{\"classification\":\"OWNER_NON_LAZY\","
++        << "\"present\":" << (diagnostic.present ? "true" : "false")
++        << ",\"count\":" << diagnostic.size
++        << ",\"finite\":" << (diagnostic.finite ? "true" : "false")
++        << ",\"max_component_abs\":" << diagnostic.maxComponentAbs
++        << ",\"canonical_hash_fnv1a64\":\"" << diagnostic.fingerprint << "\"}";
++}
++
++void rollbackOwnerScalarDiagnostic
++(
++    std::ostream& out,
++    const std::string& name,
++    const Foam::meshHistoryScalarDiagnostic& diagnostic
++)
++{
++    out << "\"" << name << "\":{\"classification\":\"OWNER_NON_LAZY\","
++        << "\"present\":" << (diagnostic.present ? "true" : "false")
++        << ",\"count\":" << diagnostic.size
++        << ",\"finite\":" << (diagnostic.finite ? "true" : "false")
++        << ",\"min\":" << diagnostic.minValue
++        << ",\"max\":" << diagnostic.maxValue
++        << ",\"old_time_levels\":" << diagnostic.nOldTimes
++        << ",\"canonical_hash_fnv1a64\":\"" << diagnostic.fingerprint << "\"}";
++}
++
++void rollbackOwnerMeshHistoryDiagnostic
++(
++    std::ostream& out,
++    const Foam::meshHistoryStateDiagnostic& diagnostic
++)
++{
++    out << "\"owner_mesh_history\":{\"classification\":\"OWNER_NON_LAZY\","
++        << "\"moving\":" << (diagnostic.moving ? "true" : "false")
++        << ",\"cur_motion_time_index\":" << diagnostic.curMotionTimeIndex
++        << ",\"cur_time_index\":" << diagnostic.curTimeIndex
++        << ",\"store_old_cell_centres\":"
++        << (diagnostic.storeOldCellCentres ? "true" : "false") << ',';
++    rollbackOwnerPointDiagnostic(out, "old_points", diagnostic.oldPoints);
++    out << ',';
++    rollbackOwnerPointDiagnostic(out, "old_cell_centres", diagnostic.oldCellCentres);
++    out << ',';
++    rollbackOwnerScalarDiagnostic(out, "V0", diagnostic.V0);
++    out << ',';
++    rollbackOwnerScalarDiagnostic(out, "V00", diagnostic.V00);
++    out << ',';
++    rollbackOwnerScalarDiagnostic(out, "meshPhi", diagnostic.meshPhi);
++    out << '}';
++}
+ }
+
+ preciceAdapter::Adapter::Adapter(const Time& runTime, const fvMesh& mesh)
+@@ -1704,6 +1743,10 @@
+     {
+         adapterInfo("Rollback diagnostics output path cannot be opened", "error");
+     }
++    const Foam::meshHistoryStateDiagnostic ownerMeshHistory
++    (
++        mesh_.meshHistoryDiagnostic()
++    );
+     const auto* U = mesh_.foundObject<volVectorField>("U") ? &mesh_.lookupObject<volVectorField>("U") : nullptr;
+     const auto* p = mesh_.foundObject<volScalarField>("p") ? &mesh_.lookupObject<volScalarField>("p") : nullptr;
+     const auto* phi = mesh_.foundObject<surfaceScalarField>("phi") ? &mesh_.lookupObject<surfaceScalarField>("phi") : nullptr;
+@@ -1747,7 +1790,6 @@
+     rollbackFieldFingerprint(output, "p", p); output << ',';
+     rollbackFieldFingerprint(output, "phi", phi); output << ',';
+     rollbackFieldFingerprint(output, "Uf", Uf); output << ',';
+-    rollbackFieldFingerprint(output, "meshPhi", meshPhi); output << ',';
+     rollbackFieldFingerprint(output, "pointDisplacement", pointDisplacement); output << ',';
+     rollbackPointDisplacementParts(output, pointDisplacement); output << ',';
+     rollbackFieldFingerprint(output, "pointDisplacement_checkpoint_copy", pointDisplacementCopy); output << ',';
+@@ -1762,8 +1804,8 @@
+     output << ',';
+     rollbackFieldFingerprint(output, "cellDisplacement", cellDisplacement); output << ',';
+     rollbackPointsFingerprint(output, "mesh_points", mesh_.points()); output << ',';
+-    rollbackPointsFingerprint(output, "old_points", mesh_.oldPoints());
+-    output << ",\"V0\":{\"classification\":\"NOT_APPLICABLE_NON_SUBCYCLED\"},\"V00\":{\"classification\":\"NOT_APPLICABLE_NON_SUBCYCLED\"}}}\n";
++    rollbackOwnerMeshHistoryDiagnostic(output, ownerMeshHistory);
++    output << "}}\n";
+     output.flush();
+ }

@@ -127,6 +127,117 @@ Current statuses:
 - `NEXT_FORMAL_TWO_WINDOW = NOT_AUTHORIZED`
 - `NEXT_IMPLICIT_0P05S = NOT_AUTHORIZED`
 
+## 2026-09-09 owner-private mesh-history observability closure
+
+The preceding `OWNER_PRIVATE_MESH_HISTORY_RUNTIME_OBSERVABILITY_UNAVAILABLE`
+block remains the immutable result for the frozen reset adapter.  It is now
+closed only for the current Foundation OF10 **Euler, non-subcycled,
+pimpleFoam moving-mesh path**, by a separately built diagnostic ABI.  This is
+not a qualification of arbitrary OF10 time schemes, cloud models, topology
+changes, or future motion solvers.
+
+### Owner-managed, non-lazy observation contract
+
+Patch `0006-of10-owner-readonly-mesh-history-diagnostic.patch` adds only a
+value-returning `fvMesh::meshHistoryDiagnostic() const` entry point and its
+owner-side implementation.  `meshHistoryCheckpoint`, already a friend of
+`polyMesh` and `fvMesh`, directly reads private pointer presence and values.
+It does not call `V0()`, `V00()`, `oldCellCentres()`, `meshPhi()`,
+`oldTime()`, a motion method, or a registry-mutating getter.  The adapter
+calls that value interface once per existing diagnostic event; it neither
+receives a mutable private pointer nor changes the checkpoint transaction.
+
+The companion no-CFD probe creates an `fvMesh` from the frozen fixture case
+and calls the owner diagnostic twice.  Both value snapshots are identical:
+`curMotion=-1`, `curTime=0`, and `oldPoints`, `oldCellCentres`, `V0`, `V00`,
+and `meshPhi` are all absent.  The probe performs no mesh motion or solve.
+The first attempt lacked the diagnostic adapter library in the utility's
+loader path and emitted a load warning; its output is retained but is not
+used.  The clean probe uses the complete diagnostic ABI and passes.
+
+### Isolated diagnostic ABI
+
+The first copied tree still inherited an absolute `FOAM_INST_DIR` from the
+earlier prototype and was detected before it could be used as evidence.  A
+new tree with its own build configuration was then built.  The initial
+`wmake` object-only invocation was also rejected as insufficient until
+`libfiniteVolume.so` was explicitly relinked and its new owner symbol was
+verified.  No `/opt/openfoam10`, build005, build006, build007, or historical
+runtime was replaced.
+
+| artifact | SHA-256 |
+| --- | --- |
+| diagnostic `libOpenFOAM.so` | `a34df8ad17f8250071c697d150e593563f2152c194b87fdb906b7a6493f37cde` |
+| diagnostic `libfiniteVolume.so` | `5a820734c0a61a8bd6cdb730d95a651e002848d9d9d4d8a4897ea42608a2e48e` |
+| diagnostic `libfvMotionSolvers.so` | `debc2c86635805c616874612c9c361477424ec58cba77ccc46853b786750eb30` |
+| diagnostic `libfvMeshMovers.so` | `da199da31b42a7b5e07248864cb91c6556dba0afa4db74507879f4124d307e78` |
+| diagnostic `pimpleFoam` | `c0add92c42e1e1e35100a5492eb398385af03bc68ba817a423efada8a01bfa43` |
+| owner-observability adapter | `c8bb6fd83be795834dcdfcae0f8b8606ba09b546611a33fb0ddfa379e47e8f17` |
+
+The adapter and solver `ldd -r` evidence resolves `libfiniteVolume` and
+`libOpenFOAM` from this same independent prefix with no missing or undefined
+symbols.  The frozen reset adapter remains unchanged at
+`5f7c75d6fc650dd425e8b0edca3e0ba9a69b320546b667b5024246495b433a2d`.
+
+### One authorized owner-observability fixture
+
+`runtime/of10_owned_atomic_mesh_history_restore_prototype_v1_precice_fixture_009_owner_observability`
+is the only new physical invocation.  It retains OF `0.100 -> 0.105 s`,
+`dt=0.005 s`, no ANCF, no acceleration and all frozen mesh/physics settings.
+The test-only min-iteration floor is 3 (max 8), solely to force the already
+authorized `A(+0.002) -> restore -> B(-0.002) -> restore -> B(-0.002) ->
+commit` coverage.  Participant and Fluid both return zero; the event trace
+has two restores and one physical commit.
+
+At checkpoint and after **both** owner restores, the complete owner summary
+is identical: `moving=false`, `curMotionTimeIndex=-1`, `curTimeIndex=0`,
+`oldPoints=false`, `oldCellCentres=false`, `V0=false`, `V00=false` and
+`meshPhi=false`.  After each normal trial motion, `oldPoints` is present with
+hash `ed1aa23b4b22b94a`; V0 is present with 16,244 finite values and hash
+`e310bfc1a7dc104f`; V00 remains absent; and meshPhi is present without old
+levels.  The two B trials have identical mesh-points
+`73319a1a883723ec`, V0 `e310bfc1a7dc104f`, and meshPhi
+`b37c51b180954283` hashes.  Thus the prior trial cannot leak through either
+restore, and the next real Euler solve consumes the correctly rebuilt state.
+
+`oldCellCentres` is absent and `storeOldCellCentres=false`; actual source
+consumers are Lagrangian cloud code, which is not present in this pimpleFoam
+case.  V00 is absent because the active `ddtScheme` is Euler; the source
+paths that consume V00 are backward/Crank--Nicolson or mesh stitching, all
+outside this non-subcycled case.  U/Uf each have one old-time level after the
+normal Euler solve.  Their lifecycle is retained as source-proven derived
+current-field history; fixture009 reports the existing level count but does
+not access its values because such a diagnostic call can mutate a
+`GeometricField` history chain.  The earlier fixture008 numeric observation
+and the source audit remain the value-equivalence evidence for that derived
+state.
+
+The final B points hash exactly matches the previously checked fixture008
+final B mesh.  Its `checkMesh` evidence therefore remains applicable:
+zero negative-volume cells, min cell volume `0.00159231047206`, max
+non-orthogonality `30.6073129682`, max skewness `0.503086727177`, and
+`Mesh OK`.  Fixture009 has no FPE, negative-cell report, V0 fatal, or double
+time commit.
+
+Structured evidence and the full SHA manifest are:
+
+- `results/of10_owned_atomic_mesh_history_restore_prototype_v1/fixture_009_owner_mesh_history_qualification.json`
+- `results/of10_owned_atomic_mesh_history_restore_prototype_v1/owner_diagnostic_abi_build_001_manifest.sha256`
+
+### Current authoritative decision
+
+- `FULL_OF10_MESH_HISTORY_QUALIFICATION = PASS_FOR_CURRENT_EULER_NON_SUBCYCLED_SCOPE`
+- Historical standalone harness API mismatch and all historical runtime FAIL
+  records remain immutable.
+- The reset adapter multirestore and explicit normal-path PASS records remain
+  unchanged; fixture009 is an observability qualification run, not a new
+  production baseline.
+- The limited PASS supports **manual review only** for a future formal
+  three-slice continuous two-window test under the frozen production
+  min/max 2/8 contract.  It is not an authorization to run it.
+- `NEXT_FORMAL_TWO_WINDOW = NOT_AUTHORIZED`
+- `NEXT_IMPLICIT_0P05S = NOT_AUTHORIZED`
+
 ### Current authoritative update: repaired multi-restore coverage and explicit normal path
 
 The frozen point-vector reset adapter was retained unchanged at
@@ -836,4 +947,17 @@ API.
 - `FULL_OF10_MESH_HISTORY_QUALIFICATION = FAIL`
 - `FIRST_BLOCKER = OWNER_PRIVATE_MESH_HISTORY_RUNTIME_OBSERVABILITY_UNAVAILABLE`
 - `NEXT_FORMAL_TWO_WINDOW = NOT_AUTHORIZED`
+- `NEXT_IMPLICIT_0P05S = NOT_AUTHORIZED`
+
+### Superseding final status: owner-private observability closure
+
+The immediately preceding remaining-state audit is immutable historical
+evidence for the pre-diagnostic owner interface.  The authoritative current
+decision is the separately documented 2026-09-09 owner-private observability
+closure (fixture009), which resolves that evidence blocker only within the
+stated Euler/non-subcycled scope:
+
+- `FULL_OF10_MESH_HISTORY_QUALIFICATION = PASS_FOR_CURRENT_EULER_NON_SUBCYCLED_SCOPE`
+- `FIRST_BLOCKER = NONE_WITHIN_CURRENT_EULER_NON_SUBCYCLED_SCOPE`
+- `NEXT_FORMAL_TWO_WINDOW = NOT_AUTHORIZED` (manual authorization remains required)
 - `NEXT_IMPLICIT_0P05S = NOT_AUTHORIZED`

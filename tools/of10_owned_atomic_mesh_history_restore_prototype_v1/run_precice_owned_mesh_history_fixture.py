@@ -29,10 +29,16 @@ RUN = os.environ.get(
     "OF10_OWNED_FIXTURE_RUN",
     "of10_owned_atomic_mesh_history_restore_prototype_v1_precice_fixture_002",
 )
-PROTOTYPE_ROOT_WSL = "/home/machao/OpenFOAM/of10_owned_atomic_mesh_history_restore_prototype_v1"
+PROTOTYPE_ROOT_WSL = os.environ.get(
+    "OF10_OWNED_PROTOTYPE_ROOT",
+    "/home/machao/OpenFOAM/of10_owned_atomic_mesh_history_restore_prototype_v1",
+)
 ADAPTER_BUILD = os.environ.get("OF10_OWNED_ADAPTER_BUILD", "adapter_build_005")
 FIXTURE_MODE = os.environ.get("OF10_OWNED_FIXTURE_MODE", "implicit-abb-min3")
-ADAPTER_LIBRARY_WSL = PROTOTYPE_ROOT_WSL + f"/{ADAPTER_BUILD}/lib"
+ADAPTER_LIBRARY_WSL = os.environ.get(
+    "OF10_OWNED_ADAPTER_LIBRARY_WSL",
+    PROTOTYPE_ROOT_WSL + f"/{ADAPTER_BUILD}/lib",
+)
 ENV_SCRIPT_WSL = (
     "/mnt/d/研二文件/开题准备/CFD_ANCF_VIV/tools/"
     "of10_owned_atomic_mesh_history_restore_prototype_v1/prototype_env.sh"
