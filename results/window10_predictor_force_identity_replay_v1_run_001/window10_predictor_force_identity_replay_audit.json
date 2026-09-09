@@ -1,0 +1,1677 @@
+{
+  "CROSS_CHANNEL_FORCE_IDENTITY": "NOT_EVALUABLE_STRICT_PREDECLARED_TOLERANCE_MISSING",
+  "CROSS_CHANNEL_FORCE_IDENTITY_NUMERIC_OBSERVATION": "PASS",
+  "WINDOW10_FORCE_RESPONSE": "NOT_EVALUABLE_STRICT_PREDECLARED_TOLERANCE_MISSING",
+  "WINDOW10_FORCE_RESPONSE_NUMERIC_OBSERVATION": "REPRODUCIBLE",
+  "comparator": {
+    "abs_tolerance_N": 1e-05,
+    "governance": "POST_EXECUTION_AUDIT_ONLY; not present in preflight.json",
+    "relative_tolerance": 1e-11
+  },
+  "cross_channel": {
+    "0": {
+      "Co": {
+        "max": 1.46356946865,
+        "mean": 0.141146883835
+      },
+      "adapter_final_event": {
+        "adapter_build_identity": "openfoam10-d53753b1-rollback-diagnostic-v1",
+        "adapter_build_sha256": "c8bb6fd83be795834dcdfcae0f8b8606ba09b546611a33fb0ddfa379e47e8f17",
+        "checkpoint_inventory": {
+          "pointDisplacement_generic_pointVector": true
+        },
+        "event": "FINAL_COMMIT",
+        "iteration_id": 1,
+        "physical_time": 0.15,
+        "states": {
+          "U": {
+            "canonical_hash_fnv1a64": "639d8a5a3b857d80",
+            "classification": "PERSISTENT_RESTORED",
+            "count": 16244,
+            "finite": true,
+            "old_time_levels": 1,
+            "old_time_value_observation": "OMITTED_NON_LAZY"
+          },
+          "Uf": {
+            "canonical_hash_fnv1a64": "955b13a86c7757d2",
+            "classification": "PERSISTENT_RESTORED",
+            "count": 24226,
+            "finite": true,
+            "old_time_levels": 1,
+            "old_time_value_observation": "OMITTED_NON_LAZY"
+          },
+          "cellDisplacement": {
+            "canonical_hash_fnv1a64": "af5ba391f2233cae",
+            "classification": "PERSISTENT_RESTORED",
+            "count": 16244,
+            "finite": true,
+            "old_time_levels": 0,
+            "old_time_value_observation": "OMITTED_NON_LAZY"
+          },
+          "mesh_points": {
+            "canonical_hash_fnv1a64": "ca22b40774db457e",
+            "centroid_xyz": [
+              3.540875306476413,
+              0.17652770489437375,
+              0.5
+            ],
+            "classification": "PERSISTENT_RESTORED",
+            "count": 16524,
+            "finite": true
+          },
+          "owner_mesh_history": {
+            "V0": {
+              "canonical_hash_fnv1a64": "8efa55e7ea3bef00",
+              "classification": "OWNER_NON_LAZY",
+              "count": 16244,
+              "finite": true,
+              "max": 0.1412655984275007,
+              "min": 0.0015832323316724653,
+              "old_time_levels": 0,
+              "present": true
+            },
+            "V00": {
+              "canonical_hash_fnv1a64": "",
+              "classification": "OWNER_NON_LAZY",
+              "count": 0,
+              "finite": true,
+              "max": 0,
+              "min": 0,
+              "old_time_levels": 0,
+              "present": false
+            },
+            "classification": "OWNER_NON_LAZY",
+            "cur_motion_time_index": 10,
+            "cur_time_index": 10,
+            "meshPhi": {
+              "canonical_hash_fnv1a64": "229bb1f44f7d451a",
+              "classification": "OWNER_NON_LAZY",
+              "count": 24226,
+              "finite": true,
+              "max": 5.966472214089203,
+              "min": -5.680606014902417,
+              "old_time_levels": 1,
+              "present": true
+            },
+            "moving": true,
+            "old_cell_centres": {
+              "canonical_hash_fnv1a64": "",
+              "classification": "OWNER_NON_LAZY",
+              "count": 0,
+              "finite": true,
+              "max_component_abs": 0,
+              "present": false
+            },
+            "old_points": {
+              "canonical_hash_fnv1a64": "7306af268969adf8",
+              "classification": "OWNER_NON_LAZY",
+              "count": 16524,
+              "finite": true,
+              "max_component_abs": 20,
+              "present": true
+            },
+            "store_old_cell_centres": false
+          },
+          "p": {
+            "canonical_hash_fnv1a64": "435d1ca15c5579b2",
+            "classification": "PERSISTENT_RESTORED",
+            "count": 16244,
+            "finite": true,
+            "old_time_levels": 0,
+            "old_time_value_observation": "OMITTED_NON_LAZY"
+          },
+          "phi": {
+            "canonical_hash_fnv1a64": "53a887ebac239fe5",
+            "classification": "PERSISTENT_RESTORED",
+            "count": 24226,
+            "finite": true,
+            "old_time_levels": 0,
+            "old_time_value_observation": "OMITTED_NON_LAZY"
+          },
+          "pointDisplacement": {
+            "canonical_hash_fnv1a64": "fa79b96fe55b4639",
+            "classification": "PERSISTENT_RESTORED",
+            "count": 16524,
+            "finite": true,
+            "old_time_levels": 0,
+            "old_time_value_observation": "OMITTED_NON_LAZY"
+          },
+          "pointDisplacement_checkpoint_copy": {
+            "canonical_hash_fnv1a64": "3cdad18bcba5eb9a",
+            "classification": "PERSISTENT_RESTORED",
+            "count": 16524,
+            "finite": true,
+            "old_time_levels": 0,
+            "old_time_value_observation": "OMITTED_NON_LAZY"
+          },
+          "pointDisplacement_lifecycle_post_fingerprint": {
+            "classification": "READ_ONLY_LIFECYCLE_COMPARISON",
+            "copy_internal_storage": "0x5e394c277fd0",
+            "copy_metadata": {
+              "instance": "0.145",
+              "name": "pointDisplacement",
+              "old_time_levels": 0,
+              "time_index": 10
+            },
+            "copy_object": "0x5e394bf33ca0",
+            "internal": {
+              "classification": "NUMERIC_COMPARISON",
+              "count": 16524,
+              "l2": 5.981743085955084,
+              "max_abs": 0.04983758144331523,
+              "max_component": 0,
+              "max_index": 16122
+            },
+            "live_internal_storage": "0x5e394b8e3430",
+            "live_metadata": {
+              "instance": "0.15",
+              "name": "pointDisplacement",
+              "old_time_levels": 0,
+              "time_index": 10
+            },
+            "live_object": "0x5e394b81a740",
+            "old_time": {
+              "copy_levels": 0,
+              "live_levels": 0,
+              "value_comparison": "OMITTED_NON_LAZY"
+            },
+            "patches": [
+              {
+                "copy_fixes_value": false,
+                "copy_size": 8262,
+                "copy_type": "empty",
+                "copy_updated": false,
+                "live_fixes_value": false,
+                "live_size": 8262,
+                "live_type": "empty",
+                "live_updated": false,
+                "name": "front",
+                "value_storage": "NOT_VALUE_BACKED"
+              },
+              {
+                "copy_fixes_value": false,
+                "copy_size": 8262,
+                "copy_type": "empty",
+                "copy_updated": false,
+                "live_fixes_value": false,
+                "live_size": 8262,
+                "live_type": "empty",
+                "live_updated": false,
+                "name": "back",
+                "value_storage": "NOT_VALUE_BACKED"
+              },
+              {
+                "copy_fixes_value": false,
+                "copy_size": 122,
+                "copy_type": "symmetryPlane",
+                "copy_updated": false,
+                "live_fixes_value": false,
+                "live_size": 122,
+                "live_type": "symmetryPlane",
+                "live_updated": true,
+                "name": "lower",
+                "value_storage": "NOT_VALUE_BACKED"
+              },
+              {
+                "copy_fixes_value": true,
+                "copy_size": 122,
+                "copy_type": "fixedValue",
+                "copy_updated": false,
+                "live_fixes_value": true,
+                "live_size": 122,
+                "live_type": "fixedValue",
+                "live_updated": false,
+                "name": "outlet",
+                "value_storage": "valuePointPatchField",
+                "values": {
+                  "classification": "NUMERIC_COMPARISON",
+                  "count": 122,
+                  "l2": 0,
+                  "max_abs": 0,
+                  "max_component": 0,
+                  "max_index": -1
+                }
+              },
+              {
+                "copy_fixes_value": false,
+                "copy_size": 122,
+                "copy_type": "symmetryPlane",
+                "copy_updated": false,
+                "live_fixes_value": false,
+                "live_size": 122,
+                "live_type": "symmetryPlane",
+                "live_updated": true,
+                "name": "upper",
+                "value_storage": "NOT_VALUE_BACKED"
+              },
+              {
+                "copy_fixes_value": true,
+                "copy_size": 122,
+                "copy_type": "fixedValue",
+                "copy_updated": false,
+                "live_fixes_value": true,
+                "live_size": 122,
+                "live_type": "fixedValue",
+                "live_updated": false,
+                "name": "inlet",
+                "value_storage": "valuePointPatchField",
+                "values": {
+                  "classification": "NUMERIC_COMPARISON",
+                  "count": 122,
+                  "l2": 0,
+                  "max_abs": 0,
+                  "max_component": 0,
+                  "max_index": -1
+                }
+              },
+              {
+                "copy_fixes_value": true,
+                "copy_size": 80,
+                "copy_type": "fixedValue",
+                "copy_updated": false,
+                "live_fixes_value": true,
+                "live_size": 80,
+                "live_type": "fixedValue",
+                "live_updated": false,
+                "name": "cylinder",
+                "value_storage": "valuePointPatchField",
+                "values": {
+                  "classification": "NUMERIC_COMPARISON",
+                  "count": 80,
+                  "l2": 0.2646708357913544,
+                  "max_abs": 0.029530543020848097,
+                  "max_component": 0,
+                  "max_index": 0
+                }
+              }
+            ],
+            "same_internal_storage": false,
+            "same_object": false
+          },
+          "pointDisplacement_lifecycle_pre_fingerprint": {
+            "classification": "READ_ONLY_LIFECYCLE_COMPARISON",
+            "copy_internal_storage": "0x5e394c277fd0",
+            "copy_metadata": {
+              "instance": "0.145",
+              "name": "pointDisplacement",
+              "old_time_levels": 0,
+              "time_index": 10
+            },
+            "copy_object": "0x5e394bf33ca0",
+            "internal": {
+              "classification": "NUMERIC_COMPARISON",
+              "count": 16524,
+              "l2": 5.981743085955084,
+              "max_abs": 0.04983758144331523,
+              "max_component": 0,
+              "max_index": 16122
+            },
+            "live_internal_storage": "0x5e394b8e3430",
+            "live_metadata": {
+              "instance": "0.15",
+              "name": "pointDisplacement",
+              "old_time_levels": 0,
+              "time_index": 10
+            },
+            "live_object": "0x5e394b81a740",
+            "old_time": {
+              "copy_levels": 0,
+              "live_levels": 0,
+              "value_comparison": "OMITTED_NON_LAZY"
+            },
+            "patches": [
+              {
+                "copy_fixes_value": false,
+                "copy_size": 8262,
+                "copy_type": "empty",
+                "copy_updated": false,
+                "live_fixes_value": false,
+                "live_size": 8262,
+                "live_type": "empty",
+                "live_updated": false,
+                "name": "front",
+                "value_storage": "NOT_VALUE_BACKED"
+              },
+              {
+                "copy_fixes_value": false,
+                "copy_size": 8262,
+                "copy_type": "empty",
+                "copy_updated": false,
+                "live_fixes_value": false,
+                "live_size": 8262,
+                "live_type": "empty",
+                "live_updated": false,
+                "name": "back",
+                "value_storage": "NOT_VALUE_BACKED"
+              },
+              {
+                "copy_fixes_value": false,
+                "copy_size": 122,
+                "copy_type": "symmetryPlane",
+                "copy_updated": false,
+                "live_fixes_value": false,
+                "live_size": 122,
+                "live_type": "symmetryPlane",
+                "live_updated": true,
+                "name": "lower",
+                "value_storage": "NOT_VALUE_BACKED"
+              },
+              {
+                "copy_fixes_value": true,
+                "copy_size": 122,
+                "copy_type": "fixedValue",
+                "copy_updated": false,
+                "live_fixes_value": true,
+                "live_size": 122,
+                "live_type": "fixedValue",
+                "live_updated": false,
+                "name": "outlet",
+                "value_storage": "valuePointPatchField",
+                "values": {
+                  "classification": "NUMERIC_COMPARISON",
+                  "count": 122,
+                  "l2": 0,
+                  "max_abs": 0,
+                  "max_component": 0,
+                  "max_index": -1
+                }
+              },
+              {
+                "copy_fixes_value": false,
+                "copy_size": 122,
+                "copy_type": "symmetryPlane",
+                "copy_updated": false,
+                "live_fixes_value": false,
+                "live_size": 122,
+                "live_type": "symmetryPlane",
+                "live_updated": true,
+                "name": "upper",
+                "value_storage": "NOT_VALUE_BACKED"
+              },
+              {
+                "copy_fixes_value": true,
+                "copy_size": 122,
+                "copy_type": "fixedValue",
+                "copy_updated": false,
+                "live_fixes_value": true,
+                "live_size": 122,
+                "live_type": "fixedValue",
+                "live_updated": false,
+                "name": "inlet",
+                "value_storage": "valuePointPatchField",
+                "values": {
+                  "classification": "NUMERIC_COMPARISON",
+                  "count": 122,
+                  "l2": 0,
+                  "max_abs": 0,
+                  "max_component": 0,
+                  "max_index": -1
+                }
+              },
+              {
+                "copy_fixes_value": true,
+                "copy_size": 80,
+                "copy_type": "fixedValue",
+                "copy_updated": false,
+                "live_fixes_value": true,
+                "live_size": 80,
+                "live_type": "fixedValue",
+                "live_updated": false,
+                "name": "cylinder",
+                "value_storage": "valuePointPatchField",
+                "values": {
+                  "classification": "NUMERIC_COMPARISON",
+                  "count": 80,
+                  "l2": 0.2646708357913544,
+                  "max_abs": 0.029530543020848097,
+                  "max_component": 0,
+                  "max_index": 0
+                }
+              }
+            ],
+            "same_internal_storage": false,
+            "same_object": false
+          },
+          "pointDisplacement_parts": {
+            "boundary_hash_fnv1a64": "4ce31c6b6d8818a6",
+            "internal_hash_fnv1a64": "3cdad18bcba5eb9a"
+          }
+        },
+        "time_index": 10,
+        "window_id": 1
+      },
+      "fluid_cylinderForces": {
+        "pressure_N": [
+          -2070537.5594,
+          141211.614015,
+          -6.38057474227e-14
+        ],
+        "total_N": [
+          -2083602.4229038998,
+          141957.738504476,
+          -1.1586287001927e-12
+        ],
+        "viscous_N": [
+          -13064.8635039,
+          746.124489476,
+          -1.09482295277e-12
+        ]
+      },
+      "fluid_to_structure_x": {
+        "abs_error": 2.457527443766594e-06,
+        "actual": -2083602.4229063573,
+        "expected": -2083602.4229038998,
+        "pass": true,
+        "rel_error": 1.1794608303145756e-12
+      },
+      "fluid_to_structure_y": {
+        "abs_error": 4.471512511372566e-07,
+        "actual": 141957.73850402885,
+        "expected": 141957.738504476,
+        "pass": true,
+        "rel_error": 3.1498899309610916e-12
+      },
+      "structure_receive": {
+        "components": [
+          "x",
+          "y"
+        ],
+        "event": "STRUCTURE_RECEIVE_RAW_FORCE",
+        "force_vertices": 40,
+        "iteration": 3,
+        "payload_sha256": "2ce663390c1673f0e8cd76700afca59ca3dcf45a281b1a08957ec5a964b9fe62",
+        "physical_time_s": 0.005,
+        "predictor_payload_sha256": "e20be93748834ce665e14f6c9f5d50341fdde2602e54de3a9590fceb55a0a3b4",
+        "sum_force_xy_N": [
+          -2083602.4229063573,
+          141957.73850402885
+        ],
+        "transaction_id": "WINDOW10_PREDICTOR_FORCE_IDENTITY_REPLAY_V1/run_001",
+        "units": "N"
+      }
+    },
+    "1": {
+      "Co": {
+        "max": 1.14257187048,
+        "mean": 0.107771123661
+      },
+      "adapter_final_event": {
+        "adapter_build_identity": "openfoam10-d53753b1-rollback-diagnostic-v1",
+        "adapter_build_sha256": "c8bb6fd83be795834dcdfcae0f8b8606ba09b546611a33fb0ddfa379e47e8f17",
+        "checkpoint_inventory": {
+          "pointDisplacement_generic_pointVector": true
+        },
+        "event": "FINAL_COMMIT",
+        "iteration_id": 1,
+        "physical_time": 0.15,
+        "states": {
+          "U": {
+            "canonical_hash_fnv1a64": "be4942b3ff9fe4fa",
+            "classification": "PERSISTENT_RESTORED",
+            "count": 16244,
+            "finite": true,
+            "old_time_levels": 1,
+            "old_time_value_observation": "OMITTED_NON_LAZY"
+          },
+          "Uf": {
+            "canonical_hash_fnv1a64": "265134be58f54e90",
+            "classification": "PERSISTENT_RESTORED",
+            "count": 24226,
+            "finite": true,
+            "old_time_levels": 1,
+            "old_time_value_observation": "OMITTED_NON_LAZY"
+          },
+          "cellDisplacement": {
+            "canonical_hash_fnv1a64": "fa28daf1f14c034f",
+            "classification": "PERSISTENT_RESTORED",
+            "count": 16244,
+            "finite": true,
+            "old_time_levels": 0,
+            "old_time_value_observation": "OMITTED_NON_LAZY"
+          },
+          "mesh_points": {
+            "canonical_hash_fnv1a64": "b610ed04bdfcc954",
+            "centroid_xyz": [
+              3.5294525588344596,
+              0.17676252528053116,
+              0.5
+            ],
+            "classification": "PERSISTENT_RESTORED",
+            "count": 16524,
+            "finite": true
+          },
+          "owner_mesh_history": {
+            "V0": {
+              "canonical_hash_fnv1a64": "4011bc92af457c47",
+              "classification": "OWNER_NON_LAZY",
+              "count": 16244,
+              "finite": true,
+              "max": 0.14228758916500045,
+              "min": 0.001585587380000634,
+              "old_time_levels": 0,
+              "present": true
+            },
+            "V00": {
+              "canonical_hash_fnv1a64": "",
+              "classification": "OWNER_NON_LAZY",
+              "count": 0,
+              "finite": true,
+              "max": 0,
+              "min": 0,
+              "old_time_levels": 0,
+              "present": false
+            },
+            "classification": "OWNER_NON_LAZY",
+            "cur_motion_time_index": 10,
+            "cur_time_index": 10,
+            "meshPhi": {
+              "canonical_hash_fnv1a64": "b62379d827d9eaeb",
+              "classification": "OWNER_NON_LAZY",
+              "count": 24226,
+              "finite": true,
+              "max": 3.9719390671382437,
+              "min": -3.781356577948854,
+              "old_time_levels": 1,
+              "present": true
+            },
+            "moving": true,
+            "old_cell_centres": {
+              "canonical_hash_fnv1a64": "",
+              "classification": "OWNER_NON_LAZY",
+              "count": 0,
+              "finite": true,
+              "max_component_abs": 0,
+              "present": false
+            },
+            "old_points": {
+              "canonical_hash_fnv1a64": "48fcf74a1da74a6e",
+              "classification": "OWNER_NON_LAZY",
+              "count": 16524,
+              "finite": true,
+              "max_component_abs": 20,
+              "present": true
+            },
+            "store_old_cell_centres": false
+          },
+          "p": {
+            "canonical_hash_fnv1a64": "b6b214cc01bbf4bb",
+            "classification": "PERSISTENT_RESTORED",
+            "count": 16244,
+            "finite": true,
+            "old_time_levels": 0,
+            "old_time_value_observation": "OMITTED_NON_LAZY"
+          },
+          "phi": {
+            "canonical_hash_fnv1a64": "4f1ac8df86310b99",
+            "classification": "PERSISTENT_RESTORED",
+            "count": 24226,
+            "finite": true,
+            "old_time_levels": 0,
+            "old_time_value_observation": "OMITTED_NON_LAZY"
+          },
+          "pointDisplacement": {
+            "canonical_hash_fnv1a64": "6ce690d449955812",
+            "classification": "PERSISTENT_RESTORED",
+            "count": 16524,
+            "finite": true,
+            "old_time_levels": 0,
+            "old_time_value_observation": "OMITTED_NON_LAZY"
+          },
+          "pointDisplacement_checkpoint_copy": {
+            "canonical_hash_fnv1a64": "ff261cfee2aee415",
+            "classification": "PERSISTENT_RESTORED",
+            "count": 16524,
+            "finite": true,
+            "old_time_levels": 0,
+            "old_time_value_observation": "OMITTED_NON_LAZY"
+          },
+          "pointDisplacement_lifecycle_post_fingerprint": {
+            "classification": "READ_ONLY_LIFECYCLE_COMPARISON",
+            "copy_internal_storage": "0x613c14e7d990",
+            "copy_metadata": {
+              "instance": "0.145",
+              "name": "pointDisplacement",
+              "old_time_levels": 0,
+              "time_index": 10
+            },
+            "copy_object": "0x613c14b1c3b0",
+            "internal": {
+              "classification": "NUMERIC_COMPARISON",
+              "count": 16524,
+              "l2": 3.981835773051195,
+              "max_abs": 0.0331409053303202,
+              "max_component": 0,
+              "max_index": 8140
+            },
+            "live_internal_storage": "0x613c144e9430",
+            "live_metadata": {
+              "instance": "0.15",
+              "name": "pointDisplacement",
+              "old_time_levels": 0,
+              "time_index": 10
+            },
+            "live_object": "0x613c14420740",
+            "old_time": {
+              "copy_levels": 0,
+              "live_levels": 0,
+              "value_comparison": "OMITTED_NON_LAZY"
+            },
+            "patches": [
+              {
+                "copy_fixes_value": false,
+                "copy_size": 8262,
+                "copy_type": "empty",
+                "copy_updated": false,
+                "live_fixes_value": false,
+                "live_size": 8262,
+                "live_type": "empty",
+                "live_updated": false,
+                "name": "front",
+                "value_storage": "NOT_VALUE_BACKED"
+              },
+              {
+                "copy_fixes_value": false,
+                "copy_size": 8262,
+                "copy_type": "empty",
+                "copy_updated": false,
+                "live_fixes_value": false,
+                "live_size": 8262,
+                "live_type": "empty",
+                "live_updated": false,
+                "name": "back",
+                "value_storage": "NOT_VALUE_BACKED"
+              },
+              {
+                "copy_fixes_value": false,
+                "copy_size": 122,
+                "copy_type": "symmetryPlane",
+                "copy_updated": false,
+                "live_fixes_value": false,
+                "live_size": 122,
+                "live_type": "symmetryPlane",
+                "live_updated": true,
+                "name": "lower",
+                "value_storage": "NOT_VALUE_BACKED"
+              },
+              {
+                "copy_fixes_value": true,
+                "copy_size": 122,
+                "copy_type": "fixedValue",
+                "copy_updated": false,
+                "live_fixes_value": true,
+                "live_size": 122,
+                "live_type": "fixedValue",
+                "live_updated": false,
+                "name": "outlet",
+                "value_storage": "valuePointPatchField",
+                "values": {
+                  "classification": "NUMERIC_COMPARISON",
+                  "count": 122,
+                  "l2": 0,
+                  "max_abs": 0,
+                  "max_component": 0,
+                  "max_index": -1
+                }
+              },
+              {
+                "copy_fixes_value": false,
+                "copy_size": 122,
+                "copy_type": "symmetryPlane",
+                "copy_updated": false,
+                "live_fixes_value": false,
+                "live_size": 122,
+                "live_type": "symmetryPlane",
+                "live_updated": true,
+                "name": "upper",
+                "value_storage": "NOT_VALUE_BACKED"
+              },
+              {
+                "copy_fixes_value": true,
+                "copy_size": 122,
+                "copy_type": "fixedValue",
+                "copy_updated": false,
+                "live_fixes_value": true,
+                "live_size": 122,
+                "live_type": "fixedValue",
+                "live_updated": false,
+                "name": "inlet",
+                "value_storage": "valuePointPatchField",
+                "values": {
+                  "classification": "NUMERIC_COMPARISON",
+                  "count": 122,
+                  "l2": 0,
+                  "max_abs": 0,
+                  "max_component": 0,
+                  "max_index": -1
+                }
+              },
+              {
+                "copy_fixes_value": true,
+                "copy_size": 80,
+                "copy_type": "fixedValue",
+                "copy_updated": false,
+                "live_fixes_value": true,
+                "live_size": 80,
+                "live_type": "fixedValue",
+                "live_updated": false,
+                "name": "cylinder",
+                "value_storage": "valuePointPatchField",
+                "values": {
+                  "classification": "NUMERIC_COMPARISON",
+                  "count": 80,
+                  "l2": 0.1755347889743316,
+                  "max_abs": 0.01958530685750963,
+                  "max_component": 0,
+                  "max_index": 1
+                }
+              }
+            ],
+            "same_internal_storage": false,
+            "same_object": false
+          },
+          "pointDisplacement_lifecycle_pre_fingerprint": {
+            "classification": "READ_ONLY_LIFECYCLE_COMPARISON",
+            "copy_internal_storage": "0x613c14e7d990",
+            "copy_metadata": {
+              "instance": "0.145",
+              "name": "pointDisplacement",
+              "old_time_levels": 0,
+              "time_index": 10
+            },
+            "copy_object": "0x613c14b1c3b0",
+            "internal": {
+              "classification": "NUMERIC_COMPARISON",
+              "count": 16524,
+              "l2": 3.981835773051195,
+              "max_abs": 0.0331409053303202,
+              "max_component": 0,
+              "max_index": 8140
+            },
+            "live_internal_storage": "0x613c144e9430",
+            "live_metadata": {
+              "instance": "0.15",
+              "name": "pointDisplacement",
+              "old_time_levels": 0,
+              "time_index": 10
+            },
+            "live_object": "0x613c14420740",
+            "old_time": {
+              "copy_levels": 0,
+              "live_levels": 0,
+              "value_comparison": "OMITTED_NON_LAZY"
+            },
+            "patches": [
+              {
+                "copy_fixes_value": false,
+                "copy_size": 8262,
+                "copy_type": "empty",
+                "copy_updated": false,
+                "live_fixes_value": false,
+                "live_size": 8262,
+                "live_type": "empty",
+                "live_updated": false,
+                "name": "front",
+                "value_storage": "NOT_VALUE_BACKED"
+              },
+              {
+                "copy_fixes_value": false,
+                "copy_size": 8262,
+                "copy_type": "empty",
+                "copy_updated": false,
+                "live_fixes_value": false,
+                "live_size": 8262,
+                "live_type": "empty",
+                "live_updated": false,
+                "name": "back",
+                "value_storage": "NOT_VALUE_BACKED"
+              },
+              {
+                "copy_fixes_value": false,
+                "copy_size": 122,
+                "copy_type": "symmetryPlane",
+                "copy_updated": false,
+                "live_fixes_value": false,
+                "live_size": 122,
+                "live_type": "symmetryPlane",
+                "live_updated": true,
+                "name": "lower",
+                "value_storage": "NOT_VALUE_BACKED"
+              },
+              {
+                "copy_fixes_value": true,
+                "copy_size": 122,
+                "copy_type": "fixedValue",
+                "copy_updated": false,
+                "live_fixes_value": true,
+                "live_size": 122,
+                "live_type": "fixedValue",
+                "live_updated": false,
+                "name": "outlet",
+                "value_storage": "valuePointPatchField",
+                "values": {
+                  "classification": "NUMERIC_COMPARISON",
+                  "count": 122,
+                  "l2": 0,
+                  "max_abs": 0,
+                  "max_component": 0,
+                  "max_index": -1
+                }
+              },
+              {
+                "copy_fixes_value": false,
+                "copy_size": 122,
+                "copy_type": "symmetryPlane",
+                "copy_updated": false,
+                "live_fixes_value": false,
+                "live_size": 122,
+                "live_type": "symmetryPlane",
+                "live_updated": true,
+                "name": "upper",
+                "value_storage": "NOT_VALUE_BACKED"
+              },
+              {
+                "copy_fixes_value": true,
+                "copy_size": 122,
+                "copy_type": "fixedValue",
+                "copy_updated": false,
+                "live_fixes_value": true,
+                "live_size": 122,
+                "live_type": "fixedValue",
+                "live_updated": false,
+                "name": "inlet",
+                "value_storage": "valuePointPatchField",
+                "values": {
+                  "classification": "NUMERIC_COMPARISON",
+                  "count": 122,
+                  "l2": 0,
+                  "max_abs": 0,
+                  "max_component": 0,
+                  "max_index": -1
+                }
+              },
+              {
+                "copy_fixes_value": true,
+                "copy_size": 80,
+                "copy_type": "fixedValue",
+                "copy_updated": false,
+                "live_fixes_value": true,
+                "live_size": 80,
+                "live_type": "fixedValue",
+                "live_updated": false,
+                "name": "cylinder",
+                "value_storage": "valuePointPatchField",
+                "values": {
+                  "classification": "NUMERIC_COMPARISON",
+                  "count": 80,
+                  "l2": 0.1755347889743316,
+                  "max_abs": 0.01958530685750963,
+                  "max_component": 0,
+                  "max_index": 1
+                }
+              }
+            ],
+            "same_internal_storage": false,
+            "same_object": false
+          },
+          "pointDisplacement_parts": {
+            "boundary_hash_fnv1a64": "d9cdb6ba55972616",
+            "internal_hash_fnv1a64": "ff261cfee2aee415"
+          }
+        },
+        "time_index": 10,
+        "window_id": 1
+      },
+      "fluid_cylinderForces": {
+        "pressure_N": [
+          -1352333.12989,
+          91825.6601507,
+          1.56114071463e-13
+        ],
+        "total_N": [
+          -1361316.23674176,
+          92371.093551976,
+          -3.399472408077e-12
+        ],
+        "viscous_N": [
+          -8983.10685176,
+          545.433401276,
+          -3.55558647954e-12
+        ]
+      },
+      "fluid_to_structure_x": {
+        "abs_error": 4.203291609883308e-06,
+        "actual": -1361316.2367375568,
+        "expected": -1361316.23674176,
+        "pass": true,
+        "rel_error": 3.0876672858495165e-12
+      },
+      "fluid_to_structure_y": {
+        "abs_error": 1.3387762010097504e-09,
+        "actual": 92371.09355197466,
+        "expected": 92371.093551976,
+        "pass": true,
+        "rel_error": 1.4493454061539702e-14
+      },
+      "structure_receive": {
+        "components": [
+          "x",
+          "y"
+        ],
+        "event": "STRUCTURE_RECEIVE_RAW_FORCE",
+        "force_vertices": 40,
+        "iteration": 3,
+        "payload_sha256": "5c78543da488ac231a77bd49aa44745a475f6556c20a168d94ce9787edaedfef",
+        "physical_time_s": 0.005,
+        "predictor_payload_sha256": "e65fb2a3e1397753ea0f0446c00a85750f25372c1c0e26303c607600a50c2e13",
+        "sum_force_xy_N": [
+          -1361316.2367375568,
+          92371.09355197466
+        ],
+        "transaction_id": "WINDOW10_PREDICTOR_FORCE_IDENTITY_REPLAY_V1/run_001",
+        "units": "N"
+      }
+    },
+    "2": {
+      "Co": {
+        "max": 1.46400134025,
+        "mean": 0.141191951021
+      },
+      "adapter_final_event": {
+        "adapter_build_identity": "openfoam10-d53753b1-rollback-diagnostic-v1",
+        "adapter_build_sha256": "c8bb6fd83be795834dcdfcae0f8b8606ba09b546611a33fb0ddfa379e47e8f17",
+        "checkpoint_inventory": {
+          "pointDisplacement_generic_pointVector": true
+        },
+        "event": "FINAL_COMMIT",
+        "iteration_id": 1,
+        "physical_time": 0.15,
+        "states": {
+          "U": {
+            "canonical_hash_fnv1a64": "750be219130501fe",
+            "classification": "PERSISTENT_RESTORED",
+            "count": 16244,
+            "finite": true,
+            "old_time_levels": 1,
+            "old_time_value_observation": "OMITTED_NON_LAZY"
+          },
+          "Uf": {
+            "canonical_hash_fnv1a64": "fb6e5860d5ac54c5",
+            "classification": "PERSISTENT_RESTORED",
+            "count": 24226,
+            "finite": true,
+            "old_time_levels": 1,
+            "old_time_value_observation": "OMITTED_NON_LAZY"
+          },
+          "cellDisplacement": {
+            "canonical_hash_fnv1a64": "73917cd6f2eadeb0",
+            "classification": "PERSISTENT_RESTORED",
+            "count": 16244,
+            "finite": true,
+            "old_time_levels": 0,
+            "old_time_value_observation": "OMITTED_NON_LAZY"
+          },
+          "mesh_points": {
+            "canonical_hash_fnv1a64": "36c206a3b161b032",
+            "centroid_xyz": [
+              3.540885366784309,
+              0.17652744434836948,
+              0.5
+            ],
+            "classification": "PERSISTENT_RESTORED",
+            "count": 16524,
+            "finite": true
+          },
+          "owner_mesh_history": {
+            "V0": {
+              "canonical_hash_fnv1a64": "85fb85f02e707c09",
+              "classification": "OWNER_NON_LAZY",
+              "count": 16244,
+              "finite": true,
+              "max": 0.14126367050250047,
+              "min": 0.0015832291532725394,
+              "old_time_levels": 0,
+              "present": true
+            },
+            "V00": {
+              "canonical_hash_fnv1a64": "",
+              "classification": "OWNER_NON_LAZY",
+              "count": 0,
+              "finite": true,
+              "max": 0,
+              "min": 0,
+              "old_time_levels": 0,
+              "present": false
+            },
+            "classification": "OWNER_NON_LAZY",
+            "cur_motion_time_index": 10,
+            "cur_time_index": 10,
+            "meshPhi": {
+              "canonical_hash_fnv1a64": "150679111e11339f",
+              "classification": "OWNER_NON_LAZY",
+              "count": 24226,
+              "finite": true,
+              "max": 5.968751076839939,
+              "min": -5.6827761354494015,
+              "old_time_levels": 1,
+              "present": true
+            },
+            "moving": true,
+            "old_cell_centres": {
+              "canonical_hash_fnv1a64": "",
+              "classification": "OWNER_NON_LAZY",
+              "count": 0,
+              "finite": true,
+              "max_component_abs": 0,
+              "present": false
+            },
+            "old_points": {
+              "canonical_hash_fnv1a64": "5cd34093cc1875c2",
+              "classification": "OWNER_NON_LAZY",
+              "count": 16524,
+              "finite": true,
+              "max_component_abs": 20,
+              "present": true
+            },
+            "store_old_cell_centres": false
+          },
+          "p": {
+            "canonical_hash_fnv1a64": "11b10296e3b751af",
+            "classification": "PERSISTENT_RESTORED",
+            "count": 16244,
+            "finite": true,
+            "old_time_levels": 0,
+            "old_time_value_observation": "OMITTED_NON_LAZY"
+          },
+          "phi": {
+            "canonical_hash_fnv1a64": "acc2408f07d6ee82",
+            "classification": "PERSISTENT_RESTORED",
+            "count": 24226,
+            "finite": true,
+            "old_time_levels": 0,
+            "old_time_value_observation": "OMITTED_NON_LAZY"
+          },
+          "pointDisplacement": {
+            "canonical_hash_fnv1a64": "a9f9f5b8231ebc65",
+            "classification": "PERSISTENT_RESTORED",
+            "count": 16524,
+            "finite": true,
+            "old_time_levels": 0,
+            "old_time_value_observation": "OMITTED_NON_LAZY"
+          },
+          "pointDisplacement_checkpoint_copy": {
+            "canonical_hash_fnv1a64": "6ca28a95e62305bd",
+            "classification": "PERSISTENT_RESTORED",
+            "count": 16524,
+            "finite": true,
+            "old_time_levels": 0,
+            "old_time_value_observation": "OMITTED_NON_LAZY"
+          },
+          "pointDisplacement_lifecycle_post_fingerprint": {
+            "classification": "READ_ONLY_LIFECYCLE_COMPARISON",
+            "copy_internal_storage": "0x5ee44b10a4f0",
+            "copy_metadata": {
+              "instance": "0.145",
+              "name": "pointDisplacement",
+              "old_time_levels": 0,
+              "time_index": 10
+            },
+            "copy_object": "0x5ee44adc6380",
+            "internal": {
+              "classification": "NUMERIC_COMPARISON",
+              "count": 16524,
+              "l2": 5.984028449964144,
+              "max_abs": 0.04985676729143747,
+              "max_component": 0,
+              "max_index": 8140
+            },
+            "live_internal_storage": "0x5ee44a776430",
+            "live_metadata": {
+              "instance": "0.15",
+              "name": "pointDisplacement",
+              "old_time_levels": 0,
+              "time_index": 10
+            },
+            "live_object": "0x5ee44a6ad740",
+            "old_time": {
+              "copy_levels": 0,
+              "live_levels": 0,
+              "value_comparison": "OMITTED_NON_LAZY"
+            },
+            "patches": [
+              {
+                "copy_fixes_value": false,
+                "copy_size": 8262,
+                "copy_type": "empty",
+                "copy_updated": false,
+                "live_fixes_value": false,
+                "live_size": 8262,
+                "live_type": "empty",
+                "live_updated": false,
+                "name": "front",
+                "value_storage": "NOT_VALUE_BACKED"
+              },
+              {
+                "copy_fixes_value": false,
+                "copy_size": 8262,
+                "copy_type": "empty",
+                "copy_updated": false,
+                "live_fixes_value": false,
+                "live_size": 8262,
+                "live_type": "empty",
+                "live_updated": false,
+                "name": "back",
+                "value_storage": "NOT_VALUE_BACKED"
+              },
+              {
+                "copy_fixes_value": false,
+                "copy_size": 122,
+                "copy_type": "symmetryPlane",
+                "copy_updated": false,
+                "live_fixes_value": false,
+                "live_size": 122,
+                "live_type": "symmetryPlane",
+                "live_updated": true,
+                "name": "lower",
+                "value_storage": "NOT_VALUE_BACKED"
+              },
+              {
+                "copy_fixes_value": true,
+                "copy_size": 122,
+                "copy_type": "fixedValue",
+                "copy_updated": false,
+                "live_fixes_value": true,
+                "live_size": 122,
+                "live_type": "fixedValue",
+                "live_updated": false,
+                "name": "outlet",
+                "value_storage": "valuePointPatchField",
+                "values": {
+                  "classification": "NUMERIC_COMPARISON",
+                  "count": 122,
+                  "l2": 0,
+                  "max_abs": 0,
+                  "max_component": 0,
+                  "max_index": -1
+                }
+              },
+              {
+                "copy_fixes_value": false,
+                "copy_size": 122,
+                "copy_type": "symmetryPlane",
+                "copy_updated": false,
+                "live_fixes_value": false,
+                "live_size": 122,
+                "live_type": "symmetryPlane",
+                "live_updated": true,
+                "name": "upper",
+                "value_storage": "NOT_VALUE_BACKED"
+              },
+              {
+                "copy_fixes_value": true,
+                "copy_size": 122,
+                "copy_type": "fixedValue",
+                "copy_updated": false,
+                "live_fixes_value": true,
+                "live_size": 122,
+                "live_type": "fixedValue",
+                "live_updated": false,
+                "name": "inlet",
+                "value_storage": "valuePointPatchField",
+                "values": {
+                  "classification": "NUMERIC_COMPARISON",
+                  "count": 122,
+                  "l2": 0,
+                  "max_abs": 0,
+                  "max_component": 0,
+                  "max_index": -1
+                }
+              },
+              {
+                "copy_fixes_value": true,
+                "copy_size": 80,
+                "copy_type": "fixedValue",
+                "copy_updated": false,
+                "live_fixes_value": true,
+                "live_size": 80,
+                "live_type": "fixedValue",
+                "live_updated": false,
+                "name": "cylinder",
+                "value_storage": "valuePointPatchField",
+                "values": {
+                  "classification": "NUMERIC_COMPARISON",
+                  "count": 80,
+                  "l2": 0.2647674450788606,
+                  "max_abs": 0.029541320236265156,
+                  "max_component": 0,
+                  "max_index": 0
+                }
+              }
+            ],
+            "same_internal_storage": false,
+            "same_object": false
+          },
+          "pointDisplacement_lifecycle_pre_fingerprint": {
+            "classification": "READ_ONLY_LIFECYCLE_COMPARISON",
+            "copy_internal_storage": "0x5ee44b10a4f0",
+            "copy_metadata": {
+              "instance": "0.145",
+              "name": "pointDisplacement",
+              "old_time_levels": 0,
+              "time_index": 10
+            },
+            "copy_object": "0x5ee44adc6380",
+            "internal": {
+              "classification": "NUMERIC_COMPARISON",
+              "count": 16524,
+              "l2": 5.984028449964144,
+              "max_abs": 0.04985676729143747,
+              "max_component": 0,
+              "max_index": 8140
+            },
+            "live_internal_storage": "0x5ee44a776430",
+            "live_metadata": {
+              "instance": "0.15",
+              "name": "pointDisplacement",
+              "old_time_levels": 0,
+              "time_index": 10
+            },
+            "live_object": "0x5ee44a6ad740",
+            "old_time": {
+              "copy_levels": 0,
+              "live_levels": 0,
+              "value_comparison": "OMITTED_NON_LAZY"
+            },
+            "patches": [
+              {
+                "copy_fixes_value": false,
+                "copy_size": 8262,
+                "copy_type": "empty",
+                "copy_updated": false,
+                "live_fixes_value": false,
+                "live_size": 8262,
+                "live_type": "empty",
+                "live_updated": false,
+                "name": "front",
+                "value_storage": "NOT_VALUE_BACKED"
+              },
+              {
+                "copy_fixes_value": false,
+                "copy_size": 8262,
+                "copy_type": "empty",
+                "copy_updated": false,
+                "live_fixes_value": false,
+                "live_size": 8262,
+                "live_type": "empty",
+                "live_updated": false,
+                "name": "back",
+                "value_storage": "NOT_VALUE_BACKED"
+              },
+              {
+                "copy_fixes_value": false,
+                "copy_size": 122,
+                "copy_type": "symmetryPlane",
+                "copy_updated": false,
+                "live_fixes_value": false,
+                "live_size": 122,
+                "live_type": "symmetryPlane",
+                "live_updated": true,
+                "name": "lower",
+                "value_storage": "NOT_VALUE_BACKED"
+              },
+              {
+                "copy_fixes_value": true,
+                "copy_size": 122,
+                "copy_type": "fixedValue",
+                "copy_updated": false,
+                "live_fixes_value": true,
+                "live_size": 122,
+                "live_type": "fixedValue",
+                "live_updated": false,
+                "name": "outlet",
+                "value_storage": "valuePointPatchField",
+                "values": {
+                  "classification": "NUMERIC_COMPARISON",
+                  "count": 122,
+                  "l2": 0,
+                  "max_abs": 0,
+                  "max_component": 0,
+                  "max_index": -1
+                }
+              },
+              {
+                "copy_fixes_value": false,
+                "copy_size": 122,
+                "copy_type": "symmetryPlane",
+                "copy_updated": false,
+                "live_fixes_value": false,
+                "live_size": 122,
+                "live_type": "symmetryPlane",
+                "live_updated": true,
+                "name": "upper",
+                "value_storage": "NOT_VALUE_BACKED"
+              },
+              {
+                "copy_fixes_value": true,
+                "copy_size": 122,
+                "copy_type": "fixedValue",
+                "copy_updated": false,
+                "live_fixes_value": true,
+                "live_size": 122,
+                "live_type": "fixedValue",
+                "live_updated": false,
+                "name": "inlet",
+                "value_storage": "valuePointPatchField",
+                "values": {
+                  "classification": "NUMERIC_COMPARISON",
+                  "count": 122,
+                  "l2": 0,
+                  "max_abs": 0,
+                  "max_component": 0,
+                  "max_index": -1
+                }
+              },
+              {
+                "copy_fixes_value": true,
+                "copy_size": 80,
+                "copy_type": "fixedValue",
+                "copy_updated": false,
+                "live_fixes_value": true,
+                "live_size": 80,
+                "live_type": "fixedValue",
+                "live_updated": false,
+                "name": "cylinder",
+                "value_storage": "valuePointPatchField",
+                "values": {
+                  "classification": "NUMERIC_COMPARISON",
+                  "count": 80,
+                  "l2": 0.2647674450788606,
+                  "max_abs": 0.029541320236265156,
+                  "max_component": 0,
+                  "max_index": 0
+                }
+              }
+            ],
+            "same_internal_storage": false,
+            "same_object": false
+          },
+          "pointDisplacement_parts": {
+            "boundary_hash_fnv1a64": "3ae9b1f815f1b386",
+            "internal_hash_fnv1a64": "6ca28a95e62305bd"
+          }
+        },
+        "time_index": 10,
+        "window_id": 1
+      },
+      "fluid_cylinderForces": {
+        "pressure_N": [
+          -2071415.5685,
+          141270.582371,
+          3.50859013345e-13
+        ],
+        "total_N": [
+          -2084484.997339,
+          142016.917550474,
+          1.615431449925e-12
+        ],
+        "viscous_N": [
+          -13069.428839,
+          746.335179474,
+          1.26457243658e-12
+        ]
+      },
+      "fluid_to_structure_x": {
+        "abs_error": 4.812609404325485e-07,
+        "actual": -2084484.9973385187,
+        "expected": -2084484.997339,
+        "pass": true,
+        "rel_error": 2.308776225527715e-13
+      },
+      "fluid_to_structure_y": {
+        "abs_error": 4.0253507904708385e-07,
+        "actual": 142016.91755007146,
+        "expected": 142016.917550474,
+        "pass": true,
+        "rel_error": 2.8344163920049842e-12
+      },
+      "structure_receive": {
+        "components": [
+          "x",
+          "y"
+        ],
+        "event": "STRUCTURE_RECEIVE_RAW_FORCE",
+        "force_vertices": 40,
+        "iteration": 3,
+        "payload_sha256": "a0212fbe8cf87ea8aa0866e7cc28ebe724ca4f58b61a9985ac640acab2a965a3",
+        "physical_time_s": 0.005,
+        "predictor_payload_sha256": "b31003516b05aedd1a4446b09fb7c200e93858a5768096536f42e10be4ba2338",
+        "sum_force_xy_N": [
+          -2084484.9973385187,
+          142016.91755007146
+        ],
+        "transaction_id": "WINDOW10_PREDICTOR_FORCE_IDENTITY_REPLAY_V1/run_001",
+        "units": "N"
+      }
+    }
+  },
+  "force_contract_loads": {
+    "0": {
+      "case_id": "c1-c1f1a7d5542b2c539fe4f8152bbb7e7e5b3c54ff6ed1767cc7233ecace06",
+      "cfd_time_step_s": 0.005,
+      "coupling_iteration": 0,
+      "force_2d_x_Npm": -2083602.4229063573,
+      "force_2d_y_Npm": 141957.73850402885,
+      "force_2d_z_Npm": 0.0,
+      "force_local_axial_N": 0.0,
+      "force_local_crossflow_N": 2365962.308400481,
+      "force_local_streamwise_N": -34726707.048439294,
+      "force_representation": "integrated_slice_force_N",
+      "force_x_N": -34726707.048439294,
+      "force_y_N": 2365962.308400481,
+      "force_z_N": 0.0,
+      "openfoam_force_x_N": -2083602.4229063573,
+      "openfoam_force_y_N": 141957.73850402885,
+      "openfoam_force_z_N": 0.0,
+      "s_ref_m": 8.333333333333334,
+      "schema_version": "0.2.1",
+      "slice_id": 0,
+      "slice_length_m": 16.666666666666668,
+      "status": "complete",
+      "step": 10,
+      "time_s": 0.05,
+      "unit_span_m": 1.0
+    },
+    "1": {
+      "case_id": "c1-c1f1a7d5542b2c539fe4f8152bbb7e7e5b3c54ff6ed1767cc7233ecace06",
+      "cfd_time_step_s": 0.005,
+      "coupling_iteration": 0,
+      "force_2d_x_Npm": -1361316.2367375568,
+      "force_2d_y_Npm": 92371.09355197466,
+      "force_2d_z_Npm": 0.0,
+      "force_local_axial_N": 0.0,
+      "force_local_crossflow_N": 1539518.2258662437,
+      "force_local_streamwise_N": -22688603.94562594,
+      "force_representation": "integrated_slice_force_N",
+      "force_x_N": -22688603.94562594,
+      "force_y_N": 1539518.2258662437,
+      "force_z_N": 0.0,
+      "openfoam_force_x_N": -1361316.2367375568,
+      "openfoam_force_y_N": 92371.09355197466,
+      "openfoam_force_z_N": 0.0,
+      "s_ref_m": 25.0,
+      "schema_version": "0.2.1",
+      "slice_id": 1,
+      "slice_length_m": 16.66666666666666,
+      "status": "complete",
+      "step": 10,
+      "time_s": 0.05,
+      "unit_span_m": 1.0
+    },
+    "2": {
+      "case_id": "c1-c1f1a7d5542b2c539fe4f8152bbb7e7e5b3c54ff6ed1767cc7233ecace06",
+      "cfd_time_step_s": 0.005,
+      "coupling_iteration": 0,
+      "force_2d_x_Npm": -2084484.9973385187,
+      "force_2d_y_Npm": 142016.91755007146,
+      "force_2d_z_Npm": 0.0,
+      "force_local_axial_N": 0.0,
+      "force_local_crossflow_N": 2366948.625834525,
+      "force_local_streamwise_N": -34741416.62230866,
+      "force_representation": "integrated_slice_force_N",
+      "force_x_N": -34741416.62230866,
+      "force_y_N": 2366948.625834525,
+      "force_z_N": 0.0,
+      "openfoam_force_x_N": -2084484.9973385187,
+      "openfoam_force_y_N": 142016.91755007146,
+      "openfoam_force_z_N": 0.0,
+      "s_ref_m": 41.666666666666664,
+      "schema_version": "0.2.1",
+      "slice_id": 2,
+      "slice_length_m": 16.66666666666667,
+      "status": "complete",
+      "step": 10,
+      "time_s": 0.05,
+      "unit_span_m": 1.0
+    }
+  },
+  "generalized_force_formal_N": [
+    0.0,
+    0.0,
+    0.0,
+    0.0,
+    0.0,
+    0.0,
+    0.0,
+    0.0,
+    0.0,
+    0.0,
+    0.0,
+    0.0,
+    -9003220.345891666,
+    613397.6355112357,
+    0.0,
+    -8038589.594546126,
+    547676.4602778887,
+    0.0,
+    -25723486.70254763,
+    1752564.6728892454,
+    0.0,
+    16077179.189092264,
+    -1095352.920555778,
+    0.0,
+    0.0,
+    0.0,
+    0.0,
+    0.0,
+    0.0,
+    0.0,
+    0.0,
+    0.0,
+    0.0,
+    0.0,
+    0.0,
+    0.0,
+    0.0,
+    0.0,
+    0.0,
+    0.0,
+    0.0,
+    0.0,
+    0.0,
+    0.0,
+    0.0,
+    0.0,
+    0.0,
+    0.0,
+    -22688603.94562594,
+    1539518.2258662437,
+    0.0,
+    0.0,
+    0.0,
+    0.0,
+    0.0,
+    0.0,
+    0.0,
+    0.0,
+    0.0,
+    0.0,
+    0.0,
+    0.0,
+    0.0,
+    0.0,
+    0.0,
+    0.0,
+    0.0,
+    0.0,
+    0.0,
+    0.0,
+    0.0,
+    0.0,
+    0.0,
+    0.0,
+    0.0,
+    0.0,
+    0.0,
+    0.0,
+    -25734382.68319163,
+    1753295.2783959468,
+    0.0,
+    -16083989.176994747,
+    1095809.5489974653,
+    0.0,
+    -9007033.939117026,
+    613653.3474385783,
+    0.0,
+    8041994.588497346,
+    -547904.7744987308,
+    0.0,
+    0.0,
+    0.0,
+    0.0,
+    0.0,
+    0.0,
+    0.0,
+    0.0,
+    0.0,
+    0.0,
+    0.0,
+    0.0,
+    0.0
+  ],
+  "generalized_force_mapping_v2": "NOT_EVALUABLE_NO_ANCF_CORRECTION_AUTHORIZED",
+  "next_implicit_0p05s": "NOT_AUTHORIZED",
+  "next_long_viv": "NOT_AUTHORIZED",
+  "original_containment_breach_comparison": {
+    "0": {
+      "abs_error": 1.7290003597736359e-06,
+      "actual": -2083602.4229063573,
+      "expected": -2083602.4229046283,
+      "pass": true,
+      "rel_error": 8.298129915600227e-13
+    },
+    "2": {
+      "abs_error": 8.329283446073532e-06,
+      "actual": -2084484.9973385187,
+      "expected": -2084484.997346848,
+      "pass": true,
+      "rel_error": 3.995847154896832e-12
+    }
+  },
+  "original_fluid_log_time_label_limit": "The formal run terminated after Structure containment; its ordinary .150 cylinderForces log is a different functionObject phase and is not used as the force delivered to Structure.",
+  "participant_local_final_commits_only": true,
+  "prediction_identity": {
+    "full_predictor_state_sha256": "76fe8167c4c83dd76caa8763e14b6cf3f54e911c96b0d3a01fd96dbc868a681f",
+    "original_prediction_response_hash": "53bb18a01d709d5c21218729630e2955bdf2e69046d6a63d3d70191d8eb6c411",
+    "predictor_payload_sha256": {
+      "0": "e20be93748834ce665e14f6c9f5d50341fdde2602e54de3a9590fceb55a0a3b4",
+      "1": "e65fb2a3e1397753ea0f0446c00a85750f25372c1c0e26303c607600a50c2e13",
+      "2": "b31003516b05aedd1a4446b09fb7c200e93858a5768096536f42e10be4ba2338"
+    },
+    "projection_contract": "frozen motion_from_ancf_state + repeated 40x [ux,uy] Structure-Mesh order",
+    "regenerated_prediction_response_hash": "53bb18a01d709d5c21218729630e2955bdf2e69046d6a63d3d70191d8eb6c411"
+  },
+  "preflight_status": "PASS",
+  "schema_version": "window10-predictor-force-identity-replay-audit-v1",
+  "transaction_id": "WINDOW10_PREDICTOR_FORCE_IDENTITY_REPLAY_V1/run_001",
+  "unused_checkpoint_current_q_sha256": "f8fb8d5a02766fd9f5dbb8281d0081de7965dc004bd717cb0354814ff46ed8bf",
+  "unused_predictor_q_sha256": "76fe8167c4c83dd76caa8763e14b6cf3f54e911c96b0d3a01fd96dbc868a681f"
+}
