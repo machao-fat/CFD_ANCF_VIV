@@ -124,3 +124,10 @@ FORMAL_IMPLICIT_TWO_WINDOW = FAIL  # immutable exact-history result
 NEXT_FORMAL_TWO_WINDOW = NOT_AUTHORIZED_PENDING_HUMAN_REVIEW
 NEXT_IMPLICIT_0P05S = NOT_AUTHORIZED_PENDING_HUMAN_REVIEW
 ```
+
+## Later authorized 0.05 s run
+
+The follow-on run and its independent report are recorded at
+[`FORMAL_THREE_SLICE_IMPLICIT_0P05S_OWNED_MESH_HISTORY_V1_REPORT.md`](../formal_three_slice_implicit_0p05s_owned_mesh_history_v1/FORMAL_THREE_SLICE_IMPLICIT_0P05S_OWNED_MESH_HISTORY_V1_REPORT.md).
+It remains a separate immutable runtime and does not alter this report's
+original two-window `FAIL`.

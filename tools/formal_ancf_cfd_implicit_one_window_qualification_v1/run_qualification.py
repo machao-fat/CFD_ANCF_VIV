@@ -67,6 +67,7 @@ SCHEME = os.environ.get("FORMAL_COUPLING_SCHEME", "parallel-implicit")
 DURATION_S = float(os.environ.get("FORMAL_PHYSICAL_HORIZON_S", str(DT)))
 PAIRED_MODE = os.environ.get("FORMAL_PAIRED_DIAGNOSTIC", "0") == "1"
 TWO_WINDOW_IPC_MODE = os.environ.get("FORMAL_CROSS_WINDOW_IPC_QUALIFICATION", "0") == "1"
+DERIVED_U_UF_OLDTIME_MODE = os.environ.get("FORMAL_DERIVED_U_UF_OLDTIME_V1", "0") == "1"
 if SCHEME not in ("parallel-explicit", "parallel-implicit"):
     raise RuntimeError("FORMAL_COUPLING_SCHEME must be parallel-explicit or parallel-implicit")
 if DURATION_S <= 0.0 or abs(DURATION_S / DT - round(DURATION_S / DT)) > 1e-12:
@@ -475,7 +476,7 @@ def audit(cases: list[Path], return_code: int) -> dict:
     traces, rollback = {}, {}
     for sid, case in enumerate(cases):
         trace = trace_rows(sid); traces[str(sid)] = trace
-        correlated = correlate_rollback_trace(trace)
+        correlated = correlate_rollback_trace(trace, allow_derived_lazy=DERIVED_U_UF_OLDTIME_MODE)
         pairs = correlated.get("restore_pairs", [])
         field_ok = correlated.get("status") == "PASS" and bool(pairs) and all(item.get("field_history_identity") for item in pairs)
         mesh_ok = correlated.get("status") == "PASS" and bool(pairs) and all(item.get("mesh_identity") for item in pairs)
@@ -530,6 +531,11 @@ def audit(cases: list[Path], return_code: int) -> dict:
         "structure_summary": summary, "iteration_count": summary.get("coupling_iterations_total"), "iteration_evidence": iterations,
         "fluid_rollback": rollback, "quality_v4": quality, "final_raw_force": forces, "integrated_structural_force": final_loads,
         "max_abs_ux_m": max_ux, "max_abs_vx_mps": max_vx, "coupling_scheme": SCHEME,
+        "derived_u_uf_oldtime_contract": {
+            "enabled": DERIVED_U_UF_OLDTIME_MODE,
+            "name": "DERIVED_LAZY_NUMERICALLY_EQUIVALENT_U_UF_OLDTIME_V1" if DERIVED_U_UF_OLDTIME_MODE else "NOT_ENABLED",
+            "scope": "Foundation OF10 Euler non-subcycled U/Uf path; only checkpoint zero-history 0->1 transition",
+        },
         "first_blocker": next((name for name, value in checks.items() if not value), None),
     }
     put(RESULTS / "formal_one_window_gate.json", result)

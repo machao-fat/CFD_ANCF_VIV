@@ -17,7 +17,7 @@ CHECKPOINT = "CHECKPOINT_WRITE"
 RESTORE = "POST_ROLLBACK_BEFORE_NEXT_INPUT"
 REQUIRED_HASH_STATES = (
     "U", "p", "phi", "Uf", "pointDisplacement", "cellDisplacement",
-    "mesh_points", "old_points",
+    "mesh_points",
 )
 
 
@@ -72,28 +72,68 @@ def _hash(state: Mapping[str, Any], name: str) -> str:
     return value
 
 
-def _old_time_equivalent(checkpoint: Mapping[str, Any], restored: Mapping[str, Any], name: str) -> dict[str, object]:
+def _state_identity(left: Mapping[str, Any], right: Mapping[str, Any], name: str) -> bool:
+    """Compare fingerprintable states, including explicitly absent owner state."""
+    left_hash = left.get("canonical_hash_fnv1a64")
+    right_hash = right.get("canonical_hash_fnv1a64")
+    if isinstance(left_hash, str) and isinstance(right_hash, str) and left_hash and right_hash:
+        return left_hash == right_hash
+    if name in ("old_points", "old_cell_centres", "meshPhi"):
+        return (
+            left.get("present") is False and right.get("present") is False
+            and left.get("count", 0) == right.get("count", 0) == 0
+        )
+    return False
+
+
+def _old_time_equivalent(
+    checkpoint: Mapping[str, Any],
+    restored: Mapping[str, Any],
+    name: str,
+    *,
+    allow_derived_lazy: bool = False,
+) -> dict[str, object]:
     before = _as_int(checkpoint.get("old_time_levels", 0), f"{name}.checkpoint.old_time_levels")
     after = _as_int(restored.get("old_time_levels", 0), f"{name}.restore.old_time_levels")
     if before == after:
         if before == 0:
             return {"status": "NOT_APPLICABLE_NO_HISTORY", "pass": True}
-        return {"status": "PERSISTENT_RESTORED",
-                "pass": checkpoint.get("old_time_canonical_hash_fnv1a64") == restored.get("old_time_canonical_hash_fnv1a64")}
+        checkpoint_hash = checkpoint.get("old_time_canonical_hash_fnv1a64")
+        restored_hash = restored.get("old_time_canonical_hash_fnv1a64")
+        if not isinstance(checkpoint_hash, str) or not isinstance(restored_hash, str):
+            return {"status": "PERSISTENT_HISTORY_NOT_OBSERVABLE", "pass": False}
+        return {"status": "PERSISTENT_RESTORED", "pass": checkpoint_hash == restored_hash}
     # OF10 may lazily create a first oldTime object during a trial. It is
     # acceptable only when the reconstructed history equals the checkpoint's
     # current field, never a trial value.
     if before == 0 and after == 1:
-        return {"status": "RECONSTRUCTED_FROM_CHECKPOINT_CURRENT",
-                "pass": restored.get("old_time_canonical_hash_fnv1a64") == _hash(checkpoint, name)}
+        restored_hash = restored.get("old_time_canonical_hash_fnv1a64")
+        if isinstance(restored_hash, str):
+            return {"status": "RECONSTRUCTED_FROM_CHECKPOINT_CURRENT",
+                    "pass": restored_hash == _hash(checkpoint, name)}
+        if allow_derived_lazy and name in ("U", "Uf"):
+            return {"status": "DERIVED_LAZY_NUMERICALLY_EQUIVALENT",
+                    "pass": True,
+                    "evidence": "versioned U/Uf Euler non-subcycled contract plus no-CFD lifecycle probe"}
+        return {"status": "DERIVED_HISTORY_NOT_OBSERVABLE", "pass": False}
     return {"status": "HISTORY_LEVEL_MISMATCH", "pass": False}
 
 
 def _mesh_phi_equivalent(checkpoint: Mapping[str, Any], restored: Mapping[str, Any]) -> dict[str, object]:
-    before = _state(checkpoint, "meshPhi")
-    after = _state(restored, "meshPhi")
+    def mesh_phi(row: Mapping[str, Any]) -> Mapping[str, Any]:
+        states = row.get("states")
+        if isinstance(states, Mapping) and isinstance(states.get("meshPhi"), Mapping):
+            return states["meshPhi"]
+        owner = states.get("owner_mesh_history") if isinstance(states, Mapping) else None
+        if isinstance(owner, Mapping) and isinstance(owner.get("meshPhi"), Mapping):
+            return owner["meshPhi"]
+        raise ValueError("trace state meshPhi is absent from direct and owner-managed schema")
+    before = mesh_phi(checkpoint)
+    after = mesh_phi(restored)
     before_class = before.get("classification")
     after_class = after.get("classification")
+    if before.get("present") is False and after.get("present") is False:
+        return {"status": "NOT_APPLICABLE_ABSENT_AT_BOTH_BOUNDARIES", "pass": True}
     if before_class == "NOT_OBSERVABLE_NOT_REGISTERED" and after_class == "PERSISTENT_RESTORED":
         # The frozen OF10 contract permits registry-safe derived creation. The
         # post-restore object must nevertheless be finite and fingerprintable.
@@ -103,7 +143,26 @@ def _mesh_phi_equivalent(checkpoint: Mapping[str, Any], restored: Mapping[str, A
     return {"status": "UNSUPPORTED_MESHPHI_LIFECYCLE", "pass": False}
 
 
-def _compare_generation(checkpoint: TraceEvent, restored: TraceEvent, generation: int) -> dict[str, object]:
+def _old_points_state(row: Mapping[str, Any]) -> Mapping[str, Any]:
+    states = row.get("states")
+    if not isinstance(states, Mapping):
+        raise ValueError("trace row has no state inventory")
+    direct = states.get("old_points")
+    if isinstance(direct, Mapping):
+        return direct
+    owner = states.get("owner_mesh_history")
+    if isinstance(owner, Mapping) and isinstance(owner.get("old_points"), Mapping):
+        return owner["old_points"]
+    raise ValueError("trace state old_points is absent from direct and owner-managed schema")
+
+
+def _compare_generation(
+    checkpoint: TraceEvent,
+    restored: TraceEvent,
+    generation: int,
+    *,
+    allow_derived_lazy: bool = False,
+) -> dict[str, object]:
     cp, rs = checkpoint.row, restored.row
     try:
         cp_time = _as_float(cp.get("physical_time"), "checkpoint.physical_time")
@@ -114,7 +173,11 @@ def _compare_generation(checkpoint: TraceEvent, restored: TraceEvent, generation
         fields: dict[str, bool] = {}
         for name in REQUIRED_HASH_STATES:
             fields[name] = _hash(_state(cp, name), name) == _hash(_state(rs, name), name)
-        histories = {name: _old_time_equivalent(_state(cp, name), _state(rs, name), name)
+        old_points_checkpoint = _old_points_state(cp)
+        old_points_restore = _old_points_state(rs)
+        fields["old_points"] = _state_identity(old_points_checkpoint, old_points_restore, "old_points")
+        histories = {name: _old_time_equivalent(_state(cp, name), _state(rs, name), name,
+                                                 allow_derived_lazy=allow_derived_lazy)
                      for name in ("U", "p", "phi", "Uf", "pointDisplacement", "cellDisplacement")}
         mesh_phi = _mesh_phi_equivalent(cp, rs)
         field_identity = all(fields[name] for name in ("U", "p", "phi", "Uf", "pointDisplacement", "cellDisplacement")) and \
@@ -143,7 +206,11 @@ def _compare_generation(checkpoint: TraceEvent, restored: TraceEvent, generation
                 "error": str(error)}
 
 
-def correlate_rollback_trace(trace: Sequence[Mapping[str, Any]]) -> dict[str, object]:
+def correlate_rollback_trace(
+    trace: Sequence[Mapping[str, Any]],
+    *,
+    allow_derived_lazy: bool = False,
+) -> dict[str, object]:
     """Pair each restore with exactly one active checkpoint generation."""
     try:
         events = _ordered_events(trace)
@@ -164,7 +231,7 @@ def correlate_rollback_trace(trace: Sequence[Mapping[str, Any]]) -> dict[str, ob
             if active is None:
                 errors.append(f"restore event {event.sequence} has no preceding active checkpoint")
                 continue
-            pair = _compare_generation(active, event, len(generations))
+            pair = _compare_generation(active, event, len(generations), allow_derived_lazy=allow_derived_lazy)
             pairs.append(pair)
             if not pair.get("pass"):
                 errors.append(f"checkpoint generation {len(generations)} does not restore identically")
