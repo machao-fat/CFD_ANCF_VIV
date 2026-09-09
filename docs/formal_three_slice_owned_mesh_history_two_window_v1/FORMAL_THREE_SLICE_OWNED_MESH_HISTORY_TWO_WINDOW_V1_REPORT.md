@@ -101,3 +101,26 @@ The minimum next review is to explain why first restore creates \`U/Uf\` old-tim
 
 \`NEXT_FORMAL_TWO_WINDOW = NOT_AUTHORIZED_PENDING_U_UF_OLDTIME_LIFECYCLE_REVIEW\`
 \`NEXT_IMPLICIT_0P05S = NOT_AUTHORIZED\`
+
+## Supplemental U/Uf oldTime lifecycle decision (read-only)
+
+The separate decision record
+[`U_UF_OLDTIME_LIFECYCLE_CONTRACT_DECISION_V1.md`](U_UF_OLDTIME_LIFECYCLE_CONTRACT_DECISION_V1.md)
+now closes the numerical mechanism for the generation-1 `0 -> 1` U/Uf
+old-time inventory change within the limited Foundation OF10 Euler,
+non-subcycled scope. It uses the immutable trace, the production-candidate
+source order and a no-CFD local-copy reproduction against the formal `0.1`
+fields. The reproduction proves full U and Uf restored-old equality to the
+checkpoint current field, checkpoint time index `0`, and non-equality to
+injected rejected-trial data.
+
+This is a versioned supplemental conclusion, not a rewrite of the frozen
+exact-history gate or the legacy auditor schema evidence:
+
+```
+U_UF_OLDTIME_LIFECYCLE_SUPPLEMENTAL_QUALIFICATION =
+PASS_FOR_CURRENT_EULER_NON_SUBCYCLED_SCOPE
+FORMAL_IMPLICIT_TWO_WINDOW = FAIL  # immutable exact-history result
+NEXT_FORMAL_TWO_WINDOW = NOT_AUTHORIZED_PENDING_HUMAN_REVIEW
+NEXT_IMPLICIT_0P05S = NOT_AUTHORIZED_PENDING_HUMAN_REVIEW
+```
