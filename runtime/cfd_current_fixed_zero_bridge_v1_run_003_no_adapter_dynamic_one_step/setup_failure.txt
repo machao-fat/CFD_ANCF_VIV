@@ -1,0 +1,6 @@
+status = TEST_HARNESS_SETUP_FAILURE
+solver_started = false
+time = 2026-09-09
+error = Python pathlib.Path.write_text() does not accept the newline keyword on this runtime.
+trace = run_no_adapter_dynamic_probe.py prepare() failed while writing system/controlDict; no OpenFOAM or preCICE process was started.
+disposition = preserved; no automatic retry under the frozen one-step experiment boundary.
