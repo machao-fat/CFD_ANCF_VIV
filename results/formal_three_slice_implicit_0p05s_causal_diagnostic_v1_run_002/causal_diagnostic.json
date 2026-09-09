@@ -1,0 +1,6312 @@
+{
+  "schema_version": "formal-three-slice-causal-diagnostic-v1",
+  "mode": "READ_ONLY_NO_NEW_CFD_OR_ANCF",
+  "immutable_runtime": "D:\\研二文件\\开题准备\\CFD_ANCF_VIV\\runtime\\formal_three_slice_implicit_0p05s_owned_mesh_history_v1_run_001",
+  "input_sha256": {
+    "records.jsonl": "6f111fa7825cc7d80c2939ccd5e2d64c8caf0eeaccad379d45f3dad61dbf9d87",
+    "implicit_iterations.jsonl": "e0d8fc6ec2feb1310d25a6098b33cef35dea0130e36d1f795faa63cb058b6151",
+    "structure_summary.json": "0e7382efde376042825dd5b4d6c61005381b756ebd78fbc7cb4c2f28222ceb64",
+    "containment_event.json": "7ee122b57f39551c1a606e0adf23d0edb8c6c3941786760acf20beaa99aef02a",
+    "fluid_0000_adapter_trace.jsonl": "8130e84cc08617cf9f75d0c4c9bc54ef1c309f2a9b1a33968ab83d1868888e5e",
+    "fluid_0001_adapter_trace.jsonl": "23e05e241cc60d437aced04f6075c937e2ca45fd3d98603ea7bfad643e2480bf",
+    "fluid_0002_adapter_trace.jsonl": "630aba6a2899e39ea92b0ceadcf5d4cb30b9081069af7013e5608f32ef108128"
+  },
+  "structure": {
+    "committed_steps": 9,
+    "coupling_iterations_total": 29,
+    "error": "RuntimeError: frozen realtime containment threshold crossed"
+  },
+  "containment": {
+    "breaches": [
+      {
+        "limit": 2000000.0,
+        "quantity": "raw_Fx_N",
+        "slice_id": 0,
+        "value": -2083602.4229046283
+      },
+      {
+        "limit": 2000000.0,
+        "quantity": "raw_Fx_N",
+        "slice_id": 2,
+        "value": -2084484.997346848
+      }
+    ],
+    "coupling_tau_s": 0.05,
+    "event": "FROZEN_CONTAINMENT_BREACH",
+    "iteration_index": 3,
+    "limits": {
+      "max_abs_raw_Fx_N": 2000000.0,
+      "max_abs_ux_m": 0.1,
+      "max_abs_vx_mps": 20.0
+    },
+    "window_index": 10
+  },
+  "committed_window_series": [
+    {
+      "window": 1,
+      "coupling_tau_s": 0.005,
+      "final_iteration": 2,
+      "raw_force_N": [
+        1248.2039243948773,
+        1248.2039243948773,
+        1248.2039243948773
+      ],
+      "integrated_force_N": [
+        20803.398739914624,
+        20803.398739914614,
+        20803.398739914628
+      ],
+      "ux_m": [
+        1.6641630090056396e-05,
+        1.5604141886979283e-05,
+        1.6642842857299692e-05
+      ],
+      "vx_mps": [
+        0.006656652036022559,
+        0.006241656754791713,
+        0.006657137142919876
+      ]
+    },
+    {
+      "window": 2,
+      "coupling_tau_s": 0.01,
+      "final_iteration": 3,
+      "raw_force_N": [
+        -989.6602682952237,
+        -956.7606067320464,
+        -989.1859312353171
+      ],
+      "integrated_force_N": [
+        -16494.337804920397,
+        -15946.010112200767,
+        -16486.43218725529
+      ],
+      "ux_m": [
+        4.375270417040299e-05,
+        4.439351722323294e-05,
+        4.374162484892238e-05
+      ],
+      "vx_mps": [
+        0.004187777596116078,
+        0.0052740933797097485,
+        0.0041823756537292004
+      ]
+    },
+    {
+      "window": 3,
+      "coupling_tau_s": 0.015,
+      "final_iteration": 3,
+      "raw_force_N": [
+        4762.8481413259715,
+        4424.741971706306,
+        4764.446523409642
+      ],
+      "integrated_force_N": [
+        79380.80235543287,
+        73745.6995284384,
+        79407.44205682739
+      ],
+      "ux_m": [
+        0.00011006692075678916,
+        0.00010830415398572727,
+        0.00011000583901972315
+      ],
+      "vx_mps": [
+        0.022337909038438394,
+        0.020290161325287985,
+        0.0223233100145911
+      ]
+    },
+    {
+      "window": 4,
+      "coupling_tau_s": 0.02,
+      "final_iteration": 3,
+      "raw_force_N": [
+        -8898.010762477663,
+        -7790.628428153629,
+        -8896.899468319616
+      ],
+      "integrated_force_N": [
+        -148300.1793746277,
+        -129843.80713589377,
+        -148281.65780532698
+      ],
+      "ux_m": [
+        0.00013897483766656433,
+        0.00014944580020708286,
+        0.00013877229302157394
+      ],
+      "vx_mps": [
+        -0.010774742274528338,
+        -0.0038335028367457516,
+        -0.010816728413850786
+      ]
+    },
+    {
+      "window": 5,
+      "coupling_tau_s": 0.025,
+      "final_iteration": 3,
+      "raw_force_N": [
+        24034.447723780668,
+        20444.493447287103,
+        24040.951186496488
+      ],
+      "integrated_force_N": [
+        400574.1287296778,
+        340741.5574547849,
+        400682.51977494155
+      ],
+      "ux_m": [
+        0.00030813153497090444,
+        0.0002924680877651998,
+        0.0003077444969572777
+      ],
+      "vx_mps": [
+        0.07843742119626437,
+        0.06104241785999252,
+        0.0784056099881323
+      ]
+    },
+    {
+      "window": 6,
+      "coupling_tau_s": 0.03,
+      "final_iteration": 3,
+      "raw_force_N": [
+        -54898.33204303828,
+        -44397.803809411555,
+        -54905.57536616202
+      ],
+      "integrated_force_N": [
+        -914972.2007173047,
+        -739963.3968235257,
+        -915092.9227693672
+      ],
+      "ux_m": [
+        0.00018629541998474284,
+        0.0002460511224267599,
+        0.0001854766819610034
+      ],
+      "vx_mps": [
+        -0.1271718671907291,
+        -0.07960920399536847,
+        -0.12731273598664206
+      ]
+    },
+    {
+      "window": 7,
+      "coupling_tau_s": 0.035,
+      "final_iteration": 3,
+      "raw_force_N": [
+        135438.89116576113,
+        105329.67152896711,
+        135477.21795378308
+      ],
+      "integrated_force_N": [
+        2257314.8527626856,
+        1755494.5254827845,
+        2257953.6325630522
+      ],
+      "ux_m": [
+        0.0008145926421601717,
+        0.0006803808078151135,
+        0.0008135424759003704
+      ],
+      "vx_mps": [
+        0.37849075606090055,
+        0.25334107815070994,
+        0.37853905356238887
+      ]
+    },
+    {
+      "window": 8,
+      "coupling_tau_s": 0.04,
+      "final_iteration": 3,
+      "raw_force_N": [
+        -321864.1647506811,
+        -238287.68993185184,
+        -321954.809548576
+      ],
+      "integrated_force_N": [
+        -5364402.7458446855,
+        -3971461.498864196,
+        -5365913.492476269
+      ],
+      "ux_m": [
+        -0.0002987289215784648,
+        6.583011536186578e-05,
+        -0.0003011057997313999
+      ],
+      "vx_mps": [
+        -0.8238193815563551,
+        -0.499161355132009,
+        -0.8243983638150975
+      ]
+    },
+    {
+      "window": 9,
+      "coupling_tau_s": 0.045,
+      "final_iteration": 3,
+      "raw_force_N": [
+        806313.3383839059,
+        566098.4773326017,
+        806609.5935849193
+      ],
+      "integrated_force_N": [
+        13438555.639731767,
+        9434974.622210024,
+        13443493.226415327
+      ],
+      "ux_m": [
+        0.003219706813301064,
+        0.002109057183077614,
+        0.003218530293214131
+      ],
+      "vx_mps": [
+        2.231193675508167,
+        1.316452182218308,
+        2.2322528009933102
+      ]
+    }
+  ],
+  "force_values_seen_by_structure_pre_correction": [
+    {
+      "window": 1,
+      "iteration": 1,
+      "coupling_tau_s": 0.005,
+      "integrated_force_N": [
+        0.0,
+        0.0,
+        0.0
+      ]
+    },
+    {
+      "window": 1,
+      "iteration": 2,
+      "coupling_tau_s": 0.005,
+      "integrated_force_N": [
+        20803.398739914624,
+        20803.398739914614,
+        20803.398739914628
+      ]
+    },
+    {
+      "window": 2,
+      "iteration": 1,
+      "coupling_tau_s": 0.01,
+      "integrated_force_N": [
+        20803.398739914624,
+        20803.398739914614,
+        20803.398739914628
+      ]
+    },
+    {
+      "window": 2,
+      "iteration": 2,
+      "coupling_tau_s": 0.01,
+      "integrated_force_N": [
+        20803.398739914624,
+        20803.398739914614,
+        20803.398739914628
+      ]
+    },
+    {
+      "window": 2,
+      "iteration": 3,
+      "coupling_tau_s": 0.01,
+      "integrated_force_N": [
+        -16494.337804920397,
+        -15946.010112200767,
+        -16486.43218725529
+      ]
+    },
+    {
+      "window": 3,
+      "iteration": 1,
+      "coupling_tau_s": 0.015,
+      "integrated_force_N": [
+        -16494.337804920397,
+        -15946.010112200767,
+        -16486.43218725529
+      ]
+    },
+    {
+      "window": 3,
+      "iteration": 2,
+      "coupling_tau_s": 0.015,
+      "integrated_force_N": [
+        -16494.337804920397,
+        -15946.010112200767,
+        -16486.43218725529
+      ]
+    },
+    {
+      "window": 3,
+      "iteration": 3,
+      "coupling_tau_s": 0.015,
+      "integrated_force_N": [
+        79380.80235543287,
+        73745.6995284384,
+        79407.44205682739
+      ]
+    },
+    {
+      "window": 4,
+      "iteration": 1,
+      "coupling_tau_s": 0.02,
+      "integrated_force_N": [
+        79380.80235543287,
+        73745.6995284384,
+        79407.44205682739
+      ]
+    },
+    {
+      "window": 4,
+      "iteration": 2,
+      "coupling_tau_s": 0.02,
+      "integrated_force_N": [
+        79380.80235543287,
+        73745.6995284384,
+        79407.44205682739
+      ]
+    },
+    {
+      "window": 4,
+      "iteration": 3,
+      "coupling_tau_s": 0.02,
+      "integrated_force_N": [
+        -148300.1793746277,
+        -129843.80713589377,
+        -148281.65780532698
+      ]
+    },
+    {
+      "window": 5,
+      "iteration": 1,
+      "coupling_tau_s": 0.025,
+      "integrated_force_N": [
+        -148300.1793746277,
+        -129843.80713589377,
+        -148281.65780532698
+      ]
+    },
+    {
+      "window": 5,
+      "iteration": 2,
+      "coupling_tau_s": 0.025,
+      "integrated_force_N": [
+        -148300.1793746277,
+        -129843.80713589377,
+        -148281.65780532698
+      ]
+    },
+    {
+      "window": 5,
+      "iteration": 3,
+      "coupling_tau_s": 0.025,
+      "integrated_force_N": [
+        400574.1287296778,
+        340741.5574547849,
+        400682.51977494155
+      ]
+    },
+    {
+      "window": 6,
+      "iteration": 1,
+      "coupling_tau_s": 0.03,
+      "integrated_force_N": [
+        400574.1287296778,
+        340741.5574547849,
+        400682.51977494155
+      ]
+    },
+    {
+      "window": 6,
+      "iteration": 2,
+      "coupling_tau_s": 0.03,
+      "integrated_force_N": [
+        400574.1287296778,
+        340741.5574547849,
+        400682.51977494155
+      ]
+    },
+    {
+      "window": 6,
+      "iteration": 3,
+      "coupling_tau_s": 0.03,
+      "integrated_force_N": [
+        -914972.2007173047,
+        -739963.3968235257,
+        -915092.9227693672
+      ]
+    },
+    {
+      "window": 7,
+      "iteration": 1,
+      "coupling_tau_s": 0.035,
+      "integrated_force_N": [
+        -914972.2007173047,
+        -739963.3968235257,
+        -915092.9227693672
+      ]
+    },
+    {
+      "window": 7,
+      "iteration": 2,
+      "coupling_tau_s": 0.035,
+      "integrated_force_N": [
+        -914972.2007173047,
+        -739963.3968235257,
+        -915092.9227693672
+      ]
+    },
+    {
+      "window": 7,
+      "iteration": 3,
+      "coupling_tau_s": 0.035,
+      "integrated_force_N": [
+        2257314.8527626856,
+        1755494.5254827845,
+        2257953.6325630522
+      ]
+    },
+    {
+      "window": 8,
+      "iteration": 1,
+      "coupling_tau_s": 0.04,
+      "integrated_force_N": [
+        2257314.8527626856,
+        1755494.5254827845,
+        2257953.6325630522
+      ]
+    },
+    {
+      "window": 8,
+      "iteration": 2,
+      "coupling_tau_s": 0.04,
+      "integrated_force_N": [
+        2257314.8527626856,
+        1755494.5254827845,
+        2257953.6325630522
+      ]
+    },
+    {
+      "window": 8,
+      "iteration": 3,
+      "coupling_tau_s": 0.04,
+      "integrated_force_N": [
+        -5364402.7458446855,
+        -3971461.498864196,
+        -5365913.492476269
+      ]
+    },
+    {
+      "window": 9,
+      "iteration": 1,
+      "coupling_tau_s": 0.045,
+      "integrated_force_N": [
+        -5364402.7458446855,
+        -3971461.498864196,
+        -5365913.492476269
+      ]
+    },
+    {
+      "window": 9,
+      "iteration": 2,
+      "coupling_tau_s": 0.045,
+      "integrated_force_N": [
+        -5364402.7458446855,
+        -3971461.498864196,
+        -5365913.492476269
+      ]
+    },
+    {
+      "window": 9,
+      "iteration": 3,
+      "coupling_tau_s": 0.045,
+      "integrated_force_N": [
+        13438555.639731767,
+        9434974.622210024,
+        13443493.226415327
+      ]
+    },
+    {
+      "window": 10,
+      "iteration": 1,
+      "coupling_tau_s": 0.05,
+      "integrated_force_N": [
+        13438555.639731767,
+        9434974.622210024,
+        13443493.226415327
+      ]
+    },
+    {
+      "window": 10,
+      "iteration": 2,
+      "coupling_tau_s": 0.05,
+      "integrated_force_N": [
+        13438555.639731767,
+        9434974.622210024,
+        13443493.226415327
+      ]
+    }
+  ],
+  "fluid_trace_transaction_summary": {
+    "0": {
+      "events": {
+        "POINT_DISPLACEMENT_COPY_CONSTRUCTED": 1,
+        "CHECKPOINT_WRITE": 10,
+        "PRE_POINT_DISPLACEMENT_CHECKPOINT_RESET": 10,
+        "POST_POINT_DISPLACEMENT_CHECKPOINT_RESET": 10,
+        "POST_GENERIC_FIELD_CHECKPOINT_STORE": 10,
+        "PRE_ROLLBACK_TRIAL": 19,
+        "PRE_OWNER_MESH_HISTORY_RESTORE": 19,
+        "POST_OWNER_MESH_HISTORY_RESTORE": 19,
+        "POST_GENERIC_FIELD_RESTORE": 19,
+        "POST_ROLLBACK_BEFORE_NEXT_INPUT": 19,
+        "POST_NEXT_COUPLING_INPUT": 28,
+        "FINAL_COMMIT": 10
+      },
+      "last_final_commit": {
+        "event": "FINAL_COMMIT",
+        "window_id": 10,
+        "iteration_id": 0,
+        "physical_time": 0.15000000000000005,
+        "time_index": 10,
+        "adapter_build_identity": "openfoam10-d53753b1-rollback-diagnostic-v1",
+        "adapter_build_sha256": "c8bb6fd83be795834dcdfcae0f8b8606ba09b546611a33fb0ddfa379e47e8f17",
+        "checkpoint_inventory": {
+          "pointDisplacement_generic_pointVector": true
+        },
+        "states": {
+          "pointDisplacement_lifecycle_pre_fingerprint": {
+            "classification": "READ_ONLY_LIFECYCLE_COMPARISON",
+            "live_object": "0x61660ab50740",
+            "copy_object": "0x61660b21c4a0",
+            "same_object": false,
+            "live_internal_storage": "0x61660ac1be80",
+            "copy_internal_storage": "0x61660b57d7d0",
+            "same_internal_storage": false,
+            "live_metadata": {
+              "name": "pointDisplacement",
+              "instance": "0.15",
+              "time_index": 10,
+              "old_time_levels": 0
+            },
+            "copy_metadata": {
+              "name": "pointDisplacement",
+              "instance": "0.1",
+              "time_index": 10,
+              "old_time_levels": 0
+            },
+            "internal": {
+              "classification": "NUMERIC_COMPARISON",
+              "count": 16524,
+              "max_abs": 0.04983758144334227,
+              "l2": 5.981743085954156,
+              "max_index": 8140,
+              "max_component": 0
+            },
+            "patches": [
+              {
+                "name": "front",
+                "live_type": "empty",
+                "copy_type": "empty",
+                "live_size": 8262,
+                "copy_size": 8262,
+                "live_fixes_value": false,
+                "copy_fixes_value": false,
+                "live_updated": false,
+                "copy_updated": false,
+                "value_storage": "NOT_VALUE_BACKED"
+              },
+              {
+                "name": "back",
+                "live_type": "empty",
+                "copy_type": "empty",
+                "live_size": 8262,
+                "copy_size": 8262,
+                "live_fixes_value": false,
+                "copy_fixes_value": false,
+                "live_updated": false,
+                "copy_updated": false,
+                "value_storage": "NOT_VALUE_BACKED"
+              },
+              {
+                "name": "lower",
+                "live_type": "symmetryPlane",
+                "copy_type": "symmetryPlane",
+                "live_size": 122,
+                "copy_size": 122,
+                "live_fixes_value": false,
+                "copy_fixes_value": false,
+                "live_updated": true,
+                "copy_updated": false,
+                "value_storage": "NOT_VALUE_BACKED"
+              },
+              {
+                "name": "outlet",
+                "live_type": "fixedValue",
+                "copy_type": "fixedValue",
+                "live_size": 122,
+                "copy_size": 122,
+                "live_fixes_value": true,
+                "copy_fixes_value": true,
+                "live_updated": false,
+                "copy_updated": false,
+                "value_storage": "valuePointPatchField",
+                "values": {
+                  "classification": "NUMERIC_COMPARISON",
+                  "count": 122,
+                  "max_abs": 0,
+                  "l2": 0,
+                  "max_index": -1,
+                  "max_component": 0
+                }
+              },
+              {
+                "name": "upper",
+                "live_type": "symmetryPlane",
+                "copy_type": "symmetryPlane",
+                "live_size": 122,
+                "copy_size": 122,
+                "live_fixes_value": false,
+                "copy_fixes_value": false,
+                "live_updated": true,
+                "copy_updated": false,
+                "value_storage": "NOT_VALUE_BACKED"
+              },
+              {
+                "name": "inlet",
+                "live_type": "fixedValue",
+                "copy_type": "fixedValue",
+                "live_size": 122,
+                "copy_size": 122,
+                "live_fixes_value": true,
+                "copy_fixes_value": true,
+                "live_updated": false,
+                "copy_updated": false,
+                "value_storage": "valuePointPatchField",
+                "values": {
+                  "classification": "NUMERIC_COMPARISON",
+                  "count": 122,
+                  "max_abs": 0,
+                  "l2": 0,
+                  "max_index": -1,
+                  "max_component": 0
+                }
+              },
+              {
+                "name": "cylinder",
+                "live_type": "fixedValue",
+                "copy_type": "fixedValue",
+                "live_size": 80,
+                "copy_size": 80,
+                "live_fixes_value": true,
+                "copy_fixes_value": true,
+                "live_updated": false,
+                "copy_updated": false,
+                "value_storage": "valuePointPatchField",
+                "values": {
+                  "classification": "NUMERIC_COMPARISON",
+                  "count": 80,
+                  "max_abs": 0.044572323420088454,
+                  "l2": 0.3994770152833621,
+                  "max_index": 0,
+                  "max_component": 0
+                }
+              }
+            ],
+            "old_time": {
+              "live_levels": 0,
+              "copy_levels": 0,
+              "value_comparison": "OMITTED_NON_LAZY"
+            }
+          },
+          "U": {
+            "classification": "PERSISTENT_RESTORED",
+            "count": 16244,
+            "finite": true,
+            "canonical_hash_fnv1a64": "c92200437d8bfec4",
+            "old_time_levels": 1,
+            "old_time_value_observation": "OMITTED_NON_LAZY"
+          },
+          "p": {
+            "classification": "PERSISTENT_RESTORED",
+            "count": 16244,
+            "finite": true,
+            "canonical_hash_fnv1a64": "a50dd7bb1fa3bfdf",
+            "old_time_levels": 0,
+            "old_time_value_observation": "OMITTED_NON_LAZY"
+          },
+          "phi": {
+            "classification": "PERSISTENT_RESTORED",
+            "count": 24226,
+            "finite": true,
+            "canonical_hash_fnv1a64": "2e5375c85721b65b",
+            "old_time_levels": 0,
+            "old_time_value_observation": "OMITTED_NON_LAZY"
+          },
+          "Uf": {
+            "classification": "PERSISTENT_RESTORED",
+            "count": 24226,
+            "finite": true,
+            "canonical_hash_fnv1a64": "dabc51da027319b9",
+            "old_time_levels": 1,
+            "old_time_value_observation": "OMITTED_NON_LAZY"
+          },
+          "pointDisplacement": {
+            "classification": "PERSISTENT_RESTORED",
+            "count": 16524,
+            "finite": true,
+            "canonical_hash_fnv1a64": "3589f3b04b6aa718",
+            "old_time_levels": 0,
+            "old_time_value_observation": "OMITTED_NON_LAZY"
+          },
+          "pointDisplacement_parts": {
+            "internal_hash_fnv1a64": "7ae0e6e853b115da",
+            "boundary_hash_fnv1a64": "a392e556ce571b26"
+          },
+          "pointDisplacement_checkpoint_copy": {
+            "classification": "PERSISTENT_RESTORED",
+            "count": 16524,
+            "finite": true,
+            "canonical_hash_fnv1a64": "7ae0e6e853b115da",
+            "old_time_levels": 0,
+            "old_time_value_observation": "OMITTED_NON_LAZY"
+          },
+          "pointDisplacement_lifecycle_post_fingerprint": {
+            "classification": "READ_ONLY_LIFECYCLE_COMPARISON",
+            "live_object": "0x61660ab50740",
+            "copy_object": "0x61660b21c4a0",
+            "same_object": false,
+            "live_internal_storage": "0x61660ac1be80",
+            "copy_internal_storage": "0x61660b57d7d0",
+            "same_internal_storage": false,
+            "live_metadata": {
+              "name": "pointDisplacement",
+              "instance": "0.15",
+              "time_index": 10,
+              "old_time_levels": 0
+            },
+            "copy_metadata": {
+              "name": "pointDisplacement",
+              "instance": "0.1",
+              "time_index": 10,
+              "old_time_levels": 0
+            },
+            "internal": {
+              "classification": "NUMERIC_COMPARISON",
+              "count": 16524,
+              "max_abs": 0.04983758144334227,
+              "l2": 5.981743085954156,
+              "max_index": 8140,
+              "max_component": 0
+            },
+            "patches": [
+              {
+                "name": "front",
+                "live_type": "empty",
+                "copy_type": "empty",
+                "live_size": 8262,
+                "copy_size": 8262,
+                "live_fixes_value": false,
+                "copy_fixes_value": false,
+                "live_updated": false,
+                "copy_updated": false,
+                "value_storage": "NOT_VALUE_BACKED"
+              },
+              {
+                "name": "back",
+                "live_type": "empty",
+                "copy_type": "empty",
+                "live_size": 8262,
+                "copy_size": 8262,
+                "live_fixes_value": false,
+                "copy_fixes_value": false,
+                "live_updated": false,
+                "copy_updated": false,
+                "value_storage": "NOT_VALUE_BACKED"
+              },
+              {
+                "name": "lower",
+                "live_type": "symmetryPlane",
+                "copy_type": "symmetryPlane",
+                "live_size": 122,
+                "copy_size": 122,
+                "live_fixes_value": false,
+                "copy_fixes_value": false,
+                "live_updated": true,
+                "copy_updated": false,
+                "value_storage": "NOT_VALUE_BACKED"
+              },
+              {
+                "name": "outlet",
+                "live_type": "fixedValue",
+                "copy_type": "fixedValue",
+                "live_size": 122,
+                "copy_size": 122,
+                "live_fixes_value": true,
+                "copy_fixes_value": true,
+                "live_updated": false,
+                "copy_updated": false,
+                "value_storage": "valuePointPatchField",
+                "values": {
+                  "classification": "NUMERIC_COMPARISON",
+                  "count": 122,
+                  "max_abs": 0,
+                  "l2": 0,
+                  "max_index": -1,
+                  "max_component": 0
+                }
+              },
+              {
+                "name": "upper",
+                "live_type": "symmetryPlane",
+                "copy_type": "symmetryPlane",
+                "live_size": 122,
+                "copy_size": 122,
+                "live_fixes_value": false,
+                "copy_fixes_value": false,
+                "live_updated": true,
+                "copy_updated": false,
+                "value_storage": "NOT_VALUE_BACKED"
+              },
+              {
+                "name": "inlet",
+                "live_type": "fixedValue",
+                "copy_type": "fixedValue",
+                "live_size": 122,
+                "copy_size": 122,
+                "live_fixes_value": true,
+                "copy_fixes_value": true,
+                "live_updated": false,
+                "copy_updated": false,
+                "value_storage": "valuePointPatchField",
+                "values": {
+                  "classification": "NUMERIC_COMPARISON",
+                  "count": 122,
+                  "max_abs": 0,
+                  "l2": 0,
+                  "max_index": -1,
+                  "max_component": 0
+                }
+              },
+              {
+                "name": "cylinder",
+                "live_type": "fixedValue",
+                "copy_type": "fixedValue",
+                "live_size": 80,
+                "copy_size": 80,
+                "live_fixes_value": true,
+                "copy_fixes_value": true,
+                "live_updated": false,
+                "copy_updated": false,
+                "value_storage": "valuePointPatchField",
+                "values": {
+                  "classification": "NUMERIC_COMPARISON",
+                  "count": 80,
+                  "max_abs": 0.044572323420088454,
+                  "l2": 0.3994770152833621,
+                  "max_index": 0,
+                  "max_component": 0
+                }
+              }
+            ],
+            "old_time": {
+              "live_levels": 0,
+              "copy_levels": 0,
+              "value_comparison": "OMITTED_NON_LAZY"
+            }
+          },
+          "cellDisplacement": {
+            "classification": "PERSISTENT_RESTORED",
+            "count": 16244,
+            "finite": true,
+            "canonical_hash_fnv1a64": "277544b6c5fa855d",
+            "old_time_levels": 0,
+            "old_time_value_observation": "OMITTED_NON_LAZY"
+          },
+          "mesh_points": {
+            "classification": "PERSISTENT_RESTORED",
+            "count": 16524,
+            "finite": true,
+            "canonical_hash_fnv1a64": "7eeba84fe94aac08",
+            "centroid_xyz": [
+              3.5408753064764027,
+              0.17652770489437394,
+              0.5
+            ]
+          },
+          "owner_mesh_history": {
+            "classification": "OWNER_NON_LAZY",
+            "moving": true,
+            "cur_motion_time_index": 10,
+            "cur_time_index": 10,
+            "store_old_cell_centres": false,
+            "old_points": {
+              "classification": "OWNER_NON_LAZY",
+              "present": true,
+              "count": 16524,
+              "finite": true,
+              "max_component_abs": 20,
+              "canonical_hash_fnv1a64": "7306af268969adf8"
+            },
+            "old_cell_centres": {
+              "classification": "OWNER_NON_LAZY",
+              "present": false,
+              "count": 0,
+              "finite": true,
+              "max_component_abs": 0,
+              "canonical_hash_fnv1a64": ""
+            },
+            "V0": {
+              "classification": "OWNER_NON_LAZY",
+              "present": true,
+              "count": 16244,
+              "finite": true,
+              "min": 0.0015832323316691554,
+              "max": 0.14126559842858769,
+              "old_time_levels": 0,
+              "canonical_hash_fnv1a64": "495e229a77ccb616"
+            },
+            "V00": {
+              "classification": "OWNER_NON_LAZY",
+              "present": false,
+              "count": 0,
+              "finite": true,
+              "min": 0,
+              "max": 0,
+              "old_time_levels": 0,
+              "canonical_hash_fnv1a64": ""
+            },
+            "meshPhi": {
+              "classification": "OWNER_NON_LAZY",
+              "present": true,
+              "count": 24226,
+              "finite": true,
+              "min": -5.680606014823823,
+              "max": 5.966472214754724,
+              "old_time_levels": 1,
+              "canonical_hash_fnv1a64": "2ca0399f64006902"
+            }
+          }
+        }
+      }
+    },
+    "1": {
+      "events": {
+        "POINT_DISPLACEMENT_COPY_CONSTRUCTED": 1,
+        "CHECKPOINT_WRITE": 10,
+        "PRE_POINT_DISPLACEMENT_CHECKPOINT_RESET": 10,
+        "POST_POINT_DISPLACEMENT_CHECKPOINT_RESET": 10,
+        "POST_GENERIC_FIELD_CHECKPOINT_STORE": 10,
+        "PRE_ROLLBACK_TRIAL": 19,
+        "PRE_OWNER_MESH_HISTORY_RESTORE": 19,
+        "POST_OWNER_MESH_HISTORY_RESTORE": 19,
+        "POST_GENERIC_FIELD_RESTORE": 19,
+        "POST_ROLLBACK_BEFORE_NEXT_INPUT": 19,
+        "POST_NEXT_COUPLING_INPUT": 28,
+        "FINAL_COMMIT": 10
+      },
+      "last_final_commit": {
+        "event": "FINAL_COMMIT",
+        "window_id": 10,
+        "iteration_id": 0,
+        "physical_time": 0.15000000000000005,
+        "time_index": 10,
+        "adapter_build_identity": "openfoam10-d53753b1-rollback-diagnostic-v1",
+        "adapter_build_sha256": "c8bb6fd83be795834dcdfcae0f8b8606ba09b546611a33fb0ddfa379e47e8f17",
+        "checkpoint_inventory": {
+          "pointDisplacement_generic_pointVector": true
+        },
+        "states": {
+          "pointDisplacement_lifecycle_pre_fingerprint": {
+            "classification": "READ_ONLY_LIFECYCLE_COMPARISON",
+            "live_object": "0x5e41d81d2740",
+            "copy_object": "0x5e41d88bbaf0",
+            "same_object": false,
+            "live_internal_storage": "0x5e41d829de80",
+            "copy_internal_storage": "0x5e41d8bff9e0",
+            "same_internal_storage": false,
+            "live_metadata": {
+              "name": "pointDisplacement",
+              "instance": "0.15",
+              "time_index": 10,
+              "old_time_levels": 0
+            },
+            "copy_metadata": {
+              "name": "pointDisplacement",
+              "instance": "0.1",
+              "time_index": 10,
+              "old_time_levels": 0
+            },
+            "internal": {
+              "classification": "NUMERIC_COMPARISON",
+              "count": 16524,
+              "max_abs": 0.03314090533030267,
+              "l2": 3.9818357730525795,
+              "max_index": 8140,
+              "max_component": 0
+            },
+            "patches": [
+              {
+                "name": "front",
+                "live_type": "empty",
+                "copy_type": "empty",
+                "live_size": 8262,
+                "copy_size": 8262,
+                "live_fixes_value": false,
+                "copy_fixes_value": false,
+                "live_updated": false,
+                "copy_updated": false,
+                "value_storage": "NOT_VALUE_BACKED"
+              },
+              {
+                "name": "back",
+                "live_type": "empty",
+                "copy_type": "empty",
+                "live_size": 8262,
+                "copy_size": 8262,
+                "live_fixes_value": false,
+                "copy_fixes_value": false,
+                "live_updated": false,
+                "copy_updated": false,
+                "value_storage": "NOT_VALUE_BACKED"
+              },
+              {
+                "name": "lower",
+                "live_type": "symmetryPlane",
+                "copy_type": "symmetryPlane",
+                "live_size": 122,
+                "copy_size": 122,
+                "live_fixes_value": false,
+                "copy_fixes_value": false,
+                "live_updated": true,
+                "copy_updated": false,
+                "value_storage": "NOT_VALUE_BACKED"
+              },
+              {
+                "name": "outlet",
+                "live_type": "fixedValue",
+                "copy_type": "fixedValue",
+                "live_size": 122,
+                "copy_size": 122,
+                "live_fixes_value": true,
+                "copy_fixes_value": true,
+                "live_updated": false,
+                "copy_updated": false,
+                "value_storage": "valuePointPatchField",
+                "values": {
+                  "classification": "NUMERIC_COMPARISON",
+                  "count": 122,
+                  "max_abs": 0,
+                  "l2": 0,
+                  "max_index": -1,
+                  "max_component": 0
+                }
+              },
+              {
+                "name": "upper",
+                "live_type": "symmetryPlane",
+                "copy_type": "symmetryPlane",
+                "live_size": 122,
+                "copy_size": 122,
+                "live_fixes_value": false,
+                "copy_fixes_value": false,
+                "live_updated": true,
+                "copy_updated": false,
+                "value_storage": "NOT_VALUE_BACKED"
+              },
+              {
+                "name": "inlet",
+                "live_type": "fixedValue",
+                "copy_type": "fixedValue",
+                "live_size": 122,
+                "copy_size": 122,
+                "live_fixes_value": true,
+                "copy_fixes_value": true,
+                "live_updated": false,
+                "copy_updated": false,
+                "value_storage": "valuePointPatchField",
+                "values": {
+                  "classification": "NUMERIC_COMPARISON",
+                  "count": 122,
+                  "max_abs": 0,
+                  "l2": 0,
+                  "max_index": -1,
+                  "max_component": 0
+                }
+              },
+              {
+                "name": "cylinder",
+                "live_type": "fixedValue",
+                "copy_type": "fixedValue",
+                "live_size": 80,
+                "copy_size": 80,
+                "live_fixes_value": true,
+                "copy_fixes_value": true,
+                "live_updated": false,
+                "copy_updated": false,
+                "value_storage": "valuePointPatchField",
+                "values": {
+                  "classification": "NUMERIC_COMPARISON",
+                  "count": 80,
+                  "max_abs": 0.029641147365560082,
+                  "l2": 0.265656813323986,
+                  "max_index": 1,
+                  "max_component": 0
+                }
+              }
+            ],
+            "old_time": {
+              "live_levels": 0,
+              "copy_levels": 0,
+              "value_comparison": "OMITTED_NON_LAZY"
+            }
+          },
+          "U": {
+            "classification": "PERSISTENT_RESTORED",
+            "count": 16244,
+            "finite": true,
+            "canonical_hash_fnv1a64": "4ffed81333dda785",
+            "old_time_levels": 1,
+            "old_time_value_observation": "OMITTED_NON_LAZY"
+          },
+          "p": {
+            "classification": "PERSISTENT_RESTORED",
+            "count": 16244,
+            "finite": true,
+            "canonical_hash_fnv1a64": "49550602f0772d9d",
+            "old_time_levels": 0,
+            "old_time_value_observation": "OMITTED_NON_LAZY"
+          },
+          "phi": {
+            "classification": "PERSISTENT_RESTORED",
+            "count": 24226,
+            "finite": true,
+            "canonical_hash_fnv1a64": "96b1d47bc1bfc289",
+            "old_time_levels": 0,
+            "old_time_value_observation": "OMITTED_NON_LAZY"
+          },
+          "Uf": {
+            "classification": "PERSISTENT_RESTORED",
+            "count": 24226,
+            "finite": true,
+            "canonical_hash_fnv1a64": "5e2c52fe12cdb6f3",
+            "old_time_levels": 1,
+            "old_time_value_observation": "OMITTED_NON_LAZY"
+          },
+          "pointDisplacement": {
+            "classification": "PERSISTENT_RESTORED",
+            "count": 16524,
+            "finite": true,
+            "canonical_hash_fnv1a64": "d64ed388d77fd6a0",
+            "old_time_levels": 0,
+            "old_time_value_observation": "OMITTED_NON_LAZY"
+          },
+          "pointDisplacement_parts": {
+            "internal_hash_fnv1a64": "5192ff0bd74b4195",
+            "boundary_hash_fnv1a64": "8b29aa843dd17396"
+          },
+          "pointDisplacement_checkpoint_copy": {
+            "classification": "PERSISTENT_RESTORED",
+            "count": 16524,
+            "finite": true,
+            "canonical_hash_fnv1a64": "5192ff0bd74b4195",
+            "old_time_levels": 0,
+            "old_time_value_observation": "OMITTED_NON_LAZY"
+          },
+          "pointDisplacement_lifecycle_post_fingerprint": {
+            "classification": "READ_ONLY_LIFECYCLE_COMPARISON",
+            "live_object": "0x5e41d81d2740",
+            "copy_object": "0x5e41d88bbaf0",
+            "same_object": false,
+            "live_internal_storage": "0x5e41d829de80",
+            "copy_internal_storage": "0x5e41d8bff9e0",
+            "same_internal_storage": false,
+            "live_metadata": {
+              "name": "pointDisplacement",
+              "instance": "0.15",
+              "time_index": 10,
+              "old_time_levels": 0
+            },
+            "copy_metadata": {
+              "name": "pointDisplacement",
+              "instance": "0.1",
+              "time_index": 10,
+              "old_time_levels": 0
+            },
+            "internal": {
+              "classification": "NUMERIC_COMPARISON",
+              "count": 16524,
+              "max_abs": 0.03314090533030267,
+              "l2": 3.9818357730525795,
+              "max_index": 8140,
+              "max_component": 0
+            },
+            "patches": [
+              {
+                "name": "front",
+                "live_type": "empty",
+                "copy_type": "empty",
+                "live_size": 8262,
+                "copy_size": 8262,
+                "live_fixes_value": false,
+                "copy_fixes_value": false,
+                "live_updated": false,
+                "copy_updated": false,
+                "value_storage": "NOT_VALUE_BACKED"
+              },
+              {
+                "name": "back",
+                "live_type": "empty",
+                "copy_type": "empty",
+                "live_size": 8262,
+                "copy_size": 8262,
+                "live_fixes_value": false,
+                "copy_fixes_value": false,
+                "live_updated": false,
+                "copy_updated": false,
+                "value_storage": "NOT_VALUE_BACKED"
+              },
+              {
+                "name": "lower",
+                "live_type": "symmetryPlane",
+                "copy_type": "symmetryPlane",
+                "live_size": 122,
+                "copy_size": 122,
+                "live_fixes_value": false,
+                "copy_fixes_value": false,
+                "live_updated": true,
+                "copy_updated": false,
+                "value_storage": "NOT_VALUE_BACKED"
+              },
+              {
+                "name": "outlet",
+                "live_type": "fixedValue",
+                "copy_type": "fixedValue",
+                "live_size": 122,
+                "copy_size": 122,
+                "live_fixes_value": true,
+                "copy_fixes_value": true,
+                "live_updated": false,
+                "copy_updated": false,
+                "value_storage": "valuePointPatchField",
+                "values": {
+                  "classification": "NUMERIC_COMPARISON",
+                  "count": 122,
+                  "max_abs": 0,
+                  "l2": 0,
+                  "max_index": -1,
+                  "max_component": 0
+                }
+              },
+              {
+                "name": "upper",
+                "live_type": "symmetryPlane",
+                "copy_type": "symmetryPlane",
+                "live_size": 122,
+                "copy_size": 122,
+                "live_fixes_value": false,
+                "copy_fixes_value": false,
+                "live_updated": true,
+                "copy_updated": false,
+                "value_storage": "NOT_VALUE_BACKED"
+              },
+              {
+                "name": "inlet",
+                "live_type": "fixedValue",
+                "copy_type": "fixedValue",
+                "live_size": 122,
+                "copy_size": 122,
+                "live_fixes_value": true,
+                "copy_fixes_value": true,
+                "live_updated": false,
+                "copy_updated": false,
+                "value_storage": "valuePointPatchField",
+                "values": {
+                  "classification": "NUMERIC_COMPARISON",
+                  "count": 122,
+                  "max_abs": 0,
+                  "l2": 0,
+                  "max_index": -1,
+                  "max_component": 0
+                }
+              },
+              {
+                "name": "cylinder",
+                "live_type": "fixedValue",
+                "copy_type": "fixedValue",
+                "live_size": 80,
+                "copy_size": 80,
+                "live_fixes_value": true,
+                "copy_fixes_value": true,
+                "live_updated": false,
+                "copy_updated": false,
+                "value_storage": "valuePointPatchField",
+                "values": {
+                  "classification": "NUMERIC_COMPARISON",
+                  "count": 80,
+                  "max_abs": 0.029641147365560082,
+                  "l2": 0.265656813323986,
+                  "max_index": 1,
+                  "max_component": 0
+                }
+              }
+            ],
+            "old_time": {
+              "live_levels": 0,
+              "copy_levels": 0,
+              "value_comparison": "OMITTED_NON_LAZY"
+            }
+          },
+          "cellDisplacement": {
+            "classification": "PERSISTENT_RESTORED",
+            "count": 16244,
+            "finite": true,
+            "canonical_hash_fnv1a64": "ad6209863c1fd53a",
+            "old_time_levels": 0,
+            "old_time_value_observation": "OMITTED_NON_LAZY"
+          },
+          "mesh_points": {
+            "classification": "PERSISTENT_RESTORED",
+            "count": 16524,
+            "finite": true,
+            "canonical_hash_fnv1a64": "615c6f3b6f4d6af4",
+            "centroid_xyz": [
+              3.529452558834473,
+              0.17676252528053107,
+              0.5
+            ]
+          },
+          "owner_mesh_history": {
+            "classification": "OWNER_NON_LAZY",
+            "moving": true,
+            "cur_motion_time_index": 10,
+            "cur_time_index": 10,
+            "store_old_cell_centres": false,
+            "old_points": {
+              "classification": "OWNER_NON_LAZY",
+              "present": true,
+              "count": 16524,
+              "finite": true,
+              "max_component_abs": 20,
+              "canonical_hash_fnv1a64": "48fcf74a1da74a6e"
+            },
+            "old_cell_centres": {
+              "classification": "OWNER_NON_LAZY",
+              "present": false,
+              "count": 0,
+              "finite": true,
+              "max_component_abs": 0,
+              "canonical_hash_fnv1a64": ""
+            },
+            "V0": {
+              "classification": "OWNER_NON_LAZY",
+              "present": true,
+              "count": 16244,
+              "finite": true,
+              "min": 0.0015855873800053114,
+              "max": 0.14228758916527637,
+              "old_time_levels": 0,
+              "canonical_hash_fnv1a64": "ff62f2a22cd1f1eb"
+            },
+            "V00": {
+              "classification": "OWNER_NON_LAZY",
+              "present": false,
+              "count": 0,
+              "finite": true,
+              "min": 0,
+              "max": 0,
+              "old_time_levels": 0,
+              "canonical_hash_fnv1a64": ""
+            },
+            "meshPhi": {
+              "classification": "OWNER_NON_LAZY",
+              "present": true,
+              "count": 24226,
+              "finite": true,
+              "min": -3.781356577837875,
+              "max": 3.971939066846492,
+              "old_time_levels": 1,
+              "canonical_hash_fnv1a64": "2159af0e2bf43533"
+            }
+          }
+        }
+      }
+    },
+    "2": {
+      "events": {
+        "POINT_DISPLACEMENT_COPY_CONSTRUCTED": 1,
+        "CHECKPOINT_WRITE": 10,
+        "PRE_POINT_DISPLACEMENT_CHECKPOINT_RESET": 10,
+        "POST_POINT_DISPLACEMENT_CHECKPOINT_RESET": 10,
+        "POST_GENERIC_FIELD_CHECKPOINT_STORE": 10,
+        "PRE_ROLLBACK_TRIAL": 19,
+        "PRE_OWNER_MESH_HISTORY_RESTORE": 19,
+        "POST_OWNER_MESH_HISTORY_RESTORE": 19,
+        "POST_GENERIC_FIELD_RESTORE": 19,
+        "POST_ROLLBACK_BEFORE_NEXT_INPUT": 19,
+        "POST_NEXT_COUPLING_INPUT": 28,
+        "FINAL_COMMIT": 10
+      },
+      "last_final_commit": {
+        "event": "FINAL_COMMIT",
+        "window_id": 10,
+        "iteration_id": 0,
+        "physical_time": 0.15000000000000005,
+        "time_index": 10,
+        "adapter_build_identity": "openfoam10-d53753b1-rollback-diagnostic-v1",
+        "adapter_build_sha256": "c8bb6fd83be795834dcdfcae0f8b8606ba09b546611a33fb0ddfa379e47e8f17",
+        "checkpoint_inventory": {
+          "pointDisplacement_generic_pointVector": true
+        },
+        "states": {
+          "pointDisplacement_lifecycle_pre_fingerprint": {
+            "classification": "READ_ONLY_LIFECYCLE_COMPARISON",
+            "live_object": "0x5676a0ae4740",
+            "copy_object": "0x5676a11cdc00",
+            "same_object": false,
+            "live_internal_storage": "0x5676a0bafe80",
+            "copy_internal_storage": "0x5676a1511af0",
+            "same_internal_storage": false,
+            "live_metadata": {
+              "name": "pointDisplacement",
+              "instance": "0.15",
+              "time_index": 10,
+              "old_time_levels": 0
+            },
+            "copy_metadata": {
+              "name": "pointDisplacement",
+              "instance": "0.1",
+              "time_index": 10,
+              "old_time_levels": 0
+            },
+            "internal": {
+              "classification": "NUMERIC_COMPARISON",
+              "count": 16524,
+              "max_abs": 0.049856767290525274,
+              "l2": 5.984028449972173,
+              "max_index": 16122,
+              "max_component": 0
+            },
+            "patches": [
+              {
+                "name": "front",
+                "live_type": "empty",
+                "copy_type": "empty",
+                "live_size": 8262,
+                "copy_size": 8262,
+                "live_fixes_value": false,
+                "copy_fixes_value": false,
+                "live_updated": false,
+                "copy_updated": false,
+                "value_storage": "NOT_VALUE_BACKED"
+              },
+              {
+                "name": "back",
+                "live_type": "empty",
+                "copy_type": "empty",
+                "live_size": 8262,
+                "copy_size": 8262,
+                "live_fixes_value": false,
+                "copy_fixes_value": false,
+                "live_updated": false,
+                "copy_updated": false,
+                "value_storage": "NOT_VALUE_BACKED"
+              },
+              {
+                "name": "lower",
+                "live_type": "symmetryPlane",
+                "copy_type": "symmetryPlane",
+                "live_size": 122,
+                "copy_size": 122,
+                "live_fixes_value": false,
+                "copy_fixes_value": false,
+                "live_updated": true,
+                "copy_updated": false,
+                "value_storage": "NOT_VALUE_BACKED"
+              },
+              {
+                "name": "outlet",
+                "live_type": "fixedValue",
+                "copy_type": "fixedValue",
+                "live_size": 122,
+                "copy_size": 122,
+                "live_fixes_value": true,
+                "copy_fixes_value": true,
+                "live_updated": false,
+                "copy_updated": false,
+                "value_storage": "valuePointPatchField",
+                "values": {
+                  "classification": "NUMERIC_COMPARISON",
+                  "count": 122,
+                  "max_abs": 0,
+                  "l2": 0,
+                  "max_index": -1,
+                  "max_component": 0
+                }
+              },
+              {
+                "name": "upper",
+                "live_type": "symmetryPlane",
+                "copy_type": "symmetryPlane",
+                "live_size": 122,
+                "copy_size": 122,
+                "live_fixes_value": false,
+                "copy_fixes_value": false,
+                "live_updated": true,
+                "copy_updated": false,
+                "value_storage": "NOT_VALUE_BACKED"
+              },
+              {
+                "name": "inlet",
+                "live_type": "fixedValue",
+                "copy_type": "fixedValue",
+                "live_size": 122,
+                "copy_size": 122,
+                "live_fixes_value": true,
+                "copy_fixes_value": true,
+                "live_updated": false,
+                "copy_updated": false,
+                "value_storage": "valuePointPatchField",
+                "values": {
+                  "classification": "NUMERIC_COMPARISON",
+                  "count": 122,
+                  "max_abs": 0,
+                  "l2": 0,
+                  "max_index": -1,
+                  "max_component": 0
+                }
+              },
+              {
+                "name": "cylinder",
+                "live_type": "fixedValue",
+                "copy_type": "fixedValue",
+                "live_size": 80,
+                "copy_size": 80,
+                "live_fixes_value": true,
+                "copy_fixes_value": true,
+                "live_updated": false,
+                "copy_updated": false,
+                "value_storage": "valuePointPatchField",
+                "values": {
+                  "classification": "NUMERIC_COMPARISON",
+                  "count": 80,
+                  "max_abs": 0.04458934980066484,
+                  "l2": 0.399629624282733,
+                  "max_index": 0,
+                  "max_component": 0
+                }
+              }
+            ],
+            "old_time": {
+              "live_levels": 0,
+              "copy_levels": 0,
+              "value_comparison": "OMITTED_NON_LAZY"
+            }
+          },
+          "U": {
+            "classification": "PERSISTENT_RESTORED",
+            "count": 16244,
+            "finite": true,
+            "canonical_hash_fnv1a64": "b18b65a92ee93583",
+            "old_time_levels": 1,
+            "old_time_value_observation": "OMITTED_NON_LAZY"
+          },
+          "p": {
+            "classification": "PERSISTENT_RESTORED",
+            "count": 16244,
+            "finite": true,
+            "canonical_hash_fnv1a64": "c66c64198e2ab89e",
+            "old_time_levels": 0,
+            "old_time_value_observation": "OMITTED_NON_LAZY"
+          },
+          "phi": {
+            "classification": "PERSISTENT_RESTORED",
+            "count": 24226,
+            "finite": true,
+            "canonical_hash_fnv1a64": "93ce3b45de775b7e",
+            "old_time_levels": 0,
+            "old_time_value_observation": "OMITTED_NON_LAZY"
+          },
+          "Uf": {
+            "classification": "PERSISTENT_RESTORED",
+            "count": 24226,
+            "finite": true,
+            "canonical_hash_fnv1a64": "9cef5dc38b2b0aaf",
+            "old_time_levels": 1,
+            "old_time_value_observation": "OMITTED_NON_LAZY"
+          },
+          "pointDisplacement": {
+            "classification": "PERSISTENT_RESTORED",
+            "count": 16524,
+            "finite": true,
+            "canonical_hash_fnv1a64": "339d5558ecfdada2",
+            "old_time_levels": 0,
+            "old_time_value_observation": "OMITTED_NON_LAZY"
+          },
+          "pointDisplacement_parts": {
+            "internal_hash_fnv1a64": "cdd83ebc2f2be04d",
+            "boundary_hash_fnv1a64": "1cd8ba7681f25076"
+          },
+          "pointDisplacement_checkpoint_copy": {
+            "classification": "PERSISTENT_RESTORED",
+            "count": 16524,
+            "finite": true,
+            "canonical_hash_fnv1a64": "cdd83ebc2f2be04d",
+            "old_time_levels": 0,
+            "old_time_value_observation": "OMITTED_NON_LAZY"
+          },
+          "pointDisplacement_lifecycle_post_fingerprint": {
+            "classification": "READ_ONLY_LIFECYCLE_COMPARISON",
+            "live_object": "0x5676a0ae4740",
+            "copy_object": "0x5676a11cdc00",
+            "same_object": false,
+            "live_internal_storage": "0x5676a0bafe80",
+            "copy_internal_storage": "0x5676a1511af0",
+            "same_internal_storage": false,
+            "live_metadata": {
+              "name": "pointDisplacement",
+              "instance": "0.15",
+              "time_index": 10,
+              "old_time_levels": 0
+            },
+            "copy_metadata": {
+              "name": "pointDisplacement",
+              "instance": "0.1",
+              "time_index": 10,
+              "old_time_levels": 0
+            },
+            "internal": {
+              "classification": "NUMERIC_COMPARISON",
+              "count": 16524,
+              "max_abs": 0.049856767290525274,
+              "l2": 5.984028449972173,
+              "max_index": 16122,
+              "max_component": 0
+            },
+            "patches": [
+              {
+                "name": "front",
+                "live_type": "empty",
+                "copy_type": "empty",
+                "live_size": 8262,
+                "copy_size": 8262,
+                "live_fixes_value": false,
+                "copy_fixes_value": false,
+                "live_updated": false,
+                "copy_updated": false,
+                "value_storage": "NOT_VALUE_BACKED"
+              },
+              {
+                "name": "back",
+                "live_type": "empty",
+                "copy_type": "empty",
+                "live_size": 8262,
+                "copy_size": 8262,
+                "live_fixes_value": false,
+                "copy_fixes_value": false,
+                "live_updated": false,
+                "copy_updated": false,
+                "value_storage": "NOT_VALUE_BACKED"
+              },
+              {
+                "name": "lower",
+                "live_type": "symmetryPlane",
+                "copy_type": "symmetryPlane",
+                "live_size": 122,
+                "copy_size": 122,
+                "live_fixes_value": false,
+                "copy_fixes_value": false,
+                "live_updated": true,
+                "copy_updated": false,
+                "value_storage": "NOT_VALUE_BACKED"
+              },
+              {
+                "name": "outlet",
+                "live_type": "fixedValue",
+                "copy_type": "fixedValue",
+                "live_size": 122,
+                "copy_size": 122,
+                "live_fixes_value": true,
+                "copy_fixes_value": true,
+                "live_updated": false,
+                "copy_updated": false,
+                "value_storage": "valuePointPatchField",
+                "values": {
+                  "classification": "NUMERIC_COMPARISON",
+                  "count": 122,
+                  "max_abs": 0,
+                  "l2": 0,
+                  "max_index": -1,
+                  "max_component": 0
+                }
+              },
+              {
+                "name": "upper",
+                "live_type": "symmetryPlane",
+                "copy_type": "symmetryPlane",
+                "live_size": 122,
+                "copy_size": 122,
+                "live_fixes_value": false,
+                "copy_fixes_value": false,
+                "live_updated": true,
+                "copy_updated": false,
+                "value_storage": "NOT_VALUE_BACKED"
+              },
+              {
+                "name": "inlet",
+                "live_type": "fixedValue",
+                "copy_type": "fixedValue",
+                "live_size": 122,
+                "copy_size": 122,
+                "live_fixes_value": true,
+                "copy_fixes_value": true,
+                "live_updated": false,
+                "copy_updated": false,
+                "value_storage": "valuePointPatchField",
+                "values": {
+                  "classification": "NUMERIC_COMPARISON",
+                  "count": 122,
+                  "max_abs": 0,
+                  "l2": 0,
+                  "max_index": -1,
+                  "max_component": 0
+                }
+              },
+              {
+                "name": "cylinder",
+                "live_type": "fixedValue",
+                "copy_type": "fixedValue",
+                "live_size": 80,
+                "copy_size": 80,
+                "live_fixes_value": true,
+                "copy_fixes_value": true,
+                "live_updated": false,
+                "copy_updated": false,
+                "value_storage": "valuePointPatchField",
+                "values": {
+                  "classification": "NUMERIC_COMPARISON",
+                  "count": 80,
+                  "max_abs": 0.04458934980066484,
+                  "l2": 0.399629624282733,
+                  "max_index": 0,
+                  "max_component": 0
+                }
+              }
+            ],
+            "old_time": {
+              "live_levels": 0,
+              "copy_levels": 0,
+              "value_comparison": "OMITTED_NON_LAZY"
+            }
+          },
+          "cellDisplacement": {
+            "classification": "PERSISTENT_RESTORED",
+            "count": 16244,
+            "finite": true,
+            "canonical_hash_fnv1a64": "06beecce2d1a1f32",
+            "old_time_levels": 0,
+            "old_time_value_observation": "OMITTED_NON_LAZY"
+          },
+          "mesh_points": {
+            "classification": "PERSISTENT_RESTORED",
+            "count": 16524,
+            "finite": true,
+            "canonical_hash_fnv1a64": "9730a0297ec73160",
+            "centroid_xyz": [
+              3.540885366784373,
+              0.17652744434836987,
+              0.5
+            ]
+          },
+          "owner_mesh_history": {
+            "classification": "OWNER_NON_LAZY",
+            "moving": true,
+            "cur_motion_time_index": 10,
+            "cur_time_index": 10,
+            "store_old_cell_centres": false,
+            "old_points": {
+              "classification": "OWNER_NON_LAZY",
+              "present": true,
+              "count": 16524,
+              "finite": true,
+              "max_component_abs": 20,
+              "canonical_hash_fnv1a64": "5cd34093cc1875c2"
+            },
+            "old_cell_centres": {
+              "classification": "OWNER_NON_LAZY",
+              "present": false,
+              "count": 0,
+              "finite": true,
+              "max_component_abs": 0,
+              "canonical_hash_fnv1a64": ""
+            },
+            "V0": {
+              "classification": "OWNER_NON_LAZY",
+              "present": true,
+              "count": 16244,
+              "finite": true,
+              "min": 0.0015832291532945218,
+              "max": 0.1412636705028465,
+              "old_time_levels": 0,
+              "canonical_hash_fnv1a64": "f91822d9054e3b1d"
+            },
+            "V00": {
+              "classification": "OWNER_NON_LAZY",
+              "present": false,
+              "count": 0,
+              "finite": true,
+              "min": 0,
+              "max": 0,
+              "old_time_levels": 0,
+              "canonical_hash_fnv1a64": ""
+            },
+            "meshPhi": {
+              "classification": "OWNER_NON_LAZY",
+              "present": true,
+              "count": 24226,
+              "finite": true,
+              "min": -5.682776128862723,
+              "max": 5.968751075305072,
+              "old_time_levels": 1,
+              "canonical_hash_fnv1a64": "dace38799d570bb4"
+            }
+          }
+        }
+      }
+    }
+  },
+  "owner_rollback_reanalysis_current_schema": {
+    "0": {
+      "status": "FAIL",
+      "generations": [
+        {
+          "generation": 1,
+          "event_sequence": 2,
+          "adapter_window_id": 1,
+          "physical_time": 0.1,
+          "time_index": 0
+        },
+        {
+          "generation": 2,
+          "event_sequence": 12,
+          "adapter_window_id": 1,
+          "physical_time": 0.10500000000000001,
+          "time_index": 1
+        },
+        {
+          "generation": 3,
+          "event_sequence": 30,
+          "adapter_window_id": 2,
+          "physical_time": 0.11000000000000001,
+          "time_index": 2
+        },
+        {
+          "generation": 4,
+          "event_sequence": 48,
+          "adapter_window_id": 3,
+          "physical_time": 0.11500000000000002,
+          "time_index": 3
+        },
+        {
+          "generation": 5,
+          "event_sequence": 66,
+          "adapter_window_id": 4,
+          "physical_time": 0.12000000000000002,
+          "time_index": 4
+        },
+        {
+          "generation": 6,
+          "event_sequence": 84,
+          "adapter_window_id": 5,
+          "physical_time": 0.12500000000000003,
+          "time_index": 5
+        },
+        {
+          "generation": 7,
+          "event_sequence": 102,
+          "adapter_window_id": 6,
+          "physical_time": 0.13000000000000003,
+          "time_index": 6
+        },
+        {
+          "generation": 8,
+          "event_sequence": 120,
+          "adapter_window_id": 7,
+          "physical_time": 0.13500000000000004,
+          "time_index": 7
+        },
+        {
+          "generation": 9,
+          "event_sequence": 138,
+          "adapter_window_id": 8,
+          "physical_time": 0.14000000000000004,
+          "time_index": 8
+        },
+        {
+          "generation": 10,
+          "event_sequence": 156,
+          "adapter_window_id": 9,
+          "physical_time": 0.14500000000000005,
+          "time_index": 9
+        }
+      ],
+      "restore_pairs": [
+        {
+          "generation": 1,
+          "checkpoint_event_sequence": 2,
+          "restore_event_sequence": 10,
+          "checkpoint_adapter_window_id": 1,
+          "restore_adapter_window_id": 1,
+          "physical_time": {
+            "checkpoint": 0.1,
+            "restore": 0.1
+          },
+          "time_index": {
+            "checkpoint": 0,
+            "restore": 0
+          },
+          "time_identity": true,
+          "adapter_build_identity": true,
+          "state_hash_identity": {
+            "U": true,
+            "p": true,
+            "phi": true,
+            "Uf": true,
+            "pointDisplacement": true,
+            "cellDisplacement": true,
+            "mesh_points": true,
+            "old_points": true
+          },
+          "old_time": {
+            "U": {
+              "status": "DERIVED_LAZY_NUMERICALLY_EQUIVALENT",
+              "pass": true,
+              "evidence": "versioned U/Uf Euler non-subcycled contract plus no-CFD lifecycle probe"
+            },
+            "p": {
+              "status": "NOT_APPLICABLE_NO_HISTORY",
+              "pass": true
+            },
+            "phi": {
+              "status": "NOT_APPLICABLE_NO_HISTORY",
+              "pass": true
+            },
+            "Uf": {
+              "status": "DERIVED_LAZY_NUMERICALLY_EQUIVALENT",
+              "pass": true,
+              "evidence": "versioned U/Uf Euler non-subcycled contract plus no-CFD lifecycle probe"
+            },
+            "pointDisplacement": {
+              "status": "NOT_APPLICABLE_NO_HISTORY",
+              "pass": true
+            },
+            "cellDisplacement": {
+              "status": "NOT_APPLICABLE_NO_HISTORY",
+              "pass": true
+            }
+          },
+          "meshPhi": {
+            "status": "NOT_APPLICABLE_ABSENT_AT_BOTH_BOUNDARIES",
+            "pass": true
+          },
+          "field_history_identity": true,
+          "mesh_identity": true,
+          "pass": true
+        },
+        {
+          "generation": 2,
+          "checkpoint_event_sequence": 12,
+          "restore_event_sequence": 22,
+          "checkpoint_adapter_window_id": 1,
+          "restore_adapter_window_id": 2,
+          "physical_time": {
+            "checkpoint": 0.10500000000000001,
+            "restore": 0.10500000000000001
+          },
+          "time_index": {
+            "checkpoint": 1,
+            "restore": 1
+          },
+          "time_identity": true,
+          "adapter_build_identity": true,
+          "state_hash_identity": {
+            "U": true,
+            "p": true,
+            "phi": true,
+            "Uf": true,
+            "pointDisplacement": true,
+            "cellDisplacement": true,
+            "mesh_points": true,
+            "old_points": true
+          },
+          "old_time": {
+            "U": {
+              "status": "PERSISTENT_HISTORY_NOT_OBSERVABLE",
+              "pass": false
+            },
+            "p": {
+              "status": "NOT_APPLICABLE_NO_HISTORY",
+              "pass": true
+            },
+            "phi": {
+              "status": "NOT_APPLICABLE_NO_HISTORY",
+              "pass": true
+            },
+            "Uf": {
+              "status": "PERSISTENT_HISTORY_NOT_OBSERVABLE",
+              "pass": false
+            },
+            "pointDisplacement": {
+              "status": "NOT_APPLICABLE_NO_HISTORY",
+              "pass": true
+            },
+            "cellDisplacement": {
+              "status": "NOT_APPLICABLE_NO_HISTORY",
+              "pass": true
+            }
+          },
+          "meshPhi": {
+            "status": "UNSUPPORTED_MESHPHI_LIFECYCLE",
+            "pass": false
+          },
+          "field_history_identity": false,
+          "mesh_identity": true,
+          "pass": false
+        },
+        {
+          "generation": 2,
+          "checkpoint_event_sequence": 12,
+          "restore_event_sequence": 28,
+          "checkpoint_adapter_window_id": 1,
+          "restore_adapter_window_id": 2,
+          "physical_time": {
+            "checkpoint": 0.10500000000000001,
+            "restore": 0.10500000000000001
+          },
+          "time_index": {
+            "checkpoint": 1,
+            "restore": 1
+          },
+          "time_identity": true,
+          "adapter_build_identity": true,
+          "state_hash_identity": {
+            "U": true,
+            "p": true,
+            "phi": true,
+            "Uf": true,
+            "pointDisplacement": true,
+            "cellDisplacement": true,
+            "mesh_points": true,
+            "old_points": true
+          },
+          "old_time": {
+            "U": {
+              "status": "PERSISTENT_HISTORY_NOT_OBSERVABLE",
+              "pass": false
+            },
+            "p": {
+              "status": "NOT_APPLICABLE_NO_HISTORY",
+              "pass": true
+            },
+            "phi": {
+              "status": "NOT_APPLICABLE_NO_HISTORY",
+              "pass": true
+            },
+            "Uf": {
+              "status": "PERSISTENT_HISTORY_NOT_OBSERVABLE",
+              "pass": false
+            },
+            "pointDisplacement": {
+              "status": "NOT_APPLICABLE_NO_HISTORY",
+              "pass": true
+            },
+            "cellDisplacement": {
+              "status": "NOT_APPLICABLE_NO_HISTORY",
+              "pass": true
+            }
+          },
+          "meshPhi": {
+            "status": "UNSUPPORTED_MESHPHI_LIFECYCLE",
+            "pass": false
+          },
+          "field_history_identity": false,
+          "mesh_identity": true,
+          "pass": false
+        },
+        {
+          "generation": 3,
+          "checkpoint_event_sequence": 30,
+          "restore_event_sequence": 40,
+          "checkpoint_adapter_window_id": 2,
+          "restore_adapter_window_id": 3,
+          "physical_time": {
+            "checkpoint": 0.11000000000000001,
+            "restore": 0.11000000000000001
+          },
+          "time_index": {
+            "checkpoint": 2,
+            "restore": 2
+          },
+          "time_identity": true,
+          "adapter_build_identity": true,
+          "state_hash_identity": {
+            "U": true,
+            "p": true,
+            "phi": true,
+            "Uf": true,
+            "pointDisplacement": true,
+            "cellDisplacement": true,
+            "mesh_points": true,
+            "old_points": true
+          },
+          "old_time": {
+            "U": {
+              "status": "PERSISTENT_HISTORY_NOT_OBSERVABLE",
+              "pass": false
+            },
+            "p": {
+              "status": "NOT_APPLICABLE_NO_HISTORY",
+              "pass": true
+            },
+            "phi": {
+              "status": "NOT_APPLICABLE_NO_HISTORY",
+              "pass": true
+            },
+            "Uf": {
+              "status": "PERSISTENT_HISTORY_NOT_OBSERVABLE",
+              "pass": false
+            },
+            "pointDisplacement": {
+              "status": "NOT_APPLICABLE_NO_HISTORY",
+              "pass": true
+            },
+            "cellDisplacement": {
+              "status": "NOT_APPLICABLE_NO_HISTORY",
+              "pass": true
+            }
+          },
+          "meshPhi": {
+            "status": "UNSUPPORTED_MESHPHI_LIFECYCLE",
+            "pass": false
+          },
+          "field_history_identity": false,
+          "mesh_identity": true,
+          "pass": false
+        },
+        {
+          "generation": 3,
+          "checkpoint_event_sequence": 30,
+          "restore_event_sequence": 46,
+          "checkpoint_adapter_window_id": 2,
+          "restore_adapter_window_id": 3,
+          "physical_time": {
+            "checkpoint": 0.11000000000000001,
+            "restore": 0.11000000000000001
+          },
+          "time_index": {
+            "checkpoint": 2,
+            "restore": 2
+          },
+          "time_identity": true,
+          "adapter_build_identity": true,
+          "state_hash_identity": {
+            "U": true,
+            "p": true,
+            "phi": true,
+            "Uf": true,
+            "pointDisplacement": true,
+            "cellDisplacement": true,
+            "mesh_points": true,
+            "old_points": true
+          },
+          "old_time": {
+            "U": {
+              "status": "PERSISTENT_HISTORY_NOT_OBSERVABLE",
+              "pass": false
+            },
+            "p": {
+              "status": "NOT_APPLICABLE_NO_HISTORY",
+              "pass": true
+            },
+            "phi": {
+              "status": "NOT_APPLICABLE_NO_HISTORY",
+              "pass": true
+            },
+            "Uf": {
+              "status": "PERSISTENT_HISTORY_NOT_OBSERVABLE",
+              "pass": false
+            },
+            "pointDisplacement": {
+              "status": "NOT_APPLICABLE_NO_HISTORY",
+              "pass": true
+            },
+            "cellDisplacement": {
+              "status": "NOT_APPLICABLE_NO_HISTORY",
+              "pass": true
+            }
+          },
+          "meshPhi": {
+            "status": "UNSUPPORTED_MESHPHI_LIFECYCLE",
+            "pass": false
+          },
+          "field_history_identity": false,
+          "mesh_identity": true,
+          "pass": false
+        },
+        {
+          "generation": 4,
+          "checkpoint_event_sequence": 48,
+          "restore_event_sequence": 58,
+          "checkpoint_adapter_window_id": 3,
+          "restore_adapter_window_id": 4,
+          "physical_time": {
+            "checkpoint": 0.11500000000000002,
+            "restore": 0.11500000000000002
+          },
+          "time_index": {
+            "checkpoint": 3,
+            "restore": 3
+          },
+          "time_identity": true,
+          "adapter_build_identity": true,
+          "state_hash_identity": {
+            "U": true,
+            "p": true,
+            "phi": true,
+            "Uf": true,
+            "pointDisplacement": true,
+            "cellDisplacement": true,
+            "mesh_points": true,
+            "old_points": true
+          },
+          "old_time": {
+            "U": {
+              "status": "PERSISTENT_HISTORY_NOT_OBSERVABLE",
+              "pass": false
+            },
+            "p": {
+              "status": "NOT_APPLICABLE_NO_HISTORY",
+              "pass": true
+            },
+            "phi": {
+              "status": "NOT_APPLICABLE_NO_HISTORY",
+              "pass": true
+            },
+            "Uf": {
+              "status": "PERSISTENT_HISTORY_NOT_OBSERVABLE",
+              "pass": false
+            },
+            "pointDisplacement": {
+              "status": "NOT_APPLICABLE_NO_HISTORY",
+              "pass": true
+            },
+            "cellDisplacement": {
+              "status": "NOT_APPLICABLE_NO_HISTORY",
+              "pass": true
+            }
+          },
+          "meshPhi": {
+            "status": "UNSUPPORTED_MESHPHI_LIFECYCLE",
+            "pass": false
+          },
+          "field_history_identity": false,
+          "mesh_identity": true,
+          "pass": false
+        },
+        {
+          "generation": 4,
+          "checkpoint_event_sequence": 48,
+          "restore_event_sequence": 64,
+          "checkpoint_adapter_window_id": 3,
+          "restore_adapter_window_id": 4,
+          "physical_time": {
+            "checkpoint": 0.11500000000000002,
+            "restore": 0.11500000000000002
+          },
+          "time_index": {
+            "checkpoint": 3,
+            "restore": 3
+          },
+          "time_identity": true,
+          "adapter_build_identity": true,
+          "state_hash_identity": {
+            "U": true,
+            "p": true,
+            "phi": true,
+            "Uf": true,
+            "pointDisplacement": true,
+            "cellDisplacement": true,
+            "mesh_points": true,
+            "old_points": true
+          },
+          "old_time": {
+            "U": {
+              "status": "PERSISTENT_HISTORY_NOT_OBSERVABLE",
+              "pass": false
+            },
+            "p": {
+              "status": "NOT_APPLICABLE_NO_HISTORY",
+              "pass": true
+            },
+            "phi": {
+              "status": "NOT_APPLICABLE_NO_HISTORY",
+              "pass": true
+            },
+            "Uf": {
+              "status": "PERSISTENT_HISTORY_NOT_OBSERVABLE",
+              "pass": false
+            },
+            "pointDisplacement": {
+              "status": "NOT_APPLICABLE_NO_HISTORY",
+              "pass": true
+            },
+            "cellDisplacement": {
+              "status": "NOT_APPLICABLE_NO_HISTORY",
+              "pass": true
+            }
+          },
+          "meshPhi": {
+            "status": "UNSUPPORTED_MESHPHI_LIFECYCLE",
+            "pass": false
+          },
+          "field_history_identity": false,
+          "mesh_identity": true,
+          "pass": false
+        },
+        {
+          "generation": 5,
+          "checkpoint_event_sequence": 66,
+          "restore_event_sequence": 76,
+          "checkpoint_adapter_window_id": 4,
+          "restore_adapter_window_id": 5,
+          "physical_time": {
+            "checkpoint": 0.12000000000000002,
+            "restore": 0.12000000000000002
+          },
+          "time_index": {
+            "checkpoint": 4,
+            "restore": 4
+          },
+          "time_identity": true,
+          "adapter_build_identity": true,
+          "state_hash_identity": {
+            "U": true,
+            "p": true,
+            "phi": true,
+            "Uf": true,
+            "pointDisplacement": true,
+            "cellDisplacement": true,
+            "mesh_points": true,
+            "old_points": true
+          },
+          "old_time": {
+            "U": {
+              "status": "PERSISTENT_HISTORY_NOT_OBSERVABLE",
+              "pass": false
+            },
+            "p": {
+              "status": "NOT_APPLICABLE_NO_HISTORY",
+              "pass": true
+            },
+            "phi": {
+              "status": "NOT_APPLICABLE_NO_HISTORY",
+              "pass": true
+            },
+            "Uf": {
+              "status": "PERSISTENT_HISTORY_NOT_OBSERVABLE",
+              "pass": false
+            },
+            "pointDisplacement": {
+              "status": "NOT_APPLICABLE_NO_HISTORY",
+              "pass": true
+            },
+            "cellDisplacement": {
+              "status": "NOT_APPLICABLE_NO_HISTORY",
+              "pass": true
+            }
+          },
+          "meshPhi": {
+            "status": "UNSUPPORTED_MESHPHI_LIFECYCLE",
+            "pass": false
+          },
+          "field_history_identity": false,
+          "mesh_identity": true,
+          "pass": false
+        },
+        {
+          "generation": 5,
+          "checkpoint_event_sequence": 66,
+          "restore_event_sequence": 82,
+          "checkpoint_adapter_window_id": 4,
+          "restore_adapter_window_id": 5,
+          "physical_time": {
+            "checkpoint": 0.12000000000000002,
+            "restore": 0.12000000000000002
+          },
+          "time_index": {
+            "checkpoint": 4,
+            "restore": 4
+          },
+          "time_identity": true,
+          "adapter_build_identity": true,
+          "state_hash_identity": {
+            "U": true,
+            "p": true,
+            "phi": true,
+            "Uf": true,
+            "pointDisplacement": true,
+            "cellDisplacement": true,
+            "mesh_points": true,
+            "old_points": true
+          },
+          "old_time": {
+            "U": {
+              "status": "PERSISTENT_HISTORY_NOT_OBSERVABLE",
+              "pass": false
+            },
+            "p": {
+              "status": "NOT_APPLICABLE_NO_HISTORY",
+              "pass": true
+            },
+            "phi": {
+              "status": "NOT_APPLICABLE_NO_HISTORY",
+              "pass": true
+            },
+            "Uf": {
+              "status": "PERSISTENT_HISTORY_NOT_OBSERVABLE",
+              "pass": false
+            },
+            "pointDisplacement": {
+              "status": "NOT_APPLICABLE_NO_HISTORY",
+              "pass": true
+            },
+            "cellDisplacement": {
+              "status": "NOT_APPLICABLE_NO_HISTORY",
+              "pass": true
+            }
+          },
+          "meshPhi": {
+            "status": "UNSUPPORTED_MESHPHI_LIFECYCLE",
+            "pass": false
+          },
+          "field_history_identity": false,
+          "mesh_identity": true,
+          "pass": false
+        },
+        {
+          "generation": 6,
+          "checkpoint_event_sequence": 84,
+          "restore_event_sequence": 94,
+          "checkpoint_adapter_window_id": 5,
+          "restore_adapter_window_id": 6,
+          "physical_time": {
+            "checkpoint": 0.12500000000000003,
+            "restore": 0.12500000000000003
+          },
+          "time_index": {
+            "checkpoint": 5,
+            "restore": 5
+          },
+          "time_identity": true,
+          "adapter_build_identity": true,
+          "state_hash_identity": {
+            "U": true,
+            "p": true,
+            "phi": true,
+            "Uf": true,
+            "pointDisplacement": true,
+            "cellDisplacement": true,
+            "mesh_points": true,
+            "old_points": true
+          },
+          "old_time": {
+            "U": {
+              "status": "PERSISTENT_HISTORY_NOT_OBSERVABLE",
+              "pass": false
+            },
+            "p": {
+              "status": "NOT_APPLICABLE_NO_HISTORY",
+              "pass": true
+            },
+            "phi": {
+              "status": "NOT_APPLICABLE_NO_HISTORY",
+              "pass": true
+            },
+            "Uf": {
+              "status": "PERSISTENT_HISTORY_NOT_OBSERVABLE",
+              "pass": false
+            },
+            "pointDisplacement": {
+              "status": "NOT_APPLICABLE_NO_HISTORY",
+              "pass": true
+            },
+            "cellDisplacement": {
+              "status": "NOT_APPLICABLE_NO_HISTORY",
+              "pass": true
+            }
+          },
+          "meshPhi": {
+            "status": "UNSUPPORTED_MESHPHI_LIFECYCLE",
+            "pass": false
+          },
+          "field_history_identity": false,
+          "mesh_identity": true,
+          "pass": false
+        },
+        {
+          "generation": 6,
+          "checkpoint_event_sequence": 84,
+          "restore_event_sequence": 100,
+          "checkpoint_adapter_window_id": 5,
+          "restore_adapter_window_id": 6,
+          "physical_time": {
+            "checkpoint": 0.12500000000000003,
+            "restore": 0.12500000000000003
+          },
+          "time_index": {
+            "checkpoint": 5,
+            "restore": 5
+          },
+          "time_identity": true,
+          "adapter_build_identity": true,
+          "state_hash_identity": {
+            "U": true,
+            "p": true,
+            "phi": true,
+            "Uf": true,
+            "pointDisplacement": true,
+            "cellDisplacement": true,
+            "mesh_points": true,
+            "old_points": true
+          },
+          "old_time": {
+            "U": {
+              "status": "PERSISTENT_HISTORY_NOT_OBSERVABLE",
+              "pass": false
+            },
+            "p": {
+              "status": "NOT_APPLICABLE_NO_HISTORY",
+              "pass": true
+            },
+            "phi": {
+              "status": "NOT_APPLICABLE_NO_HISTORY",
+              "pass": true
+            },
+            "Uf": {
+              "status": "PERSISTENT_HISTORY_NOT_OBSERVABLE",
+              "pass": false
+            },
+            "pointDisplacement": {
+              "status": "NOT_APPLICABLE_NO_HISTORY",
+              "pass": true
+            },
+            "cellDisplacement": {
+              "status": "NOT_APPLICABLE_NO_HISTORY",
+              "pass": true
+            }
+          },
+          "meshPhi": {
+            "status": "UNSUPPORTED_MESHPHI_LIFECYCLE",
+            "pass": false
+          },
+          "field_history_identity": false,
+          "mesh_identity": true,
+          "pass": false
+        },
+        {
+          "generation": 7,
+          "checkpoint_event_sequence": 102,
+          "restore_event_sequence": 112,
+          "checkpoint_adapter_window_id": 6,
+          "restore_adapter_window_id": 7,
+          "physical_time": {
+            "checkpoint": 0.13000000000000003,
+            "restore": 0.13000000000000003
+          },
+          "time_index": {
+            "checkpoint": 6,
+            "restore": 6
+          },
+          "time_identity": true,
+          "adapter_build_identity": true,
+          "state_hash_identity": {
+            "U": true,
+            "p": true,
+            "phi": true,
+            "Uf": true,
+            "pointDisplacement": true,
+            "cellDisplacement": true,
+            "mesh_points": true,
+            "old_points": true
+          },
+          "old_time": {
+            "U": {
+              "status": "PERSISTENT_HISTORY_NOT_OBSERVABLE",
+              "pass": false
+            },
+            "p": {
+              "status": "NOT_APPLICABLE_NO_HISTORY",
+              "pass": true
+            },
+            "phi": {
+              "status": "NOT_APPLICABLE_NO_HISTORY",
+              "pass": true
+            },
+            "Uf": {
+              "status": "PERSISTENT_HISTORY_NOT_OBSERVABLE",
+              "pass": false
+            },
+            "pointDisplacement": {
+              "status": "NOT_APPLICABLE_NO_HISTORY",
+              "pass": true
+            },
+            "cellDisplacement": {
+              "status": "NOT_APPLICABLE_NO_HISTORY",
+              "pass": true
+            }
+          },
+          "meshPhi": {
+            "status": "UNSUPPORTED_MESHPHI_LIFECYCLE",
+            "pass": false
+          },
+          "field_history_identity": false,
+          "mesh_identity": true,
+          "pass": false
+        },
+        {
+          "generation": 7,
+          "checkpoint_event_sequence": 102,
+          "restore_event_sequence": 118,
+          "checkpoint_adapter_window_id": 6,
+          "restore_adapter_window_id": 7,
+          "physical_time": {
+            "checkpoint": 0.13000000000000003,
+            "restore": 0.13000000000000003
+          },
+          "time_index": {
+            "checkpoint": 6,
+            "restore": 6
+          },
+          "time_identity": true,
+          "adapter_build_identity": true,
+          "state_hash_identity": {
+            "U": true,
+            "p": true,
+            "phi": true,
+            "Uf": true,
+            "pointDisplacement": true,
+            "cellDisplacement": true,
+            "mesh_points": true,
+            "old_points": true
+          },
+          "old_time": {
+            "U": {
+              "status": "PERSISTENT_HISTORY_NOT_OBSERVABLE",
+              "pass": false
+            },
+            "p": {
+              "status": "NOT_APPLICABLE_NO_HISTORY",
+              "pass": true
+            },
+            "phi": {
+              "status": "NOT_APPLICABLE_NO_HISTORY",
+              "pass": true
+            },
+            "Uf": {
+              "status": "PERSISTENT_HISTORY_NOT_OBSERVABLE",
+              "pass": false
+            },
+            "pointDisplacement": {
+              "status": "NOT_APPLICABLE_NO_HISTORY",
+              "pass": true
+            },
+            "cellDisplacement": {
+              "status": "NOT_APPLICABLE_NO_HISTORY",
+              "pass": true
+            }
+          },
+          "meshPhi": {
+            "status": "UNSUPPORTED_MESHPHI_LIFECYCLE",
+            "pass": false
+          },
+          "field_history_identity": false,
+          "mesh_identity": true,
+          "pass": false
+        },
+        {
+          "generation": 8,
+          "checkpoint_event_sequence": 120,
+          "restore_event_sequence": 130,
+          "checkpoint_adapter_window_id": 7,
+          "restore_adapter_window_id": 8,
+          "physical_time": {
+            "checkpoint": 0.13500000000000004,
+            "restore": 0.13500000000000004
+          },
+          "time_index": {
+            "checkpoint": 7,
+            "restore": 7
+          },
+          "time_identity": true,
+          "adapter_build_identity": true,
+          "state_hash_identity": {
+            "U": true,
+            "p": true,
+            "phi": true,
+            "Uf": true,
+            "pointDisplacement": true,
+            "cellDisplacement": true,
+            "mesh_points": true,
+            "old_points": true
+          },
+          "old_time": {
+            "U": {
+              "status": "PERSISTENT_HISTORY_NOT_OBSERVABLE",
+              "pass": false
+            },
+            "p": {
+              "status": "NOT_APPLICABLE_NO_HISTORY",
+              "pass": true
+            },
+            "phi": {
+              "status": "NOT_APPLICABLE_NO_HISTORY",
+              "pass": true
+            },
+            "Uf": {
+              "status": "PERSISTENT_HISTORY_NOT_OBSERVABLE",
+              "pass": false
+            },
+            "pointDisplacement": {
+              "status": "NOT_APPLICABLE_NO_HISTORY",
+              "pass": true
+            },
+            "cellDisplacement": {
+              "status": "NOT_APPLICABLE_NO_HISTORY",
+              "pass": true
+            }
+          },
+          "meshPhi": {
+            "status": "UNSUPPORTED_MESHPHI_LIFECYCLE",
+            "pass": false
+          },
+          "field_history_identity": false,
+          "mesh_identity": true,
+          "pass": false
+        },
+        {
+          "generation": 8,
+          "checkpoint_event_sequence": 120,
+          "restore_event_sequence": 136,
+          "checkpoint_adapter_window_id": 7,
+          "restore_adapter_window_id": 8,
+          "physical_time": {
+            "checkpoint": 0.13500000000000004,
+            "restore": 0.13500000000000004
+          },
+          "time_index": {
+            "checkpoint": 7,
+            "restore": 7
+          },
+          "time_identity": true,
+          "adapter_build_identity": true,
+          "state_hash_identity": {
+            "U": true,
+            "p": true,
+            "phi": true,
+            "Uf": true,
+            "pointDisplacement": true,
+            "cellDisplacement": true,
+            "mesh_points": true,
+            "old_points": true
+          },
+          "old_time": {
+            "U": {
+              "status": "PERSISTENT_HISTORY_NOT_OBSERVABLE",
+              "pass": false
+            },
+            "p": {
+              "status": "NOT_APPLICABLE_NO_HISTORY",
+              "pass": true
+            },
+            "phi": {
+              "status": "NOT_APPLICABLE_NO_HISTORY",
+              "pass": true
+            },
+            "Uf": {
+              "status": "PERSISTENT_HISTORY_NOT_OBSERVABLE",
+              "pass": false
+            },
+            "pointDisplacement": {
+              "status": "NOT_APPLICABLE_NO_HISTORY",
+              "pass": true
+            },
+            "cellDisplacement": {
+              "status": "NOT_APPLICABLE_NO_HISTORY",
+              "pass": true
+            }
+          },
+          "meshPhi": {
+            "status": "UNSUPPORTED_MESHPHI_LIFECYCLE",
+            "pass": false
+          },
+          "field_history_identity": false,
+          "mesh_identity": true,
+          "pass": false
+        },
+        {
+          "generation": 9,
+          "checkpoint_event_sequence": 138,
+          "restore_event_sequence": 148,
+          "checkpoint_adapter_window_id": 8,
+          "restore_adapter_window_id": 9,
+          "physical_time": {
+            "checkpoint": 0.14000000000000004,
+            "restore": 0.14000000000000004
+          },
+          "time_index": {
+            "checkpoint": 8,
+            "restore": 8
+          },
+          "time_identity": true,
+          "adapter_build_identity": true,
+          "state_hash_identity": {
+            "U": true,
+            "p": true,
+            "phi": true,
+            "Uf": true,
+            "pointDisplacement": true,
+            "cellDisplacement": true,
+            "mesh_points": true,
+            "old_points": true
+          },
+          "old_time": {
+            "U": {
+              "status": "PERSISTENT_HISTORY_NOT_OBSERVABLE",
+              "pass": false
+            },
+            "p": {
+              "status": "NOT_APPLICABLE_NO_HISTORY",
+              "pass": true
+            },
+            "phi": {
+              "status": "NOT_APPLICABLE_NO_HISTORY",
+              "pass": true
+            },
+            "Uf": {
+              "status": "PERSISTENT_HISTORY_NOT_OBSERVABLE",
+              "pass": false
+            },
+            "pointDisplacement": {
+              "status": "NOT_APPLICABLE_NO_HISTORY",
+              "pass": true
+            },
+            "cellDisplacement": {
+              "status": "NOT_APPLICABLE_NO_HISTORY",
+              "pass": true
+            }
+          },
+          "meshPhi": {
+            "status": "UNSUPPORTED_MESHPHI_LIFECYCLE",
+            "pass": false
+          },
+          "field_history_identity": false,
+          "mesh_identity": true,
+          "pass": false
+        },
+        {
+          "generation": 9,
+          "checkpoint_event_sequence": 138,
+          "restore_event_sequence": 154,
+          "checkpoint_adapter_window_id": 8,
+          "restore_adapter_window_id": 9,
+          "physical_time": {
+            "checkpoint": 0.14000000000000004,
+            "restore": 0.14000000000000004
+          },
+          "time_index": {
+            "checkpoint": 8,
+            "restore": 8
+          },
+          "time_identity": true,
+          "adapter_build_identity": true,
+          "state_hash_identity": {
+            "U": true,
+            "p": true,
+            "phi": true,
+            "Uf": true,
+            "pointDisplacement": true,
+            "cellDisplacement": true,
+            "mesh_points": true,
+            "old_points": true
+          },
+          "old_time": {
+            "U": {
+              "status": "PERSISTENT_HISTORY_NOT_OBSERVABLE",
+              "pass": false
+            },
+            "p": {
+              "status": "NOT_APPLICABLE_NO_HISTORY",
+              "pass": true
+            },
+            "phi": {
+              "status": "NOT_APPLICABLE_NO_HISTORY",
+              "pass": true
+            },
+            "Uf": {
+              "status": "PERSISTENT_HISTORY_NOT_OBSERVABLE",
+              "pass": false
+            },
+            "pointDisplacement": {
+              "status": "NOT_APPLICABLE_NO_HISTORY",
+              "pass": true
+            },
+            "cellDisplacement": {
+              "status": "NOT_APPLICABLE_NO_HISTORY",
+              "pass": true
+            }
+          },
+          "meshPhi": {
+            "status": "UNSUPPORTED_MESHPHI_LIFECYCLE",
+            "pass": false
+          },
+          "field_history_identity": false,
+          "mesh_identity": true,
+          "pass": false
+        },
+        {
+          "generation": 10,
+          "checkpoint_event_sequence": 156,
+          "restore_event_sequence": 166,
+          "checkpoint_adapter_window_id": 9,
+          "restore_adapter_window_id": 10,
+          "physical_time": {
+            "checkpoint": 0.14500000000000005,
+            "restore": 0.14500000000000005
+          },
+          "time_index": {
+            "checkpoint": 9,
+            "restore": 9
+          },
+          "time_identity": true,
+          "adapter_build_identity": true,
+          "state_hash_identity": {
+            "U": true,
+            "p": true,
+            "phi": true,
+            "Uf": true,
+            "pointDisplacement": true,
+            "cellDisplacement": true,
+            "mesh_points": true,
+            "old_points": true
+          },
+          "old_time": {
+            "U": {
+              "status": "PERSISTENT_HISTORY_NOT_OBSERVABLE",
+              "pass": false
+            },
+            "p": {
+              "status": "NOT_APPLICABLE_NO_HISTORY",
+              "pass": true
+            },
+            "phi": {
+              "status": "NOT_APPLICABLE_NO_HISTORY",
+              "pass": true
+            },
+            "Uf": {
+              "status": "PERSISTENT_HISTORY_NOT_OBSERVABLE",
+              "pass": false
+            },
+            "pointDisplacement": {
+              "status": "NOT_APPLICABLE_NO_HISTORY",
+              "pass": true
+            },
+            "cellDisplacement": {
+              "status": "NOT_APPLICABLE_NO_HISTORY",
+              "pass": true
+            }
+          },
+          "meshPhi": {
+            "status": "UNSUPPORTED_MESHPHI_LIFECYCLE",
+            "pass": false
+          },
+          "field_history_identity": false,
+          "mesh_identity": true,
+          "pass": false
+        },
+        {
+          "generation": 10,
+          "checkpoint_event_sequence": 156,
+          "restore_event_sequence": 172,
+          "checkpoint_adapter_window_id": 9,
+          "restore_adapter_window_id": 10,
+          "physical_time": {
+            "checkpoint": 0.14500000000000005,
+            "restore": 0.14500000000000005
+          },
+          "time_index": {
+            "checkpoint": 9,
+            "restore": 9
+          },
+          "time_identity": true,
+          "adapter_build_identity": true,
+          "state_hash_identity": {
+            "U": true,
+            "p": true,
+            "phi": true,
+            "Uf": true,
+            "pointDisplacement": true,
+            "cellDisplacement": true,
+            "mesh_points": true,
+            "old_points": true
+          },
+          "old_time": {
+            "U": {
+              "status": "PERSISTENT_HISTORY_NOT_OBSERVABLE",
+              "pass": false
+            },
+            "p": {
+              "status": "NOT_APPLICABLE_NO_HISTORY",
+              "pass": true
+            },
+            "phi": {
+              "status": "NOT_APPLICABLE_NO_HISTORY",
+              "pass": true
+            },
+            "Uf": {
+              "status": "PERSISTENT_HISTORY_NOT_OBSERVABLE",
+              "pass": false
+            },
+            "pointDisplacement": {
+              "status": "NOT_APPLICABLE_NO_HISTORY",
+              "pass": true
+            },
+            "cellDisplacement": {
+              "status": "NOT_APPLICABLE_NO_HISTORY",
+              "pass": true
+            }
+          },
+          "meshPhi": {
+            "status": "UNSUPPORTED_MESHPHI_LIFECYCLE",
+            "pass": false
+          },
+          "field_history_identity": false,
+          "mesh_identity": true,
+          "pass": false
+        }
+      ],
+      "errors": [
+        "checkpoint generation 2 does not restore identically",
+        "checkpoint generation 2 does not restore identically",
+        "checkpoint generation 3 does not restore identically",
+        "checkpoint generation 3 does not restore identically",
+        "checkpoint generation 4 does not restore identically",
+        "checkpoint generation 4 does not restore identically",
+        "checkpoint generation 5 does not restore identically",
+        "checkpoint generation 5 does not restore identically",
+        "checkpoint generation 6 does not restore identically",
+        "checkpoint generation 6 does not restore identically",
+        "checkpoint generation 7 does not restore identically",
+        "checkpoint generation 7 does not restore identically",
+        "checkpoint generation 8 does not restore identically",
+        "checkpoint generation 8 does not restore identically",
+        "checkpoint generation 9 does not restore identically",
+        "checkpoint generation 9 does not restore identically",
+        "checkpoint generation 10 does not restore identically",
+        "checkpoint generation 10 does not restore identically"
+      ],
+      "generation_contract": "latest chronologically preceding CHECKPOINT_WRITE; exact physical time/timeIndex and required state identity"
+    },
+    "1": {
+      "status": "FAIL",
+      "generations": [
+        {
+          "generation": 1,
+          "event_sequence": 2,
+          "adapter_window_id": 1,
+          "physical_time": 0.1,
+          "time_index": 0
+        },
+        {
+          "generation": 2,
+          "event_sequence": 12,
+          "adapter_window_id": 1,
+          "physical_time": 0.10500000000000001,
+          "time_index": 1
+        },
+        {
+          "generation": 3,
+          "event_sequence": 30,
+          "adapter_window_id": 2,
+          "physical_time": 0.11000000000000001,
+          "time_index": 2
+        },
+        {
+          "generation": 4,
+          "event_sequence": 48,
+          "adapter_window_id": 3,
+          "physical_time": 0.11500000000000002,
+          "time_index": 3
+        },
+        {
+          "generation": 5,
+          "event_sequence": 66,
+          "adapter_window_id": 4,
+          "physical_time": 0.12000000000000002,
+          "time_index": 4
+        },
+        {
+          "generation": 6,
+          "event_sequence": 84,
+          "adapter_window_id": 5,
+          "physical_time": 0.12500000000000003,
+          "time_index": 5
+        },
+        {
+          "generation": 7,
+          "event_sequence": 102,
+          "adapter_window_id": 6,
+          "physical_time": 0.13000000000000003,
+          "time_index": 6
+        },
+        {
+          "generation": 8,
+          "event_sequence": 120,
+          "adapter_window_id": 7,
+          "physical_time": 0.13500000000000004,
+          "time_index": 7
+        },
+        {
+          "generation": 9,
+          "event_sequence": 138,
+          "adapter_window_id": 8,
+          "physical_time": 0.14000000000000004,
+          "time_index": 8
+        },
+        {
+          "generation": 10,
+          "event_sequence": 156,
+          "adapter_window_id": 9,
+          "physical_time": 0.14500000000000005,
+          "time_index": 9
+        }
+      ],
+      "restore_pairs": [
+        {
+          "generation": 1,
+          "checkpoint_event_sequence": 2,
+          "restore_event_sequence": 10,
+          "checkpoint_adapter_window_id": 1,
+          "restore_adapter_window_id": 1,
+          "physical_time": {
+            "checkpoint": 0.1,
+            "restore": 0.1
+          },
+          "time_index": {
+            "checkpoint": 0,
+            "restore": 0
+          },
+          "time_identity": true,
+          "adapter_build_identity": true,
+          "state_hash_identity": {
+            "U": true,
+            "p": true,
+            "phi": true,
+            "Uf": true,
+            "pointDisplacement": true,
+            "cellDisplacement": true,
+            "mesh_points": true,
+            "old_points": true
+          },
+          "old_time": {
+            "U": {
+              "status": "DERIVED_LAZY_NUMERICALLY_EQUIVALENT",
+              "pass": true,
+              "evidence": "versioned U/Uf Euler non-subcycled contract plus no-CFD lifecycle probe"
+            },
+            "p": {
+              "status": "NOT_APPLICABLE_NO_HISTORY",
+              "pass": true
+            },
+            "phi": {
+              "status": "NOT_APPLICABLE_NO_HISTORY",
+              "pass": true
+            },
+            "Uf": {
+              "status": "DERIVED_LAZY_NUMERICALLY_EQUIVALENT",
+              "pass": true,
+              "evidence": "versioned U/Uf Euler non-subcycled contract plus no-CFD lifecycle probe"
+            },
+            "pointDisplacement": {
+              "status": "NOT_APPLICABLE_NO_HISTORY",
+              "pass": true
+            },
+            "cellDisplacement": {
+              "status": "NOT_APPLICABLE_NO_HISTORY",
+              "pass": true
+            }
+          },
+          "meshPhi": {
+            "status": "NOT_APPLICABLE_ABSENT_AT_BOTH_BOUNDARIES",
+            "pass": true
+          },
+          "field_history_identity": true,
+          "mesh_identity": true,
+          "pass": true
+        },
+        {
+          "generation": 2,
+          "checkpoint_event_sequence": 12,
+          "restore_event_sequence": 22,
+          "checkpoint_adapter_window_id": 1,
+          "restore_adapter_window_id": 2,
+          "physical_time": {
+            "checkpoint": 0.10500000000000001,
+            "restore": 0.10500000000000001
+          },
+          "time_index": {
+            "checkpoint": 1,
+            "restore": 1
+          },
+          "time_identity": true,
+          "adapter_build_identity": true,
+          "state_hash_identity": {
+            "U": true,
+            "p": true,
+            "phi": true,
+            "Uf": true,
+            "pointDisplacement": true,
+            "cellDisplacement": true,
+            "mesh_points": true,
+            "old_points": true
+          },
+          "old_time": {
+            "U": {
+              "status": "PERSISTENT_HISTORY_NOT_OBSERVABLE",
+              "pass": false
+            },
+            "p": {
+              "status": "NOT_APPLICABLE_NO_HISTORY",
+              "pass": true
+            },
+            "phi": {
+              "status": "NOT_APPLICABLE_NO_HISTORY",
+              "pass": true
+            },
+            "Uf": {
+              "status": "PERSISTENT_HISTORY_NOT_OBSERVABLE",
+              "pass": false
+            },
+            "pointDisplacement": {
+              "status": "NOT_APPLICABLE_NO_HISTORY",
+              "pass": true
+            },
+            "cellDisplacement": {
+              "status": "NOT_APPLICABLE_NO_HISTORY",
+              "pass": true
+            }
+          },
+          "meshPhi": {
+            "status": "UNSUPPORTED_MESHPHI_LIFECYCLE",
+            "pass": false
+          },
+          "field_history_identity": false,
+          "mesh_identity": true,
+          "pass": false
+        },
+        {
+          "generation": 2,
+          "checkpoint_event_sequence": 12,
+          "restore_event_sequence": 28,
+          "checkpoint_adapter_window_id": 1,
+          "restore_adapter_window_id": 2,
+          "physical_time": {
+            "checkpoint": 0.10500000000000001,
+            "restore": 0.10500000000000001
+          },
+          "time_index": {
+            "checkpoint": 1,
+            "restore": 1
+          },
+          "time_identity": true,
+          "adapter_build_identity": true,
+          "state_hash_identity": {
+            "U": true,
+            "p": true,
+            "phi": true,
+            "Uf": true,
+            "pointDisplacement": true,
+            "cellDisplacement": true,
+            "mesh_points": true,
+            "old_points": true
+          },
+          "old_time": {
+            "U": {
+              "status": "PERSISTENT_HISTORY_NOT_OBSERVABLE",
+              "pass": false
+            },
+            "p": {
+              "status": "NOT_APPLICABLE_NO_HISTORY",
+              "pass": true
+            },
+            "phi": {
+              "status": "NOT_APPLICABLE_NO_HISTORY",
+              "pass": true
+            },
+            "Uf": {
+              "status": "PERSISTENT_HISTORY_NOT_OBSERVABLE",
+              "pass": false
+            },
+            "pointDisplacement": {
+              "status": "NOT_APPLICABLE_NO_HISTORY",
+              "pass": true
+            },
+            "cellDisplacement": {
+              "status": "NOT_APPLICABLE_NO_HISTORY",
+              "pass": true
+            }
+          },
+          "meshPhi": {
+            "status": "UNSUPPORTED_MESHPHI_LIFECYCLE",
+            "pass": false
+          },
+          "field_history_identity": false,
+          "mesh_identity": true,
+          "pass": false
+        },
+        {
+          "generation": 3,
+          "checkpoint_event_sequence": 30,
+          "restore_event_sequence": 40,
+          "checkpoint_adapter_window_id": 2,
+          "restore_adapter_window_id": 3,
+          "physical_time": {
+            "checkpoint": 0.11000000000000001,
+            "restore": 0.11000000000000001
+          },
+          "time_index": {
+            "checkpoint": 2,
+            "restore": 2
+          },
+          "time_identity": true,
+          "adapter_build_identity": true,
+          "state_hash_identity": {
+            "U": true,
+            "p": true,
+            "phi": true,
+            "Uf": true,
+            "pointDisplacement": true,
+            "cellDisplacement": true,
+            "mesh_points": true,
+            "old_points": true
+          },
+          "old_time": {
+            "U": {
+              "status": "PERSISTENT_HISTORY_NOT_OBSERVABLE",
+              "pass": false
+            },
+            "p": {
+              "status": "NOT_APPLICABLE_NO_HISTORY",
+              "pass": true
+            },
+            "phi": {
+              "status": "NOT_APPLICABLE_NO_HISTORY",
+              "pass": true
+            },
+            "Uf": {
+              "status": "PERSISTENT_HISTORY_NOT_OBSERVABLE",
+              "pass": false
+            },
+            "pointDisplacement": {
+              "status": "NOT_APPLICABLE_NO_HISTORY",
+              "pass": true
+            },
+            "cellDisplacement": {
+              "status": "NOT_APPLICABLE_NO_HISTORY",
+              "pass": true
+            }
+          },
+          "meshPhi": {
+            "status": "UNSUPPORTED_MESHPHI_LIFECYCLE",
+            "pass": false
+          },
+          "field_history_identity": false,
+          "mesh_identity": true,
+          "pass": false
+        },
+        {
+          "generation": 3,
+          "checkpoint_event_sequence": 30,
+          "restore_event_sequence": 46,
+          "checkpoint_adapter_window_id": 2,
+          "restore_adapter_window_id": 3,
+          "physical_time": {
+            "checkpoint": 0.11000000000000001,
+            "restore": 0.11000000000000001
+          },
+          "time_index": {
+            "checkpoint": 2,
+            "restore": 2
+          },
+          "time_identity": true,
+          "adapter_build_identity": true,
+          "state_hash_identity": {
+            "U": true,
+            "p": true,
+            "phi": true,
+            "Uf": true,
+            "pointDisplacement": true,
+            "cellDisplacement": true,
+            "mesh_points": true,
+            "old_points": true
+          },
+          "old_time": {
+            "U": {
+              "status": "PERSISTENT_HISTORY_NOT_OBSERVABLE",
+              "pass": false
+            },
+            "p": {
+              "status": "NOT_APPLICABLE_NO_HISTORY",
+              "pass": true
+            },
+            "phi": {
+              "status": "NOT_APPLICABLE_NO_HISTORY",
+              "pass": true
+            },
+            "Uf": {
+              "status": "PERSISTENT_HISTORY_NOT_OBSERVABLE",
+              "pass": false
+            },
+            "pointDisplacement": {
+              "status": "NOT_APPLICABLE_NO_HISTORY",
+              "pass": true
+            },
+            "cellDisplacement": {
+              "status": "NOT_APPLICABLE_NO_HISTORY",
+              "pass": true
+            }
+          },
+          "meshPhi": {
+            "status": "UNSUPPORTED_MESHPHI_LIFECYCLE",
+            "pass": false
+          },
+          "field_history_identity": false,
+          "mesh_identity": true,
+          "pass": false
+        },
+        {
+          "generation": 4,
+          "checkpoint_event_sequence": 48,
+          "restore_event_sequence": 58,
+          "checkpoint_adapter_window_id": 3,
+          "restore_adapter_window_id": 4,
+          "physical_time": {
+            "checkpoint": 0.11500000000000002,
+            "restore": 0.11500000000000002
+          },
+          "time_index": {
+            "checkpoint": 3,
+            "restore": 3
+          },
+          "time_identity": true,
+          "adapter_build_identity": true,
+          "state_hash_identity": {
+            "U": true,
+            "p": true,
+            "phi": true,
+            "Uf": true,
+            "pointDisplacement": true,
+            "cellDisplacement": true,
+            "mesh_points": true,
+            "old_points": true
+          },
+          "old_time": {
+            "U": {
+              "status": "PERSISTENT_HISTORY_NOT_OBSERVABLE",
+              "pass": false
+            },
+            "p": {
+              "status": "NOT_APPLICABLE_NO_HISTORY",
+              "pass": true
+            },
+            "phi": {
+              "status": "NOT_APPLICABLE_NO_HISTORY",
+              "pass": true
+            },
+            "Uf": {
+              "status": "PERSISTENT_HISTORY_NOT_OBSERVABLE",
+              "pass": false
+            },
+            "pointDisplacement": {
+              "status": "NOT_APPLICABLE_NO_HISTORY",
+              "pass": true
+            },
+            "cellDisplacement": {
+              "status": "NOT_APPLICABLE_NO_HISTORY",
+              "pass": true
+            }
+          },
+          "meshPhi": {
+            "status": "UNSUPPORTED_MESHPHI_LIFECYCLE",
+            "pass": false
+          },
+          "field_history_identity": false,
+          "mesh_identity": true,
+          "pass": false
+        },
+        {
+          "generation": 4,
+          "checkpoint_event_sequence": 48,
+          "restore_event_sequence": 64,
+          "checkpoint_adapter_window_id": 3,
+          "restore_adapter_window_id": 4,
+          "physical_time": {
+            "checkpoint": 0.11500000000000002,
+            "restore": 0.11500000000000002
+          },
+          "time_index": {
+            "checkpoint": 3,
+            "restore": 3
+          },
+          "time_identity": true,
+          "adapter_build_identity": true,
+          "state_hash_identity": {
+            "U": true,
+            "p": true,
+            "phi": true,
+            "Uf": true,
+            "pointDisplacement": true,
+            "cellDisplacement": true,
+            "mesh_points": true,
+            "old_points": true
+          },
+          "old_time": {
+            "U": {
+              "status": "PERSISTENT_HISTORY_NOT_OBSERVABLE",
+              "pass": false
+            },
+            "p": {
+              "status": "NOT_APPLICABLE_NO_HISTORY",
+              "pass": true
+            },
+            "phi": {
+              "status": "NOT_APPLICABLE_NO_HISTORY",
+              "pass": true
+            },
+            "Uf": {
+              "status": "PERSISTENT_HISTORY_NOT_OBSERVABLE",
+              "pass": false
+            },
+            "pointDisplacement": {
+              "status": "NOT_APPLICABLE_NO_HISTORY",
+              "pass": true
+            },
+            "cellDisplacement": {
+              "status": "NOT_APPLICABLE_NO_HISTORY",
+              "pass": true
+            }
+          },
+          "meshPhi": {
+            "status": "UNSUPPORTED_MESHPHI_LIFECYCLE",
+            "pass": false
+          },
+          "field_history_identity": false,
+          "mesh_identity": true,
+          "pass": false
+        },
+        {
+          "generation": 5,
+          "checkpoint_event_sequence": 66,
+          "restore_event_sequence": 76,
+          "checkpoint_adapter_window_id": 4,
+          "restore_adapter_window_id": 5,
+          "physical_time": {
+            "checkpoint": 0.12000000000000002,
+            "restore": 0.12000000000000002
+          },
+          "time_index": {
+            "checkpoint": 4,
+            "restore": 4
+          },
+          "time_identity": true,
+          "adapter_build_identity": true,
+          "state_hash_identity": {
+            "U": true,
+            "p": true,
+            "phi": true,
+            "Uf": true,
+            "pointDisplacement": true,
+            "cellDisplacement": true,
+            "mesh_points": true,
+            "old_points": true
+          },
+          "old_time": {
+            "U": {
+              "status": "PERSISTENT_HISTORY_NOT_OBSERVABLE",
+              "pass": false
+            },
+            "p": {
+              "status": "NOT_APPLICABLE_NO_HISTORY",
+              "pass": true
+            },
+            "phi": {
+              "status": "NOT_APPLICABLE_NO_HISTORY",
+              "pass": true
+            },
+            "Uf": {
+              "status": "PERSISTENT_HISTORY_NOT_OBSERVABLE",
+              "pass": false
+            },
+            "pointDisplacement": {
+              "status": "NOT_APPLICABLE_NO_HISTORY",
+              "pass": true
+            },
+            "cellDisplacement": {
+              "status": "NOT_APPLICABLE_NO_HISTORY",
+              "pass": true
+            }
+          },
+          "meshPhi": {
+            "status": "UNSUPPORTED_MESHPHI_LIFECYCLE",
+            "pass": false
+          },
+          "field_history_identity": false,
+          "mesh_identity": true,
+          "pass": false
+        },
+        {
+          "generation": 5,
+          "checkpoint_event_sequence": 66,
+          "restore_event_sequence": 82,
+          "checkpoint_adapter_window_id": 4,
+          "restore_adapter_window_id": 5,
+          "physical_time": {
+            "checkpoint": 0.12000000000000002,
+            "restore": 0.12000000000000002
+          },
+          "time_index": {
+            "checkpoint": 4,
+            "restore": 4
+          },
+          "time_identity": true,
+          "adapter_build_identity": true,
+          "state_hash_identity": {
+            "U": true,
+            "p": true,
+            "phi": true,
+            "Uf": true,
+            "pointDisplacement": true,
+            "cellDisplacement": true,
+            "mesh_points": true,
+            "old_points": true
+          },
+          "old_time": {
+            "U": {
+              "status": "PERSISTENT_HISTORY_NOT_OBSERVABLE",
+              "pass": false
+            },
+            "p": {
+              "status": "NOT_APPLICABLE_NO_HISTORY",
+              "pass": true
+            },
+            "phi": {
+              "status": "NOT_APPLICABLE_NO_HISTORY",
+              "pass": true
+            },
+            "Uf": {
+              "status": "PERSISTENT_HISTORY_NOT_OBSERVABLE",
+              "pass": false
+            },
+            "pointDisplacement": {
+              "status": "NOT_APPLICABLE_NO_HISTORY",
+              "pass": true
+            },
+            "cellDisplacement": {
+              "status": "NOT_APPLICABLE_NO_HISTORY",
+              "pass": true
+            }
+          },
+          "meshPhi": {
+            "status": "UNSUPPORTED_MESHPHI_LIFECYCLE",
+            "pass": false
+          },
+          "field_history_identity": false,
+          "mesh_identity": true,
+          "pass": false
+        },
+        {
+          "generation": 6,
+          "checkpoint_event_sequence": 84,
+          "restore_event_sequence": 94,
+          "checkpoint_adapter_window_id": 5,
+          "restore_adapter_window_id": 6,
+          "physical_time": {
+            "checkpoint": 0.12500000000000003,
+            "restore": 0.12500000000000003
+          },
+          "time_index": {
+            "checkpoint": 5,
+            "restore": 5
+          },
+          "time_identity": true,
+          "adapter_build_identity": true,
+          "state_hash_identity": {
+            "U": true,
+            "p": true,
+            "phi": true,
+            "Uf": true,
+            "pointDisplacement": true,
+            "cellDisplacement": true,
+            "mesh_points": true,
+            "old_points": true
+          },
+          "old_time": {
+            "U": {
+              "status": "PERSISTENT_HISTORY_NOT_OBSERVABLE",
+              "pass": false
+            },
+            "p": {
+              "status": "NOT_APPLICABLE_NO_HISTORY",
+              "pass": true
+            },
+            "phi": {
+              "status": "NOT_APPLICABLE_NO_HISTORY",
+              "pass": true
+            },
+            "Uf": {
+              "status": "PERSISTENT_HISTORY_NOT_OBSERVABLE",
+              "pass": false
+            },
+            "pointDisplacement": {
+              "status": "NOT_APPLICABLE_NO_HISTORY",
+              "pass": true
+            },
+            "cellDisplacement": {
+              "status": "NOT_APPLICABLE_NO_HISTORY",
+              "pass": true
+            }
+          },
+          "meshPhi": {
+            "status": "UNSUPPORTED_MESHPHI_LIFECYCLE",
+            "pass": false
+          },
+          "field_history_identity": false,
+          "mesh_identity": true,
+          "pass": false
+        },
+        {
+          "generation": 6,
+          "checkpoint_event_sequence": 84,
+          "restore_event_sequence": 100,
+          "checkpoint_adapter_window_id": 5,
+          "restore_adapter_window_id": 6,
+          "physical_time": {
+            "checkpoint": 0.12500000000000003,
+            "restore": 0.12500000000000003
+          },
+          "time_index": {
+            "checkpoint": 5,
+            "restore": 5
+          },
+          "time_identity": true,
+          "adapter_build_identity": true,
+          "state_hash_identity": {
+            "U": true,
+            "p": true,
+            "phi": true,
+            "Uf": true,
+            "pointDisplacement": true,
+            "cellDisplacement": true,
+            "mesh_points": true,
+            "old_points": true
+          },
+          "old_time": {
+            "U": {
+              "status": "PERSISTENT_HISTORY_NOT_OBSERVABLE",
+              "pass": false
+            },
+            "p": {
+              "status": "NOT_APPLICABLE_NO_HISTORY",
+              "pass": true
+            },
+            "phi": {
+              "status": "NOT_APPLICABLE_NO_HISTORY",
+              "pass": true
+            },
+            "Uf": {
+              "status": "PERSISTENT_HISTORY_NOT_OBSERVABLE",
+              "pass": false
+            },
+            "pointDisplacement": {
+              "status": "NOT_APPLICABLE_NO_HISTORY",
+              "pass": true
+            },
+            "cellDisplacement": {
+              "status": "NOT_APPLICABLE_NO_HISTORY",
+              "pass": true
+            }
+          },
+          "meshPhi": {
+            "status": "UNSUPPORTED_MESHPHI_LIFECYCLE",
+            "pass": false
+          },
+          "field_history_identity": false,
+          "mesh_identity": true,
+          "pass": false
+        },
+        {
+          "generation": 7,
+          "checkpoint_event_sequence": 102,
+          "restore_event_sequence": 112,
+          "checkpoint_adapter_window_id": 6,
+          "restore_adapter_window_id": 7,
+          "physical_time": {
+            "checkpoint": 0.13000000000000003,
+            "restore": 0.13000000000000003
+          },
+          "time_index": {
+            "checkpoint": 6,
+            "restore": 6
+          },
+          "time_identity": true,
+          "adapter_build_identity": true,
+          "state_hash_identity": {
+            "U": true,
+            "p": true,
+            "phi": true,
+            "Uf": true,
+            "pointDisplacement": true,
+            "cellDisplacement": true,
+            "mesh_points": true,
+            "old_points": true
+          },
+          "old_time": {
+            "U": {
+              "status": "PERSISTENT_HISTORY_NOT_OBSERVABLE",
+              "pass": false
+            },
+            "p": {
+              "status": "NOT_APPLICABLE_NO_HISTORY",
+              "pass": true
+            },
+            "phi": {
+              "status": "NOT_APPLICABLE_NO_HISTORY",
+              "pass": true
+            },
+            "Uf": {
+              "status": "PERSISTENT_HISTORY_NOT_OBSERVABLE",
+              "pass": false
+            },
+            "pointDisplacement": {
+              "status": "NOT_APPLICABLE_NO_HISTORY",
+              "pass": true
+            },
+            "cellDisplacement": {
+              "status": "NOT_APPLICABLE_NO_HISTORY",
+              "pass": true
+            }
+          },
+          "meshPhi": {
+            "status": "UNSUPPORTED_MESHPHI_LIFECYCLE",
+            "pass": false
+          },
+          "field_history_identity": false,
+          "mesh_identity": true,
+          "pass": false
+        },
+        {
+          "generation": 7,
+          "checkpoint_event_sequence": 102,
+          "restore_event_sequence": 118,
+          "checkpoint_adapter_window_id": 6,
+          "restore_adapter_window_id": 7,
+          "physical_time": {
+            "checkpoint": 0.13000000000000003,
+            "restore": 0.13000000000000003
+          },
+          "time_index": {
+            "checkpoint": 6,
+            "restore": 6
+          },
+          "time_identity": true,
+          "adapter_build_identity": true,
+          "state_hash_identity": {
+            "U": true,
+            "p": true,
+            "phi": true,
+            "Uf": true,
+            "pointDisplacement": true,
+            "cellDisplacement": true,
+            "mesh_points": true,
+            "old_points": true
+          },
+          "old_time": {
+            "U": {
+              "status": "PERSISTENT_HISTORY_NOT_OBSERVABLE",
+              "pass": false
+            },
+            "p": {
+              "status": "NOT_APPLICABLE_NO_HISTORY",
+              "pass": true
+            },
+            "phi": {
+              "status": "NOT_APPLICABLE_NO_HISTORY",
+              "pass": true
+            },
+            "Uf": {
+              "status": "PERSISTENT_HISTORY_NOT_OBSERVABLE",
+              "pass": false
+            },
+            "pointDisplacement": {
+              "status": "NOT_APPLICABLE_NO_HISTORY",
+              "pass": true
+            },
+            "cellDisplacement": {
+              "status": "NOT_APPLICABLE_NO_HISTORY",
+              "pass": true
+            }
+          },
+          "meshPhi": {
+            "status": "UNSUPPORTED_MESHPHI_LIFECYCLE",
+            "pass": false
+          },
+          "field_history_identity": false,
+          "mesh_identity": true,
+          "pass": false
+        },
+        {
+          "generation": 8,
+          "checkpoint_event_sequence": 120,
+          "restore_event_sequence": 130,
+          "checkpoint_adapter_window_id": 7,
+          "restore_adapter_window_id": 8,
+          "physical_time": {
+            "checkpoint": 0.13500000000000004,
+            "restore": 0.13500000000000004
+          },
+          "time_index": {
+            "checkpoint": 7,
+            "restore": 7
+          },
+          "time_identity": true,
+          "adapter_build_identity": true,
+          "state_hash_identity": {
+            "U": true,
+            "p": true,
+            "phi": true,
+            "Uf": true,
+            "pointDisplacement": true,
+            "cellDisplacement": true,
+            "mesh_points": true,
+            "old_points": true
+          },
+          "old_time": {
+            "U": {
+              "status": "PERSISTENT_HISTORY_NOT_OBSERVABLE",
+              "pass": false
+            },
+            "p": {
+              "status": "NOT_APPLICABLE_NO_HISTORY",
+              "pass": true
+            },
+            "phi": {
+              "status": "NOT_APPLICABLE_NO_HISTORY",
+              "pass": true
+            },
+            "Uf": {
+              "status": "PERSISTENT_HISTORY_NOT_OBSERVABLE",
+              "pass": false
+            },
+            "pointDisplacement": {
+              "status": "NOT_APPLICABLE_NO_HISTORY",
+              "pass": true
+            },
+            "cellDisplacement": {
+              "status": "NOT_APPLICABLE_NO_HISTORY",
+              "pass": true
+            }
+          },
+          "meshPhi": {
+            "status": "UNSUPPORTED_MESHPHI_LIFECYCLE",
+            "pass": false
+          },
+          "field_history_identity": false,
+          "mesh_identity": true,
+          "pass": false
+        },
+        {
+          "generation": 8,
+          "checkpoint_event_sequence": 120,
+          "restore_event_sequence": 136,
+          "checkpoint_adapter_window_id": 7,
+          "restore_adapter_window_id": 8,
+          "physical_time": {
+            "checkpoint": 0.13500000000000004,
+            "restore": 0.13500000000000004
+          },
+          "time_index": {
+            "checkpoint": 7,
+            "restore": 7
+          },
+          "time_identity": true,
+          "adapter_build_identity": true,
+          "state_hash_identity": {
+            "U": true,
+            "p": true,
+            "phi": true,
+            "Uf": true,
+            "pointDisplacement": true,
+            "cellDisplacement": true,
+            "mesh_points": true,
+            "old_points": true
+          },
+          "old_time": {
+            "U": {
+              "status": "PERSISTENT_HISTORY_NOT_OBSERVABLE",
+              "pass": false
+            },
+            "p": {
+              "status": "NOT_APPLICABLE_NO_HISTORY",
+              "pass": true
+            },
+            "phi": {
+              "status": "NOT_APPLICABLE_NO_HISTORY",
+              "pass": true
+            },
+            "Uf": {
+              "status": "PERSISTENT_HISTORY_NOT_OBSERVABLE",
+              "pass": false
+            },
+            "pointDisplacement": {
+              "status": "NOT_APPLICABLE_NO_HISTORY",
+              "pass": true
+            },
+            "cellDisplacement": {
+              "status": "NOT_APPLICABLE_NO_HISTORY",
+              "pass": true
+            }
+          },
+          "meshPhi": {
+            "status": "UNSUPPORTED_MESHPHI_LIFECYCLE",
+            "pass": false
+          },
+          "field_history_identity": false,
+          "mesh_identity": true,
+          "pass": false
+        },
+        {
+          "generation": 9,
+          "checkpoint_event_sequence": 138,
+          "restore_event_sequence": 148,
+          "checkpoint_adapter_window_id": 8,
+          "restore_adapter_window_id": 9,
+          "physical_time": {
+            "checkpoint": 0.14000000000000004,
+            "restore": 0.14000000000000004
+          },
+          "time_index": {
+            "checkpoint": 8,
+            "restore": 8
+          },
+          "time_identity": true,
+          "adapter_build_identity": true,
+          "state_hash_identity": {
+            "U": true,
+            "p": true,
+            "phi": true,
+            "Uf": true,
+            "pointDisplacement": true,
+            "cellDisplacement": true,
+            "mesh_points": true,
+            "old_points": true
+          },
+          "old_time": {
+            "U": {
+              "status": "PERSISTENT_HISTORY_NOT_OBSERVABLE",
+              "pass": false
+            },
+            "p": {
+              "status": "NOT_APPLICABLE_NO_HISTORY",
+              "pass": true
+            },
+            "phi": {
+              "status": "NOT_APPLICABLE_NO_HISTORY",
+              "pass": true
+            },
+            "Uf": {
+              "status": "PERSISTENT_HISTORY_NOT_OBSERVABLE",
+              "pass": false
+            },
+            "pointDisplacement": {
+              "status": "NOT_APPLICABLE_NO_HISTORY",
+              "pass": true
+            },
+            "cellDisplacement": {
+              "status": "NOT_APPLICABLE_NO_HISTORY",
+              "pass": true
+            }
+          },
+          "meshPhi": {
+            "status": "UNSUPPORTED_MESHPHI_LIFECYCLE",
+            "pass": false
+          },
+          "field_history_identity": false,
+          "mesh_identity": true,
+          "pass": false
+        },
+        {
+          "generation": 9,
+          "checkpoint_event_sequence": 138,
+          "restore_event_sequence": 154,
+          "checkpoint_adapter_window_id": 8,
+          "restore_adapter_window_id": 9,
+          "physical_time": {
+            "checkpoint": 0.14000000000000004,
+            "restore": 0.14000000000000004
+          },
+          "time_index": {
+            "checkpoint": 8,
+            "restore": 8
+          },
+          "time_identity": true,
+          "adapter_build_identity": true,
+          "state_hash_identity": {
+            "U": true,
+            "p": true,
+            "phi": true,
+            "Uf": true,
+            "pointDisplacement": true,
+            "cellDisplacement": true,
+            "mesh_points": true,
+            "old_points": true
+          },
+          "old_time": {
+            "U": {
+              "status": "PERSISTENT_HISTORY_NOT_OBSERVABLE",
+              "pass": false
+            },
+            "p": {
+              "status": "NOT_APPLICABLE_NO_HISTORY",
+              "pass": true
+            },
+            "phi": {
+              "status": "NOT_APPLICABLE_NO_HISTORY",
+              "pass": true
+            },
+            "Uf": {
+              "status": "PERSISTENT_HISTORY_NOT_OBSERVABLE",
+              "pass": false
+            },
+            "pointDisplacement": {
+              "status": "NOT_APPLICABLE_NO_HISTORY",
+              "pass": true
+            },
+            "cellDisplacement": {
+              "status": "NOT_APPLICABLE_NO_HISTORY",
+              "pass": true
+            }
+          },
+          "meshPhi": {
+            "status": "UNSUPPORTED_MESHPHI_LIFECYCLE",
+            "pass": false
+          },
+          "field_history_identity": false,
+          "mesh_identity": true,
+          "pass": false
+        },
+        {
+          "generation": 10,
+          "checkpoint_event_sequence": 156,
+          "restore_event_sequence": 166,
+          "checkpoint_adapter_window_id": 9,
+          "restore_adapter_window_id": 10,
+          "physical_time": {
+            "checkpoint": 0.14500000000000005,
+            "restore": 0.14500000000000005
+          },
+          "time_index": {
+            "checkpoint": 9,
+            "restore": 9
+          },
+          "time_identity": true,
+          "adapter_build_identity": true,
+          "state_hash_identity": {
+            "U": true,
+            "p": true,
+            "phi": true,
+            "Uf": true,
+            "pointDisplacement": true,
+            "cellDisplacement": true,
+            "mesh_points": true,
+            "old_points": true
+          },
+          "old_time": {
+            "U": {
+              "status": "PERSISTENT_HISTORY_NOT_OBSERVABLE",
+              "pass": false
+            },
+            "p": {
+              "status": "NOT_APPLICABLE_NO_HISTORY",
+              "pass": true
+            },
+            "phi": {
+              "status": "NOT_APPLICABLE_NO_HISTORY",
+              "pass": true
+            },
+            "Uf": {
+              "status": "PERSISTENT_HISTORY_NOT_OBSERVABLE",
+              "pass": false
+            },
+            "pointDisplacement": {
+              "status": "NOT_APPLICABLE_NO_HISTORY",
+              "pass": true
+            },
+            "cellDisplacement": {
+              "status": "NOT_APPLICABLE_NO_HISTORY",
+              "pass": true
+            }
+          },
+          "meshPhi": {
+            "status": "UNSUPPORTED_MESHPHI_LIFECYCLE",
+            "pass": false
+          },
+          "field_history_identity": false,
+          "mesh_identity": true,
+          "pass": false
+        },
+        {
+          "generation": 10,
+          "checkpoint_event_sequence": 156,
+          "restore_event_sequence": 172,
+          "checkpoint_adapter_window_id": 9,
+          "restore_adapter_window_id": 10,
+          "physical_time": {
+            "checkpoint": 0.14500000000000005,
+            "restore": 0.14500000000000005
+          },
+          "time_index": {
+            "checkpoint": 9,
+            "restore": 9
+          },
+          "time_identity": true,
+          "adapter_build_identity": true,
+          "state_hash_identity": {
+            "U": true,
+            "p": true,
+            "phi": true,
+            "Uf": true,
+            "pointDisplacement": true,
+            "cellDisplacement": true,
+            "mesh_points": true,
+            "old_points": true
+          },
+          "old_time": {
+            "U": {
+              "status": "PERSISTENT_HISTORY_NOT_OBSERVABLE",
+              "pass": false
+            },
+            "p": {
+              "status": "NOT_APPLICABLE_NO_HISTORY",
+              "pass": true
+            },
+            "phi": {
+              "status": "NOT_APPLICABLE_NO_HISTORY",
+              "pass": true
+            },
+            "Uf": {
+              "status": "PERSISTENT_HISTORY_NOT_OBSERVABLE",
+              "pass": false
+            },
+            "pointDisplacement": {
+              "status": "NOT_APPLICABLE_NO_HISTORY",
+              "pass": true
+            },
+            "cellDisplacement": {
+              "status": "NOT_APPLICABLE_NO_HISTORY",
+              "pass": true
+            }
+          },
+          "meshPhi": {
+            "status": "UNSUPPORTED_MESHPHI_LIFECYCLE",
+            "pass": false
+          },
+          "field_history_identity": false,
+          "mesh_identity": true,
+          "pass": false
+        }
+      ],
+      "errors": [
+        "checkpoint generation 2 does not restore identically",
+        "checkpoint generation 2 does not restore identically",
+        "checkpoint generation 3 does not restore identically",
+        "checkpoint generation 3 does not restore identically",
+        "checkpoint generation 4 does not restore identically",
+        "checkpoint generation 4 does not restore identically",
+        "checkpoint generation 5 does not restore identically",
+        "checkpoint generation 5 does not restore identically",
+        "checkpoint generation 6 does not restore identically",
+        "checkpoint generation 6 does not restore identically",
+        "checkpoint generation 7 does not restore identically",
+        "checkpoint generation 7 does not restore identically",
+        "checkpoint generation 8 does not restore identically",
+        "checkpoint generation 8 does not restore identically",
+        "checkpoint generation 9 does not restore identically",
+        "checkpoint generation 9 does not restore identically",
+        "checkpoint generation 10 does not restore identically",
+        "checkpoint generation 10 does not restore identically"
+      ],
+      "generation_contract": "latest chronologically preceding CHECKPOINT_WRITE; exact physical time/timeIndex and required state identity"
+    },
+    "2": {
+      "status": "FAIL",
+      "generations": [
+        {
+          "generation": 1,
+          "event_sequence": 2,
+          "adapter_window_id": 1,
+          "physical_time": 0.1,
+          "time_index": 0
+        },
+        {
+          "generation": 2,
+          "event_sequence": 12,
+          "adapter_window_id": 1,
+          "physical_time": 0.10500000000000001,
+          "time_index": 1
+        },
+        {
+          "generation": 3,
+          "event_sequence": 30,
+          "adapter_window_id": 2,
+          "physical_time": 0.11000000000000001,
+          "time_index": 2
+        },
+        {
+          "generation": 4,
+          "event_sequence": 48,
+          "adapter_window_id": 3,
+          "physical_time": 0.11500000000000002,
+          "time_index": 3
+        },
+        {
+          "generation": 5,
+          "event_sequence": 66,
+          "adapter_window_id": 4,
+          "physical_time": 0.12000000000000002,
+          "time_index": 4
+        },
+        {
+          "generation": 6,
+          "event_sequence": 84,
+          "adapter_window_id": 5,
+          "physical_time": 0.12500000000000003,
+          "time_index": 5
+        },
+        {
+          "generation": 7,
+          "event_sequence": 102,
+          "adapter_window_id": 6,
+          "physical_time": 0.13000000000000003,
+          "time_index": 6
+        },
+        {
+          "generation": 8,
+          "event_sequence": 120,
+          "adapter_window_id": 7,
+          "physical_time": 0.13500000000000004,
+          "time_index": 7
+        },
+        {
+          "generation": 9,
+          "event_sequence": 138,
+          "adapter_window_id": 8,
+          "physical_time": 0.14000000000000004,
+          "time_index": 8
+        },
+        {
+          "generation": 10,
+          "event_sequence": 156,
+          "adapter_window_id": 9,
+          "physical_time": 0.14500000000000005,
+          "time_index": 9
+        }
+      ],
+      "restore_pairs": [
+        {
+          "generation": 1,
+          "checkpoint_event_sequence": 2,
+          "restore_event_sequence": 10,
+          "checkpoint_adapter_window_id": 1,
+          "restore_adapter_window_id": 1,
+          "physical_time": {
+            "checkpoint": 0.1,
+            "restore": 0.1
+          },
+          "time_index": {
+            "checkpoint": 0,
+            "restore": 0
+          },
+          "time_identity": true,
+          "adapter_build_identity": true,
+          "state_hash_identity": {
+            "U": true,
+            "p": true,
+            "phi": true,
+            "Uf": true,
+            "pointDisplacement": true,
+            "cellDisplacement": true,
+            "mesh_points": true,
+            "old_points": true
+          },
+          "old_time": {
+            "U": {
+              "status": "DERIVED_LAZY_NUMERICALLY_EQUIVALENT",
+              "pass": true,
+              "evidence": "versioned U/Uf Euler non-subcycled contract plus no-CFD lifecycle probe"
+            },
+            "p": {
+              "status": "NOT_APPLICABLE_NO_HISTORY",
+              "pass": true
+            },
+            "phi": {
+              "status": "NOT_APPLICABLE_NO_HISTORY",
+              "pass": true
+            },
+            "Uf": {
+              "status": "DERIVED_LAZY_NUMERICALLY_EQUIVALENT",
+              "pass": true,
+              "evidence": "versioned U/Uf Euler non-subcycled contract plus no-CFD lifecycle probe"
+            },
+            "pointDisplacement": {
+              "status": "NOT_APPLICABLE_NO_HISTORY",
+              "pass": true
+            },
+            "cellDisplacement": {
+              "status": "NOT_APPLICABLE_NO_HISTORY",
+              "pass": true
+            }
+          },
+          "meshPhi": {
+            "status": "NOT_APPLICABLE_ABSENT_AT_BOTH_BOUNDARIES",
+            "pass": true
+          },
+          "field_history_identity": true,
+          "mesh_identity": true,
+          "pass": true
+        },
+        {
+          "generation": 2,
+          "checkpoint_event_sequence": 12,
+          "restore_event_sequence": 22,
+          "checkpoint_adapter_window_id": 1,
+          "restore_adapter_window_id": 2,
+          "physical_time": {
+            "checkpoint": 0.10500000000000001,
+            "restore": 0.10500000000000001
+          },
+          "time_index": {
+            "checkpoint": 1,
+            "restore": 1
+          },
+          "time_identity": true,
+          "adapter_build_identity": true,
+          "state_hash_identity": {
+            "U": true,
+            "p": true,
+            "phi": true,
+            "Uf": true,
+            "pointDisplacement": true,
+            "cellDisplacement": true,
+            "mesh_points": true,
+            "old_points": true
+          },
+          "old_time": {
+            "U": {
+              "status": "PERSISTENT_HISTORY_NOT_OBSERVABLE",
+              "pass": false
+            },
+            "p": {
+              "status": "NOT_APPLICABLE_NO_HISTORY",
+              "pass": true
+            },
+            "phi": {
+              "status": "NOT_APPLICABLE_NO_HISTORY",
+              "pass": true
+            },
+            "Uf": {
+              "status": "PERSISTENT_HISTORY_NOT_OBSERVABLE",
+              "pass": false
+            },
+            "pointDisplacement": {
+              "status": "NOT_APPLICABLE_NO_HISTORY",
+              "pass": true
+            },
+            "cellDisplacement": {
+              "status": "NOT_APPLICABLE_NO_HISTORY",
+              "pass": true
+            }
+          },
+          "meshPhi": {
+            "status": "UNSUPPORTED_MESHPHI_LIFECYCLE",
+            "pass": false
+          },
+          "field_history_identity": false,
+          "mesh_identity": true,
+          "pass": false
+        },
+        {
+          "generation": 2,
+          "checkpoint_event_sequence": 12,
+          "restore_event_sequence": 28,
+          "checkpoint_adapter_window_id": 1,
+          "restore_adapter_window_id": 2,
+          "physical_time": {
+            "checkpoint": 0.10500000000000001,
+            "restore": 0.10500000000000001
+          },
+          "time_index": {
+            "checkpoint": 1,
+            "restore": 1
+          },
+          "time_identity": true,
+          "adapter_build_identity": true,
+          "state_hash_identity": {
+            "U": true,
+            "p": true,
+            "phi": true,
+            "Uf": true,
+            "pointDisplacement": true,
+            "cellDisplacement": true,
+            "mesh_points": true,
+            "old_points": true
+          },
+          "old_time": {
+            "U": {
+              "status": "PERSISTENT_HISTORY_NOT_OBSERVABLE",
+              "pass": false
+            },
+            "p": {
+              "status": "NOT_APPLICABLE_NO_HISTORY",
+              "pass": true
+            },
+            "phi": {
+              "status": "NOT_APPLICABLE_NO_HISTORY",
+              "pass": true
+            },
+            "Uf": {
+              "status": "PERSISTENT_HISTORY_NOT_OBSERVABLE",
+              "pass": false
+            },
+            "pointDisplacement": {
+              "status": "NOT_APPLICABLE_NO_HISTORY",
+              "pass": true
+            },
+            "cellDisplacement": {
+              "status": "NOT_APPLICABLE_NO_HISTORY",
+              "pass": true
+            }
+          },
+          "meshPhi": {
+            "status": "UNSUPPORTED_MESHPHI_LIFECYCLE",
+            "pass": false
+          },
+          "field_history_identity": false,
+          "mesh_identity": true,
+          "pass": false
+        },
+        {
+          "generation": 3,
+          "checkpoint_event_sequence": 30,
+          "restore_event_sequence": 40,
+          "checkpoint_adapter_window_id": 2,
+          "restore_adapter_window_id": 3,
+          "physical_time": {
+            "checkpoint": 0.11000000000000001,
+            "restore": 0.11000000000000001
+          },
+          "time_index": {
+            "checkpoint": 2,
+            "restore": 2
+          },
+          "time_identity": true,
+          "adapter_build_identity": true,
+          "state_hash_identity": {
+            "U": true,
+            "p": true,
+            "phi": true,
+            "Uf": true,
+            "pointDisplacement": true,
+            "cellDisplacement": true,
+            "mesh_points": true,
+            "old_points": true
+          },
+          "old_time": {
+            "U": {
+              "status": "PERSISTENT_HISTORY_NOT_OBSERVABLE",
+              "pass": false
+            },
+            "p": {
+              "status": "NOT_APPLICABLE_NO_HISTORY",
+              "pass": true
+            },
+            "phi": {
+              "status": "NOT_APPLICABLE_NO_HISTORY",
+              "pass": true
+            },
+            "Uf": {
+              "status": "PERSISTENT_HISTORY_NOT_OBSERVABLE",
+              "pass": false
+            },
+            "pointDisplacement": {
+              "status": "NOT_APPLICABLE_NO_HISTORY",
+              "pass": true
+            },
+            "cellDisplacement": {
+              "status": "NOT_APPLICABLE_NO_HISTORY",
+              "pass": true
+            }
+          },
+          "meshPhi": {
+            "status": "UNSUPPORTED_MESHPHI_LIFECYCLE",
+            "pass": false
+          },
+          "field_history_identity": false,
+          "mesh_identity": true,
+          "pass": false
+        },
+        {
+          "generation": 3,
+          "checkpoint_event_sequence": 30,
+          "restore_event_sequence": 46,
+          "checkpoint_adapter_window_id": 2,
+          "restore_adapter_window_id": 3,
+          "physical_time": {
+            "checkpoint": 0.11000000000000001,
+            "restore": 0.11000000000000001
+          },
+          "time_index": {
+            "checkpoint": 2,
+            "restore": 2
+          },
+          "time_identity": true,
+          "adapter_build_identity": true,
+          "state_hash_identity": {
+            "U": true,
+            "p": true,
+            "phi": true,
+            "Uf": true,
+            "pointDisplacement": true,
+            "cellDisplacement": true,
+            "mesh_points": true,
+            "old_points": true
+          },
+          "old_time": {
+            "U": {
+              "status": "PERSISTENT_HISTORY_NOT_OBSERVABLE",
+              "pass": false
+            },
+            "p": {
+              "status": "NOT_APPLICABLE_NO_HISTORY",
+              "pass": true
+            },
+            "phi": {
+              "status": "NOT_APPLICABLE_NO_HISTORY",
+              "pass": true
+            },
+            "Uf": {
+              "status": "PERSISTENT_HISTORY_NOT_OBSERVABLE",
+              "pass": false
+            },
+            "pointDisplacement": {
+              "status": "NOT_APPLICABLE_NO_HISTORY",
+              "pass": true
+            },
+            "cellDisplacement": {
+              "status": "NOT_APPLICABLE_NO_HISTORY",
+              "pass": true
+            }
+          },
+          "meshPhi": {
+            "status": "UNSUPPORTED_MESHPHI_LIFECYCLE",
+            "pass": false
+          },
+          "field_history_identity": false,
+          "mesh_identity": true,
+          "pass": false
+        },
+        {
+          "generation": 4,
+          "checkpoint_event_sequence": 48,
+          "restore_event_sequence": 58,
+          "checkpoint_adapter_window_id": 3,
+          "restore_adapter_window_id": 4,
+          "physical_time": {
+            "checkpoint": 0.11500000000000002,
+            "restore": 0.11500000000000002
+          },
+          "time_index": {
+            "checkpoint": 3,
+            "restore": 3
+          },
+          "time_identity": true,
+          "adapter_build_identity": true,
+          "state_hash_identity": {
+            "U": true,
+            "p": true,
+            "phi": true,
+            "Uf": true,
+            "pointDisplacement": true,
+            "cellDisplacement": true,
+            "mesh_points": true,
+            "old_points": true
+          },
+          "old_time": {
+            "U": {
+              "status": "PERSISTENT_HISTORY_NOT_OBSERVABLE",
+              "pass": false
+            },
+            "p": {
+              "status": "NOT_APPLICABLE_NO_HISTORY",
+              "pass": true
+            },
+            "phi": {
+              "status": "NOT_APPLICABLE_NO_HISTORY",
+              "pass": true
+            },
+            "Uf": {
+              "status": "PERSISTENT_HISTORY_NOT_OBSERVABLE",
+              "pass": false
+            },
+            "pointDisplacement": {
+              "status": "NOT_APPLICABLE_NO_HISTORY",
+              "pass": true
+            },
+            "cellDisplacement": {
+              "status": "NOT_APPLICABLE_NO_HISTORY",
+              "pass": true
+            }
+          },
+          "meshPhi": {
+            "status": "UNSUPPORTED_MESHPHI_LIFECYCLE",
+            "pass": false
+          },
+          "field_history_identity": false,
+          "mesh_identity": true,
+          "pass": false
+        },
+        {
+          "generation": 4,
+          "checkpoint_event_sequence": 48,
+          "restore_event_sequence": 64,
+          "checkpoint_adapter_window_id": 3,
+          "restore_adapter_window_id": 4,
+          "physical_time": {
+            "checkpoint": 0.11500000000000002,
+            "restore": 0.11500000000000002
+          },
+          "time_index": {
+            "checkpoint": 3,
+            "restore": 3
+          },
+          "time_identity": true,
+          "adapter_build_identity": true,
+          "state_hash_identity": {
+            "U": true,
+            "p": true,
+            "phi": true,
+            "Uf": true,
+            "pointDisplacement": true,
+            "cellDisplacement": true,
+            "mesh_points": true,
+            "old_points": true
+          },
+          "old_time": {
+            "U": {
+              "status": "PERSISTENT_HISTORY_NOT_OBSERVABLE",
+              "pass": false
+            },
+            "p": {
+              "status": "NOT_APPLICABLE_NO_HISTORY",
+              "pass": true
+            },
+            "phi": {
+              "status": "NOT_APPLICABLE_NO_HISTORY",
+              "pass": true
+            },
+            "Uf": {
+              "status": "PERSISTENT_HISTORY_NOT_OBSERVABLE",
+              "pass": false
+            },
+            "pointDisplacement": {
+              "status": "NOT_APPLICABLE_NO_HISTORY",
+              "pass": true
+            },
+            "cellDisplacement": {
+              "status": "NOT_APPLICABLE_NO_HISTORY",
+              "pass": true
+            }
+          },
+          "meshPhi": {
+            "status": "UNSUPPORTED_MESHPHI_LIFECYCLE",
+            "pass": false
+          },
+          "field_history_identity": false,
+          "mesh_identity": true,
+          "pass": false
+        },
+        {
+          "generation": 5,
+          "checkpoint_event_sequence": 66,
+          "restore_event_sequence": 76,
+          "checkpoint_adapter_window_id": 4,
+          "restore_adapter_window_id": 5,
+          "physical_time": {
+            "checkpoint": 0.12000000000000002,
+            "restore": 0.12000000000000002
+          },
+          "time_index": {
+            "checkpoint": 4,
+            "restore": 4
+          },
+          "time_identity": true,
+          "adapter_build_identity": true,
+          "state_hash_identity": {
+            "U": true,
+            "p": true,
+            "phi": true,
+            "Uf": true,
+            "pointDisplacement": true,
+            "cellDisplacement": true,
+            "mesh_points": true,
+            "old_points": true
+          },
+          "old_time": {
+            "U": {
+              "status": "PERSISTENT_HISTORY_NOT_OBSERVABLE",
+              "pass": false
+            },
+            "p": {
+              "status": "NOT_APPLICABLE_NO_HISTORY",
+              "pass": true
+            },
+            "phi": {
+              "status": "NOT_APPLICABLE_NO_HISTORY",
+              "pass": true
+            },
+            "Uf": {
+              "status": "PERSISTENT_HISTORY_NOT_OBSERVABLE",
+              "pass": false
+            },
+            "pointDisplacement": {
+              "status": "NOT_APPLICABLE_NO_HISTORY",
+              "pass": true
+            },
+            "cellDisplacement": {
+              "status": "NOT_APPLICABLE_NO_HISTORY",
+              "pass": true
+            }
+          },
+          "meshPhi": {
+            "status": "UNSUPPORTED_MESHPHI_LIFECYCLE",
+            "pass": false
+          },
+          "field_history_identity": false,
+          "mesh_identity": true,
+          "pass": false
+        },
+        {
+          "generation": 5,
+          "checkpoint_event_sequence": 66,
+          "restore_event_sequence": 82,
+          "checkpoint_adapter_window_id": 4,
+          "restore_adapter_window_id": 5,
+          "physical_time": {
+            "checkpoint": 0.12000000000000002,
+            "restore": 0.12000000000000002
+          },
+          "time_index": {
+            "checkpoint": 4,
+            "restore": 4
+          },
+          "time_identity": true,
+          "adapter_build_identity": true,
+          "state_hash_identity": {
+            "U": true,
+            "p": true,
+            "phi": true,
+            "Uf": true,
+            "pointDisplacement": true,
+            "cellDisplacement": true,
+            "mesh_points": true,
+            "old_points": true
+          },
+          "old_time": {
+            "U": {
+              "status": "PERSISTENT_HISTORY_NOT_OBSERVABLE",
+              "pass": false
+            },
+            "p": {
+              "status": "NOT_APPLICABLE_NO_HISTORY",
+              "pass": true
+            },
+            "phi": {
+              "status": "NOT_APPLICABLE_NO_HISTORY",
+              "pass": true
+            },
+            "Uf": {
+              "status": "PERSISTENT_HISTORY_NOT_OBSERVABLE",
+              "pass": false
+            },
+            "pointDisplacement": {
+              "status": "NOT_APPLICABLE_NO_HISTORY",
+              "pass": true
+            },
+            "cellDisplacement": {
+              "status": "NOT_APPLICABLE_NO_HISTORY",
+              "pass": true
+            }
+          },
+          "meshPhi": {
+            "status": "UNSUPPORTED_MESHPHI_LIFECYCLE",
+            "pass": false
+          },
+          "field_history_identity": false,
+          "mesh_identity": true,
+          "pass": false
+        },
+        {
+          "generation": 6,
+          "checkpoint_event_sequence": 84,
+          "restore_event_sequence": 94,
+          "checkpoint_adapter_window_id": 5,
+          "restore_adapter_window_id": 6,
+          "physical_time": {
+            "checkpoint": 0.12500000000000003,
+            "restore": 0.12500000000000003
+          },
+          "time_index": {
+            "checkpoint": 5,
+            "restore": 5
+          },
+          "time_identity": true,
+          "adapter_build_identity": true,
+          "state_hash_identity": {
+            "U": true,
+            "p": true,
+            "phi": true,
+            "Uf": true,
+            "pointDisplacement": true,
+            "cellDisplacement": true,
+            "mesh_points": true,
+            "old_points": true
+          },
+          "old_time": {
+            "U": {
+              "status": "PERSISTENT_HISTORY_NOT_OBSERVABLE",
+              "pass": false
+            },
+            "p": {
+              "status": "NOT_APPLICABLE_NO_HISTORY",
+              "pass": true
+            },
+            "phi": {
+              "status": "NOT_APPLICABLE_NO_HISTORY",
+              "pass": true
+            },
+            "Uf": {
+              "status": "PERSISTENT_HISTORY_NOT_OBSERVABLE",
+              "pass": false
+            },
+            "pointDisplacement": {
+              "status": "NOT_APPLICABLE_NO_HISTORY",
+              "pass": true
+            },
+            "cellDisplacement": {
+              "status": "NOT_APPLICABLE_NO_HISTORY",
+              "pass": true
+            }
+          },
+          "meshPhi": {
+            "status": "UNSUPPORTED_MESHPHI_LIFECYCLE",
+            "pass": false
+          },
+          "field_history_identity": false,
+          "mesh_identity": true,
+          "pass": false
+        },
+        {
+          "generation": 6,
+          "checkpoint_event_sequence": 84,
+          "restore_event_sequence": 100,
+          "checkpoint_adapter_window_id": 5,
+          "restore_adapter_window_id": 6,
+          "physical_time": {
+            "checkpoint": 0.12500000000000003,
+            "restore": 0.12500000000000003
+          },
+          "time_index": {
+            "checkpoint": 5,
+            "restore": 5
+          },
+          "time_identity": true,
+          "adapter_build_identity": true,
+          "state_hash_identity": {
+            "U": true,
+            "p": true,
+            "phi": true,
+            "Uf": true,
+            "pointDisplacement": true,
+            "cellDisplacement": true,
+            "mesh_points": true,
+            "old_points": true
+          },
+          "old_time": {
+            "U": {
+              "status": "PERSISTENT_HISTORY_NOT_OBSERVABLE",
+              "pass": false
+            },
+            "p": {
+              "status": "NOT_APPLICABLE_NO_HISTORY",
+              "pass": true
+            },
+            "phi": {
+              "status": "NOT_APPLICABLE_NO_HISTORY",
+              "pass": true
+            },
+            "Uf": {
+              "status": "PERSISTENT_HISTORY_NOT_OBSERVABLE",
+              "pass": false
+            },
+            "pointDisplacement": {
+              "status": "NOT_APPLICABLE_NO_HISTORY",
+              "pass": true
+            },
+            "cellDisplacement": {
+              "status": "NOT_APPLICABLE_NO_HISTORY",
+              "pass": true
+            }
+          },
+          "meshPhi": {
+            "status": "UNSUPPORTED_MESHPHI_LIFECYCLE",
+            "pass": false
+          },
+          "field_history_identity": false,
+          "mesh_identity": true,
+          "pass": false
+        },
+        {
+          "generation": 7,
+          "checkpoint_event_sequence": 102,
+          "restore_event_sequence": 112,
+          "checkpoint_adapter_window_id": 6,
+          "restore_adapter_window_id": 7,
+          "physical_time": {
+            "checkpoint": 0.13000000000000003,
+            "restore": 0.13000000000000003
+          },
+          "time_index": {
+            "checkpoint": 6,
+            "restore": 6
+          },
+          "time_identity": true,
+          "adapter_build_identity": true,
+          "state_hash_identity": {
+            "U": true,
+            "p": true,
+            "phi": true,
+            "Uf": true,
+            "pointDisplacement": true,
+            "cellDisplacement": true,
+            "mesh_points": true,
+            "old_points": true
+          },
+          "old_time": {
+            "U": {
+              "status": "PERSISTENT_HISTORY_NOT_OBSERVABLE",
+              "pass": false
+            },
+            "p": {
+              "status": "NOT_APPLICABLE_NO_HISTORY",
+              "pass": true
+            },
+            "phi": {
+              "status": "NOT_APPLICABLE_NO_HISTORY",
+              "pass": true
+            },
+            "Uf": {
+              "status": "PERSISTENT_HISTORY_NOT_OBSERVABLE",
+              "pass": false
+            },
+            "pointDisplacement": {
+              "status": "NOT_APPLICABLE_NO_HISTORY",
+              "pass": true
+            },
+            "cellDisplacement": {
+              "status": "NOT_APPLICABLE_NO_HISTORY",
+              "pass": true
+            }
+          },
+          "meshPhi": {
+            "status": "UNSUPPORTED_MESHPHI_LIFECYCLE",
+            "pass": false
+          },
+          "field_history_identity": false,
+          "mesh_identity": true,
+          "pass": false
+        },
+        {
+          "generation": 7,
+          "checkpoint_event_sequence": 102,
+          "restore_event_sequence": 118,
+          "checkpoint_adapter_window_id": 6,
+          "restore_adapter_window_id": 7,
+          "physical_time": {
+            "checkpoint": 0.13000000000000003,
+            "restore": 0.13000000000000003
+          },
+          "time_index": {
+            "checkpoint": 6,
+            "restore": 6
+          },
+          "time_identity": true,
+          "adapter_build_identity": true,
+          "state_hash_identity": {
+            "U": true,
+            "p": true,
+            "phi": true,
+            "Uf": true,
+            "pointDisplacement": true,
+            "cellDisplacement": true,
+            "mesh_points": true,
+            "old_points": true
+          },
+          "old_time": {
+            "U": {
+              "status": "PERSISTENT_HISTORY_NOT_OBSERVABLE",
+              "pass": false
+            },
+            "p": {
+              "status": "NOT_APPLICABLE_NO_HISTORY",
+              "pass": true
+            },
+            "phi": {
+              "status": "NOT_APPLICABLE_NO_HISTORY",
+              "pass": true
+            },
+            "Uf": {
+              "status": "PERSISTENT_HISTORY_NOT_OBSERVABLE",
+              "pass": false
+            },
+            "pointDisplacement": {
+              "status": "NOT_APPLICABLE_NO_HISTORY",
+              "pass": true
+            },
+            "cellDisplacement": {
+              "status": "NOT_APPLICABLE_NO_HISTORY",
+              "pass": true
+            }
+          },
+          "meshPhi": {
+            "status": "UNSUPPORTED_MESHPHI_LIFECYCLE",
+            "pass": false
+          },
+          "field_history_identity": false,
+          "mesh_identity": true,
+          "pass": false
+        },
+        {
+          "generation": 8,
+          "checkpoint_event_sequence": 120,
+          "restore_event_sequence": 130,
+          "checkpoint_adapter_window_id": 7,
+          "restore_adapter_window_id": 8,
+          "physical_time": {
+            "checkpoint": 0.13500000000000004,
+            "restore": 0.13500000000000004
+          },
+          "time_index": {
+            "checkpoint": 7,
+            "restore": 7
+          },
+          "time_identity": true,
+          "adapter_build_identity": true,
+          "state_hash_identity": {
+            "U": true,
+            "p": true,
+            "phi": true,
+            "Uf": true,
+            "pointDisplacement": true,
+            "cellDisplacement": true,
+            "mesh_points": true,
+            "old_points": true
+          },
+          "old_time": {
+            "U": {
+              "status": "PERSISTENT_HISTORY_NOT_OBSERVABLE",
+              "pass": false
+            },
+            "p": {
+              "status": "NOT_APPLICABLE_NO_HISTORY",
+              "pass": true
+            },
+            "phi": {
+              "status": "NOT_APPLICABLE_NO_HISTORY",
+              "pass": true
+            },
+            "Uf": {
+              "status": "PERSISTENT_HISTORY_NOT_OBSERVABLE",
+              "pass": false
+            },
+            "pointDisplacement": {
+              "status": "NOT_APPLICABLE_NO_HISTORY",
+              "pass": true
+            },
+            "cellDisplacement": {
+              "status": "NOT_APPLICABLE_NO_HISTORY",
+              "pass": true
+            }
+          },
+          "meshPhi": {
+            "status": "UNSUPPORTED_MESHPHI_LIFECYCLE",
+            "pass": false
+          },
+          "field_history_identity": false,
+          "mesh_identity": true,
+          "pass": false
+        },
+        {
+          "generation": 8,
+          "checkpoint_event_sequence": 120,
+          "restore_event_sequence": 136,
+          "checkpoint_adapter_window_id": 7,
+          "restore_adapter_window_id": 8,
+          "physical_time": {
+            "checkpoint": 0.13500000000000004,
+            "restore": 0.13500000000000004
+          },
+          "time_index": {
+            "checkpoint": 7,
+            "restore": 7
+          },
+          "time_identity": true,
+          "adapter_build_identity": true,
+          "state_hash_identity": {
+            "U": true,
+            "p": true,
+            "phi": true,
+            "Uf": true,
+            "pointDisplacement": true,
+            "cellDisplacement": true,
+            "mesh_points": true,
+            "old_points": true
+          },
+          "old_time": {
+            "U": {
+              "status": "PERSISTENT_HISTORY_NOT_OBSERVABLE",
+              "pass": false
+            },
+            "p": {
+              "status": "NOT_APPLICABLE_NO_HISTORY",
+              "pass": true
+            },
+            "phi": {
+              "status": "NOT_APPLICABLE_NO_HISTORY",
+              "pass": true
+            },
+            "Uf": {
+              "status": "PERSISTENT_HISTORY_NOT_OBSERVABLE",
+              "pass": false
+            },
+            "pointDisplacement": {
+              "status": "NOT_APPLICABLE_NO_HISTORY",
+              "pass": true
+            },
+            "cellDisplacement": {
+              "status": "NOT_APPLICABLE_NO_HISTORY",
+              "pass": true
+            }
+          },
+          "meshPhi": {
+            "status": "UNSUPPORTED_MESHPHI_LIFECYCLE",
+            "pass": false
+          },
+          "field_history_identity": false,
+          "mesh_identity": true,
+          "pass": false
+        },
+        {
+          "generation": 9,
+          "checkpoint_event_sequence": 138,
+          "restore_event_sequence": 148,
+          "checkpoint_adapter_window_id": 8,
+          "restore_adapter_window_id": 9,
+          "physical_time": {
+            "checkpoint": 0.14000000000000004,
+            "restore": 0.14000000000000004
+          },
+          "time_index": {
+            "checkpoint": 8,
+            "restore": 8
+          },
+          "time_identity": true,
+          "adapter_build_identity": true,
+          "state_hash_identity": {
+            "U": true,
+            "p": true,
+            "phi": true,
+            "Uf": true,
+            "pointDisplacement": true,
+            "cellDisplacement": true,
+            "mesh_points": true,
+            "old_points": true
+          },
+          "old_time": {
+            "U": {
+              "status": "PERSISTENT_HISTORY_NOT_OBSERVABLE",
+              "pass": false
+            },
+            "p": {
+              "status": "NOT_APPLICABLE_NO_HISTORY",
+              "pass": true
+            },
+            "phi": {
+              "status": "NOT_APPLICABLE_NO_HISTORY",
+              "pass": true
+            },
+            "Uf": {
+              "status": "PERSISTENT_HISTORY_NOT_OBSERVABLE",
+              "pass": false
+            },
+            "pointDisplacement": {
+              "status": "NOT_APPLICABLE_NO_HISTORY",
+              "pass": true
+            },
+            "cellDisplacement": {
+              "status": "NOT_APPLICABLE_NO_HISTORY",
+              "pass": true
+            }
+          },
+          "meshPhi": {
+            "status": "UNSUPPORTED_MESHPHI_LIFECYCLE",
+            "pass": false
+          },
+          "field_history_identity": false,
+          "mesh_identity": true,
+          "pass": false
+        },
+        {
+          "generation": 9,
+          "checkpoint_event_sequence": 138,
+          "restore_event_sequence": 154,
+          "checkpoint_adapter_window_id": 8,
+          "restore_adapter_window_id": 9,
+          "physical_time": {
+            "checkpoint": 0.14000000000000004,
+            "restore": 0.14000000000000004
+          },
+          "time_index": {
+            "checkpoint": 8,
+            "restore": 8
+          },
+          "time_identity": true,
+          "adapter_build_identity": true,
+          "state_hash_identity": {
+            "U": true,
+            "p": true,
+            "phi": true,
+            "Uf": true,
+            "pointDisplacement": true,
+            "cellDisplacement": true,
+            "mesh_points": true,
+            "old_points": true
+          },
+          "old_time": {
+            "U": {
+              "status": "PERSISTENT_HISTORY_NOT_OBSERVABLE",
+              "pass": false
+            },
+            "p": {
+              "status": "NOT_APPLICABLE_NO_HISTORY",
+              "pass": true
+            },
+            "phi": {
+              "status": "NOT_APPLICABLE_NO_HISTORY",
+              "pass": true
+            },
+            "Uf": {
+              "status": "PERSISTENT_HISTORY_NOT_OBSERVABLE",
+              "pass": false
+            },
+            "pointDisplacement": {
+              "status": "NOT_APPLICABLE_NO_HISTORY",
+              "pass": true
+            },
+            "cellDisplacement": {
+              "status": "NOT_APPLICABLE_NO_HISTORY",
+              "pass": true
+            }
+          },
+          "meshPhi": {
+            "status": "UNSUPPORTED_MESHPHI_LIFECYCLE",
+            "pass": false
+          },
+          "field_history_identity": false,
+          "mesh_identity": true,
+          "pass": false
+        },
+        {
+          "generation": 10,
+          "checkpoint_event_sequence": 156,
+          "restore_event_sequence": 166,
+          "checkpoint_adapter_window_id": 9,
+          "restore_adapter_window_id": 10,
+          "physical_time": {
+            "checkpoint": 0.14500000000000005,
+            "restore": 0.14500000000000005
+          },
+          "time_index": {
+            "checkpoint": 9,
+            "restore": 9
+          },
+          "time_identity": true,
+          "adapter_build_identity": true,
+          "state_hash_identity": {
+            "U": true,
+            "p": true,
+            "phi": true,
+            "Uf": true,
+            "pointDisplacement": true,
+            "cellDisplacement": true,
+            "mesh_points": true,
+            "old_points": true
+          },
+          "old_time": {
+            "U": {
+              "status": "PERSISTENT_HISTORY_NOT_OBSERVABLE",
+              "pass": false
+            },
+            "p": {
+              "status": "NOT_APPLICABLE_NO_HISTORY",
+              "pass": true
+            },
+            "phi": {
+              "status": "NOT_APPLICABLE_NO_HISTORY",
+              "pass": true
+            },
+            "Uf": {
+              "status": "PERSISTENT_HISTORY_NOT_OBSERVABLE",
+              "pass": false
+            },
+            "pointDisplacement": {
+              "status": "NOT_APPLICABLE_NO_HISTORY",
+              "pass": true
+            },
+            "cellDisplacement": {
+              "status": "NOT_APPLICABLE_NO_HISTORY",
+              "pass": true
+            }
+          },
+          "meshPhi": {
+            "status": "UNSUPPORTED_MESHPHI_LIFECYCLE",
+            "pass": false
+          },
+          "field_history_identity": false,
+          "mesh_identity": true,
+          "pass": false
+        },
+        {
+          "generation": 10,
+          "checkpoint_event_sequence": 156,
+          "restore_event_sequence": 172,
+          "checkpoint_adapter_window_id": 9,
+          "restore_adapter_window_id": 10,
+          "physical_time": {
+            "checkpoint": 0.14500000000000005,
+            "restore": 0.14500000000000005
+          },
+          "time_index": {
+            "checkpoint": 9,
+            "restore": 9
+          },
+          "time_identity": true,
+          "adapter_build_identity": true,
+          "state_hash_identity": {
+            "U": true,
+            "p": true,
+            "phi": true,
+            "Uf": true,
+            "pointDisplacement": true,
+            "cellDisplacement": true,
+            "mesh_points": true,
+            "old_points": true
+          },
+          "old_time": {
+            "U": {
+              "status": "PERSISTENT_HISTORY_NOT_OBSERVABLE",
+              "pass": false
+            },
+            "p": {
+              "status": "NOT_APPLICABLE_NO_HISTORY",
+              "pass": true
+            },
+            "phi": {
+              "status": "NOT_APPLICABLE_NO_HISTORY",
+              "pass": true
+            },
+            "Uf": {
+              "status": "PERSISTENT_HISTORY_NOT_OBSERVABLE",
+              "pass": false
+            },
+            "pointDisplacement": {
+              "status": "NOT_APPLICABLE_NO_HISTORY",
+              "pass": true
+            },
+            "cellDisplacement": {
+              "status": "NOT_APPLICABLE_NO_HISTORY",
+              "pass": true
+            }
+          },
+          "meshPhi": {
+            "status": "UNSUPPORTED_MESHPHI_LIFECYCLE",
+            "pass": false
+          },
+          "field_history_identity": false,
+          "mesh_identity": true,
+          "pass": false
+        }
+      ],
+      "errors": [
+        "checkpoint generation 2 does not restore identically",
+        "checkpoint generation 2 does not restore identically",
+        "checkpoint generation 3 does not restore identically",
+        "checkpoint generation 3 does not restore identically",
+        "checkpoint generation 4 does not restore identically",
+        "checkpoint generation 4 does not restore identically",
+        "checkpoint generation 5 does not restore identically",
+        "checkpoint generation 5 does not restore identically",
+        "checkpoint generation 6 does not restore identically",
+        "checkpoint generation 6 does not restore identically",
+        "checkpoint generation 7 does not restore identically",
+        "checkpoint generation 7 does not restore identically",
+        "checkpoint generation 8 does not restore identically",
+        "checkpoint generation 8 does not restore identically",
+        "checkpoint generation 9 does not restore identically",
+        "checkpoint generation 9 does not restore identically",
+        "checkpoint generation 10 does not restore identically",
+        "checkpoint generation 10 does not restore identically"
+      ],
+      "generation_contract": "latest chronologically preceding CHECKPOINT_WRITE; exact physical time/timeIndex and required state identity"
+    }
+  },
+  "fluid_log_force_and_Co_observations": {
+    "0": [
+      {
+        "mean_Co": 0.03019056182,
+        "max_Co": 0.350303474526,
+        "pressure_Fx_N": 631.472995517,
+        "viscous_Fx_N": 718.725340208,
+        "total_Fx_N": 1350.198335725,
+        "of_time_s": 0.105
+      },
+      {
+        "mean_Co": 0.03019056182,
+        "max_Co": 0.350303474526,
+        "pressure_Fx_N": 631.472995517,
+        "viscous_Fx_N": 718.725340208,
+        "total_Fx_N": 1350.198335725,
+        "of_time_s": 0.105
+      },
+      {
+        "mean_Co": 0.0301902268283,
+        "max_Co": 0.35010195544,
+        "pressure_Fx_N": 542.616707016,
+        "viscous_Fx_N": 705.587217378,
+        "total_Fx_N": 1248.2039243939998,
+        "of_time_s": 0.11
+      },
+      {
+        "mean_Co": 0.0301902268283,
+        "max_Co": 0.35010195544,
+        "pressure_Fx_N": 542.616707016,
+        "viscous_Fx_N": 705.587217378,
+        "total_Fx_N": 1248.2039243939998,
+        "of_time_s": 0.11
+      },
+      {
+        "mean_Co": 0.0301902268283,
+        "max_Co": 0.35010195544,
+        "pressure_Fx_N": 542.616707016,
+        "viscous_Fx_N": 705.587217378,
+        "total_Fx_N": 1248.2039243939998,
+        "of_time_s": 0.11
+      },
+      {
+        "mean_Co": 0.0297341784542,
+        "max_Co": 0.344624226656,
+        "pressure_Fx_N": -1653.37197213,
+        "viscous_Fx_N": 663.711703835,
+        "total_Fx_N": -989.6602682949999,
+        "of_time_s": 0.115
+      },
+      {
+        "mean_Co": 0.0297341784542,
+        "max_Co": 0.344624226656,
+        "pressure_Fx_N": -1653.37197213,
+        "viscous_Fx_N": 663.711703835,
+        "total_Fx_N": -989.6602682949999,
+        "of_time_s": 0.115
+      },
+      {
+        "mean_Co": 0.0297341784542,
+        "max_Co": 0.344624226656,
+        "pressure_Fx_N": -1653.37197213,
+        "viscous_Fx_N": 663.711703835,
+        "total_Fx_N": -989.6602682949999,
+        "of_time_s": 0.115
+      },
+      {
+        "mean_Co": 0.0304561147982,
+        "max_Co": 0.352231102762,
+        "pressure_Fx_N": 4070.92096749,
+        "viscous_Fx_N": 691.927173836,
+        "total_Fx_N": 4762.848141326,
+        "of_time_s": 0.12
+      },
+      {
+        "mean_Co": 0.0304561147982,
+        "max_Co": 0.352231102762,
+        "pressure_Fx_N": 4070.92096749,
+        "viscous_Fx_N": 691.927173836,
+        "total_Fx_N": 4762.848141326,
+        "of_time_s": 0.12
+      },
+      {
+        "mean_Co": 0.0304561147982,
+        "max_Co": 0.352231102762,
+        "pressure_Fx_N": 4070.92096749,
+        "viscous_Fx_N": 691.927173836,
+        "total_Fx_N": 4762.848141326,
+        "of_time_s": 0.12
+      },
+      {
+        "mean_Co": 0.0283966975026,
+        "max_Co": 0.328767051056,
+        "pressure_Fx_N": -9457.50565803,
+        "viscous_Fx_N": 559.494895554,
+        "total_Fx_N": -8898.010762476,
+        "of_time_s": 0.125
+      },
+      {
+        "mean_Co": 0.0283966975026,
+        "max_Co": 0.328767051056,
+        "pressure_Fx_N": -9457.50565803,
+        "viscous_Fx_N": 559.494895554,
+        "total_Fx_N": -8898.010762476,
+        "of_time_s": 0.125
+      },
+      {
+        "mean_Co": 0.0283966975026,
+        "max_Co": 0.328767051056,
+        "pressure_Fx_N": -9457.50565803,
+        "viscous_Fx_N": 559.494895554,
+        "total_Fx_N": -8898.010762476,
+        "of_time_s": 0.125
+      },
+      {
+        "mean_Co": 0.0330575821294,
+        "max_Co": 0.380092976653,
+        "pressure_Fx_N": 23215.7396807,
+        "viscous_Fx_N": 818.7080431,
+        "total_Fx_N": 24034.4477238,
+        "of_time_s": 0.13
+      },
+      {
+        "mean_Co": 0.0330575821294,
+        "max_Co": 0.380092976653,
+        "pressure_Fx_N": 23215.7396807,
+        "viscous_Fx_N": 818.7080431,
+        "total_Fx_N": 24034.4477238,
+        "of_time_s": 0.13
+      },
+      {
+        "mean_Co": 0.0330575821294,
+        "max_Co": 0.380092976653,
+        "pressure_Fx_N": 23215.7396807,
+        "viscous_Fx_N": 818.7080431,
+        "total_Fx_N": 24034.4477238,
+        "of_time_s": 0.13
+      },
+      {
+        "mean_Co": 0.0215952098056,
+        "max_Co": 0.251183280606,
+        "pressure_Fx_N": -55034.5028492,
+        "viscous_Fx_N": 136.170806177,
+        "total_Fx_N": -54898.332043023,
+        "of_time_s": 0.135
+      },
+      {
+        "mean_Co": 0.0215952098056,
+        "max_Co": 0.251183280606,
+        "pressure_Fx_N": -55034.5028492,
+        "viscous_Fx_N": 136.170806177,
+        "total_Fx_N": -54898.332043023,
+        "of_time_s": 0.135
+      },
+      {
+        "mean_Co": 0.0215952098056,
+        "max_Co": 0.251183280606,
+        "pressure_Fx_N": -55034.5028492,
+        "viscous_Fx_N": 136.170806177,
+        "total_Fx_N": -54898.332043023,
+        "of_time_s": 0.135
+      },
+      {
+        "mean_Co": 0.0488643355058,
+        "max_Co": 0.550542526877,
+        "pressure_Fx_N": 133743.934725,
+        "viscous_Fx_N": 1694.95644115,
+        "total_Fx_N": 135438.89116615,
+        "of_time_s": 0.14
+      },
+      {
+        "mean_Co": 0.0488643355058,
+        "max_Co": 0.550542526877,
+        "pressure_Fx_N": 133743.934725,
+        "viscous_Fx_N": 1694.95644115,
+        "total_Fx_N": 135438.89116615,
+        "of_time_s": 0.14
+      },
+      {
+        "mean_Co": 0.0488643355058,
+        "max_Co": 0.550542526877,
+        "pressure_Fx_N": 133743.934725,
+        "viscous_Fx_N": 1694.95644115,
+        "total_Fx_N": 135438.89116615,
+        "of_time_s": 0.14
+      },
+      {
+        "mean_Co": 0.0176038912877,
+        "max_Co": 0.286151641817,
+        "pressure_Fx_N": -319756.808155,
+        "viscous_Fx_N": -2107.35659604,
+        "total_Fx_N": -321864.16475104,
+        "of_time_s": 0.145
+      },
+      {
+        "mean_Co": 0.0176038912877,
+        "max_Co": 0.286151641817,
+        "pressure_Fx_N": -319756.808155,
+        "viscous_Fx_N": -2107.35659604,
+        "total_Fx_N": -321864.16475104,
+        "of_time_s": 0.145
+      },
+      {
+        "mean_Co": 0.0176038912877,
+        "max_Co": 0.286151641817,
+        "pressure_Fx_N": -319756.808155,
+        "viscous_Fx_N": -2107.35659604,
+        "total_Fx_N": -321864.16475104,
+        "of_time_s": 0.145
+      },
+      {
+        "mean_Co": 0.141146883835,
+        "max_Co": 1.46356946867,
+        "pressure_Fx_N": 799832.989278,
+        "viscous_Fx_N": 6480.34910576,
+        "total_Fx_N": 806313.33838376,
+        "of_time_s": 0.15
+      },
+      {
+        "mean_Co": 0.141146883835,
+        "max_Co": 1.46356946867,
+        "pressure_Fx_N": 799832.989278,
+        "viscous_Fx_N": 6480.34910576,
+        "total_Fx_N": 806313.33838376,
+        "of_time_s": 0.15
+      },
+      {
+        "mean_Co": 0.141146883835,
+        "max_Co": 1.46356946867,
+        "pressure_Fx_N": 799832.989278,
+        "viscous_Fx_N": 6480.34910576,
+        "total_Fx_N": 806313.33838376,
+        "of_time_s": 0.15
+      }
+    ],
+    "1": [
+      {
+        "mean_Co": 0.03019056182,
+        "max_Co": 0.350303474526,
+        "pressure_Fx_N": 631.472995517,
+        "viscous_Fx_N": 718.725340208,
+        "total_Fx_N": 1350.198335725,
+        "of_time_s": 0.105
+      },
+      {
+        "mean_Co": 0.03019056182,
+        "max_Co": 0.350303474526,
+        "pressure_Fx_N": 631.472995517,
+        "viscous_Fx_N": 718.725340208,
+        "total_Fx_N": 1350.198335725,
+        "of_time_s": 0.105
+      },
+      {
+        "mean_Co": 0.0301902268283,
+        "max_Co": 0.35010195544,
+        "pressure_Fx_N": 542.616707016,
+        "viscous_Fx_N": 705.587217378,
+        "total_Fx_N": 1248.2039243939998,
+        "of_time_s": 0.11
+      },
+      {
+        "mean_Co": 0.0301902268283,
+        "max_Co": 0.35010195544,
+        "pressure_Fx_N": 542.616707016,
+        "viscous_Fx_N": 705.587217378,
+        "total_Fx_N": 1248.2039243939998,
+        "of_time_s": 0.11
+      },
+      {
+        "mean_Co": 0.0301902268283,
+        "max_Co": 0.35010195544,
+        "pressure_Fx_N": 542.616707016,
+        "viscous_Fx_N": 705.587217378,
+        "total_Fx_N": 1248.2039243939998,
+        "of_time_s": 0.11
+      },
+      {
+        "mean_Co": 0.0297442831319,
+        "max_Co": 0.344745863658,
+        "pressure_Fx_N": -1621.06019796,
+        "viscous_Fx_N": 664.299591233,
+        "total_Fx_N": -956.7606067270001,
+        "of_time_s": 0.115
+      },
+      {
+        "mean_Co": 0.0297442831319,
+        "max_Co": 0.344745863658,
+        "pressure_Fx_N": -1621.06019796,
+        "viscous_Fx_N": 664.299591233,
+        "total_Fx_N": -956.7606067270001,
+        "of_time_s": 0.115
+      },
+      {
+        "mean_Co": 0.0297442831319,
+        "max_Co": 0.344745863658,
+        "pressure_Fx_N": -1621.06019796,
+        "viscous_Fx_N": 664.299591233,
+        "total_Fx_N": -956.7606067270001,
+        "of_time_s": 0.115
+      },
+      {
+        "mean_Co": 0.0303982136889,
+        "max_Co": 0.351589142646,
+        "pressure_Fx_N": 3736.15826938,
+        "viscous_Fx_N": 688.583702326,
+        "total_Fx_N": 4424.741971706,
+        "of_time_s": 0.12
+      },
+      {
+        "mean_Co": 0.0303982136889,
+        "max_Co": 0.351589142646,
+        "pressure_Fx_N": 3736.15826938,
+        "viscous_Fx_N": 688.583702326,
+        "total_Fx_N": 4424.741971706,
+        "of_time_s": 0.12
+      },
+      {
+        "mean_Co": 0.0303982136889,
+        "max_Co": 0.351589142646,
+        "pressure_Fx_N": 3736.15826938,
+        "viscous_Fx_N": 688.583702326,
+        "total_Fx_N": 4424.741971706,
+        "of_time_s": 0.12
+      },
+      {
+        "mean_Co": 0.0285637407162,
+        "max_Co": 0.330644542981,
+        "pressure_Fx_N": -8359.89895847,
+        "viscous_Fx_N": 569.270530315,
+        "total_Fx_N": -7790.628428155,
+        "of_time_s": 0.125
+      },
+      {
+        "mean_Co": 0.0285637407162,
+        "max_Co": 0.330644542981,
+        "pressure_Fx_N": -8359.89895847,
+        "viscous_Fx_N": 569.270530315,
+        "total_Fx_N": -7790.628428155,
+        "of_time_s": 0.125
+      },
+      {
+        "mean_Co": 0.0285637407162,
+        "max_Co": 0.330644542981,
+        "pressure_Fx_N": -8359.89895847,
+        "viscous_Fx_N": 569.270530315,
+        "total_Fx_N": -7790.628428155,
+        "of_time_s": 0.125
+      },
+      {
+        "mean_Co": 0.0324975087464,
+        "max_Co": 0.373872846416,
+        "pressure_Fx_N": 19657.9874355,
+        "viscous_Fx_N": 786.506011834,
+        "total_Fx_N": 20444.493447334,
+        "of_time_s": 0.13
+      },
+      {
+        "mean_Co": 0.0324975087464,
+        "max_Co": 0.373872846416,
+        "pressure_Fx_N": 19657.9874355,
+        "viscous_Fx_N": 786.506011834,
+        "total_Fx_N": 20444.493447334,
+        "of_time_s": 0.13
+      },
+      {
+        "mean_Co": 0.0324975087464,
+        "max_Co": 0.373872846416,
+        "pressure_Fx_N": 19657.9874355,
+        "viscous_Fx_N": 786.506011834,
+        "total_Fx_N": 20444.493447334,
+        "of_time_s": 0.13
+      },
+      {
+        "mean_Co": 0.0231800985524,
+        "max_Co": 0.269124618754,
+        "pressure_Fx_N": -44628.5221731,
+        "viscous_Fx_N": 230.718363659,
+        "total_Fx_N": -44397.803809441,
+        "of_time_s": 0.135
+      },
+      {
+        "mean_Co": 0.0231800985524,
+        "max_Co": 0.269124618754,
+        "pressure_Fx_N": -44628.5221731,
+        "viscous_Fx_N": 230.718363659,
+        "total_Fx_N": -44397.803809441,
+        "of_time_s": 0.135
+      },
+      {
+        "mean_Co": 0.0231800985524,
+        "max_Co": 0.269124618754,
+        "pressure_Fx_N": -44628.5221731,
+        "viscous_Fx_N": 230.718363659,
+        "total_Fx_N": -44397.803809441,
+        "of_time_s": 0.135
+      },
+      {
+        "mean_Co": 0.0443827359031,
+        "max_Co": 0.502313796358,
+        "pressure_Fx_N": 103886.385661,
+        "viscous_Fx_N": 1443.28586833,
+        "total_Fx_N": 105329.67152933,
+        "of_time_s": 0.14
+      },
+      {
+        "mean_Co": 0.0443827359031,
+        "max_Co": 0.502313796358,
+        "pressure_Fx_N": 103886.385661,
+        "viscous_Fx_N": 1443.28586833,
+        "total_Fx_N": 105329.67152933,
+        "of_time_s": 0.14
+      },
+      {
+        "mean_Co": 0.0443827359031,
+        "max_Co": 0.502313796358,
+        "pressure_Fx_N": 103886.385661,
+        "viscous_Fx_N": 1443.28586833,
+        "total_Fx_N": 105329.67152933,
+        "of_time_s": 0.14
+      },
+      {
+        "mean_Co": 0.00538561620697,
+        "max_Co": 0.161050205183,
+        "pressure_Fx_N": -236866.380036,
+        "viscous_Fx_N": -1421.30989596,
+        "total_Fx_N": -238287.68993196,
+        "of_time_s": 0.145
+      },
+      {
+        "mean_Co": 0.00538561620697,
+        "max_Co": 0.161050205183,
+        "pressure_Fx_N": -236866.380036,
+        "viscous_Fx_N": -1421.30989596,
+        "total_Fx_N": -238287.68993196,
+        "of_time_s": 0.145
+      },
+      {
+        "mean_Co": 0.00538561620697,
+        "max_Co": 0.161050205183,
+        "pressure_Fx_N": -236866.380036,
+        "viscous_Fx_N": -1421.30989596,
+        "total_Fx_N": -238287.68993196,
+        "of_time_s": 0.145
+      },
+      {
+        "mean_Co": 0.107771123661,
+        "max_Co": 1.14257187046,
+        "pressure_Fx_N": 561268.670199,
+        "viscous_Fx_N": 4829.80713357,
+        "total_Fx_N": 566098.47733257,
+        "of_time_s": 0.15
+      },
+      {
+        "mean_Co": 0.107771123661,
+        "max_Co": 1.14257187046,
+        "pressure_Fx_N": 561268.670199,
+        "viscous_Fx_N": 4829.80713357,
+        "total_Fx_N": 566098.47733257,
+        "of_time_s": 0.15
+      },
+      {
+        "mean_Co": 0.107771123661,
+        "max_Co": 1.14257187046,
+        "pressure_Fx_N": 561268.670199,
+        "viscous_Fx_N": 4829.80713357,
+        "total_Fx_N": 566098.47733257,
+        "of_time_s": 0.15
+      }
+    ],
+    "2": [
+      {
+        "mean_Co": 0.03019056182,
+        "max_Co": 0.350303474526,
+        "pressure_Fx_N": 631.472995517,
+        "viscous_Fx_N": 718.725340208,
+        "total_Fx_N": 1350.198335725,
+        "of_time_s": 0.105
+      },
+      {
+        "mean_Co": 0.03019056182,
+        "max_Co": 0.350303474526,
+        "pressure_Fx_N": 631.472995517,
+        "viscous_Fx_N": 718.725340208,
+        "total_Fx_N": 1350.198335725,
+        "of_time_s": 0.105
+      },
+      {
+        "mean_Co": 0.0301902268283,
+        "max_Co": 0.35010195544,
+        "pressure_Fx_N": 542.616707016,
+        "viscous_Fx_N": 705.587217378,
+        "total_Fx_N": 1248.2039243939998,
+        "of_time_s": 0.11
+      },
+      {
+        "mean_Co": 0.0301902268283,
+        "max_Co": 0.35010195544,
+        "pressure_Fx_N": 542.616707016,
+        "viscous_Fx_N": 705.587217378,
+        "total_Fx_N": 1248.2039243939998,
+        "of_time_s": 0.11
+      },
+      {
+        "mean_Co": 0.0301902268283,
+        "max_Co": 0.35010195544,
+        "pressure_Fx_N": 542.616707016,
+        "viscous_Fx_N": 705.587217378,
+        "total_Fx_N": 1248.2039243939998,
+        "of_time_s": 0.11
+      },
+      {
+        "mean_Co": 0.0297342727787,
+        "max_Co": 0.344625291207,
+        "pressure_Fx_N": -1652.90304876,
+        "viscous_Fx_N": 663.717117522,
+        "total_Fx_N": -989.1859312380001,
+        "of_time_s": 0.115
+      },
+      {
+        "mean_Co": 0.0297342727787,
+        "max_Co": 0.344625291207,
+        "pressure_Fx_N": -1652.90304876,
+        "viscous_Fx_N": 663.717117522,
+        "total_Fx_N": -989.1859312380001,
+        "of_time_s": 0.115
+      },
+      {
+        "mean_Co": 0.0297342727787,
+        "max_Co": 0.344625291207,
+        "pressure_Fx_N": -1652.90304876,
+        "viscous_Fx_N": 663.717117522,
+        "total_Fx_N": -989.1859312380001,
+        "of_time_s": 0.115
+      },
+      {
+        "mean_Co": 0.0304565226394,
+        "max_Co": 0.352235735829,
+        "pressure_Fx_N": 4072.49629175,
+        "viscous_Fx_N": 691.950231659,
+        "total_Fx_N": 4764.446523409,
+        "of_time_s": 0.12
+      },
+      {
+        "mean_Co": 0.0304565226394,
+        "max_Co": 0.352235735829,
+        "pressure_Fx_N": 4072.49629175,
+        "viscous_Fx_N": 691.950231659,
+        "total_Fx_N": 4764.446523409,
+        "of_time_s": 0.12
+      },
+      {
+        "mean_Co": 0.0304565226394,
+        "max_Co": 0.352235735829,
+        "pressure_Fx_N": 4072.49629175,
+        "viscous_Fx_N": 691.950231659,
+        "total_Fx_N": 4764.446523409,
+        "of_time_s": 0.12
+      },
+      {
+        "mean_Co": 0.0283973083702,
+        "max_Co": 0.328774096909,
+        "pressure_Fx_N": -9456.42772734,
+        "viscous_Fx_N": 559.52825902,
+        "total_Fx_N": -8896.89946832,
+        "of_time_s": 0.125
+      },
+      {
+        "mean_Co": 0.0283973083702,
+        "max_Co": 0.328774096909,
+        "pressure_Fx_N": -9456.42772734,
+        "viscous_Fx_N": 559.52825902,
+        "total_Fx_N": -8896.89946832,
+        "of_time_s": 0.125
+      },
+      {
+        "mean_Co": 0.0283973083702,
+        "max_Co": 0.328774096909,
+        "pressure_Fx_N": -9456.42772734,
+        "viscous_Fx_N": 559.52825902,
+        "total_Fx_N": -8896.89946832,
+        "of_time_s": 0.125
+      },
+      {
+        "mean_Co": 0.0330594679218,
+        "max_Co": 0.380114402198,
+        "pressure_Fx_N": 23222.1400422,
+        "viscous_Fx_N": 818.811144319,
+        "total_Fx_N": 24040.951186519,
+        "of_time_s": 0.13
+      },
+      {
+        "mean_Co": 0.0330594679218,
+        "max_Co": 0.380114402198,
+        "pressure_Fx_N": 23222.1400422,
+        "viscous_Fx_N": 818.811144319,
+        "total_Fx_N": 24040.951186519,
+        "of_time_s": 0.13
+      },
+      {
+        "mean_Co": 0.0330594679218,
+        "max_Co": 0.380114402198,
+        "pressure_Fx_N": 23222.1400422,
+        "viscous_Fx_N": 818.811144319,
+        "total_Fx_N": 24040.951186519,
+        "of_time_s": 0.13
+      },
+      {
+        "mean_Co": 0.0215955587847,
+        "max_Co": 0.251187762967,
+        "pressure_Fx_N": -55041.753978,
+        "viscous_Fx_N": 136.178611829,
+        "total_Fx_N": -54905.575366171004,
+        "of_time_s": 0.135
+      },
+      {
+        "mean_Co": 0.0215955587847,
+        "max_Co": 0.251187762967,
+        "pressure_Fx_N": -55041.753978,
+        "viscous_Fx_N": 136.178611829,
+        "total_Fx_N": -54905.575366171004,
+        "of_time_s": 0.135
+      },
+      {
+        "mean_Co": 0.0215955587847,
+        "max_Co": 0.251187762967,
+        "pressure_Fx_N": -55041.753978,
+        "viscous_Fx_N": 136.178611829,
+        "total_Fx_N": -54905.575366171004,
+        "of_time_s": 0.135
+      },
+      {
+        "mean_Co": 0.0488722764763,
+        "max_Co": 0.550629473447,
+        "pressure_Fx_N": 133781.833457,
+        "viscous_Fx_N": 1695.38449641,
+        "total_Fx_N": 135477.21795341,
+        "of_time_s": 0.14
+      },
+      {
+        "mean_Co": 0.0488722764763,
+        "max_Co": 0.550629473447,
+        "pressure_Fx_N": 133781.833457,
+        "viscous_Fx_N": 1695.38449641,
+        "total_Fx_N": 135477.21795341,
+        "of_time_s": 0.14
+      },
+      {
+        "mean_Co": 0.0488722764763,
+        "max_Co": 0.550629473447,
+        "pressure_Fx_N": 133781.833457,
+        "viscous_Fx_N": 1695.38449641,
+        "total_Fx_N": 135477.21795341,
+        "of_time_s": 0.14
+      },
+      {
+        "mean_Co": 0.0176141653236,
+        "max_Co": 0.286256085748,
+        "pressure_Fx_N": -319846.853199,
+        "viscous_Fx_N": -2107.95634967,
+        "total_Fx_N": -321954.80954867,
+        "of_time_s": 0.145
+      },
+      {
+        "mean_Co": 0.0176141653236,
+        "max_Co": 0.286256085748,
+        "pressure_Fx_N": -319846.853199,
+        "viscous_Fx_N": -2107.95634967,
+        "total_Fx_N": -321954.80954867,
+        "of_time_s": 0.145
+      },
+      {
+        "mean_Co": 0.0176141653236,
+        "max_Co": 0.286256085748,
+        "pressure_Fx_N": -319846.853199,
+        "viscous_Fx_N": -2107.95634967,
+        "total_Fx_N": -321954.80954867,
+        "of_time_s": 0.145
+      },
+      {
+        "mean_Co": 0.141191951021,
+        "max_Co": 1.46400134025,
+        "pressure_Fx_N": 800127.096728,
+        "viscous_Fx_N": 6482.49685676,
+        "total_Fx_N": 806609.59358476,
+        "of_time_s": 0.15
+      },
+      {
+        "mean_Co": 0.141191951021,
+        "max_Co": 1.46400134025,
+        "pressure_Fx_N": 800127.096728,
+        "viscous_Fx_N": 6482.49685676,
+        "total_Fx_N": 806609.59358476,
+        "of_time_s": 0.15
+      },
+      {
+        "mean_Co": 0.141191951021,
+        "max_Co": 1.46400134025,
+        "pressure_Fx_N": 800127.096728,
+        "viscous_Fx_N": 6482.49685676,
+        "total_Fx_N": 806609.59358476,
+        "of_time_s": 0.15
+      }
+    ]
+  },
+  "audit_limits": [
+    "no inference that OpenFOAM log force and mapped preCICE force are identical without a same-event identity",
+    "persistent oldTime lacking value fingerprints remains not observable",
+    "a fluid FINAL_COMMIT is not a Structure physical checkpoint commit"
+  ]
+}
