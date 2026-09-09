@@ -1,0 +1,982 @@
+{
+  "schema_version": "cfd-current-fixed-zero-bridge-analysis-v1",
+  "run": "D:\\\u7814\u4e8c\u6587\u4ef6\\\u5f00\u9898\u51c6\u5907\\CFD_ANCF_VIV\\runtime\\cfd_current_fixed_zero_bridge_v1_run_002",
+  "target_times_s": [
+    0.105,
+    0.11,
+    0.115,
+    0.12,
+    0.125,
+    0.13,
+    0.135,
+    0.14,
+    0.145,
+    0.15
+  ],
+  "per_time": [
+    {
+      "time_s": 0.105,
+      "pointDisplacement": {
+        "fixed_exists": false,
+        "zero_exists": true,
+        "fixed_sha256": null,
+        "zero_sha256": "cc0ece052830fdd20131dfa96fcf2106d97f9b9f23129dd19802958283c15d02",
+        "numeric_count_fixed": 0,
+        "numeric_count_zero": 12,
+        "max_abs_value_zero": 0.0,
+        "max_abs_difference": null,
+        "l2_difference": null
+      },
+      "cellDisplacement": {
+        "fixed_exists": false,
+        "zero_exists": true,
+        "fixed_sha256": null,
+        "zero_sha256": "1355c73b4d9aa076ad72396e071e7526b7919d0f41e58f1873edd07363a76da7",
+        "numeric_count_fixed": 0,
+        "numeric_count_zero": 6,
+        "max_abs_value_zero": 0.0,
+        "max_abs_difference": null,
+        "l2_difference": null
+      },
+      "meshPhi": {
+        "fixed_exists": false,
+        "zero_exists": true,
+        "fixed_sha256": null,
+        "zero_sha256": "47ce1a6c6a412dcb95df81436b9c97a6e0a037c76402800cb044c6de1f7daf11",
+        "numeric_count_fixed": 0,
+        "numeric_count_zero": 8,
+        "max_abs_value_zero": 0.0,
+        "max_abs_difference": null,
+        "l2_difference": null
+      },
+      "phi": {
+        "fixed_exists": true,
+        "zero_exists": true,
+        "fixed_sha256": "e1d1d75a84c4c07351147da0fd1bd5a6beac068ded3bb5ff383230bbf3c26e88",
+        "zero_sha256": "68c37f183a6637d2b1657fd7cbc7c6ef10e3406e0e32062b4a82a93632870cd5",
+        "numeric_count_fixed": 24354,
+        "numeric_count_zero": 24354,
+        "max_abs_value_zero": 24226.0,
+        "max_abs_difference": 0.000531824344199,
+        "l2_difference": 0.002320683413891404
+      },
+      "p": {
+        "fixed_exists": true,
+        "zero_exists": true,
+        "fixed_sha256": "f59e1321ddc676afdbb9b4b73523d3bdd9f042d47966e1a3f94f4122c78bd853",
+        "zero_sha256": "dd9c69f4f44eeb5864f7ac12d95231ea7b835ed19f7459aa1802c4b2ffb35b04",
+        "numeric_count_fixed": 16246,
+        "numeric_count_zero": 16246,
+        "max_abs_value_zero": 16244.0,
+        "max_abs_difference": 0.2877803429829999,
+        "l2_difference": 1.9603375710438926
+      },
+      "U": {
+        "fixed_exists": true,
+        "zero_exists": true,
+        "fixed_sha256": "cb2e1c3676dde48a242b14bee0b158a46b8a9e5753177d905a613f95fb67b067",
+        "zero_sha256": "c16b52c21390aa47b53de493a1c09008d255c06d931bd4675a37333a4b9cc2e5",
+        "numeric_count_fixed": 48920,
+        "numeric_count_zero": 48920,
+        "max_abs_value_zero": 16244.0,
+        "max_abs_difference": 0.02249636675900002,
+        "l2_difference": 0.08754551679129707
+      },
+      "Uf": {
+        "fixed_exists": false,
+        "zero_exists": true,
+        "fixed_sha256": null,
+        "zero_sha256": "8c9a1bb962ad5bb37483ff59f7777b00e845f9f5e56d42ad80284f693f34bdb0",
+        "numeric_count_fixed": 0,
+        "numeric_count_zero": 73230,
+        "max_abs_value_zero": 24226.0,
+        "max_abs_difference": null,
+        "l2_difference": null
+      },
+      "fixed_points_sha256": "fbdbb5f484af3b11e025dbeba34ac41459cb3cf08bf5544c561e16a77149012f",
+      "zero_points_sha256": "fbdbb5f484af3b11e025dbeba34ac41459cb3cf08bf5544c561e16a77149012f"
+    },
+    {
+      "time_s": 0.11,
+      "pointDisplacement": {
+        "fixed_exists": false,
+        "zero_exists": true,
+        "fixed_sha256": null,
+        "zero_sha256": "324c603b63023e87d612ae0c53d0b2bddae988712aa15a7df1bbeb98a5b794d3",
+        "numeric_count_fixed": 0,
+        "numeric_count_zero": 12,
+        "max_abs_value_zero": 0.0,
+        "max_abs_difference": null,
+        "l2_difference": null
+      },
+      "cellDisplacement": {
+        "fixed_exists": false,
+        "zero_exists": true,
+        "fixed_sha256": null,
+        "zero_sha256": "21bb8ba41e9d6edb5ad753f4e4c77d53142f6f08f20656451d97f8084be010c7",
+        "numeric_count_fixed": 0,
+        "numeric_count_zero": 6,
+        "max_abs_value_zero": 0.0,
+        "max_abs_difference": null,
+        "l2_difference": null
+      },
+      "meshPhi": {
+        "fixed_exists": false,
+        "zero_exists": true,
+        "fixed_sha256": null,
+        "zero_sha256": "939be369088392bdef1d2fd0c1ffd28d2f9febbc78298572cf61cce8db623fc9",
+        "numeric_count_fixed": 0,
+        "numeric_count_zero": 8,
+        "max_abs_value_zero": 0.0,
+        "max_abs_difference": null,
+        "l2_difference": null
+      },
+      "phi": {
+        "fixed_exists": true,
+        "zero_exists": true,
+        "fixed_sha256": "6100d201903d9966fda30ef1d0c3db1112f5a3ef02052058289ec6e72f9b2696",
+        "zero_sha256": "e4a111a22fd08f4985989f7625c4a8814ce03e627fed5c199ef7b5bdec8a0d2c",
+        "numeric_count_fixed": 24354,
+        "numeric_count_zero": 24354,
+        "max_abs_value_zero": 24226.0,
+        "max_abs_difference": 0.00029374787019000005,
+        "l2_difference": 0.002012086789469612
+      },
+      "p": {
+        "fixed_exists": true,
+        "zero_exists": true,
+        "fixed_sha256": "9bec3349217af9b50998aef1e26775d99e955a542b80a40a74d2d7c454603ac6",
+        "zero_sha256": "f7b12b02765cb820e1f75f39378f4632f2770ce5399ff7e5d3ddb90d26f8fed2",
+        "numeric_count_fixed": 16246,
+        "numeric_count_zero": 16246,
+        "max_abs_value_zero": 16244.0,
+        "max_abs_difference": 0.028222657952000074,
+        "l2_difference": 0.3534574293069017
+      },
+      "U": {
+        "fixed_exists": true,
+        "zero_exists": true,
+        "fixed_sha256": "da2095628e1da4f3064b7753212ecc2ce581bc94af24aaa1bbb6ff1875ec2f51",
+        "zero_sha256": "492f93c80fe797e681152a7872c00521893e2894dd44bd6593cacc514415ff06",
+        "numeric_count_fixed": 48920,
+        "numeric_count_zero": 48920,
+        "max_abs_value_zero": 16244.0,
+        "max_abs_difference": 0.017772247466999985,
+        "l2_difference": 0.07129380542170614
+      },
+      "Uf": {
+        "fixed_exists": false,
+        "zero_exists": true,
+        "fixed_sha256": null,
+        "zero_sha256": "02b01b6d6aa133b66fd909274b7a3e71925324ad2dd2bda8818816135e1ce12c",
+        "numeric_count_fixed": 0,
+        "numeric_count_zero": 73230,
+        "max_abs_value_zero": 24226.0,
+        "max_abs_difference": null,
+        "l2_difference": null
+      },
+      "fixed_points_sha256": "fbdbb5f484af3b11e025dbeba34ac41459cb3cf08bf5544c561e16a77149012f",
+      "zero_points_sha256": "fbdbb5f484af3b11e025dbeba34ac41459cb3cf08bf5544c561e16a77149012f"
+    },
+    {
+      "time_s": 0.115,
+      "pointDisplacement": {
+        "fixed_exists": false,
+        "zero_exists": true,
+        "fixed_sha256": null,
+        "zero_sha256": "cb287196bcd11411be6314b6659c5fa5bb2e57a03b4b924ad064dba9973a17dc",
+        "numeric_count_fixed": 0,
+        "numeric_count_zero": 12,
+        "max_abs_value_zero": 0.0,
+        "max_abs_difference": null,
+        "l2_difference": null
+      },
+      "cellDisplacement": {
+        "fixed_exists": false,
+        "zero_exists": true,
+        "fixed_sha256": null,
+        "zero_sha256": "9cf832594e280c033223d974aac5a07a8f5af7811adcc9e7cd63780ea9770f0d",
+        "numeric_count_fixed": 0,
+        "numeric_count_zero": 6,
+        "max_abs_value_zero": 0.0,
+        "max_abs_difference": null,
+        "l2_difference": null
+      },
+      "meshPhi": {
+        "fixed_exists": false,
+        "zero_exists": true,
+        "fixed_sha256": null,
+        "zero_sha256": "8efdafdf16d2518da6f50961c3bd697c395cc2f9d9087f40598bd1196b3382f8",
+        "numeric_count_fixed": 0,
+        "numeric_count_zero": 8,
+        "max_abs_value_zero": 0.0,
+        "max_abs_difference": null,
+        "l2_difference": null
+      },
+      "phi": {
+        "fixed_exists": true,
+        "zero_exists": true,
+        "fixed_sha256": "5b0370e6c9fb5c358d4a108a202a1a7aafeaf041180d8d23ed8af0d062b070ba",
+        "zero_sha256": "cb666c0a9272ff7f92a4b841a0bbcfb6ef97cd900750fc0ac03eeffaa1cb4bc5",
+        "numeric_count_fixed": 24354,
+        "numeric_count_zero": 24354,
+        "max_abs_value_zero": 24226.0,
+        "max_abs_difference": 0.0002769811031999997,
+        "l2_difference": 0.00184752266649395
+      },
+      "p": {
+        "fixed_exists": true,
+        "zero_exists": true,
+        "fixed_sha256": "d1351ad4e563eabac0e189c1b815cd4173050521629f887d24fd785983c4b38c",
+        "zero_sha256": "a5a727bb825c926f6d62f3ac816d88427b58430f949f93972fbf7104f2d52b30",
+        "numeric_count_fixed": 16246,
+        "numeric_count_zero": 16246,
+        "max_abs_value_zero": 16244.0,
+        "max_abs_difference": 0.013616871810000042,
+        "l2_difference": 0.14072472472217365
+      },
+      "U": {
+        "fixed_exists": true,
+        "zero_exists": true,
+        "fixed_sha256": "6cbf202009a4a589ced5710fa869a44045175fcae0fcb44b36f3da9973d2bef3",
+        "zero_sha256": "dd2af55af3ce69b4ce4a659aa5eb60d1f2215e3591226f4536a9d4c3a61d0410",
+        "numeric_count_fixed": 48920,
+        "numeric_count_zero": 48920,
+        "max_abs_value_zero": 16244.0,
+        "max_abs_difference": 0.013943571255999987,
+        "l2_difference": 0.05926186187046375
+      },
+      "Uf": {
+        "fixed_exists": false,
+        "zero_exists": true,
+        "fixed_sha256": null,
+        "zero_sha256": "887e83a4833908e15df006abcabb51b3948e5b0175f960910c4926012f506a7b",
+        "numeric_count_fixed": 0,
+        "numeric_count_zero": 73230,
+        "max_abs_value_zero": 24226.0,
+        "max_abs_difference": null,
+        "l2_difference": null
+      },
+      "fixed_points_sha256": "fbdbb5f484af3b11e025dbeba34ac41459cb3cf08bf5544c561e16a77149012f",
+      "zero_points_sha256": "fbdbb5f484af3b11e025dbeba34ac41459cb3cf08bf5544c561e16a77149012f"
+    },
+    {
+      "time_s": 0.12,
+      "pointDisplacement": {
+        "fixed_exists": false,
+        "zero_exists": true,
+        "fixed_sha256": null,
+        "zero_sha256": "099b0443f9fc7aa318147065edb5b1c5254630e86a5313053f1988b11902749d",
+        "numeric_count_fixed": 0,
+        "numeric_count_zero": 12,
+        "max_abs_value_zero": 0.0,
+        "max_abs_difference": null,
+        "l2_difference": null
+      },
+      "cellDisplacement": {
+        "fixed_exists": false,
+        "zero_exists": true,
+        "fixed_sha256": null,
+        "zero_sha256": "222b26b2de29300f6f460611e435ebdfcca0dbb06a62c81a198334a7e2e2c7cc",
+        "numeric_count_fixed": 0,
+        "numeric_count_zero": 6,
+        "max_abs_value_zero": 0.0,
+        "max_abs_difference": null,
+        "l2_difference": null
+      },
+      "meshPhi": {
+        "fixed_exists": false,
+        "zero_exists": true,
+        "fixed_sha256": null,
+        "zero_sha256": "c45c8b6ed9b6ad3303594bebda550729af771f6b72acc89eef4c7ea716fc223f",
+        "numeric_count_fixed": 0,
+        "numeric_count_zero": 8,
+        "max_abs_value_zero": 0.0,
+        "max_abs_difference": null,
+        "l2_difference": null
+      },
+      "phi": {
+        "fixed_exists": true,
+        "zero_exists": true,
+        "fixed_sha256": "4eb70110cd7f7d1ae19b5e77c7b7427028d7bb7db71dd768986307a414dc7a70",
+        "zero_sha256": "437b04e8570c08bbb2cca11ff502fe2e97a2c3837d31dcabfc7332f2aa5bb8d0",
+        "numeric_count_fixed": 24354,
+        "numeric_count_zero": 24354,
+        "max_abs_value_zero": 24226.0,
+        "max_abs_difference": 0.00027216994019998997,
+        "l2_difference": 0.0017300753670908932
+      },
+      "p": {
+        "fixed_exists": true,
+        "zero_exists": true,
+        "fixed_sha256": "a5dfc22979da7282287acd7169a5e83f457fe85bec6758ffa9f239801f421337",
+        "zero_sha256": "b5f7e09a94d0d18705f99b6e8bd6d2fea3bca340251241f5c9af6ac02642dc5c",
+        "numeric_count_fixed": 16246,
+        "numeric_count_zero": 16246,
+        "max_abs_value_zero": 16244.0,
+        "max_abs_difference": 0.010940054551,
+        "l2_difference": 0.1209423106125639
+      },
+      "U": {
+        "fixed_exists": true,
+        "zero_exists": true,
+        "fixed_sha256": "afbe5534acec05ea5f2be2873e6b7de4aeb4bc158749aa78e9336395da17ab16",
+        "zero_sha256": "0eea526c6286a8cc33638ca9b95ecfa2b1f66e016ca63ef10bc128466830dd72",
+        "numeric_count_fixed": 48920,
+        "numeric_count_zero": 48920,
+        "max_abs_value_zero": 16244.0,
+        "max_abs_difference": 0.010753604647999987,
+        "l2_difference": 0.05012553581373582
+      },
+      "Uf": {
+        "fixed_exists": false,
+        "zero_exists": true,
+        "fixed_sha256": null,
+        "zero_sha256": "b690f9cddb24a7d8a5b9f793c455fa22088b3a39f2e84ef1c87255b6b48ba382",
+        "numeric_count_fixed": 0,
+        "numeric_count_zero": 73230,
+        "max_abs_value_zero": 24226.0,
+        "max_abs_difference": null,
+        "l2_difference": null
+      },
+      "fixed_points_sha256": "fbdbb5f484af3b11e025dbeba34ac41459cb3cf08bf5544c561e16a77149012f",
+      "zero_points_sha256": "fbdbb5f484af3b11e025dbeba34ac41459cb3cf08bf5544c561e16a77149012f"
+    },
+    {
+      "time_s": 0.125,
+      "pointDisplacement": {
+        "fixed_exists": false,
+        "zero_exists": true,
+        "fixed_sha256": null,
+        "zero_sha256": "52763aa3350f435173d8209ea188eab9aeaeaa02f4f366ce5ce17347aad5da09",
+        "numeric_count_fixed": 0,
+        "numeric_count_zero": 12,
+        "max_abs_value_zero": 0.0,
+        "max_abs_difference": null,
+        "l2_difference": null
+      },
+      "cellDisplacement": {
+        "fixed_exists": false,
+        "zero_exists": true,
+        "fixed_sha256": null,
+        "zero_sha256": "2f89f150df5228333cb5d66f0e34515f49f0cc7a85276e4d877c36bb21bc47ce",
+        "numeric_count_fixed": 0,
+        "numeric_count_zero": 6,
+        "max_abs_value_zero": 0.0,
+        "max_abs_difference": null,
+        "l2_difference": null
+      },
+      "meshPhi": {
+        "fixed_exists": false,
+        "zero_exists": true,
+        "fixed_sha256": null,
+        "zero_sha256": "7cc20b76aeb7da0bd1e610e1e257376971f52c49e087278e5d349d53e8af6984",
+        "numeric_count_fixed": 0,
+        "numeric_count_zero": 8,
+        "max_abs_value_zero": 0.0,
+        "max_abs_difference": null,
+        "l2_difference": null
+      },
+      "phi": {
+        "fixed_exists": true,
+        "zero_exists": true,
+        "fixed_sha256": "8bea56cc64f2d100066486d6e325c0bdec0336f0d17646963da32841f186f5c3",
+        "zero_sha256": "92724ba51341a0a792b377e8d95333c5bec4f56a1263534feb2697f15d61ec0e",
+        "numeric_count_fixed": 24354,
+        "numeric_count_zero": 24354,
+        "max_abs_value_zero": 24226.0,
+        "max_abs_difference": 0.00026730387571999997,
+        "l2_difference": 0.0016306181201097471
+      },
+      "p": {
+        "fixed_exists": true,
+        "zero_exists": true,
+        "fixed_sha256": "28bb20fd802fb7c12498a6d031c0bbc9d5bc2c24e474a9721081aed2af5d7ddd",
+        "zero_sha256": "631531712e223d7ed9d9704cdd47b220d32b3c9114eaed0b4a0fec47cd8b1781",
+        "numeric_count_fixed": 16246,
+        "numeric_count_zero": 16246,
+        "max_abs_value_zero": 16244.0,
+        "max_abs_difference": 0.009509817799000064,
+        "l2_difference": 0.10631756136932108
+      },
+      "U": {
+        "fixed_exists": true,
+        "zero_exists": true,
+        "fixed_sha256": "ce6a1c77ef3ffa16d85be85466ace3a8d5ab272babb606eaecb22ef66b724b6a",
+        "zero_sha256": "7619286166645f3ddbb219609e8bdb5c54151a3dc58bfeca20c5ff6d5a78bd75",
+        "numeric_count_fixed": 48920,
+        "numeric_count_zero": 48920,
+        "max_abs_value_zero": 16244.0,
+        "max_abs_difference": 0.008172416759999995,
+        "l2_difference": 0.04298203611554533
+      },
+      "Uf": {
+        "fixed_exists": false,
+        "zero_exists": true,
+        "fixed_sha256": null,
+        "zero_sha256": "aa82f2ff0417502b0e067752b4819beb44495e275acfc70c45ff2f82a26d3444",
+        "numeric_count_fixed": 0,
+        "numeric_count_zero": 73230,
+        "max_abs_value_zero": 24226.0,
+        "max_abs_difference": null,
+        "l2_difference": null
+      },
+      "fixed_points_sha256": "fbdbb5f484af3b11e025dbeba34ac41459cb3cf08bf5544c561e16a77149012f",
+      "zero_points_sha256": "fbdbb5f484af3b11e025dbeba34ac41459cb3cf08bf5544c561e16a77149012f"
+    },
+    {
+      "time_s": 0.13,
+      "pointDisplacement": {
+        "fixed_exists": false,
+        "zero_exists": true,
+        "fixed_sha256": null,
+        "zero_sha256": "0e56c3609356e215f6a901a9ac5aefeeb84142e61882bb6fdb739cd2f79c6c85",
+        "numeric_count_fixed": 0,
+        "numeric_count_zero": 12,
+        "max_abs_value_zero": 0.0,
+        "max_abs_difference": null,
+        "l2_difference": null
+      },
+      "cellDisplacement": {
+        "fixed_exists": false,
+        "zero_exists": true,
+        "fixed_sha256": null,
+        "zero_sha256": "d458710a906ed0b4721fef61aa374928d5018669adcb8da07383ba190e04961b",
+        "numeric_count_fixed": 0,
+        "numeric_count_zero": 6,
+        "max_abs_value_zero": 0.0,
+        "max_abs_difference": null,
+        "l2_difference": null
+      },
+      "meshPhi": {
+        "fixed_exists": false,
+        "zero_exists": true,
+        "fixed_sha256": null,
+        "zero_sha256": "333affab8a064dbb2a3bb8a1c7b933731df42babcdb4ce318dd236e1dcb717f6",
+        "numeric_count_fixed": 0,
+        "numeric_count_zero": 8,
+        "max_abs_value_zero": 0.0,
+        "max_abs_difference": null,
+        "l2_difference": null
+      },
+      "phi": {
+        "fixed_exists": true,
+        "zero_exists": true,
+        "fixed_sha256": "d396437d46fd72b8a92f7b28b50903dcc2e9d1b75544e37d4155f073951f9479",
+        "zero_sha256": "2d2386e4b46ac859aeb432836cb3766a7e0e8dd4e186a8361c062f305d22ceec",
+        "numeric_count_fixed": 24354,
+        "numeric_count_zero": 24354,
+        "max_abs_value_zero": 24226.0,
+        "max_abs_difference": 0.0002557170254000006,
+        "l2_difference": 0.001541695193535937
+      },
+      "p": {
+        "fixed_exists": true,
+        "zero_exists": true,
+        "fixed_sha256": "30d06c0f0e6845f166bc5a0f47a9478cd5d783852b0be4d20653654ea9583db1",
+        "zero_sha256": "5456a69415fc3eae8f5707461f197f498392f4380b61e5a5bf3168d44bb5ca6d",
+        "numeric_count_fixed": 16246,
+        "numeric_count_zero": 16246,
+        "max_abs_value_zero": 16244.0,
+        "max_abs_difference": 0.008296724882000062,
+        "l2_difference": 0.09318264702023209
+      },
+      "U": {
+        "fixed_exists": true,
+        "zero_exists": true,
+        "fixed_sha256": "5988d400f2a682490a479622e853716ea81d5a043bf9054b53803f6e30329a27",
+        "zero_sha256": "a9f59bbe9d6c5e4400b42bed43f01b1dc945f1706959c8195deba9f6685314e5",
+        "numeric_count_fixed": 48920,
+        "numeric_count_zero": 48920,
+        "max_abs_value_zero": 16244.0,
+        "max_abs_difference": 0.006376740732000008,
+        "l2_difference": 0.03727543709579821
+      },
+      "Uf": {
+        "fixed_exists": false,
+        "zero_exists": true,
+        "fixed_sha256": null,
+        "zero_sha256": "99613194abc0c301c3cf32398aad7eef523b6f888473edb6393c6a27e469439e",
+        "numeric_count_fixed": 0,
+        "numeric_count_zero": 73230,
+        "max_abs_value_zero": 24226.0,
+        "max_abs_difference": null,
+        "l2_difference": null
+      },
+      "fixed_points_sha256": "fbdbb5f484af3b11e025dbeba34ac41459cb3cf08bf5544c561e16a77149012f",
+      "zero_points_sha256": "fbdbb5f484af3b11e025dbeba34ac41459cb3cf08bf5544c561e16a77149012f"
+    },
+    {
+      "time_s": 0.135,
+      "pointDisplacement": {
+        "fixed_exists": false,
+        "zero_exists": true,
+        "fixed_sha256": null,
+        "zero_sha256": "fb9ca023a81873fd4a88ac4de79c59c782fa8b735edbaf1d53e759ce2cee0819",
+        "numeric_count_fixed": 0,
+        "numeric_count_zero": 12,
+        "max_abs_value_zero": 0.0,
+        "max_abs_difference": null,
+        "l2_difference": null
+      },
+      "cellDisplacement": {
+        "fixed_exists": false,
+        "zero_exists": true,
+        "fixed_sha256": null,
+        "zero_sha256": "ef6df4fa342c1296d81fa4e079788298e6f6bd91ec3b471b01cd01b7593a9688",
+        "numeric_count_fixed": 0,
+        "numeric_count_zero": 6,
+        "max_abs_value_zero": 0.0,
+        "max_abs_difference": null,
+        "l2_difference": null
+      },
+      "meshPhi": {
+        "fixed_exists": false,
+        "zero_exists": true,
+        "fixed_sha256": null,
+        "zero_sha256": "4cb6c2bdfaba0b0d3d1970f4d1c31e446d86c8d26724112ffb9b43f400872df1",
+        "numeric_count_fixed": 0,
+        "numeric_count_zero": 8,
+        "max_abs_value_zero": 0.0,
+        "max_abs_difference": null,
+        "l2_difference": null
+      },
+      "phi": {
+        "fixed_exists": true,
+        "zero_exists": true,
+        "fixed_sha256": "f6c233eff7b045668ea1b83c6b108550384d05c035b5b0162cdcc1a70945ca85",
+        "zero_sha256": "13951ce8a8b43016e8dbed8cfce74e68c2d35cb194165ff25f9edb03be6de008",
+        "numeric_count_fixed": 24354,
+        "numeric_count_zero": 24354,
+        "max_abs_value_zero": 24226.0,
+        "max_abs_difference": 0.00023452333870999965,
+        "l2_difference": 0.0014562878875732123
+      },
+      "p": {
+        "fixed_exists": true,
+        "zero_exists": true,
+        "fixed_sha256": "ec828e62eef0e6c1cf7f3e3ee1faf816af3283776021357c96ac67050adba38b",
+        "zero_sha256": "0618e0df00c4b2fce9df2d7104ef3091fab038fa080a9c5f28a776d8f014a471",
+        "numeric_count_fixed": 16246,
+        "numeric_count_zero": 16246,
+        "max_abs_value_zero": 16244.0,
+        "max_abs_difference": 0.007494578962000009,
+        "l2_difference": 0.08265891738977031
+      },
+      "U": {
+        "fixed_exists": true,
+        "zero_exists": true,
+        "fixed_sha256": "d2792c0454e1e1a1f8eb99859de4302b0c0a3d3f0276c2ac3b2363a9f3c0f024",
+        "zero_sha256": "f8ba44c4857cc3fdc3f76bf675e771e37aa93a844fd2d6a259d710b0dc0c364d",
+        "numeric_count_fixed": 48920,
+        "numeric_count_zero": 48920,
+        "max_abs_value_zero": 16244.0,
+        "max_abs_difference": 0.0051507115709999995,
+        "l2_difference": 0.03259178967593927
+      },
+      "Uf": {
+        "fixed_exists": false,
+        "zero_exists": true,
+        "fixed_sha256": null,
+        "zero_sha256": "153a35cf9d195f5ef0defdec6ebbf1a38045d8ec965587cc754652e913c76034",
+        "numeric_count_fixed": 0,
+        "numeric_count_zero": 73230,
+        "max_abs_value_zero": 24226.0,
+        "max_abs_difference": null,
+        "l2_difference": null
+      },
+      "fixed_points_sha256": "fbdbb5f484af3b11e025dbeba34ac41459cb3cf08bf5544c561e16a77149012f",
+      "zero_points_sha256": "fbdbb5f484af3b11e025dbeba34ac41459cb3cf08bf5544c561e16a77149012f"
+    },
+    {
+      "time_s": 0.14,
+      "pointDisplacement": {
+        "fixed_exists": false,
+        "zero_exists": true,
+        "fixed_sha256": null,
+        "zero_sha256": "408780135a545cfe5a70c1b4f904a2b87032ff2ec46e9b52d7f80b713ea31c77",
+        "numeric_count_fixed": 0,
+        "numeric_count_zero": 12,
+        "max_abs_value_zero": 0.0,
+        "max_abs_difference": null,
+        "l2_difference": null
+      },
+      "cellDisplacement": {
+        "fixed_exists": false,
+        "zero_exists": true,
+        "fixed_sha256": null,
+        "zero_sha256": "30772f19eefc2285cec9da38872d314aebe2ac25672ec270005a8acc7beaba36",
+        "numeric_count_fixed": 0,
+        "numeric_count_zero": 6,
+        "max_abs_value_zero": 0.0,
+        "max_abs_difference": null,
+        "l2_difference": null
+      },
+      "meshPhi": {
+        "fixed_exists": false,
+        "zero_exists": true,
+        "fixed_sha256": null,
+        "zero_sha256": "3ee8d12d739464642781d5a4e31ea035b7c712ca36e3b0818af3efa695934242",
+        "numeric_count_fixed": 0,
+        "numeric_count_zero": 8,
+        "max_abs_value_zero": 0.0,
+        "max_abs_difference": null,
+        "l2_difference": null
+      },
+      "phi": {
+        "fixed_exists": true,
+        "zero_exists": true,
+        "fixed_sha256": "0db3535b3ca627e3b712e2cd6d2f94c6e964a6f22e63e668e247044b4bae5f89",
+        "zero_sha256": "754404d773e0296cde492996dd56c1ce8f29f0bb74f95e48fd97532b8c8b03aa",
+        "numeric_count_fixed": 24354,
+        "numeric_count_zero": 24354,
+        "max_abs_value_zero": 24226.0,
+        "max_abs_difference": 0.00021048548870000738,
+        "l2_difference": 0.0013716169807109501
+      },
+      "p": {
+        "fixed_exists": true,
+        "zero_exists": true,
+        "fixed_sha256": "8a08948e70d315003dd51e23a5e014a9f33c0f860e3875e954a537be47df2638",
+        "zero_sha256": "ba8558a5036fab7d27f08ce5f2dfe800afac1e64878c9a409ead342d8a4bf189",
+        "numeric_count_fixed": 16246,
+        "numeric_count_zero": 16246,
+        "max_abs_value_zero": 16244.0,
+        "max_abs_difference": 0.006607652786999929,
+        "l2_difference": 0.07310023807420288
+      },
+      "U": {
+        "fixed_exists": true,
+        "zero_exists": true,
+        "fixed_sha256": "010b97d5dcbd96cf789d32c049b8b36f9ec3c70fb4b915f471d7ea81980f99ef",
+        "zero_sha256": "3b047ec0f22950be071b9edc5122db8f527303e6b0c871ae0ca4688b8aeaa080",
+        "numeric_count_fixed": 48920,
+        "numeric_count_zero": 48920,
+        "max_abs_value_zero": 16244.0,
+        "max_abs_difference": 0.0041666740240000055,
+        "l2_difference": 0.028684077218021665
+      },
+      "Uf": {
+        "fixed_exists": false,
+        "zero_exists": true,
+        "fixed_sha256": null,
+        "zero_sha256": "7ed5ac02a634de495f7afbbd6485b05342f87d213380168529023d3b6e3bc38a",
+        "numeric_count_fixed": 0,
+        "numeric_count_zero": 73230,
+        "max_abs_value_zero": 24226.0,
+        "max_abs_difference": null,
+        "l2_difference": null
+      },
+      "fixed_points_sha256": "fbdbb5f484af3b11e025dbeba34ac41459cb3cf08bf5544c561e16a77149012f",
+      "zero_points_sha256": "fbdbb5f484af3b11e025dbeba34ac41459cb3cf08bf5544c561e16a77149012f"
+    },
+    {
+      "time_s": 0.145,
+      "pointDisplacement": {
+        "fixed_exists": false,
+        "zero_exists": true,
+        "fixed_sha256": null,
+        "zero_sha256": "8ef5389773f23c5623833bc5adeef9ed3cf357779ab0334e9115f91b2192c6ce",
+        "numeric_count_fixed": 0,
+        "numeric_count_zero": 12,
+        "max_abs_value_zero": 0.0,
+        "max_abs_difference": null,
+        "l2_difference": null
+      },
+      "cellDisplacement": {
+        "fixed_exists": false,
+        "zero_exists": true,
+        "fixed_sha256": null,
+        "zero_sha256": "b18ed40818cd0c43c20c77e219cad7e3ab932fe5c4c267e57d8bac778b9ac42c",
+        "numeric_count_fixed": 0,
+        "numeric_count_zero": 6,
+        "max_abs_value_zero": 0.0,
+        "max_abs_difference": null,
+        "l2_difference": null
+      },
+      "meshPhi": {
+        "fixed_exists": false,
+        "zero_exists": true,
+        "fixed_sha256": null,
+        "zero_sha256": "3491a2a991c2f880627a64ca3ca4e76963a87dffa46c6d660280bff2a17b59ab",
+        "numeric_count_fixed": 0,
+        "numeric_count_zero": 8,
+        "max_abs_value_zero": 0.0,
+        "max_abs_difference": null,
+        "l2_difference": null
+      },
+      "phi": {
+        "fixed_exists": true,
+        "zero_exists": true,
+        "fixed_sha256": "f15dc60cbc6915d054a0a9f657108c9a0a4802062aeee28d2b51c371e17dbfce",
+        "zero_sha256": "29119c5e0ecdb935d1b41ad1531bd48d2d8527b85ac8ee2f1687154f03ac9639",
+        "numeric_count_fixed": 24354,
+        "numeric_count_zero": 24354,
+        "max_abs_value_zero": 24226.0,
+        "max_abs_difference": 0.00019033128249999753,
+        "l2_difference": 0.0012947326653014346
+      },
+      "p": {
+        "fixed_exists": true,
+        "zero_exists": true,
+        "fixed_sha256": "52b1b37cf75e56522313282d08fce3a04565db8952cdf6476146e5642dd97dfb",
+        "zero_sha256": "0439a249e591ba318de966c03d0a376cba28a5be4aaf575c69729da3d739caa0",
+        "numeric_count_fixed": 16246,
+        "numeric_count_zero": 16246,
+        "max_abs_value_zero": 16244.0,
+        "max_abs_difference": 0.0058343777779999995,
+        "l2_difference": 0.06433896901497177
+      },
+      "U": {
+        "fixed_exists": true,
+        "zero_exists": true,
+        "fixed_sha256": "9a962782278dd7ad86199c13177bbf346a2e559836bc3c84656561463408f7d2",
+        "zero_sha256": "8a929bc0e31310e225909c0214bdca99ff6711e94ad7deb1b7666f649475bd67",
+        "numeric_count_fixed": 48920,
+        "numeric_count_zero": 48920,
+        "max_abs_value_zero": 16244.0,
+        "max_abs_difference": 0.003376975938999993,
+        "l2_difference": 0.025410308983399393
+      },
+      "Uf": {
+        "fixed_exists": false,
+        "zero_exists": true,
+        "fixed_sha256": null,
+        "zero_sha256": "888ade7ad8b16ba887cf98ee1fd347eece34422a8d01a733852ded1969582a3e",
+        "numeric_count_fixed": 0,
+        "numeric_count_zero": 73230,
+        "max_abs_value_zero": 24226.0,
+        "max_abs_difference": null,
+        "l2_difference": null
+      },
+      "fixed_points_sha256": "fbdbb5f484af3b11e025dbeba34ac41459cb3cf08bf5544c561e16a77149012f",
+      "zero_points_sha256": "fbdbb5f484af3b11e025dbeba34ac41459cb3cf08bf5544c561e16a77149012f"
+    },
+    {
+      "time_s": 0.15,
+      "pointDisplacement": {
+        "fixed_exists": false,
+        "zero_exists": true,
+        "fixed_sha256": null,
+        "zero_sha256": "751933eec0d5a85be6d86b779b5ac416623eaa173e91536a35a9a85865a26cd6",
+        "numeric_count_fixed": 0,
+        "numeric_count_zero": 12,
+        "max_abs_value_zero": 0.0,
+        "max_abs_difference": null,
+        "l2_difference": null
+      },
+      "cellDisplacement": {
+        "fixed_exists": false,
+        "zero_exists": true,
+        "fixed_sha256": null,
+        "zero_sha256": "3b2cc3d6807f5ea8b2647a1d85cb01126adfbed976d5dfb312ce935669ca563b",
+        "numeric_count_fixed": 0,
+        "numeric_count_zero": 6,
+        "max_abs_value_zero": 0.0,
+        "max_abs_difference": null,
+        "l2_difference": null
+      },
+      "meshPhi": {
+        "fixed_exists": false,
+        "zero_exists": true,
+        "fixed_sha256": null,
+        "zero_sha256": "8acaf246a0cf0e19779c67131df05c2317d6f98fbed81e15fae9166c9f954bfc",
+        "numeric_count_fixed": 0,
+        "numeric_count_zero": 8,
+        "max_abs_value_zero": 0.0,
+        "max_abs_difference": null,
+        "l2_difference": null
+      },
+      "phi": {
+        "fixed_exists": true,
+        "zero_exists": true,
+        "fixed_sha256": "6c5dcbcbcca890b2a447d6aa8971fcfba77eb5841fb2b6524c00364fe1e97b5b",
+        "zero_sha256": "a02bac012ec8a4796693dfcd59316954f38285cfad9cc5c3711a41e3520bc7a8",
+        "numeric_count_fixed": 24354,
+        "numeric_count_zero": 24354,
+        "max_abs_value_zero": 24226.0,
+        "max_abs_difference": 0.0001704623880999928,
+        "l2_difference": 0.0012240175625131144
+      },
+      "p": {
+        "fixed_exists": true,
+        "zero_exists": true,
+        "fixed_sha256": "e42b2dd56f1a50a583e81b51198529b698c9319ff33ea12cba7b535c9c687f2d",
+        "zero_sha256": "1991755acd99ed385002522c24b11a1d9de40055e247975482dbea1cb6a54855",
+        "numeric_count_fixed": 16246,
+        "numeric_count_zero": 16246,
+        "max_abs_value_zero": 16244.0,
+        "max_abs_difference": 0.005155336536000088,
+        "l2_difference": 0.055838923989581346
+      },
+      "U": {
+        "fixed_exists": true,
+        "zero_exists": true,
+        "fixed_sha256": "f66af8b90db54f27ab8de9f499ead53de3c719c7d665d83f57627d279a65b95e",
+        "zero_sha256": "619fd2af8c0507c83bbddab2d2cf7fc61e6f5eee9d52eaa97b26baedc904238f",
+        "numeric_count_fixed": 48920,
+        "numeric_count_zero": 48920,
+        "max_abs_value_zero": 16244.0,
+        "max_abs_difference": 0.0029773902369999994,
+        "l2_difference": 0.022619701504025886
+      },
+      "Uf": {
+        "fixed_exists": false,
+        "zero_exists": true,
+        "fixed_sha256": null,
+        "zero_sha256": "0ee8e4676e7f450440c5725530c205f89a24af256a75cab211c7729b4b77cab0",
+        "numeric_count_fixed": 0,
+        "numeric_count_zero": 73230,
+        "max_abs_value_zero": 24226.0,
+        "max_abs_difference": null,
+        "l2_difference": null
+      },
+      "fixed_points_sha256": "fbdbb5f484af3b11e025dbeba34ac41459cb3cf08bf5544c561e16a77149012f",
+      "zero_points_sha256": "fbdbb5f484af3b11e025dbeba34ac41459cb3cf08bf5544c561e16a77149012f"
+    }
+  ],
+  "fixed_log_metrics": [
+    {
+      "time_s": 0.105,
+      "max_final_residual": 8.51143320633e-05,
+      "max_linear_iterations": 14,
+      "max_abs_global_continuity": 2.59609952768e-12,
+      "courant": []
+    },
+    {
+      "time_s": 0.11,
+      "max_final_residual": 0.0001456767592,
+      "max_linear_iterations": 14,
+      "max_abs_global_continuity": 1.05496184376e-12,
+      "courant": []
+    },
+    {
+      "time_s": 0.115,
+      "max_final_residual": 0.00013493932489,
+      "max_linear_iterations": 14,
+      "max_abs_global_continuity": 9.97862055784e-13,
+      "courant": []
+    },
+    {
+      "time_s": 0.12,
+      "max_final_residual": 0.000126781394883,
+      "max_linear_iterations": 14,
+      "max_abs_global_continuity": 9.58831897025e-13,
+      "courant": []
+    },
+    {
+      "time_s": 0.125,
+      "max_final_residual": 0.000121750639583,
+      "max_linear_iterations": 14,
+      "max_abs_global_continuity": 9.97197951602e-13,
+      "courant": []
+    },
+    {
+      "time_s": 0.13,
+      "max_final_residual": 0.000119131708132,
+      "max_linear_iterations": 14,
+      "max_abs_global_continuity": 1.05470303596e-12,
+      "courant": []
+    },
+    {
+      "time_s": 0.135,
+      "max_final_residual": 0.0001122691082,
+      "max_linear_iterations": 14,
+      "max_abs_global_continuity": 9.64362530241e-13,
+      "courant": []
+    },
+    {
+      "time_s": 0.14,
+      "max_final_residual": 0.000106113243979,
+      "max_linear_iterations": 14,
+      "max_abs_global_continuity": 8.42184719777e-13,
+      "courant": []
+    },
+    {
+      "time_s": 0.145,
+      "max_final_residual": 0.000102742695552,
+      "max_linear_iterations": 14,
+      "max_abs_global_continuity": 8.25802964697e-13,
+      "courant": []
+    },
+    {
+      "time_s": 0.15,
+      "max_final_residual": 9.85067680205e-05,
+      "max_linear_iterations": 14,
+      "max_abs_global_continuity": 7.11612795722e-13,
+      "courant": []
+    }
+  ],
+  "zero_log_metrics": [
+    {
+      "time_s": 0.105,
+      "max_final_residual": 0.00469713118572,
+      "max_linear_iterations": 17,
+      "max_abs_global_continuity": 1.98763663389e-11,
+      "courant": []
+    },
+    {
+      "time_s": 0.11,
+      "max_final_residual": 0.00813247617096,
+      "max_linear_iterations": 19,
+      "max_abs_global_continuity": 1.7325967985e-11,
+      "courant": []
+    },
+    {
+      "time_s": 0.115,
+      "max_final_residual": 0.0080292828032,
+      "max_linear_iterations": 15,
+      "max_abs_global_continuity": 4.78607138653e-12,
+      "courant": []
+    },
+    {
+      "time_s": 0.12,
+      "max_final_residual": 0.00864517844814,
+      "max_linear_iterations": 14,
+      "max_abs_global_continuity": 1.01581846939e-12,
+      "courant": []
+    },
+    {
+      "time_s": 0.125,
+      "max_final_residual": 0.00585029737494,
+      "max_linear_iterations": 14,
+      "max_abs_global_continuity": 2.38237982601e-12,
+      "courant": []
+    },
+    {
+      "time_s": 0.13,
+      "max_final_residual": 0.00661063507826,
+      "max_linear_iterations": 14,
+      "max_abs_global_continuity": 2.33666090084e-12,
+      "courant": []
+    },
+    {
+      "time_s": 0.135,
+      "max_final_residual": 0.00653718462846,
+      "max_linear_iterations": 14,
+      "max_abs_global_continuity": 2.07534827064e-12,
+      "courant": []
+    },
+    {
+      "time_s": 0.14,
+      "max_final_residual": 0.00650579796471,
+      "max_linear_iterations": 14,
+      "max_abs_global_continuity": 1.94910680261e-12,
+      "courant": []
+    },
+    {
+      "time_s": 0.145,
+      "max_final_residual": 0.00650637871096,
+      "max_linear_iterations": 13,
+      "max_abs_global_continuity": 1.86760244453e-12,
+      "courant": []
+    },
+    {
+      "time_s": 0.15,
+      "max_final_residual": 0.00657416448797,
+      "max_linear_iterations": 14,
+      "max_abs_global_continuity": 7.46997315976e-13,
+      "courant": []
+    }
+  ]
+}
