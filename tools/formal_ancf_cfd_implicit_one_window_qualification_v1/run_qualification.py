@@ -49,8 +49,17 @@ IPC_REGRESSION = ROOT / "results" / "formal_implicit_ipc_and_first_step_quality_
 QUALITY_COMPLETION_REGRESSION = ROOT / "results" / "formal_implicit_ipc_quality_v4_completion_regression_001" / "quality_v4_completion_regression.json"
 CROSS_WINDOW_IPC_REGRESSION = ROOT / "runtime" / "implicit_cross_window_ipc_lifecycle_closure_v1" / "real_worker_multiwindow_regression_002" / "real_worker_multiwindow_regression.json"
 ROLLBACK_AUDIT_CORRELATION_REGRESSION = ROOT / "results" / "implicit_rollback_audit_correlation_closure_v1_regression_001" / "rollback_audit_correlation_regression.json"
-LIB_WSL = "/home/machao/OpenFOAM/reproducible_adapter_rollback_qualification_v1/diagnostic_build_006/lib"
+# The historical library remains the default.  A manually authorized formal
+# candidate must opt in explicitly and must also declare the exact OF10 prefix
+# that resolves its ABI closure.  This prevents the launcher from silently
+# combining a new adapter with /opt/openfoam10.
+LIB_WSL = os.environ.get(
+    "FORMAL_ADAPTER_LIBRARY_WSL",
+    "/home/machao/OpenFOAM/reproducible_adapter_rollback_qualification_v1/diagnostic_build_006/lib",
+)
 LIB_FILE = Path(LIB_WSL) / "libpreciceAdapterFunctionObject.so"
+OF10_ROOT_WSL = os.environ.get("FORMAL_OF10_ROOT_WSL", "/opt/openfoam10")
+OF10_SETUP_SCRIPT_WSL = os.environ.get("FORMAL_OF10_SETUP_SCRIPT_WSL", "")
 UPSTREAM = "d53753b1c927b2413b02299c9da15725b3e772f0"
 PATCH_SET = ["0001-respect-adapter-target-dir", "0002-diagnostic-rollback-fingerprints", "0004-registry-safe-rollback-and-motion-timing", "0005-precice-time-layer-and-different-input-rollback"]
 DT = 0.005
@@ -109,6 +118,82 @@ def wsl_process(command: list[str], **kwargs):
     if os.name == "nt":
         command = ["wsl.exe", "-d", "Ubuntu-22.04", "--", *command]
     return subprocess.run(command, **kwargs)
+
+
+def of10_setup_command() -> str:
+    """Return the one permitted way to initialize this launcher's OF10 ABI."""
+    if OF10_SETUP_SCRIPT_WSL:
+        return f"source '{OF10_SETUP_SCRIPT_WSL}' '{OF10_ROOT_WSL}'"
+    return f"source '{OF10_ROOT_WSL}/etc/bashrc'"
+
+
+def runtime_abi_preflight(runtime: Path) -> dict[str, object]:
+    """Fail closed unless solver, adapter, and core OF10 libraries share one prefix."""
+    command = "\n".join((
+        "set -e",
+        "export ZSH_NAME=",
+        of10_setup_command(),
+        f"export LD_LIBRARY_PATH='{LIB_WSL}':$LD_LIBRARY_PATH",
+        "solver=$(realpath \"$(command -v pimpleFoam)\")",
+        "echo \"PIMPLE=$solver\"",
+        "echo \"FOAM_LIBBIN=$FOAM_LIBBIN\"",
+        f"echo \"ADAPTER=$(realpath '{LIB_FILE.as_posix()}')\"",
+        f"ldd -r '{LIB_FILE.as_posix()}'",
+        "ldd -r \"$solver\"",
+    ))
+    # Run exactly as the eventual generated launcher runs.  In particular, the
+    # prototype setup helper is a sourced shell script and must not be probed
+    # through a host-constructed `bash -c` string.
+    script_path = runtime / "of10_abi_preflight.sh"
+    put(script_path, command + "\n")
+    completed = wsl_process(
+        ["bash", wsl(script_path)], text=True, encoding="utf-8",
+        errors="replace", capture_output=True,
+    )
+    output = completed.stdout + completed.stderr
+    if completed.returncode != 0:
+        raise RuntimeError("isolated OF10 ABI setup or ldd -r preflight fails: " + output)
+    if re.search(r"(?:not found|undefined symbol)", output, flags=re.I):
+        raise RuntimeError("isolated OF10 ABI closure has unresolved entries")
+    lines = dict(
+        line.split("=", 1) for line in output.splitlines()
+        if line.startswith(("PIMPLE=", "FOAM_LIBBIN=", "ADAPTER="))
+    )
+    required = {"PIMPLE", "FOAM_LIBBIN", "ADAPTER"}
+    if set(lines) != required:
+        raise RuntimeError("isolated OF10 ABI preflight did not identify solver/library paths")
+    if not lines["PIMPLE"].startswith(OF10_ROOT_WSL + "/"):
+        raise RuntimeError("pimpleFoam is outside selected OF10 prefix")
+    if lines["ADAPTER"] != linux_realpath(LIB_FILE):
+        raise RuntimeError("adapter realpath differs from selected candidate")
+    core_names = ("libOpenFOAM.so", "libfiniteVolume.so", "libfvMotionSolvers.so", "libfvMeshMovers.so")
+    core_paths = {name: lines["FOAM_LIBBIN"] + "/" + name for name in core_names}
+    if not all(linux_file_exists(Path(path)) for path in core_paths.values()):
+        raise RuntimeError("selected OF10 prefix lacks a required core/motion library")
+    core_sha = {name: sha256(Path(path)) for name, path in core_paths.items()}
+    resolved = [line.split("=>", 1)[1].strip().split(" ", 1)[0]
+                for line in output.splitlines() if "=>" in line]
+    # libfvMotionSolvers/libfvMeshMovers are selected at runtime from the
+    # configured mover, so they are required in the same prefix but are not
+    # necessarily direct ELF dependencies of pimpleFoam or the adapter.
+    for name in ("libOpenFOAM.so", "libfiniteVolume.so"):
+        matches = [path for path in resolved if path.endswith("/" + name)]
+        if not matches or not all(path.startswith(OF10_ROOT_WSL + "/") for path in matches):
+            raise RuntimeError(f"{name} is not resolved exclusively from selected OF10 prefix")
+    if any(path.startswith(("/opt/openfoam10/", "/home/machao/OpenFOAM/machao-10/")) for path in resolved):
+        raise RuntimeError("legacy OpenFOAM library leaked into isolated ABI closure")
+    return {
+        "status": "PASS",
+        "of10_root_wsl": OF10_ROOT_WSL,
+        "setup_script_wsl": OF10_SETUP_SCRIPT_WSL or None,
+        "pimpleFoam_realpath": lines["PIMPLE"],
+        "pimpleFoam_sha256": sha256(Path(lines["PIMPLE"])),
+        "adapter_realpath": lines["ADAPTER"],
+        "adapter_sha256": sha256(LIB_FILE),
+        "foam_libbin": lines["FOAM_LIBBIN"],
+        "core_library_sha256": core_sha,
+        "ldd_r_output": output,
+    }
 
 
 def put(path: Path, value: object) -> None:
@@ -284,13 +369,19 @@ def prepare():
     preflight = {str(sid): case_preflight(case, "0.1") for sid, case in enumerate(cases)}
     if not all(item.get("MOVING_MESH_CASE_PREFLIGHT") == "PASS" for item in preflight.values()):
         raise RuntimeError("moving-mesh production preflight fails")
+    abi = runtime_abi_preflight(RUNTIME)
+    put(RUNTIME / "of10_abi_closure_ldd-r.txt", abi.pop("ldd_r_output"))
     adapter_manifest = {
         "realpath": linux_realpath(LIB_FILE),
         "sha256": sha256(LIB_FILE),
         "upstream_commit": UPSTREAM,
         "patch_set": PATCH_SET,
-        "OpenFOAM": "Foundation 10 /opt/openfoam10 linux64GccDPInt32Opt",
+        "OpenFOAM": "Foundation 10 / selected isolated linux64GccDPInt32Opt ABI",
         "preCICE": "3.4.1",
+        "of10_abi_closure": {
+            **abi,
+            "ldd_r_path": str(RUNTIME / "of10_abi_closure_ldd-r.txt"),
+        },
         "coupling_scheme": SCHEME,
         "physical_horizon_s": DURATION_S,
         "cpp_worker": {"path": str(WORKER), "sha256": sha256(WORKER)},
@@ -339,7 +430,7 @@ def launch(base, cases: list[Path]) -> int:
         )
         fluid.append(command)
     script = [
-        "set -o pipefail", "export ZSH_NAME=", "source /opt/openfoam10/etc/bashrc",
+        "set -o pipefail", "export ZSH_NAME=", of10_setup_command(),
         f"export LD_LIBRARY_PATH='{LIB_WSL}':$LD_LIBRARY_PATH",
         f"export PYTHONPATH='{wsl(ROOT)}/src:{wsl(base.PYDEPS)}'",
         f"python3 '{wsl(PARTICIPANT)}' --contract '{wsl(RUNTIME / base.CONTRACT.name)}' --state '{wsl(base.STATE)}' --worker '{wsl(WORKER)}' --runtime '{wsl(RUNTIME)}' --config {configs} --vertex-count 40 > '{wsl(logs / 'structure.stdout')}' 2> '{wsl(logs / 'structure.stderr')}' & spid=$!",
