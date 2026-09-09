@@ -18,9 +18,9 @@ from pathlib import Path
 ROOT = Path(__file__).resolve().parents[2]
 FORMAL_CASE = ROOT / "runtime" / "formal_three_slice_implicit_0p05s_owned_mesh_history_v1_run_001" / "cases" / "slice_0000"
 PRECURSOR = ROOT / "results" / "fixed_cylinder_precursor_initialization_contract_v1_run_002" / "PRECURSOR_STATE_V1"
-RUNTIME = ROOT / "runtime" / "cfd_current_fixed_zero_bridge_v1_run_003_no_adapter_dynamic_one_step"
+RUNTIME = ROOT / "runtime" / "cfd_current_fixed_zero_bridge_v1_run_004_no_adapter_dynamic_one_step"
 CASE = RUNTIME / "case"
-RESULTS = ROOT / "results" / "cfd_current_fixed_zero_bridge_v1_run_003_no_adapter_dynamic_one_step"
+RESULTS = ROOT / "results" / "cfd_current_fixed_zero_bridge_v1_run_004_no_adapter_dynamic_one_step"
 PROTOTYPE_ROOT_WSL = "/home/machao/OpenFOAM/of10_owned_atomic_mesh_history_restore_prototype_v1"
 ENV_SCRIPT_WSL = "/mnt/d/研二文件/开题准备/CFD_ANCF_VIV/tools/of10_owned_atomic_mesh_history_restore_prototype_v1/prototype_env.sh"
 DT = 0.005
