@@ -20,8 +20,8 @@ from typing import Any
 
 
 ROOT = Path(__file__).resolve().parents[2]
-RUNTIME = ROOT / "runtime" / "shiels_s5_k988_single_slice_free_fsi_first_trial_v1_run_001"
-RESULTS = ROOT / "results" / "shiels_s5_k988_single_slice_free_fsi_first_trial_v1_run_001"
+RUNTIME = ROOT / "runtime" / "shiels_s5_k988_single_slice_free_fsi_first_trial_v1_run_002"
+RESULTS = ROOT / "results" / "shiels_s5_k988_single_slice_free_fsi_first_trial_v1_run_002"
 BASELINE = ROOT / "runtime" / "fixed_cylinder_precursor_initialization_v1_run_002" / "zero_motion_dynamic_restart"
 CURRENT_ZERO = ROOT / "runtime" / "cfd_current_fixed_zero_bridge_v1_run_002" / "zero_precice_case"
 PYDEPS = ROOT / "runtime" / "284_precice_single_slice_smoke_real_v1" / "python_deps"
@@ -259,7 +259,7 @@ def launcher() -> str:
     participant_runtime = RUNTIME / "structure"
     return "\n".join((
         "set -o pipefail", "export ZSH_NAME=", f"source '{ENV_SCRIPT_WSL}' '{ABI_ROOT_WSL}'",
-        f"export LD_LIBRARY_PATH='{ADAPTER_LIB_WSL}':$LD_LIBRARY_PATH", f"export PYTHONPATH='{wsl(PYDEPS)}':{wsl(ROOT)}'",
+        f"export LD_LIBRARY_PATH='{ADAPTER_LIB_WSL}':$LD_LIBRARY_PATH", f"export PYTHONPATH='{wsl(PYDEPS)}:{wsl(ROOT)}'",
         f"export PRECICE_ADAPTER_BUILD_SHA256='{ADAPTER_SHA256}'",
         f"python3 '{wsl(PARTICIPANT)}' --config '{wsl(case / 'precice-config.xml')}' --runtime '{wsl(participant_runtime)}' --contract '{wsl(RUNTIME / 'contract.json')}' --vertex-count {VERTEX_COUNT} > '{wsl(RUNTIME / 'participant.stdout')}' 2> '{wsl(RUNTIME / 'participant.stderr')}' & structure_pid=$!",
         f"(cd '{wsl(case)}' && pimpleFoam > '{wsl(RUNTIME / 'fluid.stdout')}' 2> '{wsl(RUNTIME / 'fluid.stderr')}') & fluid_pid=$!",
@@ -313,14 +313,21 @@ def patch_y_error(case: Path, time_name: str, expected_y: float) -> dict[str, An
     return {"representation": "uniform", "value_count": 1, "max_abs_y_error_m": abs(float(uniform.group(2)) - expected_y)}
 
 
-def force_rows(case: Path) -> list[dict[str, float]]:
+def force_rows(case: Path) -> tuple[list[dict[str, float]], dict[str, int]]:
     file = case / "postProcessing" / "cylinderForces" / f"{START:.12g}" / "forces.dat"
-    rows: list[dict[str, float]] = []
+    final_rows: dict[float, dict[str, float]] = {}
+    records_by_time: dict[str, int] = {}
     for line in file.read_text(encoding="utf-8", errors="replace").splitlines():
         values = [float(value) for value in re.findall(NUMBER, line)]
         if len(values) >= 7 and values[0] > START + 0.25 * DT:
-            rows.append({"time_s": values[0], "pressure_x_N": values[1], "pressure_y_N": values[2], "viscous_x_N": values[4], "viscous_y_N": values[5], "total_x_N": values[1] + values[4], "total_y_N": values[2] + values[5]})
-    return rows
+            time_s = values[0]
+            time_key = f"{time_s:.12g}"
+            records_by_time[time_key] = records_by_time.get(time_key, 0) + 1
+            # The force function writes once per implicit coupling iteration.
+            # The last same-time record is the final iteration used by the
+            # accepted structure window; preserve the raw count separately.
+            final_rows[time_s] = {"time_s": time_s, "pressure_x_N": values[1], "pressure_y_N": values[2], "viscous_x_N": values[4], "viscous_y_N": values[5], "total_x_N": values[1] + values[4], "total_y_N": values[2] + values[5]}
+    return [final_rows[time_s] for time_s in sorted(final_rows)], records_by_time
 
 
 def log_audit() -> dict[str, Any]:
@@ -341,7 +348,7 @@ def audit() -> dict[str, Any]:
     summary = json.loads((RUNTIME / "structure" / "structure_summary.json").read_text(encoding="utf-8"))
     events = [json.loads(line) for line in (RUNTIME / "structure" / "events.jsonl").read_text(encoding="utf-8").splitlines()]
     commits = [row for row in events if row.get("event") == "window_commit"]
-    forces = force_rows(case)
+    forces, force_records_by_time = force_rows(case)
     if len(commits) != STEPS or len(forces) != STEPS:
         raise RuntimeError("incomplete output; cannot evaluate free-FSI first trial")
     initial_points = points(case, "0.105")
@@ -376,6 +383,7 @@ def audit() -> dict[str, Any]:
     }
     result = {"schema_version": "shiels-s5-k988-single-slice-free-fsi-first-trial-v1-result", "status": "PASS" if all(hard.values()) else "FAIL_CLOSED",
               "hard_gates": hard, "initial_state": initial, "structure_summary": summary, "window_rows": motion_rows, "fluid_logs": logs,
+              "force_function_records_by_time": force_records_by_time,
               "limitations": ["This is only 0.05 s, far shorter than one natural period; no lock-in/steady VIV claim is made.", "Energy is reported with trapezoidal fluid work because the undamped structure may gain/loss energy through fluid work; energy constancy is not a gate.", "The result applies to the existing Python SDOFRunner wrapper, not C++ ANCF or the 50 m riser."]}
     RESULTS.mkdir(parents=True, exist_ok=True)
     write_json(RESULTS / "first_trial_result.json", result)
