@@ -81,6 +81,13 @@ The containment event, traces, logs, and gate JSON remain immutable under the
 new runtime. The original two-window `FAIL` and old auditor records remain
 unchanged.
 
+Read-only final-state `checkMesh -time 0.15 -allTopology -allGeometry` returned
+`Mesh OK` for all three fluid cases. The minimum volumes were
+`0.00161187777359`, `0.00160480881820`, and `0.00161188593849`; maximum
+non-orthogonality was `30.6535934622`, `30.6485339779`, and `30.6536015544`;
+maximum skewness was `0.503077454543`, `0.503079398538`, and `0.503077452783`.
+This geometry result does not override the failed coupling/containment gate.
+
 ## Scope conclusion
 
 This result does not establish VIV, lock-in, long-time stability, or an
@@ -93,4 +100,3 @@ FIRST_BLOCKER = FROZEN_CONTAINMENT_BREACH_RAW_FX_WINDOW_10_ITERATION_3
 NEXT_IMPLICIT_0P05S = NOT_AUTHORIZED
 NEXT_LONG_VIV = NOT_AUTHORIZED
 ```
-
