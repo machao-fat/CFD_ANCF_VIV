@@ -267,12 +267,14 @@ int main(int argc, char *argv[])
         fvc::flux(U)
     );
 
-    // This is the dynamic createUfIfPresent.H fallback when 0.1/Uf is absent.
+    // This is the dynamic createUfIfPresent.H READ_IF_PRESENT path.  When
+    // 0.1/Uf is absent, the constructor uses fvc::interpolate(U).
     surfaceVectorField Uf
     (
         IOobject("Uf", runTime.timeName(), mesh, IOobject::READ_IF_PRESENT, IOobject::NO_WRITE),
         fvc::interpolate(U)
     );
+    const bool ufPersistedFilePresent = Uf.headerOk();
 
     const bool movedMesh = args.optionFound("moveMesh");
     if (movedMesh)
@@ -325,7 +327,8 @@ int main(int argc, char *argv[])
            << ",\"mesh_changing\":" << (mesh.changing() ? "true" : "false")
            << ",\"persisted_phi_present\":true"
            << ",\"uf_source\":\"fvc::interpolate(U)\""
-           << ",\"uf_persisted_file_present\":false"
+           << ",\"uf_persisted_file_present\":"
+           << (ufPersistedFilePresent ? "true" : "false")
            << ",\"Uf_magnitude\":";
     writeStats(output, surfaceVectorStats(Uf));
     output << ",\"meshPhi_present\":" << (meshPhiPresent ? "true" : "false");
