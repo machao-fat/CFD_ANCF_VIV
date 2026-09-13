@@ -76,6 +76,33 @@ struct State {
   std::size_t iterations = 0;
 };
 
+enum class StaticSolverMode {
+  LegacyFixedRelaxation,
+  BacktrackingNewton
+};
+
+struct StaticNewtonTrialDiagnostic {
+  double beta = 0.0;
+  double residual = 0.0;
+  double merit = 0.0;
+  bool finite = false;
+  bool convergence_pass = false;
+  bool sufficient_decrease = false;
+};
+
+struct StaticNewtonIterationDiagnostic {
+  std::size_t load_step = 0;
+  std::size_t iteration = 0;
+  double residual_before_step = 0.0;
+  double full_newton_direction_norm = 0.0;
+  double beta_accepted = 0.0;
+  std::size_t backtrack_count = 0;
+  double residual_after_accepted_trial = 0.0;
+  bool finite = false;
+  bool line_search_failed = false;
+  std::vector<StaticNewtonTrialDiagnostic> trials;
+};
+
 struct StepDiagnostics {
   double initial_residual = 0.0;
   double residual = 0.0;
@@ -89,6 +116,8 @@ struct StepDiagnostics {
   double external_mapping_s = 0.0;
   // MATLAB's free-DOF residual scale, retained for audit diagnostics.
   double residual_scale = 0.0;
+  std::string failure_reason;
+  std::vector<StaticNewtonIterationDiagnostic> static_newton_trace;
 };
 
 // Offline-only Newton trace. The default production advance path does not
@@ -163,6 +192,10 @@ StepDiagnostics static_equilibrium(State& state, const Model& model,
                                    const std::vector<double>& base_load,
                                    std::size_t load_steps = 40,
                                    double relaxation = 0.8);
+StepDiagnostics static_equilibrium(State& state, const Model& model,
+                                   const std::vector<double>& base_load,
+                                   std::size_t load_steps,
+                                   StaticSolverMode mode);
 void internal_force_tangent(const std::vector<double>& q, const Model& model, std::vector<double>& force, Matrix& tangent);
 void internal_force_tangent(const std::vector<double>& q, const Model& model, std::vector<double>& force,
                             Matrix& tangent, AssemblyTrace* trace);

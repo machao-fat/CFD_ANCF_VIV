@@ -614,13 +614,19 @@ StepDiagnostics advance(State& state, const Model& model, const std::vector<doub
   return d;
 }
 
-StepDiagnostics static_equilibrium(State& state, const Model& model,
-                                   const std::vector<double>& base_load,
-                                   std::size_t load_steps, double relaxation) {
+namespace {
+
+StepDiagnostics static_equilibrium_impl(State& state, const Model& model,
+                                        const std::vector<double>& base_load,
+                                        std::size_t load_steps, double relaxation,
+                                        StaticSolverMode mode) {
   validate_model(model);
   const std::size_t n = model.ndof();
   if (base_load.size() != n || !finite_vector(base_load) || load_steps == 0 ||
-      !std::isfinite(relaxation) || relaxation <= 0.0 || relaxation > 1.0) {
+      (mode == StaticSolverMode::LegacyFixedRelaxation &&
+       (!std::isfinite(relaxation) || relaxation <= 0.0 || relaxation > 1.0)) ||
+      (mode != StaticSolverMode::LegacyFixedRelaxation &&
+       mode != StaticSolverMode::BacktrackingNewton)) {
     throw std::invalid_argument("static equilibrium contract is invalid");
   }
   if (state.q.size() != n || state.mass.rows != n || state.mass.cols != n ||
@@ -662,6 +668,15 @@ StepDiagnostics static_equilibrium(State& state, const Model& model,
       diagnostics.iterations += 1;
       if (norm <= model.newton_tolerance * scale_value) {
         converged = true;
+        if (mode == StaticSolverMode::BacktrackingNewton) {
+          StaticNewtonIterationDiagnostic iteration_diagnostic;
+          iteration_diagnostic.load_step = load_step;
+          iteration_diagnostic.iteration = iteration;
+          iteration_diagnostic.residual_before_step = norm;
+          iteration_diagnostic.residual_after_accepted_trial = norm;
+          iteration_diagnostic.finite = true;
+          diagnostics.static_newton_trace.push_back(std::move(iteration_diagnostic));
+        }
         break;
       }
       Matrix tangent_free(free.size(), free.size());
@@ -672,11 +687,108 @@ StepDiagnostics static_equilibrium(State& state, const Model& model,
           tangent_free(row, col) = tangent(free[row], free[col]);
       }
       const auto increment = solve(tangent_free, residual_free);
-      for (std::size_t index = 0; index < free.size(); ++index)
-        q[free[index]] -= relaxation * increment[index];
-      for (std::size_t i = 0; i < n; ++i) if (fixed[i]) q[i] = prescribed[i];
+      if (mode == StaticSolverMode::LegacyFixedRelaxation) {
+        for (std::size_t index = 0; index < free.size(); ++index)
+          q[free[index]] -= relaxation * increment[index];
+        for (std::size_t i = 0; i < n; ++i) if (fixed[i]) q[i] = prescribed[i];
+        continue;
+      }
+
+      const auto inf_norm = [](const std::vector<double>& values) {
+        double result = 0.0;
+        for (double value : values) result = (std::max)(result, std::abs(value));
+        return result;
+      };
+      const auto merit = [&free](const std::vector<double>& values) {
+        long double sum = 0.0L;
+        for (std::size_t index : free) {
+          const long double value = static_cast<long double>(values[index]);
+          sum += 0.5L * value * value;
+          if (!std::isfinite(sum)) return (std::numeric_limits<double>::infinity)();
+        }
+        const double result = static_cast<double>(sum);
+        return std::isfinite(result) ? result :
+               (std::numeric_limits<double>::infinity)();
+      };
+
+      StaticNewtonIterationDiagnostic iteration_diagnostic;
+      iteration_diagnostic.load_step = load_step;
+      iteration_diagnostic.iteration = iteration;
+      iteration_diagnostic.residual_before_step = norm;
+      iteration_diagnostic.full_newton_direction_norm = inf_norm(increment);
+      iteration_diagnostic.finite = true;
+      const double current_merit = merit(residual);
+      bool accepted = false;
+      for (std::size_t backtrack = 0; backtrack <= 12; ++backtrack) {
+        const double beta = std::ldexp(1.0, -static_cast<int>(backtrack));
+        StaticNewtonTrialDiagnostic trial_diagnostic;
+        trial_diagnostic.beta = beta;
+        std::vector<double> trial_q = q;
+        for (std::size_t index = 0; index < free.size(); ++index)
+          trial_q[free[index]] -= beta * increment[index];
+        for (std::size_t i = 0; i < n; ++i) if (fixed[i]) trial_q[i] = prescribed[i];
+
+        double trial_norm = 0.0;
+        double trial_merit = (std::numeric_limits<double>::infinity)();
+        try {
+          std::vector<double> trial_internal;
+          Matrix trial_tangent;
+          internal_force_tangent(trial_q, model, trial_internal, trial_tangent);
+          if (!finite_vector(trial_internal) || !finite_matrix(trial_tangent))
+            throw std::runtime_error("static trial contains NaN/Inf");
+          std::vector<double> trial_residual(n);
+          for (std::size_t i = 0; i < n; ++i) {
+            trial_residual[i] = trial_internal[i] - factor * base_load[i];
+            if (fixed[i]) trial_residual[i] = 0.0;
+            else trial_norm = (std::max)(trial_norm, std::abs(trial_residual[i]));
+          }
+          trial_merit = merit(trial_residual);
+        } catch (const std::exception&) {
+          trial_diagnostic.residual = (std::numeric_limits<double>::infinity)();
+          trial_diagnostic.merit = (std::numeric_limits<double>::infinity)();
+          trial_diagnostic.finite = false;
+          iteration_diagnostic.trials.push_back(std::move(trial_diagnostic));
+          continue;
+        }
+        trial_diagnostic.residual = trial_norm;
+        trial_diagnostic.merit = trial_merit;
+        trial_diagnostic.finite = std::isfinite(trial_norm) && std::isfinite(trial_merit);
+        if (trial_diagnostic.finite) {
+          trial_diagnostic.convergence_pass =
+              trial_norm <= model.newton_tolerance * scale_value;
+          trial_diagnostic.sufficient_decrease =
+              trial_merit <= (1.0 - 1.0e-4 * beta) * current_merit;
+        }
+        const bool trial_accepted = trial_diagnostic.finite &&
+                                    (trial_diagnostic.convergence_pass ||
+                                     trial_diagnostic.sufficient_decrease);
+        iteration_diagnostic.trials.push_back(trial_diagnostic);
+        if (trial_accepted) {
+          q = std::move(trial_q);
+          diagnostics.residual = trial_norm;
+          converged = trial_diagnostic.convergence_pass;
+          iteration_diagnostic.beta_accepted = beta;
+          iteration_diagnostic.backtrack_count = backtrack;
+          iteration_diagnostic.residual_after_accepted_trial = trial_norm;
+          accepted = true;
+          break;
+        }
+      }
+      if (!accepted) {
+        iteration_diagnostic.line_search_failed = true;
+        diagnostics.static_newton_trace.push_back(std::move(iteration_diagnostic));
+        diagnostics.failure_reason = "STATIC_LINE_SEARCH_FAILED";
+        diagnostics.converged = false;
+        return diagnostics;
+      }
+      diagnostics.static_newton_trace.push_back(std::move(iteration_diagnostic));
     }
     if (!converged) {
+      if (mode == StaticSolverMode::BacktrackingNewton) {
+        diagnostics.failure_reason = "STATIC_NEWTON_DID_NOT_CONVERGE";
+        diagnostics.converged = false;
+        return diagnostics;
+      }
       throw std::runtime_error("static equilibrium did not converge at load step " +
                                std::to_string(load_step));
     }
@@ -689,6 +801,21 @@ StepDiagnostics static_equilibrium(State& state, const Model& model,
   state.step = 0;
   diagnostics.converged = true;
   return diagnostics;
+}
+
+}  // namespace
+
+StepDiagnostics static_equilibrium(State& state, const Model& model,
+                                   const std::vector<double>& base_load,
+                                   std::size_t load_steps, double relaxation) {
+  return static_equilibrium_impl(state, model, base_load, load_steps, relaxation,
+                                 StaticSolverMode::LegacyFixedRelaxation);
+}
+
+StepDiagnostics static_equilibrium(State& state, const Model& model,
+                                   const std::vector<double>& base_load,
+                                   std::size_t load_steps, StaticSolverMode mode) {
+  return static_equilibrium_impl(state, model, base_load, load_steps, 1.0, mode);
 }
 
 bool finite(const State& state) {
