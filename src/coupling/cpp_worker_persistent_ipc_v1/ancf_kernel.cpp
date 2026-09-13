@@ -369,6 +369,56 @@ void internal_force_tangent(const std::vector<double>& q, const Model& model, st
     throw std::runtime_error("ANCF assembled force or tangent contains NaN/Inf");
 }
 
+struct StrainEnergyComponents {
+  double axial = 0.0;
+  double bending = 0.0;
+  double total() const { return axial + bending; }
+};
+
+StrainEnergyComponents strain_energy_components(const std::vector<double>& q,
+                                                const Model& model) {
+  validate_model(model);
+  if (q.size() != model.ndof() || !finite_vector(q))
+    throw std::invalid_argument("q dimensions or values are invalid");
+  StrainEnergyComponents energy;
+  const double Le = model.length_m / static_cast<double>(model.elements);
+  const auto [xi, weights] = gauss(model.gauss_order);
+  for (std::size_t element = 0; element < model.elements; ++element) {
+    const std::vector<double> qe(q.begin() + 6 * element,
+                                 q.begin() + 6 * element + 12);
+    for (std::size_t k = 0; k < xi.size(); ++k) {
+      const double x = 0.5 * (xi[k] + 1.0) * Le;
+      const Matrix B = block_matrix(shape(x, Le, 1));
+      const Matrix C = block_matrix(shape(x, Le, 2));
+      Vec3 a{}, b{};
+      for (int component = 0; component < 3; ++component) {
+        for (int column = 0; column < 12; ++column) {
+          a[component] += B(component, column) * qe[static_cast<std::size_t>(column)];
+          b[component] += C(component, column) * qe[static_cast<std::size_t>(column)];
+        }
+      }
+      const double a2 = dot(a, a);
+      if (a2 < EPS) throw std::runtime_error("degenerate ANCF strain energy");
+      const double eps = 0.5 * (a2 - 1.0);
+      const Vec3 cross_ab = cross(a, b);
+      const double kappa2 = dot(cross_ab, cross_ab) * std::pow(a2, -3.0);
+      double axial_density = 0.5 * model.EA() * eps * eps;
+      double bending_density = 0.5 * model.EI() * kappa2;
+      axial_density *= weights[k];
+      axial_density *= Le;
+      axial_density /= 2.0;
+      bending_density *= weights[k];
+      bending_density *= Le;
+      bending_density /= 2.0;
+      energy.axial += axial_density;
+      energy.bending += bending_density;
+    }
+  }
+  if (!std::isfinite(energy.axial) || !std::isfinite(energy.bending))
+    throw std::runtime_error("ANCF strain energy contains NaN/Inf");
+  return energy;
+}
+
 ForensicResult internal_force_forensic(const std::vector<double>& q, const Model& model) {
   validate_model(model);
   if (q.size() != model.ndof() || !finite_vector(q))
@@ -619,14 +669,18 @@ namespace {
 StepDiagnostics static_equilibrium_impl(State& state, const Model& model,
                                         const std::vector<double>& base_load,
                                         std::size_t load_steps, double relaxation,
-                                        StaticSolverMode mode) {
+                                        StaticSolverMode mode,
+                                        bool fixed_conservative_load_contract) {
   validate_model(model);
   const std::size_t n = model.ndof();
   if (base_load.size() != n || !finite_vector(base_load) || load_steps == 0 ||
       (mode == StaticSolverMode::LegacyFixedRelaxation &&
        (!std::isfinite(relaxation) || relaxation <= 0.0 || relaxation > 1.0)) ||
       (mode != StaticSolverMode::LegacyFixedRelaxation &&
-       mode != StaticSolverMode::BacktrackingNewton)) {
+       mode != StaticSolverMode::BacktrackingNewton &&
+       mode != StaticSolverMode::PotentialBacktrackingNewton) ||
+      (mode == StaticSolverMode::PotentialBacktrackingNewton &&
+       !fixed_conservative_load_contract)) {
     throw std::invalid_argument("static equilibrium contract is invalid");
   }
   if (state.q.size() != n || state.mass.rows != n || state.mass.cols != n ||
@@ -668,13 +722,20 @@ StepDiagnostics static_equilibrium_impl(State& state, const Model& model,
       diagnostics.iterations += 1;
       if (norm <= model.newton_tolerance * scale_value) {
         converged = true;
-        if (mode == StaticSolverMode::BacktrackingNewton) {
+        if (mode == StaticSolverMode::BacktrackingNewton ||
+            mode == StaticSolverMode::PotentialBacktrackingNewton) {
           StaticNewtonIterationDiagnostic iteration_diagnostic;
           iteration_diagnostic.load_step = load_step;
           iteration_diagnostic.iteration = iteration;
           iteration_diagnostic.residual_before_step = norm;
+          iteration_diagnostic.residual_normalized_before_step = norm / scale_value;
           iteration_diagnostic.residual_after_accepted_trial = norm;
+          iteration_diagnostic.residual_normalized_after_accepted_trial = norm / scale_value;
           iteration_diagnostic.finite = true;
+          if (mode == StaticSolverMode::PotentialBacktrackingNewton) {
+            iteration_diagnostic.internal_energy_before =
+                strain_energy_components(q, model).total();
+          }
           diagnostics.static_newton_trace.push_back(std::move(iteration_diagnostic));
         }
         break;
@@ -691,6 +752,110 @@ StepDiagnostics static_equilibrium_impl(State& state, const Model& model,
         for (std::size_t index = 0; index < free.size(); ++index)
           q[free[index]] -= relaxation * increment[index];
         for (std::size_t i = 0; i < n; ++i) if (fixed[i]) q[i] = prescribed[i];
+        continue;
+      }
+
+      if (mode == StaticSolverMode::PotentialBacktrackingNewton) {
+        const auto inf_norm = [](const std::vector<double>& values) {
+          double result = 0.0;
+          for (double value : values) result = (std::max)(result, std::abs(value));
+          return result;
+        };
+        const StrainEnergyComponents current_energy = strain_energy_components(q, model);
+        double r_dot_p = 0.0;
+        for (std::size_t index = 0; index < residual_free.size(); ++index)
+          r_dot_p -= residual_free[index] * increment[index];
+        StaticNewtonIterationDiagnostic iteration_diagnostic;
+        iteration_diagnostic.load_step = load_step;
+        iteration_diagnostic.iteration = iteration;
+        iteration_diagnostic.residual_before_step = norm;
+        iteration_diagnostic.residual_normalized_before_step = norm / scale_value;
+        iteration_diagnostic.full_newton_direction_norm = inf_norm(increment);
+        iteration_diagnostic.r_dot_p = r_dot_p;
+        iteration_diagnostic.internal_energy_before = current_energy.total();
+        iteration_diagnostic.finite = std::isfinite(r_dot_p) &&
+                                      std::isfinite(current_energy.total());
+        if (!iteration_diagnostic.finite || r_dot_p >= 0.0) {
+          diagnostics.failure_reason = "STATIC_POTENTIAL_NON_DESCENT_DIRECTION";
+          diagnostics.converged = false;
+          diagnostics.static_newton_trace.push_back(std::move(iteration_diagnostic));
+          return diagnostics;
+        }
+
+        bool accepted = false;
+        for (std::size_t backtrack = 0; backtrack <= 12; ++backtrack) {
+          const double beta = std::ldexp(1.0, -static_cast<int>(backtrack));
+          StaticNewtonTrialDiagnostic trial_diagnostic;
+          trial_diagnostic.beta = beta;
+          trial_diagnostic.r_dot_p = r_dot_p;
+          trial_diagnostic.armijo_rhs = 1.0e-4 * beta * r_dot_p;
+          std::vector<double> trial_q = q;
+          for (std::size_t index = 0; index < free.size(); ++index)
+            trial_q[free[index]] -= beta * increment[index];
+          for (std::size_t i = 0; i < n; ++i) if (fixed[i]) trial_q[i] = prescribed[i];
+
+          double trial_norm = 0.0;
+          try {
+            std::vector<double> trial_internal;
+            Matrix trial_tangent;
+            internal_force_tangent(trial_q, model, trial_internal, trial_tangent);
+            if (!finite_vector(trial_internal) || !finite_matrix(trial_tangent))
+              throw std::runtime_error("static potential trial contains NaN/Inf");
+            std::vector<double> trial_residual(n);
+            for (std::size_t i = 0; i < n; ++i) {
+              trial_residual[i] = trial_internal[i] - factor * base_load[i];
+              if (fixed[i]) trial_residual[i] = 0.0;
+              else trial_norm = (std::max)(trial_norm, std::abs(trial_residual[i]));
+            }
+            const StrainEnergyComponents trial_energy = strain_energy_components(trial_q, model);
+            double delta_potential = trial_energy.total() - current_energy.total();
+            for (std::size_t i = 0; i < n; ++i)
+              delta_potential -= factor * base_load[i] * (trial_q[i] - q[i]);
+            trial_diagnostic.internal_energy = trial_energy.total();
+            trial_diagnostic.delta_potential = delta_potential;
+            trial_diagnostic.residual = trial_norm;
+            trial_diagnostic.finite = std::isfinite(trial_norm) &&
+                                      std::isfinite(delta_potential) &&
+                                      std::isfinite(trial_diagnostic.internal_energy);
+            if (trial_diagnostic.finite) {
+              trial_diagnostic.convergence_pass =
+                  trial_norm <= model.newton_tolerance * scale_value;
+              trial_diagnostic.sufficient_decrease =
+                  delta_potential <= trial_diagnostic.armijo_rhs;
+            }
+          } catch (const std::exception&) {
+            trial_diagnostic.residual = (std::numeric_limits<double>::infinity)();
+            trial_diagnostic.internal_energy = (std::numeric_limits<double>::infinity)();
+            trial_diagnostic.delta_potential = (std::numeric_limits<double>::infinity)();
+            trial_diagnostic.finite = false;
+          }
+          const bool trial_accepted = trial_diagnostic.finite &&
+                                      (trial_diagnostic.convergence_pass ||
+                                       trial_diagnostic.sufficient_decrease);
+          iteration_diagnostic.trials.push_back(trial_diagnostic);
+          if (trial_accepted) {
+            q = std::move(trial_q);
+            diagnostics.residual = trial_norm;
+            converged = trial_diagnostic.convergence_pass;
+            iteration_diagnostic.beta_accepted = beta;
+            iteration_diagnostic.backtrack_count = backtrack;
+            iteration_diagnostic.delta_potential_accepted =
+                trial_diagnostic.delta_potential;
+            iteration_diagnostic.residual_after_accepted_trial = trial_norm;
+            iteration_diagnostic.residual_normalized_after_accepted_trial =
+                trial_norm / scale_value;
+            accepted = true;
+            break;
+          }
+        }
+        if (!accepted) {
+          iteration_diagnostic.line_search_failed = true;
+          diagnostics.static_newton_trace.push_back(std::move(iteration_diagnostic));
+          diagnostics.failure_reason = "STATIC_POTENTIAL_LINE_SEARCH_FAILED";
+          diagnostics.converged = false;
+          return diagnostics;
+        }
+        diagnostics.static_newton_trace.push_back(std::move(iteration_diagnostic));
         continue;
       }
 
@@ -784,7 +949,8 @@ StepDiagnostics static_equilibrium_impl(State& state, const Model& model,
       diagnostics.static_newton_trace.push_back(std::move(iteration_diagnostic));
     }
     if (!converged) {
-      if (mode == StaticSolverMode::BacktrackingNewton) {
+      if (mode == StaticSolverMode::BacktrackingNewton ||
+          mode == StaticSolverMode::PotentialBacktrackingNewton) {
         diagnostics.failure_reason = "STATIC_NEWTON_DID_NOT_CONVERGE";
         diagnostics.converged = false;
         return diagnostics;
@@ -809,7 +975,7 @@ StepDiagnostics static_equilibrium(State& state, const Model& model,
                                    const std::vector<double>& base_load,
                                    std::size_t load_steps, double relaxation) {
   return static_equilibrium_impl(state, model, base_load, load_steps, relaxation,
-                                 StaticSolverMode::LegacyFixedRelaxation);
+                                 StaticSolverMode::LegacyFixedRelaxation, false);
 }
 
 StepDiagnostics static_equilibrium(State& state, const Model& model,
@@ -818,14 +984,29 @@ StepDiagnostics static_equilibrium(State& state, const Model& model,
   if (mode == StaticSolverMode::LegacyFixedRelaxation)
     throw std::invalid_argument(
         "LegacyFixedRelaxation requires an explicit relaxation argument");
-  return static_equilibrium_impl(state, model, base_load, load_steps, 1.0, mode);
+  if (mode == StaticSolverMode::PotentialBacktrackingNewton)
+    throw std::invalid_argument(
+        "PotentialBacktrackingNewton requires an explicit fixed conservative load contract");
+  return static_equilibrium_impl(state, model, base_load, load_steps, 1.0, mode, false);
 }
 
 StepDiagnostics static_equilibrium(State& state, const Model& model,
                                    const std::vector<double>& base_load,
                                    std::size_t load_steps, double relaxation,
                                    StaticSolverMode mode) {
-  return static_equilibrium_impl(state, model, base_load, load_steps, relaxation, mode);
+  return static_equilibrium_impl(state, model, base_load, load_steps, relaxation, mode, false);
+}
+
+StepDiagnostics static_equilibrium(State& state, const Model& model,
+                                   const std::vector<double>& base_load,
+                                   std::size_t load_steps, StaticSolverMode mode,
+                                   StaticLoadContract load_contract) {
+  if (mode != StaticSolverMode::PotentialBacktrackingNewton ||
+      load_contract != StaticLoadContract::FixedConservativeGeneralizedLoad) {
+    throw std::invalid_argument(
+        "fixed conservative load contract is only valid for PotentialBacktrackingNewton");
+  }
+  return static_equilibrium_impl(state, model, base_load, load_steps, 1.0, mode, true);
 }
 
 bool finite(const State& state) {

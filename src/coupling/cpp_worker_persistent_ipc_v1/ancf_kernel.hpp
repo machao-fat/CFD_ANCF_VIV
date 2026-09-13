@@ -78,13 +78,24 @@ struct State {
 
 enum class StaticSolverMode {
   LegacyFixedRelaxation,
-  BacktrackingNewton
+  BacktrackingNewton,
+  PotentialBacktrackingNewton
+};
+
+enum class StaticLoadContract {
+  // Caller asserts that Q_ext is fixed for every trial in the current load
+  // step and derives from the conservative fixed-load potential contract.
+  FixedConservativeGeneralizedLoad
 };
 
 struct StaticNewtonTrialDiagnostic {
   double beta = 0.0;
   double residual = 0.0;
   double merit = 0.0;
+  double internal_energy = 0.0;
+  double delta_potential = 0.0;
+  double armijo_rhs = 0.0;
+  double r_dot_p = 0.0;
   bool finite = false;
   bool convergence_pass = false;
   bool sufficient_decrease = false;
@@ -94,10 +105,15 @@ struct StaticNewtonIterationDiagnostic {
   std::size_t load_step = 0;
   std::size_t iteration = 0;
   double residual_before_step = 0.0;
+  double residual_normalized_before_step = 0.0;
   double full_newton_direction_norm = 0.0;
+  double r_dot_p = 0.0;
+  double internal_energy_before = 0.0;
   double beta_accepted = 0.0;
   std::size_t backtrack_count = 0;
+  double delta_potential_accepted = 0.0;
   double residual_after_accepted_trial = 0.0;
+  double residual_normalized_after_accepted_trial = 0.0;
   bool finite = false;
   bool line_search_failed = false;
   std::vector<StaticNewtonTrialDiagnostic> trials;
@@ -200,6 +216,10 @@ StepDiagnostics static_equilibrium(State& state, const Model& model,
                                    const std::vector<double>& base_load,
                                    std::size_t load_steps, double relaxation,
                                    StaticSolverMode mode);
+StepDiagnostics static_equilibrium(State& state, const Model& model,
+                                   const std::vector<double>& base_load,
+                                   std::size_t load_steps, StaticSolverMode mode,
+                                   StaticLoadContract load_contract);
 void internal_force_tangent(const std::vector<double>& q, const Model& model, std::vector<double>& force, Matrix& tangent);
 void internal_force_tangent(const std::vector<double>& q, const Model& model, std::vector<double>& force,
                             Matrix& tangent, AssemblyTrace* trace);
