@@ -196,6 +196,10 @@ StepDiagnostics static_equilibrium(State& state, const Model& model,
                                    const std::vector<double>& base_load,
                                    std::size_t load_steps,
                                    StaticSolverMode mode);
+StepDiagnostics static_equilibrium(State& state, const Model& model,
+                                   const std::vector<double>& base_load,
+                                   std::size_t load_steps, double relaxation,
+                                   StaticSolverMode mode);
 void internal_force_tangent(const std::vector<double>& q, const Model& model, std::vector<double>& force, Matrix& tangent);
 void internal_force_tangent(const std::vector<double>& q, const Model& model, std::vector<double>& force,
                             Matrix& tangent, AssemblyTrace* trace);

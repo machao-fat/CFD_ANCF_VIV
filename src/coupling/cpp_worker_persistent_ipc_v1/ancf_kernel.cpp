@@ -815,7 +815,17 @@ StepDiagnostics static_equilibrium(State& state, const Model& model,
 StepDiagnostics static_equilibrium(State& state, const Model& model,
                                    const std::vector<double>& base_load,
                                    std::size_t load_steps, StaticSolverMode mode) {
+  if (mode == StaticSolverMode::LegacyFixedRelaxation)
+    throw std::invalid_argument(
+        "LegacyFixedRelaxation requires an explicit relaxation argument");
   return static_equilibrium_impl(state, model, base_load, load_steps, 1.0, mode);
+}
+
+StepDiagnostics static_equilibrium(State& state, const Model& model,
+                                   const std::vector<double>& base_load,
+                                   std::size_t load_steps, double relaxation,
+                                   StaticSolverMode mode) {
+  return static_equilibrium_impl(state, model, base_load, load_steps, relaxation, mode);
 }
 
 bool finite(const State& state) {
