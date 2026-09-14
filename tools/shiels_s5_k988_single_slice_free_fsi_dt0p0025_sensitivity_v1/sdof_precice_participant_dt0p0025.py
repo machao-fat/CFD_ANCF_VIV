@@ -1,4 +1,4 @@
-"""Checkpoint-aware preCICE wrapper around the existing project SDOFRunner.
+"""Checkpoint-aware preCICE wrapper for the isolated dt=0.0025 s run.
 
 This is test-only coupling glue.  It does not replace the project's SDOF
 integrator, ANCF core, OpenFOAM adapter, or force mapping implementation.
@@ -149,6 +149,35 @@ def energy(state: SDOFState) -> float:
     return 0.5 * MASS_KG * state.v**2 + 0.5 * STIFFNESS_NPM * state.y**2
 
 
+def enforce_emergency_protection(*, state: SDOFState, limits: dict[str, float],
+                                 runtime: Path, phase: str, physical_time_s: float,
+                                 window_index: int, iteration_index: int) -> None:
+    """Stop an unsafe trial before it can be committed.
+
+    These are runtime-protection limits only. They intentionally replace neither
+    the historical small-motion attachment gate nor any Shiels comparison metric.
+    """
+    checks = {
+        "abs_y_m": (abs(state.y), limits["max_abs_y_m"]),
+        "abs_v_mps": (abs(state.v), limits["max_abs_v_mps"]),
+    }
+    failed = {name: {"value": value, "limit": limit} for name, (value, limit) in checks.items() if value > limit}
+    if not failed:
+        return
+    append_jsonl(runtime / "events.jsonl", {
+        "event": "emergency_stop",
+        "phase": phase,
+        "physical_time_s": physical_time_s,
+        "window_index": window_index,
+        "iteration_index": iteration_index,
+        "state": state_payload(state),
+        "limits": limits,
+        "violations": failed,
+        "policy": "hard runtime protection only; not a Shiels validation criterion",
+    })
+    raise RuntimeError(f"emergency protection triggered during {phase}: {failed}")
+
+
 def self_test() -> dict[str, Any]:
     """No-preCICE unit checks for the new wrapper's state and unit contract."""
     dt = 0.005
@@ -206,6 +235,15 @@ def run_participant(args: argparse.Namespace) -> int:
     steps = int(contract["coupling"]["accepted_window_limit"])
     start = float(contract["coupling"]["start_of_time_s"])
     initial_force = float(contract["initial_state"]["Fy0_total_N"])
+    protection_raw = contract.get("emergency_protection")
+    if not isinstance(protection_raw, dict):
+        raise RuntimeError("missing emergency_protection contract for this sensitivity run")
+    protection = {
+        "max_abs_y_m": float(protection_raw["max_abs_y_m"]),
+        "max_abs_v_mps": float(protection_raw["max_abs_v_mps"]),
+    }
+    if not all(math.isfinite(value) and value > 0.0 for value in protection.values()):
+        raise RuntimeError("emergency_protection limits must be finite and positive")
     vertex_count = int(args.vertex_count)
     if args.runtime.exists() and (args.runtime / "structure_summary.json").exists():
         raise RuntimeError("structure runtime already has execution evidence; rerun forbidden")
@@ -266,6 +304,10 @@ def run_participant(args: argparse.Namespace) -> int:
             physical_time = start + local_time
             old_state = clone_state(runner.state)
             predicted = runner.predict(local_step, local_time, previous_force)
+            enforce_emergency_protection(
+                state=predicted, limits=protection, runtime=args.runtime, phase="predictor",
+                physical_time_s=physical_time, window_index=local_step, iteration_index=iteration,
+            )
             payload, payload_sha = displacement_payload(predicted.y, vertex_count)
             append_jsonl(args.runtime / "events.jsonl", {
                 "event": "trial_write_displacement", "window_index": local_step, "iteration_index": iteration,
@@ -292,6 +334,10 @@ def run_participant(args: argparse.Namespace) -> int:
                 "predictor_correction_y_m": corrected.y - predicted.y,
                 "predictor_correction_v_mps": corrected.v - predicted.v,
             })
+            enforce_emergency_protection(
+                state=corrected, limits=protection, runtime=args.runtime, phase="corrector",
+                physical_time_s=physical_time, window_index=local_step, iteration_index=iteration,
+            )
             wants_read_after = participant.requires_reading_checkpoint()
             if wants_read_after:
                 before = state_payload(runner.state)
@@ -335,11 +381,12 @@ def run_participant(args: argparse.Namespace) -> int:
         except Exception as exc:
             error = error or f"preCICE finalize: {type(exc).__name__}: {exc}"
     summary = {
-        "schema_version": "shiels-sdof-precice-participant-v1", "status": "completed" if error is None else "failed",
+        "schema_version": "shiels-sdof-precice-participant-dt0p0025-sensitivity-v1", "status": "completed" if error is None else "failed",
         "error": error, "accepted_windows": accepted, "trial_attempts": attempts, "checkpoint_restores": restores,
         "initial_force_y_N": initial_force, "initial_state": initial, "last_accepted_physical_time_s": start + accepted * dt,
         "cumulative_fluid_work_J": cumulative_work, "cumulative_energy_balance_defect_J": cumulative_defect,
         "transport_identity_policy": "preCICE/transport IDs are not restored; only SDOF physical state is restored",
+        "emergency_protection": protection,
     }
     write_json(args.runtime / "structure_summary.json", summary)
     return 0 if error is None else 1
