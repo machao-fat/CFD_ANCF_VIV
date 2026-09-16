@@ -4,6 +4,7 @@
 #include <array>
 #include <chrono>
 #include <cmath>
+#include <cstring>
 #include <limits>
 #include <stdexcept>
 
@@ -761,7 +762,8 @@ StepDiagnostics static_equilibrium_impl(State& state, const Model& model,
           for (double value : values) result = (std::max)(result, std::abs(value));
           return result;
         };
-        const StrainEnergyComponents current_energy = strain_energy_components(q, model);
+        const std::vector<double> iteration_start_q = q;
+        const StrainEnergyComponents current_energy = strain_energy_components(iteration_start_q, model);
         double r_dot_p = 0.0;
         for (std::size_t index = 0; index < residual_free.size(); ++index)
           r_dot_p -= residual_free[index] * increment[index];
@@ -783,16 +785,40 @@ StepDiagnostics static_equilibrium_impl(State& state, const Model& model,
         }
 
         bool accepted = false;
+        constexpr std::array<double, 8> gl8_nodes = {
+            -0.960289856497536231683560868569,
+            -0.796666477413626739591553936475,
+            -0.525532409916328985817739049189,
+            -0.183434642495649804939476142360,
+             0.183434642495649804939476142360,
+             0.525532409916328985817739049189,
+             0.796666477413626739591553936475,
+             0.960289856497536231683560868569};
+        constexpr std::array<double, 8> gl8_weights = {
+            0.101228536290376259152531354310,
+            0.222381034453374470544355994426,
+            0.313706645877887287337962201987,
+            0.362683783378361982965150449277,
+            0.362683783378361982965150449277,
+            0.313706645877887287337962201987,
+            0.222381034453374470544355994426,
+            0.101228536290376259152531354310};
         for (std::size_t backtrack = 0; backtrack <= 12; ++backtrack) {
           const double beta = std::ldexp(1.0, -static_cast<int>(backtrack));
           StaticNewtonTrialDiagnostic trial_diagnostic;
           trial_diagnostic.beta = beta;
           trial_diagnostic.r_dot_p = r_dot_p;
           trial_diagnostic.armijo_rhs = 1.0e-4 * beta * r_dot_p;
-          std::vector<double> trial_q = q;
+          std::vector<double> trial_q = iteration_start_q;
           for (std::size_t index = 0; index < free.size(); ++index)
             trial_q[free[index]] -= beta * increment[index];
           for (std::size_t i = 0; i < n; ++i) if (fixed[i]) trial_q[i] = prescribed[i];
+          for (std::size_t index : free) {
+            if (std::memcmp(&trial_q[index], &iteration_start_q[index], sizeof(double)) != 0)
+              ++trial_diagnostic.changed_free_dof_count;
+          }
+          trial_diagnostic.trial_state_unchanged =
+              trial_diagnostic.changed_free_dof_count == 0;
 
           double trial_norm = 0.0;
           try {
@@ -808,9 +834,32 @@ StepDiagnostics static_equilibrium_impl(State& state, const Model& model,
               else trial_norm = (std::max)(trial_norm, std::abs(trial_residual[i]));
             }
             const StrainEnergyComponents trial_energy = strain_energy_components(trial_q, model);
-            double delta_potential = trial_energy.total() - current_energy.total();
-            for (std::size_t i = 0; i < n; ++i)
-              delta_potential -= factor * base_load[i] * (trial_q[i] - q[i]);
+            double line_integral_sum = 0.0;
+            for (std::size_t quadrature = 0; quadrature < gl8_nodes.size(); ++quadrature) {
+              const double t = 0.5 * beta * (1.0 + gl8_nodes[quadrature]);
+              std::vector<double> quadrature_q = iteration_start_q;
+              for (std::size_t index = 0; index < free.size(); ++index)
+                quadrature_q[free[index]] -= t * increment[index];
+              for (std::size_t i = 0; i < n; ++i) if (fixed[i]) quadrature_q[i] = prescribed[i];
+              std::vector<double> quadrature_internal;
+              Matrix quadrature_tangent;
+              internal_force_tangent(quadrature_q, model, quadrature_internal,
+                                     quadrature_tangent);
+              if (!finite_vector(quadrature_internal) || !finite_matrix(quadrature_tangent))
+                throw std::runtime_error("static potential quadrature state contains NaN/Inf");
+              double integrand = 0.0;
+              for (std::size_t index = 0; index < free.size(); ++index) {
+                const double quadrature_residual =
+                    quadrature_internal[free[index]] - factor * base_load[free[index]];
+                integrand -= quadrature_residual * increment[index];
+              }
+              if (!std::isfinite(integrand))
+                throw std::runtime_error("static potential quadrature integrand contains NaN/Inf");
+              line_integral_sum += gl8_weights[quadrature] * integrand;
+              if (!std::isfinite(line_integral_sum))
+                throw std::runtime_error("static potential line integral contains NaN/Inf");
+            }
+            const double delta_potential = 0.5 * beta * line_integral_sum;
             trial_diagnostic.internal_energy = trial_energy.total();
             trial_diagnostic.delta_potential = delta_potential;
             trial_diagnostic.residual = trial_norm;
@@ -830,6 +879,7 @@ StepDiagnostics static_equilibrium_impl(State& state, const Model& model,
             trial_diagnostic.finite = false;
           }
           const bool trial_accepted = trial_diagnostic.finite &&
+                                      !trial_diagnostic.trial_state_unchanged &&
                                       (trial_diagnostic.convergence_pass ||
                                        trial_diagnostic.sufficient_decrease);
           iteration_diagnostic.trials.push_back(trial_diagnostic);

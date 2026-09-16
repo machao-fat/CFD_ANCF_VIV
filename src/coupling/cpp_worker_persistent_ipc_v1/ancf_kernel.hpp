@@ -99,6 +99,8 @@ struct StaticNewtonTrialDiagnostic {
   bool finite = false;
   bool convergence_pass = false;
   bool sufficient_decrease = false;
+  std::size_t changed_free_dof_count = 0;
+  bool trial_state_unchanged = false;
 };
 
 struct StaticNewtonIterationDiagnostic {
