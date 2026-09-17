@@ -734,6 +734,7 @@ StepDiagnostics static_equilibrium_impl(State& state, const Model& model,
   double scale_value = 1.0;
   for (std::size_t i : free) scale_value = (std::max)(scale_value, std::abs(base_load[i]));
   StepDiagnostics diagnostics;
+  diagnostics.residual_scale = scale_value;
   std::vector<double> q = state.q;
   for (std::size_t load_step = 1; load_step <= load_steps; ++load_step) {
     const double factor = static_cast<double>(load_step) / static_cast<double>(load_steps);
