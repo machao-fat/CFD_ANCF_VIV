@@ -37,6 +37,13 @@ constexpr std::size_t ID_CASE = 64;
 constexpr std::size_t ID_ENDPOINT = 32;
 constexpr std::size_t ID_BOUNDARY = 64;
 constexpr std::int32_t EXTENDED_LAYOUT_MARKER = 0x314C5845;
+constexpr std::uint32_t SECTION_PROPERTY_EXTENSION_MARKER = 0x31585053;
+constexpr std::uint32_t SECTION_PROPERTY_EXTENSION_VERSION = 1;
+constexpr std::uint32_t SECTION_PROPERTY_MODE_EXPLICIT = 1;
+constexpr std::uint32_t BASE_LOAD_SOURCE_EXTENSION_MARKER = 0x31534C42;
+constexpr std::uint32_t BASE_LOAD_SOURCE_EXTENSION_VERSION = 1;
+constexpr std::uint32_t BASE_LOAD_SOURCE_CALLER = 0;
+constexpr std::uint32_t BASE_LOAD_SOURCE_MODEL_STATIC = 1;
 constexpr char REQUEST_PRODUCER[] = "python_scheduler";
 constexpr char REQUEST_CONSUMER[] = "cpp_ancf_kernel_worker";
 constexpr char WORKER_ROLE[] = "cfd_ancf_kernel_worker_v1";
@@ -299,6 +306,47 @@ int process_step(const std::vector<char>& payload, std::vector<char>& response,
   }
   model.slice_positions_m.resize(static_cast<std::size_t>(slices));
   for (double& position : model.slice_positions_m) if (!take(payload, offset, position)) return 4;
+  // Section properties are a versioned trailer after the historical model
+  // bytes.  An absent trailer is the exact legacy wire contract.
+  std::uint32_t section_marker = 0;
+  if (offset <= payload.size() && sizeof(section_marker) <= payload.size() - offset) {
+    std::memcpy(&section_marker, payload.data() + offset, sizeof(section_marker));
+  }
+  if (section_marker == SECTION_PROPERTY_EXTENSION_MARKER) {
+    constexpr std::size_t section_extension_size = 3 * sizeof(std::uint32_t) + 4 * sizeof(double);
+    if (section_extension_size > payload.size() - offset) return 4;
+    std::uint32_t section_version = 0, section_mode = 0;
+    if (!take(payload, offset, section_marker) || !take(payload, offset, section_version) ||
+        !take(payload, offset, section_mode) ||
+        !take(payload, offset, model.explicit_EA_N) ||
+        !take(payload, offset, model.explicit_EI_Nm2) ||
+        !take(payload, offset, model.explicit_mass_per_length_kg_m) ||
+        !take(payload, offset, model.explicit_displaced_area_m2) ||
+        section_version != SECTION_PROPERTY_EXTENSION_VERSION ||
+        section_mode != SECTION_PROPERTY_MODE_EXPLICIT) return 4;
+    model.section_property_mode = cfd_ancf::SectionPropertyMode::ExplicitSectionProperties;
+  }
+  enum class BaseLoadSource { CallerSupplied, ModelStatic };
+  BaseLoadSource base_load_source = BaseLoadSource::CallerSupplied;
+  std::uint32_t base_load_marker = 0;
+  if (offset <= payload.size() && sizeof(base_load_marker) <= payload.size() - offset) {
+    std::memcpy(&base_load_marker, payload.data() + offset, sizeof(base_load_marker));
+  }
+  if (base_load_marker == BASE_LOAD_SOURCE_EXTENSION_MARKER) {
+    constexpr std::size_t base_load_extension_size = 3 * sizeof(std::uint32_t);
+    if (base_load_extension_size > payload.size() - offset) return 4;
+    std::uint32_t base_load_version = 0, base_load_mode = 0;
+    if (!take(payload, offset, base_load_marker) || !take(payload, offset, base_load_version) ||
+        !take(payload, offset, base_load_mode) ||
+        base_load_version != BASE_LOAD_SOURCE_EXTENSION_VERSION) return 4;
+    if (base_load_mode == BASE_LOAD_SOURCE_CALLER) {
+      base_load_source = BaseLoadSource::CallerSupplied;
+    } else if (base_load_mode == BASE_LOAD_SOURCE_MODEL_STATIC) {
+      base_load_source = BaseLoadSource::ModelStatic;
+    } else {
+      return 4;
+    }
+  }
   const std::size_t model_end = offset;
   model.elements = static_cast<std::size_t>(elements);
   model.slices = static_cast<std::size_t>(slices);
@@ -508,13 +556,22 @@ int process_step(const std::vector<char>& payload, std::vector<char>& response,
     if (!exactly_symmetric(state.mass)) return 17;
   }
   const std::vector<double> slice_force(input.begin() + static_cast<std::ptrdiff_t>(input_offset), input.end());
-  state.q = q; state.qdot = qdot; state.qddot = qddot; state.base_load = base_load;
+  std::vector<double> effective_base_load = base_load;
+  if (base_load_source == BaseLoadSource::ModelStatic) {
+    try {
+      effective_base_load = cfd_ancf::static_base_load(model);
+    } catch (const std::exception& error) {
+      std::cerr << "static_base_load exception: " << error.what() << '\n';
+      return 12;
+    }
+  }
+  state.q = q; state.qdot = qdot; state.qddot = qddot; state.base_load = effective_base_load;
   if (global_step <= 0 || time_s < dt_s) return 10;
   state.time_s = time_s - dt_s; state.step = static_cast<std::size_t>(global_step - 1);
   std::vector<double> internal_before; cfd_ancf::Matrix tangent;
   cfd_ancf::internal_force_tangent(state.q, model, internal_before, tangent);
   const std::vector<double> external = cfd_ancf::external_force(model, slice_force);
-  std::vector<double> generalized = base_load;
+  std::vector<double> generalized = effective_base_load;
   for (std::size_t index = 0; index < generalized.size(); ++index) generalized[index] += external[index];
   cfd_ancf::StepDiagnostics diagnostics;
   try {

@@ -21,6 +21,17 @@ REQUEST_CONSUMER = "cpp_ancf_kernel_worker"
 MAX_NDOF = 2048
 MAX_NEWTON = 1000
 EXTENDED_LAYOUT_MARKER = 0x314C5845  # "EXL1", little-endian
+SECTION_PROPERTY_EXTENSION_MARKER = 0x31585053  # "SPX1", little-endian
+SECTION_PROPERTY_EXTENSION_VERSION = 1
+SECTION_PROPERTY_MODE_LEGACY = "legacy_physical"
+SECTION_PROPERTY_MODE_EXPLICIT = "explicit"
+_SECTION_PROPERTY_MODE_EXPLICIT_WIRE = 1
+BASE_LOAD_SOURCE_CALLER = "caller_supplied"
+BASE_LOAD_SOURCE_MODEL_STATIC = "model_static"
+BASE_LOAD_SOURCE_EXTENSION_MARKER = 0x31534C42  # "BLS1", little-endian
+BASE_LOAD_SOURCE_EXTENSION_VERSION = 1
+_BASE_LOAD_SOURCE_CALLER_WIRE = 0
+_BASE_LOAD_SOURCE_MODEL_STATIC_WIRE = 1
 CANONICAL_BOUNDARY_CONTRACT_ID = "ancf_v1_bottom_top_xy_zero"
 
 # v1 is a positional response schema without per-field wire labels. Preserve
@@ -37,6 +48,7 @@ RESPONSE_FIELD_SEMANTICS = {
 
 _PREFIX = struct.Struct("<IIIiiQddiiiiiQQ")
 _MODEL = struct.Struct("<13dii")
+_SECTION_PROPERTY_EXTENSION = struct.Struct("<III4d")
 _BOUNDARY_ID = 64
 _RESPONSE_PREFIX = struct.Struct("<IIIiiQdiiidQQI")
 
@@ -101,6 +113,15 @@ class KernelModel:
     # intentionally requires both owned components to be enabled.
     include_gravity: bool = True
     include_buoyancy: bool = True
+    # Appended fields preserve source compatibility for existing positional
+    # callers.  None means that no explicit section value was supplied.
+    section_property_mode: str = SECTION_PROPERTY_MODE_LEGACY
+    explicit_EA_N: float | None = None
+    explicit_EI_Nm2: float | None = None
+    explicit_mass_per_length_kg_m: float | None = None
+    explicit_displaced_area_m2: float | None = None
+    # Missing means the historical caller-supplied base-load path.
+    base_load_source: str = BASE_LOAD_SOURCE_CALLER
 
     @property
     def ndof(self) -> int:
@@ -109,6 +130,32 @@ class KernelModel:
         return 6 * (self.elements + 1)
 
     def validate(self, dt_s: float) -> None:
+        mode = self.section_property_mode
+        if mode not in (SECTION_PROPERTY_MODE_LEGACY, SECTION_PROPERTY_MODE_EXPLICIT):
+            raise FrameError("kernel section_property_mode is unknown")
+        if self.base_load_source not in (BASE_LOAD_SOURCE_CALLER, BASE_LOAD_SOURCE_MODEL_STATIC):
+            raise FrameError("kernel base_load_source is unknown")
+        explicit_values = (
+            self.explicit_EA_N,
+            self.explicit_EI_Nm2,
+            self.explicit_mass_per_length_kg_m,
+            self.explicit_displaced_area_m2,
+        )
+        if mode == SECTION_PROPERTY_MODE_LEGACY:
+            if any(value is not None for value in explicit_values):
+                raise FrameError("explicit section properties require explicit section_property_mode")
+        else:
+            for name, value in (
+                ("explicit_EA_N", self.explicit_EA_N),
+                ("explicit_EI_Nm2", self.explicit_EI_Nm2),
+                ("explicit_mass_per_length_kg_m", self.explicit_mass_per_length_kg_m),
+                ("explicit_displaced_area_m2", self.explicit_displaced_area_m2),
+            ):
+                if isinstance(value, bool) or not isinstance(value, Real):
+                    raise FrameError(f"kernel model {name} is missing or not numeric")
+                value = float(value)
+                if not math.isfinite(value) or value <= 0.0:
+                    raise FrameError(f"kernel model {name} must be finite and positive")
         for name, value in (("elements", self.elements), ("slices", self.slices),
                             ("gauss_order", self.gauss_order), ("mass_gauss_order", self.mass_gauss_order),
                             ("max_newton", self.max_newton)):
@@ -177,16 +224,33 @@ class KernelModel:
                            self.fluid_density, self.gravity, self.beta, self.gamma,
                            self.newton_tolerance, self.damping_alpha, self.damping_beta,
                            self.gauss_order, self.max_newton)
-        # Preserve the v1 legacy byte layout for the canonical contract so
-        # previously built offline workers remain readable.  Any non-default
-        # boundary or mass rule is forced onto the explicit extension layout.
-        explicit = bool(self.fixed_dof or self.prescribed_values or self.mass_gauss_order != 5 or
-                        self.boundary_contract_id != CANONICAL_BOUNDARY_CONTRACT_ID)
-        if not explicit:
-            return base + struct.pack("<" + "d" * self.slices, *positions)
-        return base + struct.pack("<Iii", EXTENDED_LAYOUT_MARKER, self.mass_gauss_order, len(fixed)) + boundary + \
-            struct.pack("<" + "i" * len(fixed), *fixed) + struct.pack("<" + "d" * len(prescribed), *prescribed) + \
-            struct.pack("<" + "d" * self.slices, *positions)
+        positions_bytes = struct.pack("<" + "d" * self.slices, *positions)
+        has_custom_boundary = bool(self.fixed_dof or self.prescribed_values or self.mass_gauss_order != 5 or
+                                   self.boundary_contract_id != CANONICAL_BOUNDARY_CONTRACT_ID)
+        if has_custom_boundary:
+            model_bytes = base + struct.pack("<Iii", EXTENDED_LAYOUT_MARKER, self.mass_gauss_order, len(fixed)) + boundary + \
+                struct.pack("<" + "i" * len(fixed), *fixed) + struct.pack("<" + "d" * len(prescribed), *prescribed) + \
+                positions_bytes
+        else:
+            model_bytes = base + positions_bytes
+        if self.section_property_mode == SECTION_PROPERTY_MODE_EXPLICIT:
+            model_bytes += _SECTION_PROPERTY_EXTENSION.pack(
+                SECTION_PROPERTY_EXTENSION_MARKER,
+                SECTION_PROPERTY_EXTENSION_VERSION,
+                _SECTION_PROPERTY_MODE_EXPLICIT_WIRE,
+                float(self.explicit_EA_N),
+                float(self.explicit_EI_Nm2),
+                float(self.explicit_mass_per_length_kg_m),
+                float(self.explicit_displaced_area_m2),
+            )
+        if self.base_load_source == BASE_LOAD_SOURCE_MODEL_STATIC:
+            model_bytes += struct.pack(
+                "<III",
+                BASE_LOAD_SOURCE_EXTENSION_MARKER,
+                BASE_LOAD_SOURCE_EXTENSION_VERSION,
+                _BASE_LOAD_SOURCE_MODEL_STATIC_WIRE,
+            )
+        return model_bytes
 
 
 @dataclass(frozen=True)
