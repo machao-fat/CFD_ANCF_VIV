@@ -101,13 +101,16 @@ class GenericANCFParticipant:
     def __init__(self, config: CaseConfig, backends: Sequence[Any], worker: Any,
                  *, vertex_count: int | None = None) -> None:
         self.config = config
-        self.model = config.kernel_model()
         if len(backends) != len(config.slices()):
             raise ParticipantError("backend count must equal configured slice count")
         self.backends = tuple(backends)
         self.worker = worker
         self.vertex_count = vertex_count
         state = config.initial_state()
+        boundary_override = None
+        if "boundary_fixed_dof" in state and "boundary_prescribed_values" in state:
+            boundary_override = (state["boundary_fixed_dof"], state["boundary_prescribed_values"])
+        self.model = config.kernel_model(boundary_override)
         self.q = tuple(state["q"]); self.qdot = tuple(state["qdot"]); self.qddot = tuple(state["qddot"])
         self.base_load = tuple(state["base_load"])
         self.time_s = float(state["time_s"])

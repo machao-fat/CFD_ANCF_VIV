@@ -45,6 +45,7 @@ SCHEMA_VERSION = 1
 SECTION_MODES = ("legacy_physical", "explicit")
 BASE_LOAD_SOURCES = ("caller_supplied", "model_static")
 STATE_KINDS = ("fresh", "prestressed_start", "restart")
+PRESTRESS_MODES = ("none", "installed_stretch_target_top_reaction")
 FORCE_REPRESENTATION = "integrated_slice_force_N"
 MOTION_COMPONENTS = ("x", "y")
 PINNED_PRESET = "pinned_position_both_ends"
@@ -259,6 +260,23 @@ class CaseConfig:
             raise CaseConfigError("max_newton exceeds the current worker contract")
         if numerics.get("damping_alpha", 0.0) != 0.0 or numerics.get("damping_beta", 0.0) != 0.0:
             raise CaseConfigError("STRUCTURAL_DAMPING_NOT_SUPPORTED_V1")
+        prestress = root.get("prestress", {"mode": "none"})
+        prestress = _mapping(prestress, "prestress")
+        prestress_mode = prestress.get("mode", "none")
+        if prestress_mode not in PRESTRESS_MODES:
+            raise CaseConfigError("prestress.mode is invalid")
+        if prestress_mode == "installed_stretch_target_top_reaction":
+            _positive(prestress.get("target_reaction_N"), "prestress.target_reaction_N")
+            axis = _vector(prestress.get("installation_axis"), "prestress.installation_axis", 3)
+            if math.sqrt(sum(item * item for item in axis)) <= 0.0:
+                raise CaseConfigError("prestress.installation_axis must be nonzero")
+            low = _finite(prestress.get("delta_length_low_m"), "prestress.delta_length_low_m")
+            high = _finite(prestress.get("delta_length_high_m"), "prestress.delta_length_high_m")
+            if low >= high or low <= -length or high <= -length:
+                raise CaseConfigError("prestress delta-length bracket is invalid")
+            _positive(prestress.get("relative_target_tolerance"), "prestress.relative_target_tolerance")
+            _positive_int(prestress.get("max_iterations"), "prestress.max_iterations")
+            _positive_int(prestress.get("static_load_steps", 40), "prestress.static_load_steps")
 
     @property
     def case_id(self) -> str:
@@ -288,6 +306,46 @@ class CaseConfig:
     def model_identity_sha256(self) -> str:
         fields = {key: self.raw[key] for key in ("model", "section", "environment", "base_load", "boundary")}
         return canonical_sha256(_physics_view(fields))
+
+    def model_identity_sha256_for_boundary(self, fixed_dof: Sequence[int],
+                                           prescribed_values: Sequence[float]) -> str:
+        fixed = tuple(int(value) for value in fixed_dof)
+        prescribed = tuple(_finite(value, f"prescribed_values[{index}]")
+                           for index, value in enumerate(prescribed_values))
+        if len(fixed) != len(prescribed):
+            raise CaseConfigError("resolved boundary arrays must have equal length")
+        fields = {key: deepcopy(self.raw[key]) for key in
+                  ("model", "section", "environment", "base_load")}
+        fields["boundary"] = {
+            "contract_id": self.raw["boundary"]["contract_id"],
+            "fixed_dof": list(fixed),
+            "prescribed_values": list(prescribed),
+        }
+        return canonical_sha256(_physics_view(fields))
+
+    def prestress_spec(self) -> dict[str, Any]:
+        value = dict(_mapping(self.raw.get("prestress", {"mode": "none"}), "prestress"))
+        mode = value.get("mode", "none")
+        if mode == "none":
+            return {"mode": "none"}
+        axis = _vector(value["installation_axis"], "prestress.installation_axis", 3)
+        magnitude = math.sqrt(sum(item * item for item in axis))
+        fixed, prescribed = self.boundary_arrays()
+        expected_fixed = (0, 1, 2, 6 * self.elements, 6 * self.elements + 1, 6 * self.elements + 2)
+        if tuple(fixed) != expected_fixed:
+            raise CaseConfigError("PRESTRESS_BOUNDARY_CONTRACT_UNSUPPORTED_V1")
+        return {
+            "mode": mode,
+            "target_reaction_N": _positive(value["target_reaction_N"], "prestress.target_reaction_N"),
+            "installation_axis": tuple(item / magnitude for item in axis),
+            "delta_length_low_m": _finite(value["delta_length_low_m"], "prestress.delta_length_low_m"),
+            "delta_length_high_m": _finite(value["delta_length_high_m"], "prestress.delta_length_high_m"),
+            "relative_target_tolerance": _positive(value["relative_target_tolerance"], "prestress.relative_target_tolerance"),
+            "max_iterations": _positive_int(value["max_iterations"], "prestress.max_iterations"),
+            "static_load_steps": _positive_int(value.get("static_load_steps", 40), "prestress.static_load_steps"),
+            "bottom_position_m": tuple(prescribed[:3]),
+            "configured_top_position_m": tuple(prescribed[3:6]),
+        }
 
     def _metadata(self) -> Mapping[str, Any]:
         model = _mapping(self.raw["model"], "model")
@@ -383,7 +441,7 @@ class CaseConfig:
         return tuple(_vector(item, f"reference_positions_m[{i}]", 3)  # type: ignore[misc]
                      for i, item in enumerate(values))
 
-    def kernel_model(self) -> KernelModel:
+    def kernel_model(self, boundary_override: tuple[Sequence[int], Sequence[float]] | None = None) -> KernelModel:
         mode, section = self._section_values()
         meta = self._metadata()
         if mode == "legacy_physical":
@@ -399,7 +457,12 @@ class CaseConfig:
             material_density = _positive(meta.get("material_density", 7850.0), "model.kernel_metadata.material_density")
         if inner < 0.0 or inner >= diameter:
             raise CaseConfigError("kernel metadata requires 0 <= inner_diameter_m < diameter_m")
-        boundary_fixed, prescribed = self.boundary_arrays()
+        boundary_fixed, prescribed = self.boundary_arrays() if boundary_override is None else (
+            tuple(int(value) for value in boundary_override[0]),
+            tuple(_finite(value, f"resolved prescribed_values[{index}]")
+                  for index, value in enumerate(boundary_override[1])))
+        if len(boundary_fixed) != len(prescribed):
+            raise CaseConfigError("resolved boundary arrays must have equal length")
         numerics = self.raw["numerics"]
         env = self.raw["environment"]
         model = self.raw["model"]
@@ -473,8 +536,20 @@ class CaseConfig:
                 raise CaseConfigError("STATE_IDENTITY_FAIL: section identity mismatch")
             if state.get("environment") is not None and _physics_view(state["environment"]) != _physics_view(self._state_environment_identity()):
                 raise CaseConfigError("STATE_IDENTITY_FAIL: environment identity mismatch")
-            if state.get("boundary") is not None and _physics_view(state["boundary"]) != _physics_view(self._state_boundary_identity()):
-                raise CaseConfigError("STATE_IDENTITY_FAIL: boundary identity mismatch")
+            state_boundary = state.get("boundary")
+            if state_boundary is not None:
+                expected_boundary = self._state_boundary_identity()
+                boundary_same = _physics_view(state_boundary) == _physics_view(expected_boundary)
+                prestressed_resolved = (kind == "prestressed_start" and
+                                        state.get("state_kind") == "prestressed_static" and
+                                        state.get("source_model_identity_sha256") == self.model_identity_sha256)
+                if not boundary_same and not prestressed_resolved:
+                    raise CaseConfigError("STATE_IDENTITY_FAIL: boundary identity mismatch")
+                if prestressed_resolved:
+                    fixed = tuple(int(value) for value in state_boundary.get("fixed_dof", ()))
+                    expected_fixed = self.boundary_arrays()[0]
+                    if fixed != expected_fixed or state_boundary.get("contract_id") != self.raw["boundary"]["contract_id"]:
+                        raise CaseConfigError("STATE_IDENTITY_FAIL: resolved boundary topology mismatch")
             state_base = state.get("base_load")
             if isinstance(state_base, Mapping):
                 if state_base.get("source") != self.raw["base_load"]["source"]:
@@ -492,13 +567,23 @@ class CaseConfig:
                 raise CaseConfigError("prestressed_start requires state_file")
             if state.get("case_config_sha256") != self.config_sha256:
                 raise CaseConfigError("STATE_IDENTITY_FAIL: case_config_sha256 mismatch")
-            if state.get("model_identity_sha256") != self.model_identity_sha256:
+            state_model_identity = state.get("model_identity_sha256")
+            if state.get("state_kind") == "prestressed_static":
+                if state.get("source_model_identity_sha256") != self.model_identity_sha256:
+                    raise CaseConfigError("STATE_IDENTITY_FAIL: source model identity mismatch")
+                if state_model_identity != state.get("resolved_static_model_identity_sha256"):
+                    raise CaseConfigError("STATE_IDENTITY_FAIL: resolved model identity mismatch")
+            elif state_model_identity != self.model_identity_sha256:
                 raise CaseConfigError("STATE_IDENTITY_FAIL: model_identity_sha256 mismatch")
-            if state.get("state_kind") not in ("prestressed_start", "static_equilibrium"):
+            if state.get("state_kind") not in ("prestressed_start", "static_equilibrium", "prestressed_static"):
                 raise CaseConfigError("STATE_IDENTITY_FAIL: state is not a prestressed/static artifact")
-            result["qdot"] = _vector(initial.get("qdot", (0.0,) * model.ndof), "initial_state.qdot", model.ndof)
-            result["qddot"] = _vector(initial.get("qddot", (0.0,) * model.ndof), "initial_state.qddot", model.ndof)
+            result["qdot"] = _vector(state.get("qdot", (0.0,) * model.ndof), "state.qdot", model.ndof)
+            result["qddot"] = _vector(state.get("qddot", (0.0,) * model.ndof), "state.qddot", model.ndof)
             result["time_s"] = 0.0; result["global_step"] = 0
+            if state.get("boundary") is not None:
+                result["boundary_fixed_dof"] = tuple(int(value) for value in state["boundary"]["fixed_dof"])
+                result["boundary_prescribed_values"] = _vector(
+                    state["boundary"]["prescribed_values"], "state.boundary.prescribed_values")
         elif kind == "restart":
             if path is None:
                 raise CaseConfigError("restart requires state_file")

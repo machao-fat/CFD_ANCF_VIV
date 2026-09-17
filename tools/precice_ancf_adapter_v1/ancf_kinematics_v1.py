@@ -78,6 +78,23 @@ def shape_functions(local_x_m: object, element_length_m: object) -> Tuple[float,
         length * (-xi * xi + xi * xi * xi),
     )
 
+
+def shape_function_derivatives(local_x_m: object, element_length_m: object) -> Tuple[float, float, float, float]:
+    """Return d(N1,N2,N3,N4)/dx for the canonical ANCF Hermite element."""
+
+    x = _finite(local_x_m, "local_x_m")
+    length = _positive(element_length_m, "element_length_m")
+    xi = x / length
+    if xi < -1.0e-12 or xi > 1.0 + 1.0e-12:
+        raise KinematicsError("local_x_m lies outside the element")
+    xi = min(1.0, max(0.0, xi))
+    return (
+        (-6.0 * xi + 6.0 * xi * xi) / length,
+        1.0 - 4.0 * xi + 3.0 * xi * xi,
+        (6.0 * xi - 6.0 * xi * xi) / length,
+        -2.0 * xi + 3.0 * xi * xi,
+    )
+
 def shape_matrix(s_m: object, length_m: object, elements: int) -> Tuple[Tuple[float, ...], ...]:
     """Return the 3 x ndof canonical ANCF position matrix at s."""
 
@@ -107,6 +124,34 @@ def velocity_at_s(qdot: Sequence[float], s_m: object, length_m: object, elements
 
 def acceleration_at_s(qddot: Sequence[float], s_m: object, length_m: object, elements: int) -> Tuple[float, float, float]:
     return _mat_vec(shape_matrix(s_m, length_m, elements), qddot, "qddot")
+
+
+def gradient_at_s(q: Sequence[float], s_m: object, length_m: object,
+                  elements: int) -> Tuple[float, float, float]:
+    """Interpolate the material gradient r_s at an arbitrary reference s."""
+
+    length = _positive(length_m, "length_m")
+    if isinstance(elements, bool) or not isinstance(elements, int) or elements < 1:
+        raise KinematicsError("elements must be an integer >= 1")
+    s = _finite(s_m, "s_m")
+    if s < 0.0 or s > length:
+        raise KinematicsError("s_m lies outside the model")
+    if len(q) != NODE_DOF_STRIDE * (elements + 1):
+        raise KinematicsError("q dimension does not match ANCF model")
+    element_length = length / elements
+    element = elements - 1 if s == length else min(elements - 1, int(s / element_length))
+    local_x = s - element * element_length
+    d1, d2, d3, d4 = shape_function_derivatives(local_x, element_length)
+    values = tuple(float(value) for value in q)
+    result = []
+    for component in range(3):
+        result.append(
+            d1 * values[6 * element + component]
+            + d2 * values[6 * element + 3 + component]
+            + d3 * values[6 * (element + 1) + component]
+            + d4 * values[6 * (element + 1) + 3 + component]
+        )
+    return tuple(result)  # type: ignore[return-value]
 
 
 def interpolate_state(
