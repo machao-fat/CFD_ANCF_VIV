@@ -1,0 +1,70 @@
+{
+  "schema_version": 1,
+  "case_identity": {
+    "case_id": "generic_fixture_case",
+    "run_id": "generic_fixture_run"
+  },
+  "model": {
+    "length_m": 10.0,
+    "elements": 2,
+    "kernel_metadata": {
+      "diameter_m": 0.05,
+      "inner_diameter_m": 0.04,
+      "youngs_modulus_Pa": 2000000000.0,
+      "material_density": 2000.0,
+      "top_tension_N": 0.0
+    }
+  },
+  "section": {
+    "mode": "explicit",
+    "explicit": {
+      "EA_N": 1413716.6941154075,
+      "EI_Nm2": 362.26490286707315,
+      "mass_per_length_kg_m": 2.827433388230815,
+      "displaced_area_m2": 0.001963495408493621
+    }
+  },
+  "environment": {
+    "rho_fluid_kg_m3": 1000.0,
+    "gravity_m_s2": 9.81
+  },
+  "base_load": {
+    "source": "caller_supplied",
+    "vector": [0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0]
+  },
+  "boundary": {
+    "contract_id": "generic_fixture_custom",
+    "fixed_dof": [0, 1, 2],
+    "prescribed_values": [0.0, 0.0, 0.0]
+  },
+  "initial_state": {
+    "kind": "fresh",
+    "q": [0.0, 0.0, 0.0, 0.0, 0.0, 1.0, 0.0, 0.0, 5.0, 0.0, 0.0, 1.0, 0.0, 0.0, 10.0, 0.0, 0.0, 1.0],
+    "qdot": [0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0],
+    "qddot": [0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0],
+    "reference_geometry": "case_geometry",
+    "reference_positions_m": [[0.0, 0.0, 0.0], [0.0, 0.0, 2.5], [0.0, 0.0, 5.0], [0.0, 0.0, 7.5], [0.0, 0.0, 10.0]]
+  },
+  "coupling": {
+    "slices": [
+      {"slice_id": 0, "s_ref_m": 0.0, "slice_length_m": 2.0, "unit_span_m": 1.0},
+      {"slice_id": 1, "s_ref_m": 2.5, "slice_length_m": 2.0, "unit_span_m": 1.0},
+      {"slice_id": 2, "s_ref_m": 5.0, "slice_length_m": 2.0, "unit_span_m": 1.0},
+      {"slice_id": 3, "s_ref_m": 7.5, "slice_length_m": 2.0, "unit_span_m": 1.0},
+      {"slice_id": 4, "s_ref_m": 10.0, "slice_length_m": 2.0, "unit_span_m": 1.0}
+    ],
+    "force_representation": "integrated_slice_force_N",
+    "motion_components": ["x", "y"]
+  },
+  "numerics": {
+    "dt_s": 0.01,
+    "beta": 0.25,
+    "gamma": 0.5,
+    "newton_tolerance": 1e-8,
+    "gauss_order": 3,
+    "mass_gauss_order": 5,
+    "max_newton": 40,
+    "damping_alpha": 0.0,
+    "damping_beta": 0.0
+  }
+}
