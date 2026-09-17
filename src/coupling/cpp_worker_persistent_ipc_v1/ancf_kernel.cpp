@@ -201,13 +201,23 @@ void element_force_tangent(const std::vector<double>& qe, double Le, double EA, 
 }
 
 double Model::area() const { return PI*(diameter_m*diameter_m-inner_diameter_m*inner_diameter_m)/4.0; }
-double Model::displaced_area() const { return PI*diameter_m*diameter_m/4.0; }
-double Model::EA() const { return youngs_modulus_Pa*area(); }
+double Model::displaced_area() const {
+  if (section_property_mode == SectionPropertyMode::ExplicitSectionProperties)
+    return explicit_displaced_area_m2;
+  return PI*diameter_m*diameter_m/4.0;
+}
+double Model::EA() const {
+  if (section_property_mode == SectionPropertyMode::ExplicitSectionProperties)
+    return explicit_EA_N;
+  return youngs_modulus_Pa*area();
+}
 // Match the scalar multiplication path used by the MATLAB material fixture.
 // The shape-function power path is handled explicitly above; retaining the
 // original product order here is an independent A/B variable for the
 // MATLAB/C++ forensic comparison.
 double Model::EI() const {
+  if (section_property_mode == SectionPropertyMode::ExplicitSectionProperties)
+    return explicit_EI_Nm2;
   const double diameter_squared = diameter_m * diameter_m;
   const double inner_squared = inner_diameter_m * inner_diameter_m;
   const double diameter_fourth = diameter_squared * diameter_squared;
@@ -215,11 +225,23 @@ double Model::EI() const {
   return youngs_modulus_Pa * PI * (diameter_fourth - inner_fourth) / 64.0;
 }
 
+double Model::mass_per_length() const {
+  if (section_property_mode == SectionPropertyMode::ExplicitSectionProperties)
+    return explicit_mass_per_length_kg_m;
+  return material_density * area();
+}
+
 void validate_model(const Model& model) {
   const auto finite = [](double value) { return std::isfinite(value); };
+  const bool legacy_section =
+      model.section_property_mode == SectionPropertyMode::LegacyPhysicalSection;
+  const bool explicit_section =
+      model.section_property_mode == SectionPropertyMode::ExplicitSectionProperties;
   if (model.elements < 1 || model.elements > 10000 || model.slices < 1 || model.slices > 1000 || model.ndof() > MAX_NDOF ||
-      model.length_m <= 0.0 || model.diameter_m <= model.inner_diameter_m ||
-      model.inner_diameter_m < 0.0 || model.dt_s <= 0.0 || model.beta <= 0.0 ||
+      model.length_m <= 0.0 ||
+      (legacy_section && (model.diameter_m <= model.inner_diameter_m ||
+                          model.inner_diameter_m < 0.0)) ||
+      (!legacy_section && !explicit_section) || model.dt_s <= 0.0 || model.beta <= 0.0 ||
       model.gamma <= 0.0 || model.max_newton == 0 || model.max_newton > MAX_NEWTON ||
        (model.gauss_order != 3 && model.gauss_order != 5) ||
        (model.mass_gauss_order != 3 && model.mass_gauss_order != 5) ||
@@ -227,12 +249,23 @@ void validate_model(const Model& model) {
        model.damping_alpha != 0.0 || model.damping_beta != 0.0) {
     throw std::invalid_argument("invalid ANCF model dimensions or numerical contract");
   }
-  for (double value : {model.length_m, model.diameter_m, model.inner_diameter_m,
-                       model.top_tension_N, model.youngs_modulus_Pa,
-                       model.material_density, model.fluid_density, model.gravity,
+  for (double value : {model.length_m, model.top_tension_N, model.fluid_density, model.gravity,
                        model.dt_s, model.beta, model.gamma, model.newton_tolerance,
                        model.damping_alpha, model.damping_beta}) {
     if (!finite(value)) throw std::invalid_argument("ANCF model contains NaN/Inf");
+  }
+  if (legacy_section) {
+    for (double value : {model.diameter_m, model.inner_diameter_m,
+                         model.youngs_modulus_Pa, model.material_density}) {
+      if (!finite(value)) throw std::invalid_argument("ANCF model contains NaN/Inf");
+    }
+  } else {
+    for (double value : {model.explicit_EA_N, model.explicit_EI_Nm2,
+                         model.explicit_mass_per_length_kg_m,
+                         model.explicit_displaced_area_m2}) {
+      if (!finite(value) || value <= 0.0)
+        throw std::invalid_argument("ANCF explicit section properties must be finite and positive");
+    }
   }
   if (model.newton_tolerance <= 0.0) {
     throw std::invalid_argument("ANCF Newton tolerance must be positive");
@@ -294,7 +327,7 @@ std::vector<double> static_base_load(const Model& model) {
   const std::size_t n = model.ndof();
   std::vector<double> load(n, 0.0);
   const double line_force_z =
-      -model.material_density * model.area() * model.gravity +
+      -model.mass_per_length() * model.gravity +
       model.fluid_density * model.displaced_area() * model.gravity;
   const double Le = model.length_m / static_cast<double>(model.elements);
   const auto [xi, weights] = gauss(model.mass_gauss_order);
@@ -444,7 +477,7 @@ State make_reference_state(const Model& model) {
   // independent of the internal-force quadrature order.  Keep the mass
   // contract separate so a valid gauss_order=3 request cannot silently
   // change inertia while the MATLAB baseline remains unchanged.
-  auto [xi,w]=gauss(model.mass_gauss_order);double rhoA=model.material_density*model.area();for(std::size_t e=0;e<model.elements;++e){Matrix Me(12,12);for(std::size_t k=0;k<xi.size();++k){double x=0.5*(xi[k]+1)*Le;Matrix N=block_matrix(shape(x,Le,0));Matrix Nt=transpose(N);Matrix local=multiply(Nt,N);for(std::size_t i=0;i<12;++i)for(std::size_t j=0;j<12;++j)Me(i,j)+=w[k]*local(i,j)*Le/2*rhoA;}for(int i=0;i<12;++i)for(int j=0;j<12;++j)state.mass(6*e+i,6*e+j)+=Me(i,j);}state.damping=Matrix(model.ndof(),model.ndof());state.base_load.assign(model.ndof(),0);return state;
+  auto [xi,w]=gauss(model.mass_gauss_order);double rhoA=model.mass_per_length();for(std::size_t e=0;e<model.elements;++e){Matrix Me(12,12);for(std::size_t k=0;k<xi.size();++k){double x=0.5*(xi[k]+1)*Le;Matrix N=block_matrix(shape(x,Le,0));Matrix Nt=transpose(N);Matrix local=multiply(Nt,N);for(std::size_t i=0;i<12;++i)for(std::size_t j=0;j<12;++j)Me(i,j)+=w[k]*local(i,j)*Le/2*rhoA;}for(int i=0;i<12;++i)for(int j=0;j<12;++j)state.mass(6*e+i,6*e+j)+=Me(i,j);}state.damping=Matrix(model.ndof(),model.ndof());state.base_load.assign(model.ndof(),0);return state;
 }
 
 void symmetrize_mass(State& state) {

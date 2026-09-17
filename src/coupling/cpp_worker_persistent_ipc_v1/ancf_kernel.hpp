@@ -18,6 +18,11 @@ constexpr std::size_t MAX_NDOF = 2048;
 // cleanup runs.
 constexpr std::size_t MAX_NEWTON = 1000;
 
+enum class SectionPropertyMode {
+  LegacyPhysicalSection,
+  ExplicitSectionProperties
+};
+
 struct Matrix {
   std::size_t rows = 0, cols = 0;
   std::vector<double> data;
@@ -37,6 +42,11 @@ struct Model {
   double top_tension_N = 1.0e7;
   double youngs_modulus_Pa = 2.07e11;
   double material_density = 7850.0;
+  SectionPropertyMode section_property_mode = SectionPropertyMode::LegacyPhysicalSection;
+  double explicit_EA_N = 0.0;
+  double explicit_EI_Nm2 = 0.0;
+  double explicit_mass_per_length_kg_m = 0.0;
+  double explicit_displaced_area_m2 = 0.0;
   double fluid_density = 1025.0;
   double gravity = 9.81;
   bool include_gravity = true;
@@ -60,6 +70,7 @@ struct Model {
   double displaced_area() const;
   double EA() const;
   double EI() const;
+  double mass_per_length() const;
   std::size_t ndof() const {
     constexpr std::size_t max_value = (std::numeric_limits<std::size_t>::max)();
     if (elements == max_value || elements > (max_value - 1u) / 6u) return max_value;
