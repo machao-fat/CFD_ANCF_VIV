@@ -32,6 +32,14 @@ BASE_LOAD_SOURCE_EXTENSION_MARKER = 0x31534C42  # "BLS1", little-endian
 BASE_LOAD_SOURCE_EXTENSION_VERSION = 1
 _BASE_LOAD_SOURCE_CALLER_WIRE = 0
 _BASE_LOAD_SOURCE_MODEL_STATIC_WIRE = 1
+DAMPING_EXTENSION_MARKER = 0x31504D44  # "DMP1", little-endian
+DAMPING_EXTENSION_VERSION = 1
+DAMPING_MODE_RAYLEIGH = 1
+DAMPING_REFERENCE_DYNAMIC_INITIAL = 1
+DAMPING_PSD_POLICY_ID = 1
+_DAMPING_TAG = b"ancf-damping-v1\0"
+_DAMPING_REFERENCE_TAG = b"ancf-damping-ref-v1\0"
+DOF_ORDER_IDENTITY = "per_node[r_x,r_y,r_z,r_sx,r_sy,r_sz]"
 CANONICAL_BOUNDARY_CONTRACT_ID = "ancf_v1_bottom_top_xy_zero"
 
 # v1 is a positional response schema without per-field wire labels. Preserve
@@ -51,6 +59,35 @@ _MODEL = struct.Struct("<13dii")
 _SECTION_PROPERTY_EXTENSION = struct.Struct("<III4d")
 _BOUNDARY_ID = 64
 _RESPONSE_PREFIX = struct.Struct("<IIIiiQdiiidQQI")
+
+
+def damping_identity_sha256(alpha_mass_per_s: float, beta_stiffness_s: float,
+                            *, mode: int = DAMPING_MODE_RAYLEIGH,
+                            reference_kind: int = DAMPING_REFERENCE_DYNAMIC_INITIAL,
+                            psd_policy_id: int = DAMPING_PSD_POLICY_ID) -> str:
+    """Hash the exact binary DMP1 damping semantics."""
+    if not all(math.isfinite(float(value)) for value in (alpha_mass_per_s, beta_stiffness_s)):
+        raise FrameError("damping coefficients must be finite")
+    payload = (_DAMPING_TAG + struct.pack("<IddII", int(mode), float(alpha_mass_per_s),
+                                           float(beta_stiffness_s), int(reference_kind),
+                                           int(psd_policy_id)))
+    return hashlib.sha256(payload).hexdigest()
+
+
+def damping_reference_state_sha256(q_ref: Sequence[float], model_identity_sha256: str,
+                                   *, reference_kind: int = DAMPING_REFERENCE_DYNAMIC_INITIAL) -> str:
+    """Hash q_ref plus the structural identity used to construct K_ref."""
+    values = _finite_vector(q_ref, "damping.q_ref")
+    if len(model_identity_sha256) != 64:
+        raise FrameError("damping model identity must be a SHA-256 hex string")
+    try:
+        model_digest = bytes.fromhex(model_identity_sha256)
+    except ValueError as exc:
+        raise FrameError("damping model identity is not SHA-256 hex") from exc
+    payload = (_DAMPING_REFERENCE_TAG + model_digest + DOF_ORDER_IDENTITY.encode("ascii") +
+               struct.pack("<II", int(reference_kind), len(values)) +
+               struct.pack("<" + "d" * len(values), *values))
+    return hashlib.sha256(payload).hexdigest()
 
 
 def _finite_vector(values: Sequence[float], name: str) -> tuple[float, ...]:
@@ -167,8 +204,11 @@ class KernelModel:
             raise FrameError("kernel model dimensions or quadrature order are invalid")
         if self.max_newton <= 0 or self.max_newton > MAX_NEWTON or self.newton_tolerance <= 0.0:
             raise FrameError("kernel Newton contract is invalid")
-        if self.damping_alpha != 0.0 or self.damping_beta != 0.0:
-            raise FrameError("non-zero damping is not implemented in the worker contract")
+        for name, value in (("damping_alpha", self.damping_alpha), ("damping_beta", self.damping_beta)):
+            if isinstance(value, bool) or not isinstance(value, Real) or not math.isfinite(float(value)):
+                raise FrameError(f"kernel model {name} is NaN/Inf or not numeric")
+            if float(value) < 0.0:
+                raise FrameError(f"kernel model {name} must be non-negative")
         if not isinstance(self.include_gravity, bool) or not isinstance(self.include_buoyancy, bool):
             raise FrameError("kernel physics switches must be boolean")
         # The v1 wire model does not carry these switches.  Accepting false
@@ -276,6 +316,13 @@ class KernelStepRequest:
     mass_matrix: tuple[float, ...] = ()
     producer: str = "python_scheduler"
     consumer: str = "cpp_ancf_kernel_worker"
+    damping_mode: str = "none"
+    damping_reference_state: str = "dynamic_initial"
+    damping_identity_sha256: str = ""
+    damping_reference_state_identity_sha256: str = ""
+    damping_model_identity_sha256: str = ""
+    damping_q_ref: tuple[float, ...] = ()
+    damping_psd_policy_id: int = DAMPING_PSD_POLICY_ID
 
     def payload(self) -> bytes:
         self.model.validate(self.dt_s)
@@ -325,11 +372,50 @@ class KernelStepRequest:
                 expected_tick < 0 or expected_tick > 0xFFFFFFFFFFFFFFFF or
                 self.integer_tick != expected_tick):
             raise FrameError("kernel time_s and integer_tick are inconsistent")
+        alpha = float(self.model.damping_alpha)
+        beta = float(self.model.damping_beta)
+        has_damping = alpha != 0.0 or beta != 0.0
+        if self.damping_mode not in ("none", "rayleigh_coefficients"):
+            raise FrameError("damping mode is unknown")
+        if has_damping:
+            if self.damping_mode != "rayleigh_coefficients" or self.damping_reference_state != "dynamic_initial":
+                raise FrameError("non-zero damping requires the dynamic_initial Rayleigh contract")
+            if self.damping_psd_policy_id != DAMPING_PSD_POLICY_ID:
+                raise FrameError("unsupported damping PSD policy")
+            q_ref = _finite_vector(self.damping_q_ref, "damping.q_ref")
+            if len(q_ref) != n:
+                raise FrameError("damping.q_ref dimension is inconsistent with model")
+            expected_damping = damping_identity_sha256(alpha, beta,
+                                                       psd_policy_id=self.damping_psd_policy_id)
+            if self.damping_identity_sha256.lower() != expected_damping:
+                raise FrameError("damping identity does not match coefficients")
+            expected_reference = damping_reference_state_sha256(
+                q_ref, self.damping_model_identity_sha256)
+            if self.damping_reference_state_identity_sha256.lower() != expected_reference:
+                raise FrameError("damping reference identity does not match q_ref")
+            try:
+                damping_identity = bytes.fromhex(self.damping_identity_sha256)
+                reference_identity = bytes.fromhex(self.damping_reference_state_identity_sha256)
+                model_identity = bytes.fromhex(self.damping_model_identity_sha256)
+            except ValueError as exc:
+                raise FrameError("damping identities must be SHA-256 hex") from exc
+            damping_extension = (
+                struct.pack("<6I", DAMPING_EXTENSION_MARKER, DAMPING_EXTENSION_VERSION,
+                            DAMPING_MODE_RAYLEIGH, DAMPING_REFERENCE_DYNAMIC_INITIAL,
+                            n, self.damping_psd_policy_id) + damping_identity +
+                reference_identity + model_identity +
+                struct.pack("<" + "d" * n, *q_ref))
+        else:
+            if self.damping_mode != "none" or alpha != 0.0 or beta != 0.0:
+                raise FrameError("zero damping must use mode none")
+            if self.damping_q_ref:
+                raise FrameError("none damping must not carry q_ref")
+            damping_extension = b""
         prefix = _PREFIX.pack(SCHEMA_VERSION, PROTOCOL_VERSION, self.sequence, self.global_step,
                               self.case_local_bridge_step, self.integer_tick, self.time_s, self.dt_s,
                               n, self.model.elements, self.model.slices, self.model.gauss_order,
                               self.model.max_newton, self.request_id, self.transaction_id)
-        model_bytes = self.model.bytes()
+        model_bytes = self.model.bytes() + damping_extension
         if mass:
             sizes = struct.pack("<iii", len(base), len(force), n)
         else:

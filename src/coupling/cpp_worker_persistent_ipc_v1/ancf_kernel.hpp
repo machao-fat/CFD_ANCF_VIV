@@ -236,6 +236,12 @@ StepDiagnostics static_equilibrium(State& state, const Model& model,
 void internal_force_tangent(const std::vector<double>& q, const Model& model, std::vector<double>& force, Matrix& tangent);
 void internal_force_tangent(const std::vector<double>& q, const Model& model, std::vector<double>& force,
                             Matrix& tangent, AssemblyTrace* trace);
+// Resolve the constant Rayleigh damping contract from the exact production
+// mass matrix and a frozen dynamic-initial reference state.  The optional
+// PSD check is applied only to the free-free internal tangent block.
+Matrix resolve_rayleigh_damping(const Model& model, const Matrix& mass,
+                                const std::vector<double>& q_ref,
+                                bool require_free_tangent_positive_semidefinite = true);
 ForensicResult internal_force_forensic(const std::vector<double>& q, const Model& model);
 std::vector<double> external_force(const Model& model, const std::vector<double>& slice_force);
 // Assemble the canonical static gravity/buoyancy/top-tension load used by

@@ -44,6 +44,11 @@ constexpr std::uint32_t BASE_LOAD_SOURCE_EXTENSION_MARKER = 0x31534C42;
 constexpr std::uint32_t BASE_LOAD_SOURCE_EXTENSION_VERSION = 1;
 constexpr std::uint32_t BASE_LOAD_SOURCE_CALLER = 0;
 constexpr std::uint32_t BASE_LOAD_SOURCE_MODEL_STATIC = 1;
+constexpr std::uint32_t DAMPING_EXTENSION_MARKER = 0x31504D44;
+constexpr std::uint32_t DAMPING_EXTENSION_VERSION = 1;
+constexpr std::uint32_t DAMPING_MODE_RAYLEIGH = 1;
+constexpr std::uint32_t DAMPING_REFERENCE_DYNAMIC_INITIAL = 1;
+constexpr std::uint32_t DAMPING_PSD_POLICY_ID = 1;
 constexpr char REQUEST_PRODUCER[] = "python_scheduler";
 constexpr char REQUEST_CONSUMER[] = "cpp_ancf_kernel_worker";
 constexpr char WORKER_ROLE[] = "cfd_ancf_kernel_worker_v1";
@@ -63,6 +68,16 @@ void append_bytes(std::vector<char>& output, const void* data, std::size_t size)
 
 template <class T>
 void append(std::vector<char>& output, const T& value) { append_bytes(output, &value, sizeof(T)); }
+
+void append_bytes(std::vector<unsigned char>& output, const void* data, std::size_t size) {
+  const auto* begin = static_cast<const unsigned char*>(data);
+  output.insert(output.end(), begin, begin + size);
+}
+
+template <class T>
+void append(std::vector<unsigned char>& output, const T& value) { append_bytes(output, &value, sizeof(T)); }
+
+bool finite_values(const std::vector<double>& values);
 
 bool read_bytes(std::istream& input, char* data, std::size_t size) {
   return static_cast<bool>(input.read(data, static_cast<std::streamsize>(size)));
@@ -97,6 +112,34 @@ bool decode_sha256_hex(const char* text, std::array<unsigned char, 32>& digest) 
     digest[index] = static_cast<unsigned char>((high << 4) | low);
   }
   return true;
+}
+
+bool damping_identity(const cfd_ancf::Model& model, std::uint32_t mode,
+                      std::uint32_t reference_kind, std::uint32_t psd_policy,
+                      std::array<unsigned char, 32>& digest) {
+  std::vector<unsigned char> bytes;
+  constexpr char tag[] = "ancf-damping-v1";
+  append_bytes(bytes, tag, sizeof(tag));
+  append(bytes, mode); append(bytes, model.damping_alpha); append(bytes, model.damping_beta);
+  append(bytes, reference_kind); append(bytes, psd_policy);
+  return cfd_ancf::wire::sha256_bytes(bytes, digest);
+}
+
+bool reference_identity(const std::array<unsigned char, 32>& model_identity,
+                        std::uint32_t reference_kind, const std::vector<double>& q_ref,
+                        std::array<unsigned char, 32>& digest) {
+  if (q_ref.empty() || !finite_values(q_ref)) return false;
+  std::vector<unsigned char> bytes;
+  constexpr char tag[] = "ancf-damping-ref-v1";
+  constexpr char dof_order[] = "per_node[r_x,r_y,r_z,r_sx,r_sy,r_sz]";
+  append_bytes(bytes, tag, sizeof(tag));
+  append_bytes(bytes, model_identity.data(), model_identity.size());
+  append_bytes(bytes, dof_order, sizeof(dof_order) - 1u);
+  append(bytes, reference_kind);
+  const std::uint32_t count = static_cast<std::uint32_t>(q_ref.size());
+  append(bytes, count);
+  append_bytes(bytes, q_ref.data(), q_ref.size() * sizeof(double));
+  return cfd_ancf::wire::sha256_bytes(bytes, digest);
 }
 
 std::string string_value(const char* value, std::size_t size) {
@@ -347,6 +390,40 @@ int process_step(const std::vector<char>& payload, std::vector<char>& response,
       return 4;
     }
   }
+  bool damping_extension = false;
+  std::uint32_t damping_marker = 0, damping_version = 0, damping_mode = 0,
+                damping_reference_kind = 0, damping_q_count = 0, damping_psd_policy = 0;
+  std::array<unsigned char, 32> damping_identity_bytes{}, damping_reference_identity_bytes{},
+      damping_model_identity_bytes{};
+  std::vector<double> damping_q_ref;
+  if (offset <= payload.size() && sizeof(damping_marker) <= payload.size() - offset) {
+    std::memcpy(&damping_marker, payload.data() + offset, sizeof(damping_marker));
+  }
+  if (damping_marker == DAMPING_EXTENSION_MARKER) {
+    constexpr std::size_t damping_header_size = 6u * sizeof(std::uint32_t) + 3u * 32u;
+    if (damping_header_size > payload.size() - offset) return 4;
+    if (!take(payload, offset, damping_marker) || !take(payload, offset, damping_version) ||
+        !take(payload, offset, damping_mode) || !take(payload, offset, damping_reference_kind) ||
+        !take(payload, offset, damping_q_count) || !take(payload, offset, damping_psd_policy)) return 4;
+    if (damping_version != DAMPING_EXTENSION_VERSION || damping_mode != DAMPING_MODE_RAYLEIGH ||
+        damping_reference_kind != DAMPING_REFERENCE_DYNAMIC_INITIAL ||
+        damping_psd_policy != DAMPING_PSD_POLICY_ID || damping_q_count != static_cast<std::uint32_t>(n) ||
+        payload.size() - offset < 3u * 32u + static_cast<std::size_t>(damping_q_count) * sizeof(double)) return 4;
+    std::memcpy(damping_identity_bytes.data(), payload.data() + offset, 32); offset += 32;
+    std::memcpy(damping_reference_identity_bytes.data(), payload.data() + offset, 32); offset += 32;
+    std::memcpy(damping_model_identity_bytes.data(), payload.data() + offset, 32); offset += 32;
+    damping_q_ref.resize(damping_q_count);
+    for (double& value : damping_q_ref) if (!take(payload, offset, value) || !std::isfinite(value)) return 4;
+    std::array<unsigned char, 32> expected_damping_identity{}, expected_reference_identity{};
+    if (!damping_identity(model, damping_mode, damping_reference_kind, damping_psd_policy,
+                          expected_damping_identity) ||
+        expected_damping_identity != damping_identity_bytes ||
+        !reference_identity(damping_model_identity_bytes, damping_reference_kind, damping_q_ref,
+                            expected_reference_identity) ||
+        expected_reference_identity != damping_reference_identity_bytes) return 4;
+    damping_extension = true;
+  }
+  if ((model.damping_alpha != 0.0 || model.damping_beta != 0.0) != damping_extension) return 4;
   const std::size_t model_end = offset;
   model.elements = static_cast<std::size_t>(elements);
   model.slices = static_cast<std::size_t>(slices);
@@ -554,6 +631,15 @@ int process_step(const std::vector<char>& payload, std::vector<char>& response,
     // mutated asymmetric matrix instead of changing the numerical contract
     // or feeding a non-symmetric inertia matrix into Newton.
     if (!exactly_symmetric(state.mass)) return 17;
+  }
+  if (damping_extension) {
+    try {
+      state.damping = cfd_ancf::resolve_rayleigh_damping(
+          model, state.mass, damping_q_ref, true);
+    } catch (const std::exception& error) {
+      std::cerr << "Rayleigh damping exception: " << error.what() << '\n';
+      return 12;
+    }
   }
   const std::vector<double> slice_force(input.begin() + static_cast<std::ptrdiff_t>(input_offset), input.end());
   std::vector<double> effective_base_load = base_load;

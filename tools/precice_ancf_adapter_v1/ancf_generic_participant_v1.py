@@ -112,6 +112,15 @@ class GenericANCFParticipant:
             boundary_override = (state["boundary_fixed_dof"], state["boundary_prescribed_values"])
         self.model = config.kernel_model(boundary_override)
         self.q = tuple(state["q"]); self.qdot = tuple(state["qdot"]); self.qddot = tuple(state["qddot"])
+        self.q_ref = tuple(state.get("damping_reference_q", self.q))
+        self.resolved_model_identity = str(state.get("resolved_model_identity_sha256", config.model_identity_sha256))
+        self.damping_identity = str(state.get("damping_identity_sha256", config.damping_identity_sha256))
+        self.damping_reference_identity = str(state.get(
+            "damping_reference_state_identity_sha256",
+            config.damping_reference_identity_sha256(self.q_ref, self.resolved_model_identity)))
+        self.dynamic_identity = str(state.get(
+            "dynamic_identity_sha256",
+            config.dynamic_identity_sha256(self.q_ref, self.resolved_model_identity)))
         self.base_load = tuple(state["base_load"])
         self.time_s = float(state["time_s"])
         self.global_step = int(state["global_step"])
@@ -193,6 +202,12 @@ class GenericANCFParticipant:
             case_id=self.config.case_id, model=self.model, q=self.q, qdot=self.qdot,
             qddot=self.qddot, base_load=self.base_load,
             slice_force=tuple(forces),
+            damping_mode=self.config.damping_spec()["mode"],
+            damping_reference_state=self.config.damping_spec()["reference_state"],
+            damping_identity_sha256=self.damping_identity,
+            damping_reference_state_identity_sha256=self.damping_reference_identity,
+            damping_model_identity_sha256=self.resolved_model_identity,
+            damping_q_ref=(self.q_ref if self.config.damping_spec()["mode"] != "none" else ()),
         )
         response = self._send_worker(request_obj)
         q = _response_field(response, "q"); qdot = _response_field(response, "qdot"); qddot = _response_field(response, "qddot")
@@ -205,7 +220,9 @@ class GenericANCFParticipant:
         return result
 
     def state_artifact(self) -> dict[str, Any]:
-        return self.config.make_state_artifact(self.q, self.qdot, self.qddot, self.time_s, self.global_step)
+        return self.config.make_state_artifact(
+            self.q, self.qdot, self.qddot, self.time_s, self.global_step,
+            self.q_ref, self.resolved_model_identity)
 
     def finalize(self) -> None:
         for backend in self.backends:

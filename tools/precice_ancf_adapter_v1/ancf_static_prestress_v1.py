@@ -454,6 +454,17 @@ class StaticPrestressInitializer:
             "source_model_identity_sha256": self.config.model_identity_sha256,
             "model_identity_sha256": resolved_identity,
             "resolved_static_model_identity_sha256": resolved_identity,
+            "damping": {
+                "mode": self.config.damping_spec()["mode"],
+                "alpha_mass_per_s": self.config.damping_spec()["alpha_mass_per_s"],
+                "beta_stiffness_s": self.config.damping_spec()["beta_stiffness_s"],
+                "reference_state": self.config.damping_spec()["reference_state"],
+                "require_free_tangent_positive_semidefinite": self.config.damping_spec()["require_free_tangent_positive_semidefinite"],
+                "identity_sha256": self.config.damping_identity_sha256,
+                "reference_identity_sha256": self.config.damping_reference_identity_sha256(q, resolved_identity),
+            },
+            "damping_reference_q": list(q),
+            "dynamic_identity_sha256": self.config.dynamic_identity_sha256(q, resolved_identity),
             "producer": {
                 "commit": producer_commit,
                 "component": "ancf_static_prestress_v1",

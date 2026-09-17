@@ -23,6 +23,10 @@ try:
         BASE_LOAD_SOURCE_MODEL_STATIC,
         SECTION_PROPERTY_MODE_EXPLICIT,
         SECTION_PROPERTY_MODE_LEGACY,
+        DAMPING_PSD_POLICY_ID,
+        DAMPING_REFERENCE_DYNAMIC_INITIAL,
+        damping_identity_sha256,
+        damping_reference_state_sha256,
         KernelModel,
     )
     from coupling.multi_slice_mapping.mapping import SliceDefinition, SliceManifest
@@ -36,6 +40,10 @@ except ModuleNotFoundError:  # pragma: no cover - supports direct script imports
         BASE_LOAD_SOURCE_MODEL_STATIC,
         SECTION_PROPERTY_MODE_EXPLICIT,
         SECTION_PROPERTY_MODE_LEGACY,
+        DAMPING_PSD_POLICY_ID,
+        DAMPING_REFERENCE_DYNAMIC_INITIAL,
+        damping_identity_sha256,
+        damping_reference_state_sha256,
         KernelModel,
     )
     from coupling.multi_slice_mapping.mapping import SliceDefinition, SliceManifest  # type: ignore
@@ -50,6 +58,8 @@ FORCE_REPRESENTATION = "integrated_slice_force_N"
 MOTION_COMPONENTS = ("x", "y")
 PINNED_PRESET = "pinned_position_both_ends"
 DOF_ORDER = "per_node[r_x,r_y,r_z,r_sx,r_sy,r_sz]"
+DAMPING_MODES = ("none", "rayleigh_coefficients")
+DAMPING_REFERENCE_STATE = "dynamic_initial"
 
 
 class CaseConfigError(ValueError):
@@ -259,7 +269,23 @@ class CaseConfig:
         if numerics["max_newton"] > 1000:
             raise CaseConfigError("max_newton exceeds the current worker contract")
         if numerics.get("damping_alpha", 0.0) != 0.0 or numerics.get("damping_beta", 0.0) != 0.0:
-            raise CaseConfigError("STRUCTURAL_DAMPING_NOT_SUPPORTED_V1")
+            raise CaseConfigError("STRUCTURAL_DAMPING_NOT_SUPPORTED_V1 in numerics; use the versioned damping block")
+        damping = _mapping(root.get("damping", {"mode": "none"}), "damping")
+        damping_mode = damping.get("mode", "none")
+        if damping_mode not in DAMPING_MODES:
+            raise CaseConfigError("damping.mode is invalid")
+        if damping_mode == "none":
+            if damping.get("alpha_mass_per_s", 0.0) != 0.0 or damping.get("beta_stiffness_s", 0.0) != 0.0:
+                raise CaseConfigError("damping.mode none requires zero coefficients")
+        else:
+            alpha = _finite(damping.get("alpha_mass_per_s"), "damping.alpha_mass_per_s")
+            beta = _finite(damping.get("beta_stiffness_s"), "damping.beta_stiffness_s")
+            if alpha < 0.0 or beta < 0.0 or alpha == 0.0 and beta == 0.0:
+                raise CaseConfigError("Rayleigh damping coefficients must be nonnegative and not both zero")
+            if damping.get("reference_state") != DAMPING_REFERENCE_STATE:
+                raise CaseConfigError("damping.reference_state must be dynamic_initial")
+            if damping.get("require_free_tangent_positive_semidefinite", True) is not True:
+                raise CaseConfigError("V1 requires the frozen free-tangent PSD policy")
         prestress = root.get("prestress", {"mode": "none"})
         prestress = _mapping(prestress, "prestress")
         prestress_mode = prestress.get("mode", "none")
@@ -306,6 +332,50 @@ class CaseConfig:
     def model_identity_sha256(self) -> str:
         fields = {key: self.raw[key] for key in ("model", "section", "environment", "base_load", "boundary")}
         return canonical_sha256(_physics_view(fields))
+
+    def damping_spec(self) -> dict[str, Any]:
+        value = dict(_mapping(self.raw.get("damping", {"mode": "none"}), "damping"))
+        mode = value.get("mode", "none")
+        if mode == "none":
+            return {
+                "mode": "none", "alpha_mass_per_s": 0.0, "beta_stiffness_s": 0.0,
+                "reference_state": DAMPING_REFERENCE_STATE,
+                "require_free_tangent_positive_semidefinite": False,
+                "psd_policy_id": DAMPING_PSD_POLICY_ID,
+            }
+        return {
+            "mode": "rayleigh_coefficients",
+            "alpha_mass_per_s": _finite(value["alpha_mass_per_s"], "damping.alpha_mass_per_s"),
+            "beta_stiffness_s": _finite(value["beta_stiffness_s"], "damping.beta_stiffness_s"),
+            "reference_state": DAMPING_REFERENCE_STATE,
+            "require_free_tangent_positive_semidefinite": True,
+            "psd_policy_id": DAMPING_PSD_POLICY_ID,
+        }
+
+    @property
+    def damping_identity_sha256(self) -> str:
+        spec = self.damping_spec()
+        if spec["mode"] == "none":
+            return canonical_sha256(spec)
+        return damping_identity_sha256(spec["alpha_mass_per_s"], spec["beta_stiffness_s"])
+
+    def damping_reference_identity_sha256(self, q_ref: Sequence[float],
+                                          model_identity: str | None = None) -> str:
+        spec = self.damping_spec()
+        if spec["mode"] == "none":
+            return canonical_sha256({"mode": "none"})
+        values = _vector(q_ref, "damping.q_ref", self.ndof)
+        return damping_reference_state_sha256(values, model_identity or self.model_identity_sha256)
+
+    def dynamic_identity_sha256(self, q_ref: Sequence[float],
+                                model_identity: str | None = None) -> str:
+        resolved_model = model_identity or self.model_identity_sha256
+        return canonical_sha256({
+            "model_identity_sha256": resolved_model,
+            "damping_identity_sha256": self.damping_identity_sha256,
+            "damping_reference_state_identity_sha256": self.damping_reference_identity_sha256(q_ref, resolved_model),
+            "wire_contract": "DMP1-v1" if self.damping_spec()["mode"] != "none" else "none",
+        })
 
     def model_identity_sha256_for_boundary(self, fixed_dof: Sequence[int],
                                            prescribed_values: Sequence[float]) -> str:
@@ -466,6 +536,7 @@ class CaseConfig:
         numerics = self.raw["numerics"]
         env = self.raw["environment"]
         model = self.raw["model"]
+        damping = self.damping_spec()
         kwargs: dict[str, Any] = dict(
             length_m=self.length_m, diameter_m=diameter, inner_diameter_m=inner,
             elements=self.elements, slices=len(self.slices()),
@@ -476,7 +547,7 @@ class CaseConfig:
             beta=_positive(numerics["beta"], "numerics.beta"),
             gamma=_positive(numerics["gamma"], "numerics.gamma"),
             newton_tolerance=_positive(numerics["newton_tolerance"], "numerics.newton_tolerance"),
-            damping_alpha=0.0, damping_beta=0.0,
+            damping_alpha=damping["alpha_mass_per_s"], damping_beta=damping["beta_stiffness_s"],
             gauss_order=_positive_int(numerics["gauss_order"], "numerics.gauss_order"),
             mass_gauss_order=_positive_int(numerics["mass_gauss_order"], "numerics.mass_gauss_order"),
             max_newton=_positive_int(numerics["max_newton"], "numerics.max_newton"),
@@ -559,9 +630,20 @@ class CaseConfig:
                     actual_base = _vector(state_base["vector"], "state.base_load.vector", model.ndof)
                     if actual_base != expected_base:
                         raise CaseConfigError("STATE_IDENTITY_FAIL: caller base-load mismatch")
+            damping = self.damping_spec()
+            state_damping = state.get("damping")
+            if damping["mode"] == "rayleigh_coefficients":
+                if not isinstance(state_damping, Mapping) or state_damping.get("identity_sha256") != self.damping_identity_sha256:
+                    raise CaseConfigError("DAMPING_STATE_IDENTITY_FAIL: damping identity mismatch")
+                if state_damping.get("mode") != damping["mode"]:
+                    raise CaseConfigError("DAMPING_STATE_IDENTITY_FAIL: damping mode mismatch")
+                if (_finite(state_damping.get("alpha_mass_per_s"), "state.damping.alpha_mass_per_s") != damping["alpha_mass_per_s"] or
+                        _finite(state_damping.get("beta_stiffness_s"), "state.damping.beta_stiffness_s") != damping["beta_stiffness_s"]):
+                    raise CaseConfigError("DAMPING_STATE_IDENTITY_FAIL: damping coefficient mismatch")
         required = ("q", "qdot", "qddot")
         _require(state, required, "initial state")
         result = {key: _vector(state[key], key, model.ndof) for key in required}
+        result["resolved_model_identity_sha256"] = self.model_identity_sha256
         if kind == "prestressed_start":
             if path is None:
                 raise CaseConfigError("prestressed_start requires state_file")
@@ -584,6 +666,7 @@ class CaseConfig:
                 result["boundary_fixed_dof"] = tuple(int(value) for value in state["boundary"]["fixed_dof"])
                 result["boundary_prescribed_values"] = _vector(
                     state["boundary"]["prescribed_values"], "state.boundary.prescribed_values")
+            result["resolved_model_identity_sha256"] = str(state_model_identity)
         elif kind == "restart":
             if path is None:
                 raise CaseConfigError("restart requires state_file")
@@ -596,6 +679,21 @@ class CaseConfig:
         else:
             result["time_s"] = _finite(state.get("state_time_s", 0.0), "state_time_s")
             result["global_step"] = _nonnegative_int(state.get("global_step", 0), "global_step")
+        damping = self.damping_spec()
+        stored_reference = state.get("damping_reference_q")
+        if stored_reference is None:
+            if kind == "fresh" or damping["mode"] == "none":
+                stored_reference = result["q"]
+            else:
+                raise CaseConfigError("DAMPING_STATE_IDENTITY_FAIL: reference q is missing")
+        result["damping_reference_q"] = _vector(stored_reference, "state.damping_reference_q", model.ndof)
+        if kind == "prestressed_start" and tuple(result["damping_reference_q"]) != tuple(result["q"]):
+            raise CaseConfigError("DAMPING_STATE_IDENTITY_FAIL: prestressed q_ref differs from q_static")
+        result["damping_identity_sha256"] = self.damping_identity_sha256
+        result["damping_reference_state_identity_sha256"] = self.damping_reference_identity_sha256(
+            result["damping_reference_q"], result["resolved_model_identity_sha256"])
+        result["dynamic_identity_sha256"] = self.dynamic_identity_sha256(
+            result["damping_reference_q"], result["resolved_model_identity_sha256"])
         if self.raw["base_load"]["source"] == "caller_supplied" and "base_load" in state:
             result["base_load"] = self.base_load_vector(state["base_load"])
         else:
@@ -603,12 +701,17 @@ class CaseConfig:
         return result
 
     def make_state_artifact(self, q: Sequence[float], qdot: Sequence[float], qddot: Sequence[float],
-                            time_s: float, global_step: int) -> dict[str, Any]:
+                            time_s: float, global_step: int,
+                            q_ref: Sequence[float] | None = None,
+                            resolved_model_identity: str | None = None) -> dict[str, Any]:
         model = self.kernel_model()
         base = self.base_load_vector()
         fixed, prescribed = self.boundary_arrays()
         base_source = self.raw["base_load"]["source"]
-        return {
+        resolved_model = resolved_model_identity or self.model_identity_sha256
+        reference = _vector(q_ref if q_ref is not None else q, "damping_reference_q", model.ndof)
+        damping = self.damping_spec()
+        artifact = {
             "schema_version": 1, "state_kind": self.raw["initial_state"]["kind"],
             "q": list(_vector(q, "q", model.ndof)), "qdot": list(_vector(qdot, "qdot", model.ndof)),
             "qddot": list(_vector(qddot, "qddot", model.ndof)), "dof_order": DOF_ORDER,
@@ -623,8 +726,20 @@ class CaseConfig:
             "state_time_s": _finite(time_s, "time_s"),
             "global_step": _nonnegative_int(global_step, "global_step"),
             "case_config_sha256": self.config_sha256,
-            "model_identity_sha256": self.model_identity_sha256,
+            "model_identity_sha256": resolved_model,
         }
+        artifact["damping"] = {
+            "mode": damping["mode"],
+            "alpha_mass_per_s": damping["alpha_mass_per_s"],
+            "beta_stiffness_s": damping["beta_stiffness_s"],
+            "reference_state": damping["reference_state"],
+            "require_free_tangent_positive_semidefinite": damping["require_free_tangent_positive_semidefinite"],
+            "identity_sha256": self.damping_identity_sha256,
+            "reference_identity_sha256": self.damping_reference_identity_sha256(reference, resolved_model),
+        }
+        artifact["damping_reference_q"] = list(reference)
+        artifact["dynamic_identity_sha256"] = self.dynamic_identity_sha256(reference, resolved_model)
+        return artifact
 
 
 def load_case_config(path: str | Path) -> CaseConfig:

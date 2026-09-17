@@ -119,6 +119,47 @@ std::vector<double> solve(Matrix a, std::vector<double> b) {
 #endif
 }
 
+double minimum_symmetric_eigenvalue(Matrix matrix) {
+  if (matrix.rows != matrix.cols || !finite_matrix(matrix))
+    throw std::invalid_argument("symmetric eigenvalue matrix is invalid");
+  const std::size_t n = matrix.rows;
+  if (n == 0) return 0.0;
+  const std::size_t max_iterations = std::max<std::size_t>(32u, 16u * n * n);
+  for (std::size_t iteration = 0; iteration < max_iterations; ++iteration) {
+    std::size_t p = 0, q = 0;
+    double largest = 0.0;
+    for (std::size_t row = 0; row < n; ++row) {
+      for (std::size_t col = row + 1; col < n; ++col) {
+        const double value = std::abs(matrix(row, col));
+        if (value > largest) { largest = value; p = row; q = col; }
+      }
+    }
+    double diagonal_scale = 1.0;
+    for (std::size_t index = 0; index < n; ++index)
+      diagonal_scale = std::max(diagonal_scale, std::abs(matrix(index, index)));
+    if (largest <= 1.0e-14 * diagonal_scale) break;
+    const double app = matrix(p, p), aqq = matrix(q, q), apq = matrix(p, q);
+    const double tau = (aqq - app) / (2.0 * apq);
+    const double sign = tau >= 0.0 ? 1.0 : -1.0;
+    const double t = sign / (std::abs(tau) + std::sqrt(1.0 + tau * tau));
+    const double c = 1.0 / std::sqrt(1.0 + t * t);
+    const double s = t * c;
+    for (std::size_t k = 0; k < n; ++k) {
+      if (k == p || k == q) continue;
+      const double akp = matrix(k, p), akq = matrix(k, q);
+      matrix(k, p) = matrix(p, k) = c * akp - s * akq;
+      matrix(k, q) = matrix(q, k) = s * akp + c * akq;
+    }
+    matrix(p, p) = c * c * app - 2.0 * s * c * apq + s * s * aqq;
+    matrix(q, q) = s * s * app + 2.0 * s * c * apq + c * c * aqq;
+    matrix(p, q) = matrix(q, p) = 0.0;
+  }
+  double minimum = matrix(0, 0);
+  for (std::size_t index = 1; index < n; ++index) minimum = std::min(minimum, matrix(index, index));
+  if (!std::isfinite(minimum)) throw std::runtime_error("symmetric eigenvalue is NaN/Inf");
+  return minimum;
+}
+
 void element_force_tangent(const std::vector<double>& qe, double Le, double EA, double EI, std::size_t ngauss,
                            std::size_t element_id, std::vector<double>& fe, Matrix& Ke,
                            AssemblyTrace* trace) {
@@ -246,7 +287,7 @@ void validate_model(const Model& model) {
        (model.gauss_order != 3 && model.gauss_order != 5) ||
        (model.mass_gauss_order != 3 && model.mass_gauss_order != 5) ||
        !model.include_gravity || !model.include_buoyancy ||
-       model.damping_alpha != 0.0 || model.damping_beta != 0.0) {
+       model.damping_alpha < 0.0 || model.damping_beta < 0.0) {
     throw std::invalid_argument("invalid ANCF model dimensions or numerical contract");
   }
   for (double value : {model.length_m, model.top_tension_N, model.fluid_density, model.gravity,
@@ -401,6 +442,68 @@ void internal_force_tangent(const std::vector<double>& q, const Model& model, st
   for(std::size_t i=0;i<model.ndof();++i)for(std::size_t j=i+1;j<model.ndof();++j){double v=0.5*(tangent(i,j)+tangent(j,i));tangent(i,j)=tangent(j,i)=v;}
   if (!finite_vector(force) || !finite_matrix(tangent))
     throw std::runtime_error("ANCF assembled force or tangent contains NaN/Inf");
+}
+
+Matrix resolve_rayleigh_damping(const Model& model, const Matrix& mass,
+                                const std::vector<double>& q_ref,
+                                bool require_free_tangent_positive_semidefinite) {
+  validate_model(model);
+  const std::size_t n = model.ndof();
+  if (mass.rows != n || mass.cols != n || mass.data.size() != n * n ||
+      !finite_matrix(mass) || q_ref.size() != n || !finite_vector(q_ref)) {
+    throw std::invalid_argument("Rayleigh damping state dimensions or values are invalid");
+  }
+  for (std::size_t row = 0; row < n; ++row) {
+    for (std::size_t col = row + 1; col < n; ++col) {
+      if (mass(row, col) != mass(col, row))
+        throw std::invalid_argument("Rayleigh damping mass matrix must be symmetric");
+    }
+  }
+  if (model.damping_alpha == 0.0 && model.damping_beta == 0.0)
+    return Matrix(n, n);
+
+  Matrix tangent(n, n);
+  std::vector<double> tangent_force;
+  if (model.damping_beta != 0.0) {
+    internal_force_tangent(q_ref, model, tangent_force, tangent);
+    if (require_free_tangent_positive_semidefinite) {
+      std::vector<bool> fixed(n, false);
+      const auto canonical = canonical_boundary(model).first;
+      const auto& fixed_indices = model.fixed_dof.empty() ? canonical : model.fixed_dof;
+      for (std::size_t index : fixed_indices) {
+        if (index >= n) throw std::invalid_argument("Rayleigh fixed DOF is outside the model");
+        fixed[index] = true;
+      }
+      std::vector<std::size_t> free_indices;
+      for (std::size_t index = 0; index < n; ++index) if (!fixed[index]) free_indices.push_back(index);
+      Matrix free_tangent(free_indices.size(), free_indices.size());
+      double scale = 1.0;
+      for (std::size_t row = 0; row < free_indices.size(); ++row) {
+        for (std::size_t col = 0; col < free_indices.size(); ++col) {
+          free_tangent(row, col) = tangent(free_indices[row], free_indices[col]);
+          scale = std::max(scale, std::abs(free_tangent(row, col)));
+        }
+      }
+      const double tolerance = std::max(1.0e-12, 1.0e-10 * scale);
+      if (minimum_symmetric_eigenvalue(free_tangent) < -tolerance)
+        throw std::invalid_argument("DAMPING_REFERENCE_TANGENT_NOT_PSD");
+    }
+  }
+  Matrix result(n, n);
+  for (std::size_t row = 0; row < n; ++row) {
+    for (std::size_t col = 0; col < n; ++col) {
+      result(row, col) = model.damping_alpha * mass(row, col) +
+                         model.damping_beta * tangent(row, col);
+    }
+  }
+  for (std::size_t row = 0; row < n; ++row) {
+    for (std::size_t col = row + 1; col < n; ++col) {
+      const double value = 0.5 * (result(row, col) + result(col, row));
+      result(row, col) = result(col, row) = value;
+    }
+  }
+  if (!finite_matrix(result)) throw std::runtime_error("Rayleigh damping contains NaN/Inf");
+  return result;
 }
 
 struct StrainEnergyComponents {
