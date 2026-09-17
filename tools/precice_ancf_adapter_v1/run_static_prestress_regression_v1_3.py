@@ -87,6 +87,68 @@ def _fresh_offline_suite() -> dict[str, Any]:
     }
 
 
+def _evaluation_tuple(result: Mapping[str, Any], f_N: float,
+                      target_reaction_N: float) -> dict[str, Any]:
+    """Return one self-contained evaluation tuple.
+
+    The evaluation id, state values, top tension, and residual are copied
+    from one result object.  The residual is checked against that same
+    object's top tension so callers cannot accidentally combine fields from
+    different evaluations.
+    """
+    evaluation_id = str(result["evaluation_id"])
+    delta_length = float(result["DeltaL_m"])
+    height = float(result["H_m"])
+    top_tension = float(result["top_tension_N"])
+    expected_f = top_tension - float(target_reaction_N)
+    actual_f = float(f_N)
+    if not math.isclose(actual_f, expected_f, rel_tol=1.0e-12, abs_tol=1.0e-12):
+        raise ValueError(
+            f"mixed evaluation tuple for {evaluation_id}: "
+            f"f={actual_f:.17g}, expected={expected_f:.17g}")
+    return {
+        "evaluation_id": evaluation_id,
+        "DeltaL_m": delta_length,
+        "H_m": height,
+        "T_top_N": top_tension,
+        "f_N": actual_f,
+        "relative_target_error": abs(actual_f) / float(target_reaction_N),
+        "status": result.get("status"),
+        "static_status": result.get("static_status"),
+    }
+
+
+def _summary_states(calibration: Mapping[str, Any],
+                    target_reaction_N: float) -> dict[str, Any]:
+    """Build explicitly named initial/final/accepted summary states."""
+    initial = {
+        "low": _evaluation_tuple(
+            calibration["initial_low_result"],
+            calibration["initial_low_f_N"], target_reaction_N),
+        "high": _evaluation_tuple(
+            calibration["initial_high_result"],
+            calibration["initial_high_f_N"], target_reaction_N),
+    }
+    initial["sign_change"] = initial["low"]["f_N"] * initial["high"]["f_N"] < 0.0
+    final = {
+        "low": _evaluation_tuple(
+            calibration["final_bracket_low_result"],
+            calibration["final_bracket_low_f_N"], target_reaction_N),
+        "high": _evaluation_tuple(
+            calibration["final_bracket_high_result"],
+            calibration["final_bracket_high_f_N"], target_reaction_N),
+    }
+    final["sign_change"] = final["low"]["f_N"] * final["high"]["f_N"] < 0.0
+    accepted = _evaluation_tuple(
+        calibration["accepted_result"], calibration["accepted_f_N"],
+        target_reaction_N)
+    return {
+        "initial_bracket": initial,
+        "final_bracket_before_accepted_solution": final,
+        "accepted_solution": accepted,
+    }
+
+
 def _calibrate_in_order(initializer: StaticPrestressInitializer) -> dict[str, Any]:
     """Perform low, high, then deterministic bisection in frozen order."""
     spec = initializer.spec
@@ -98,9 +160,18 @@ def _calibrate_in_order(initializer: StaticPrestressInitializer) -> dict[str, An
     high_f = float(high["top_tension_N"]) - float(spec["target_reaction_N"])
     if low_f * high_f >= 0.0:
         raise PrestressError("TARGET_REACTION_BRACKET_FAIL")
+    initial_low_result = deepcopy(low)
+    initial_high_result = deepcopy(high)
+    initial_low_f = low_f
+    initial_high_f = high_f
+    current_low_result = deepcopy(low)
+    current_high_result = deepcopy(high)
+    current_low_f = low_f
+    current_high_f = high_f
 
     final: Mapping[str, Any] | None = None
     final_delta: float | None = None
+    accepted_f: float | None = None
     for iteration in range(1, int(spec["max_iterations"]) + 1):
         delta = 0.5 * (low_delta + high_delta)
         candidate = initializer._evaluate(delta, iteration)
@@ -109,22 +180,37 @@ def _calibrate_in_order(initializer: StaticPrestressInitializer) -> dict[str, An
         candidate_f = float(candidate["top_tension_N"]) - float(spec["target_reaction_N"])
         relative_error = abs(candidate_f) / float(spec["target_reaction_N"])
         if relative_error <= float(spec["relative_target_tolerance"]):
+            accepted_f = candidate_f
             break
-        if low_f * candidate_f < 0.0:
-            high_delta, high_f = delta, candidate_f
+        if current_low_f * candidate_f < 0.0:
+            high_delta, current_high_f = delta, candidate_f
+            current_high_result = deepcopy(candidate)
         else:
-            low_delta, low_f = delta, candidate_f
+            low_delta, current_low_f = delta, candidate_f
+            current_low_result = deepcopy(candidate)
     else:
         raise PrestressError("TARGET_REACTION_CALIBRATION_FAIL")
 
-    assert final is not None and final_delta is not None
+    assert final is not None and final_delta is not None and accepted_f is not None
     return {
         "final_delta_length_m": final_delta,
         "final": final,
-        "bracket_low": low,
-        "bracket_high": high,
-        "bracket_low_f_N": low_f,
-        "bracket_high_f_N": high_f,
+        "initial_low_result": initial_low_result,
+        "initial_high_result": initial_high_result,
+        "initial_low_f_N": initial_low_f,
+        "initial_high_f_N": initial_high_f,
+        "final_bracket_low_result": current_low_result,
+        "final_bracket_high_result": current_high_result,
+        "final_bracket_low_f_N": current_low_f,
+        "final_bracket_high_f_N": current_high_f,
+        "accepted_result": deepcopy(final),
+        "accepted_f_N": accepted_f,
+        # Compatibility aliases for existing internal consumers. These now
+        # explicitly denote the final bracket before the accepted solution.
+        "bracket_low": current_low_result,
+        "bracket_high": current_high_result,
+        "bracket_low_f_N": current_low_f,
+        "bracket_high_f_N": current_high_f,
         "bracket_valid": True,
         "static_solves": initializer.static_solves,
         "total_newton_iterations": initializer.total_newton_iterations,
@@ -302,10 +388,11 @@ def run_v13(output_dir: Path, driver: Path) -> dict[str, Any]:
         for index in range(len(legacy_profile) - 1))
     invalid_results = _invalid_case_results(legacy_raw, output_dir)
     invalid_pass = all(item["status"] == "REJECT" for item in invalid_results)
+    summary_states = _summary_states(legacy_calibration, TARGET)
     gates = {
         "low_status": low.get("status") == "PASS",
         "high_status": high.get("status") == "PASS",
-        "bracket_sign_change": legacy_calibration["bracket_low_f_N"] * legacy_calibration["bracket_high_f_N"] < 0.0,
+        "bracket_sign_change": summary_states["initial_bracket"]["sign_change"],
         "target_error": target_error <= TARGET_TOLERANCE,
         "global_balance": float(legacy_final["global_balance_error"]) <= GLOBAL_BALANCE_TOLERANCE,
         "delta_agreement": delta_agreement <= DELTA_TOLERANCE,
@@ -340,12 +427,14 @@ def run_v13(output_dir: Path, driver: Path) -> dict[str, Any]:
         "offline_tests": offline,
         "low_endpoint": low,
         "high_endpoint": high,
+        "initial_bracket": summary_states["initial_bracket"],
+        "final_bracket_before_accepted_solution": summary_states[
+            "final_bracket_before_accepted_solution"],
+        "accepted_solution": summary_states["accepted_solution"],
         "bracket": {
-            "low_DeltaL_m": legacy_calibration["history"][0]["DeltaL_m"],
-            "high_DeltaL_m": legacy_calibration["history"][1]["DeltaL_m"],
-            "low_f_N": legacy_calibration["bracket_low_f_N"],
-            "high_f_N": legacy_calibration["bracket_high_f_N"],
-            "sign_change": legacy_calibration["bracket_low_f_N"] * legacy_calibration["bracket_high_f_N"] < 0.0,
+            "initial": summary_states["initial_bracket"],
+            "final_before_accepted_solution": summary_states[
+                "final_bracket_before_accepted_solution"],
         },
         "bisection_iterations": max(row["bisection_iteration"] for row in legacy_calibration["history"]),
         "static_solve_count": legacy_calibration["static_solves"],
@@ -417,8 +506,21 @@ Final status: `{status}`
 - Protocol SHA-256: `{PROTOCOL_SHA256}`
 - Production baseline: `{BASELINE_COMMIT}`
 - Strategy: `installed_stretch_target_top_reaction`
-- Low/high bracket: `{legacy_calibration['history'][0]['DeltaL_m']:.17g}` m / `{legacy_calibration['history'][1]['DeltaL_m']:.17g}` m
-- Bracket residuals: `{legacy_calibration['bracket_low_f_N']:.17g}` N / `{legacy_calibration['bracket_high_f_N']:.17g}` N
+- Initial bracket: low `{summary_states['initial_bracket']['low']['evaluation_id']}`
+  DeltaL `{summary_states['initial_bracket']['low']['DeltaL_m']:.17g}` m,
+  f `{summary_states['initial_bracket']['low']['f_N']:.17g}` N; high
+  `{summary_states['initial_bracket']['high']['evaluation_id']}`
+  DeltaL `{summary_states['initial_bracket']['high']['DeltaL_m']:.17g}` m,
+  f `{summary_states['initial_bracket']['high']['f_N']:.17g}` N
+- Final bracket before accepted solution: low `{summary_states['final_bracket_before_accepted_solution']['low']['evaluation_id']}`
+  DeltaL `{summary_states['final_bracket_before_accepted_solution']['low']['DeltaL_m']:.17g}` m,
+  f `{summary_states['final_bracket_before_accepted_solution']['low']['f_N']:.17g}` N; high
+  `{summary_states['final_bracket_before_accepted_solution']['high']['evaluation_id']}`
+  DeltaL `{summary_states['final_bracket_before_accepted_solution']['high']['DeltaL_m']:.17g}` m,
+  f `{summary_states['final_bracket_before_accepted_solution']['high']['f_N']:.17g}` N
+- Accepted solution: `{summary_states['accepted_solution']['evaluation_id']}`
+  DeltaL `{summary_states['accepted_solution']['DeltaL_m']:.17g}` m,
+  f `{summary_states['accepted_solution']['f_N']:.17g}` N
 - Static solves: `{legacy_calibration['static_solves']}`; bisection iterations: `{max(row['bisection_iteration'] for row in legacy_calibration['history'])}`
 - Final DeltaL/H: `{legacy_calibration['final_delta_length_m']:.17g}` m / `{legacy_final['H_m']:.17g}` m
 - Final top reaction: `{legacy_final['top_tension_N']:.17g}` N; relative error `{target_error:.17g}`
