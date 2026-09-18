@@ -23,6 +23,37 @@ enum class SectionPropertyMode {
   ExplicitSectionProperties
 };
 
+// The legacy mode is the protected H^T F point-lumped contract.  Distributed
+// modes use a separate typed input and never reinterpret the legacy force
+// vector as a line load.
+enum class SpanwiseLoadReconstruction {
+  LegacyPointLumped,
+  PiecewiseLinearDistributed
+};
+
+enum class SpanwiseEndpointPolicy {
+  NearestConstant
+};
+
+struct SpanwiseLoadSample {
+  double s_m = 0.0;
+  std::array<double, 3> line_force_Npm{};
+};
+
+struct SpanwiseLoadRegion {
+  double s_min_m = 0.0;
+  double s_max_m = 0.0;
+};
+
+struct SpanwiseLoadInput {
+  // Fail closed to the historical mapping when a caller does not opt into
+  // the new typed distributed-load contract explicitly.
+  SpanwiseLoadReconstruction mode = SpanwiseLoadReconstruction::LegacyPointLumped;
+  SpanwiseEndpointPolicy endpoint_policy = SpanwiseEndpointPolicy::NearestConstant;
+  SpanwiseLoadRegion active_region;
+  std::vector<SpanwiseLoadSample> samples;
+};
+
 struct Matrix {
   std::size_t rows = 0, cols = 0;
   std::vector<double> data;
@@ -39,6 +70,13 @@ struct Model {
   std::size_t elements = 2;
   std::size_t slices = 3;
   std::vector<double> slice_positions_m;
+  // Optional versioned distributed-load model metadata.  The legacy model
+  // bytes omit this trailer, preserving the historical wire layout.
+  SpanwiseLoadReconstruction spanwise_load_reconstruction =
+      SpanwiseLoadReconstruction::LegacyPointLumped;
+  SpanwiseEndpointPolicy spanwise_endpoint_policy = SpanwiseEndpointPolicy::NearestConstant;
+  double spanwise_active_s_min_m = 0.0;
+  double spanwise_active_s_max_m = 0.0;
   double top_tension_N = 1.0e7;
   double youngs_modulus_Pa = 2.07e11;
   double material_density = 7850.0;
@@ -221,6 +259,8 @@ void validate_model(const Model& model);
 void symmetrize_mass(State& state);
 StepDiagnostics advance(State& state, const Model& model, const std::vector<double>& slice_force,
                         std::vector<NewtonIterationTrace>* trace = nullptr);
+StepDiagnostics advance(State& state, const Model& model, const SpanwiseLoadInput& load,
+                        std::vector<NewtonIterationTrace>* trace = nullptr);
 // Offline-only load-ramped static Newton solve. It shares the production
 // internal-force/tangent implementation but intentionally excludes Newmark
 // inertia and does not advance state time or step.
@@ -251,6 +291,7 @@ Matrix resolve_rayleigh_damping(const Model& model, const Matrix& mass,
                                 bool require_free_tangent_positive_semidefinite = true);
 ForensicResult internal_force_forensic(const std::vector<double>& q, const Model& model);
 std::vector<double> external_force(const Model& model, const std::vector<double>& slice_force);
+std::vector<double> external_force(const Model& model, const SpanwiseLoadInput& load);
 // Assemble the canonical static gravity/buoyancy/top-tension load used by
 // the ANCF initialization contract. This does not alter transient advance.
 std::vector<double> static_base_load(const Model& model);

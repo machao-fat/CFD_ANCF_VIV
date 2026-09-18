@@ -148,14 +148,20 @@ class GenericANCFParticipant:
             raise ParticipantError("backend lacks write_displacement")
         writer(payload)
 
-    def _read_force(self, backend: Any, item: Any) -> tuple[tuple[float, float, float], tuple[float, float, float]]:
+    def _read_force(self, backend: Any, item: Any) -> tuple[
+            tuple[float, float, float], tuple[float, float, float], tuple[float, float, float]]:
         reader = getattr(backend, "read_force", None)
         if not callable(reader):
             raise ParticipantError("backend lacks read_force")
         raw = reader()
         openfoam = _force_total(raw, "preCICE Force")
         converted = convert_openfoam_force(openfoam, item.unit_span_m, item.slice_length_m)
-        return openfoam, converted.force_N
+        if self.config.spanwise_load_spec()["mode"] == "piecewise_linear_distributed":
+            # The distributed wire field is explicitly N/m.  Do not apply the
+            # legacy slice_length_m multiplication to the value sent to the
+            # distributed kernel path.
+            return openfoam, converted.force_2d_Npm, converted.force_N
+        return openfoam, converted.force_N, converted.force_N
 
     def _send_worker(self, request: Any) -> Any:
         if callable(self.worker):
@@ -188,10 +194,11 @@ class GenericANCFParticipant:
         forces = []
         slice_steps = []
         for index, (item, position, velocity, acceleration, displacement) in enumerate(motion_data):
-            openfoam, force = self._read_force(self.backends[index], item)
-            forces.extend(force)
-            slice_steps.append(SliceStep(item.slice_id, displacement, openfoam, force,
+            openfoam, wire_force, integrated_force = self._read_force(self.backends[index], item)
+            forces.extend(wire_force)
+            slice_steps.append(SliceStep(item.slice_id, displacement, openfoam, integrated_force,
                                          position, velocity, acceleration))
+        distributed = self.config.spanwise_load_spec()["mode"] == "piecewise_linear_distributed"
         dt = float(self.config.raw["numerics"]["dt_s"])
         next_step = self.global_step + 1
         next_time = self.time_s + dt
@@ -201,7 +208,8 @@ class GenericANCFParticipant:
             request_id=next_step, transaction_id=next_step, run_id=self.config.run_id,
             case_id=self.config.case_id, model=self.model, q=self.q, qdot=self.qdot,
             qddot=self.qddot, base_load=self.base_load,
-            slice_force=tuple(forces),
+            slice_force=(() if distributed else tuple(forces)),
+            spanwise_line_force_Npm=(tuple(forces) if distributed else ()),
             damping_mode=self.config.damping_spec()["mode"],
             damping_reference_state=self.config.damping_spec()["reference_state"],
             damping_identity_sha256=self.damping_identity,

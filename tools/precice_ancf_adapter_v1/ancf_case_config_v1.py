@@ -55,6 +55,9 @@ BASE_LOAD_SOURCES = ("caller_supplied", "model_static")
 STATE_KINDS = ("fresh", "prestressed_start", "restart")
 PRESTRESS_MODES = ("none", "installed_stretch_target_top_reaction")
 FORCE_REPRESENTATION = "integrated_slice_force_N"
+DISTRIBUTED_FORCE_REPRESENTATION = "sectional_line_force_Npm"
+SPANWISE_RECONSTRUCTION_MODES = ("legacy_point_lumped", "piecewise_linear_distributed")
+SPANWISE_ENDPOINT_POLICIES = ("nearest_constant",)
 MOTION_COMPONENTS = ("x", "y")
 PINNED_PRESET = "pinned_position_both_ends"
 DOF_ORDER = "per_node[r_x,r_y,r_z,r_sx,r_sy,r_sz]"
@@ -253,8 +256,34 @@ class CaseConfig:
             ids.append(sid); previous = s
         if ids != expected_ids:
             raise CaseConfigError("slice_id must be exactly 0..N-1")
-        if coupling.get("force_representation") != FORCE_REPRESENTATION:
-            raise CaseConfigError("coupling.force_representation must be integrated_slice_force_N")
+        reconstruction = coupling.get(
+            "spanwise_load_reconstruction", {"mode": "legacy_point_lumped"})
+        reconstruction = _mapping(reconstruction, "coupling.spanwise_load_reconstruction")
+        reconstruction_mode = reconstruction.get("mode", "legacy_point_lumped")
+        if reconstruction_mode not in SPANWISE_RECONSTRUCTION_MODES:
+            raise CaseConfigError("coupling.spanwise_load_reconstruction.mode is invalid")
+        force_representation = coupling.get("force_representation")
+        if reconstruction_mode == "legacy_point_lumped":
+            if force_representation != FORCE_REPRESENTATION:
+                raise CaseConfigError("legacy coupling.force_representation must be integrated_slice_force_N")
+        else:
+            if force_representation != DISTRIBUTED_FORCE_REPRESENTATION:
+                raise CaseConfigError(
+                    "distributed coupling.force_representation must be sectional_line_force_Npm")
+            endpoint_policy = reconstruction.get("endpoint_policy", "nearest_constant")
+            if endpoint_policy not in SPANWISE_ENDPOINT_POLICIES:
+                raise CaseConfigError("coupling.spanwise_load_reconstruction.endpoint_policy is invalid")
+            active_start = _finite(
+                reconstruction.get("active_start_m"),
+                "coupling.spanwise_load_reconstruction.active_start_m")
+            active_end = _finite(
+                reconstruction.get("active_end_m"),
+                "coupling.spanwise_load_reconstruction.active_end_m")
+            first_sample = float(slices[0]["s_ref_m"])
+            last_sample = float(slices[-1]["s_ref_m"])
+            if (active_start < 0.0 or active_end > length or active_start > active_end or
+                    active_start > first_sample or last_sample > active_end):
+                raise CaseConfigError("distributed active interval does not cover the samples")
         components = coupling.get("motion_components", ["x", "y"])
         if tuple(components) != MOTION_COMPONENTS:
             raise CaseConfigError("UNSUPPORTED_MOTION_COMPONENT: V1 supports exactly x,y")
@@ -489,6 +518,24 @@ class CaseConfig:
                                      float(item["slice_length_m"]), float(item["unit_span_m"]))
                      for item in self.raw["coupling"]["slices"])
 
+    def spanwise_load_spec(self) -> dict[str, Any]:
+        value = dict(self.raw["coupling"].get(
+            "spanwise_load_reconstruction", {"mode": "legacy_point_lumped"}))
+        mode = str(value.get("mode", "legacy_point_lumped"))
+        if mode == "legacy_point_lumped":
+            return {
+                "mode": mode,
+                "endpoint_policy": "nearest_constant",
+                "active_start_m": 0.0,
+                "active_end_m": self.length_m,
+            }
+        return {
+            "mode": mode,
+            "endpoint_policy": str(value.get("endpoint_policy", "nearest_constant")),
+            "active_start_m": float(value["active_start_m"]),
+            "active_end_m": float(value["active_end_m"]),
+        }
+
     def slice_manifest(self) -> SliceManifest:
         slices = self.slices()
         return SliceManifest("0.2.1", self.case_id, self.length_m,
@@ -537,6 +584,7 @@ class CaseConfig:
         env = self.raw["environment"]
         model = self.raw["model"]
         damping = self.damping_spec()
+        spanwise = self.spanwise_load_spec()
         kwargs: dict[str, Any] = dict(
             length_m=self.length_m, diameter_m=diameter, inner_diameter_m=inner,
             elements=self.elements, slices=len(self.slices()),
@@ -556,6 +604,10 @@ class CaseConfig:
             boundary_contract_id=str(self.raw["boundary"]["contract_id"]),
             base_load_source=(BASE_LOAD_SOURCE_CALLER if self.raw["base_load"]["source"] == "caller_supplied"
                               else BASE_LOAD_SOURCE_MODEL_STATIC),
+            spanwise_load_reconstruction=spanwise["mode"],
+            spanwise_endpoint_policy=spanwise["endpoint_policy"],
+            spanwise_active_s_min_m=spanwise["active_start_m"],
+            spanwise_active_s_max_m=spanwise["active_end_m"],
         )
         if mode == "legacy_physical":
             kwargs["section_property_mode"] = SECTION_PROPERTY_MODE_LEGACY

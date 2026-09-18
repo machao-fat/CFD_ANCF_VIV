@@ -37,6 +37,13 @@ DAMPING_EXTENSION_VERSION = 1
 DAMPING_MODE_RAYLEIGH = 1
 DAMPING_REFERENCE_DYNAMIC_INITIAL = 1
 DAMPING_PSD_POLICY_ID = 1
+SPANWISE_LOAD_EXTENSION_MARKER = 0x31444C53  # "SLD1", little-endian
+SPANWISE_LOAD_EXTENSION_VERSION = 1
+_SPANWISE_LOAD_MODE_PIECEWISE_LINEAR_WIRE = 1
+SPANWISE_ENDPOINT_NEAREST_CONSTANT = 1
+SPANWISE_LOAD_MODE_LEGACY = "legacy_point_lumped"
+SPANWISE_LOAD_MODE_PIECEWISE_LINEAR = "piecewise_linear_distributed"
+SPANWISE_ENDPOINT_POLICY_NEAREST_CONSTANT = "nearest_constant"
 _DAMPING_TAG = b"ancf-damping-v1\0"
 _DAMPING_REFERENCE_TAG = b"ancf-damping-ref-v1\0"
 DOF_ORDER_IDENTITY = "per_node[r_x,r_y,r_z,r_sx,r_sy,r_sz]"
@@ -159,6 +166,12 @@ class KernelModel:
     explicit_displaced_area_m2: float | None = None
     # Missing means the historical caller-supplied base-load path.
     base_load_source: str = BASE_LOAD_SOURCE_CALLER
+    # Additive spanwise line-load contract.  The legacy defaults intentionally
+    # emit no SLD1 trailer and preserve the historical model bytes.
+    spanwise_load_reconstruction: str = SPANWISE_LOAD_MODE_LEGACY
+    spanwise_active_s_min_m: float = 0.0
+    spanwise_active_s_max_m: float | None = None
+    spanwise_endpoint_policy: str = SPANWISE_ENDPOINT_POLICY_NEAREST_CONSTANT
 
     @property
     def ndof(self) -> int:
@@ -172,6 +185,11 @@ class KernelModel:
             raise FrameError("kernel section_property_mode is unknown")
         if self.base_load_source not in (BASE_LOAD_SOURCE_CALLER, BASE_LOAD_SOURCE_MODEL_STATIC):
             raise FrameError("kernel base_load_source is unknown")
+        if self.spanwise_load_reconstruction not in (
+                SPANWISE_LOAD_MODE_LEGACY, SPANWISE_LOAD_MODE_PIECEWISE_LINEAR):
+            raise FrameError("kernel spanwise_load_reconstruction is unknown")
+        if self.spanwise_endpoint_policy != SPANWISE_ENDPOINT_POLICY_NEAREST_CONSTANT:
+            raise FrameError("kernel spanwise endpoint policy is unknown")
         explicit_values = (
             self.explicit_EA_N,
             self.explicit_EI_Nm2,
@@ -238,6 +256,20 @@ class KernelModel:
                                        any(self.slice_positions_m[i] <= self.slice_positions_m[i - 1]
                                            for i in range(1, len(self.slice_positions_m)))):
             raise FrameError("kernel slice positions are invalid")
+        if self.spanwise_load_reconstruction == SPANWISE_LOAD_MODE_PIECEWISE_LINEAR:
+            if (self.slices < 2 or not self.slice_positions_m or
+                    self.spanwise_active_s_max_m is None or
+                    isinstance(self.spanwise_active_s_max_m, bool) or
+                    not isinstance(self.spanwise_active_s_max_m, Real) or
+                    not isinstance(self.spanwise_active_s_min_m, Real) or
+                    not math.isfinite(float(self.spanwise_active_s_min_m)) or
+                    not math.isfinite(float(self.spanwise_active_s_max_m)) or
+                    self.spanwise_active_s_min_m < 0.0 or
+                    self.spanwise_active_s_max_m > self.length_m or
+                    self.spanwise_active_s_min_m > self.spanwise_active_s_max_m or
+                    self.spanwise_active_s_min_m > self.slice_positions_m[0] or
+                    self.slice_positions_m[-1] > self.spanwise_active_s_max_m):
+                raise FrameError("kernel distributed-load active region is invalid")
         fixed = self.fixed_dof or (0, 1, 2, 6 * self.elements, 6 * self.elements + 1)
         prescribed = self.prescribed_values or (0.0,) * len(fixed)
         if (len(fixed) != len(prescribed) or not fixed or
@@ -290,6 +322,16 @@ class KernelModel:
                 BASE_LOAD_SOURCE_EXTENSION_VERSION,
                 _BASE_LOAD_SOURCE_MODEL_STATIC_WIRE,
             )
+        if self.spanwise_load_reconstruction == SPANWISE_LOAD_MODE_PIECEWISE_LINEAR:
+            model_bytes += struct.pack(
+                "<IIIIdd",
+                SPANWISE_LOAD_EXTENSION_MARKER,
+                SPANWISE_LOAD_EXTENSION_VERSION,
+                _SPANWISE_LOAD_MODE_PIECEWISE_LINEAR_WIRE,
+                SPANWISE_ENDPOINT_NEAREST_CONSTANT,
+                float(self.spanwise_active_s_min_m),
+                float(self.spanwise_active_s_max_m),
+            )
         return model_bytes
 
 
@@ -323,6 +365,7 @@ class KernelStepRequest:
     damping_model_identity_sha256: str = ""
     damping_q_ref: tuple[float, ...] = ()
     damping_psd_policy_id: int = DAMPING_PSD_POLICY_ID
+    spanwise_line_force_Npm: tuple[float, ...] = ()
 
     def payload(self) -> bytes:
         self.model.validate(self.dt_s)
@@ -331,7 +374,15 @@ class KernelStepRequest:
         n = self.model.ndof
         q = _finite_vector(self.q, "q"); qdot = _finite_vector(self.qdot, "qdot")
         qddot = _finite_vector(self.qddot, "qddot"); base = _finite_vector(self.base_load, "base_load")
-        force = _finite_vector(self.slice_force, "slice_force")
+        distributed = self.model.spanwise_load_reconstruction == SPANWISE_LOAD_MODE_PIECEWISE_LINEAR
+        if distributed:
+            if self.slice_force:
+                raise FrameError("distributed requests must not carry legacy slice_force")
+            force = _finite_vector(self.spanwise_line_force_Npm, "spanwise_line_force_Npm")
+        else:
+            force = _finite_vector(self.slice_force, "slice_force")
+            if self.spanwise_line_force_Npm:
+                raise FrameError("legacy requests must not carry spanwise_line_force_Npm")
         if isinstance(self.mass_matrix, (str, bytes)):
             raise FrameError("mass_matrix is not a numeric sequence")
         try:

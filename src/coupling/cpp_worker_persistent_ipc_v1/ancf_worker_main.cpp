@@ -44,6 +44,10 @@ constexpr std::uint32_t BASE_LOAD_SOURCE_EXTENSION_MARKER = 0x31534C42;
 constexpr std::uint32_t BASE_LOAD_SOURCE_EXTENSION_VERSION = 1;
 constexpr std::uint32_t BASE_LOAD_SOURCE_CALLER = 0;
 constexpr std::uint32_t BASE_LOAD_SOURCE_MODEL_STATIC = 1;
+constexpr std::uint32_t SPANWISE_LOAD_EXTENSION_MARKER = 0x31444C53;
+constexpr std::uint32_t SPANWISE_LOAD_EXTENSION_VERSION = 1;
+constexpr std::uint32_t SPANWISE_LOAD_MODE_PIECEWISE_LINEAR = 1;
+constexpr std::uint32_t SPANWISE_ENDPOINT_NEAREST_CONSTANT = 1;
 constexpr std::uint32_t DAMPING_EXTENSION_MARKER = 0x31504D44;
 constexpr std::uint32_t DAMPING_EXTENSION_VERSION = 1;
 constexpr std::uint32_t DAMPING_MODE_RAYLEIGH = 1;
@@ -390,6 +394,24 @@ int process_step(const std::vector<char>& payload, std::vector<char>& response,
       return 4;
     }
   }
+  std::uint32_t spanwise_marker = 0;
+  if (offset <= payload.size() && sizeof(spanwise_marker) <= payload.size() - offset)
+    std::memcpy(&spanwise_marker, payload.data() + offset, sizeof(spanwise_marker));
+  if (spanwise_marker == SPANWISE_LOAD_EXTENSION_MARKER) {
+    constexpr std::size_t spanwise_extension_size = 4u * sizeof(std::uint32_t) + 2u * sizeof(double);
+    if (spanwise_extension_size > payload.size() - offset) return 4;
+    std::uint32_t spanwise_version = 0, spanwise_mode = 0, spanwise_endpoint = 0;
+    if (!take(payload, offset, spanwise_marker) || !take(payload, offset, spanwise_version) ||
+        !take(payload, offset, spanwise_mode) || !take(payload, offset, spanwise_endpoint) ||
+        !take(payload, offset, model.spanwise_active_s_min_m) ||
+        !take(payload, offset, model.spanwise_active_s_max_m) ||
+        spanwise_version != SPANWISE_LOAD_EXTENSION_VERSION ||
+        spanwise_mode != SPANWISE_LOAD_MODE_PIECEWISE_LINEAR ||
+        spanwise_endpoint != SPANWISE_ENDPOINT_NEAREST_CONSTANT) return 4;
+    model.spanwise_load_reconstruction =
+        cfd_ancf::SpanwiseLoadReconstruction::PiecewiseLinearDistributed;
+    model.spanwise_endpoint_policy = cfd_ancf::SpanwiseEndpointPolicy::NearestConstant;
+  }
   bool damping_extension = false;
   std::uint32_t damping_marker = 0, damping_version = 0, damping_mode = 0,
                 damping_reference_kind = 0, damping_q_count = 0, damping_psd_policy = 0;
@@ -641,7 +663,21 @@ int process_step(const std::vector<char>& payload, std::vector<char>& response,
       return 12;
     }
   }
-  const std::vector<double> slice_force(input.begin() + static_cast<std::ptrdiff_t>(input_offset), input.end());
+  const std::vector<double> load_values(input.begin() + static_cast<std::ptrdiff_t>(input_offset), input.end());
+  cfd_ancf::SpanwiseLoadInput distributed_load;
+  if (model.spanwise_load_reconstruction ==
+      cfd_ancf::SpanwiseLoadReconstruction::PiecewiseLinearDistributed) {
+    distributed_load.mode = cfd_ancf::SpanwiseLoadReconstruction::PiecewiseLinearDistributed;
+    distributed_load.endpoint_policy = cfd_ancf::SpanwiseEndpointPolicy::NearestConstant;
+    distributed_load.active_region = {
+        model.spanwise_active_s_min_m, model.spanwise_active_s_max_m};
+    distributed_load.samples.resize(model.slice_positions_m.size());
+    for (std::size_t index = 0; index < distributed_load.samples.size(); ++index) {
+      distributed_load.samples[index].s_m = model.slice_positions_m[index];
+      for (std::size_t component = 0; component < 3; ++component)
+        distributed_load.samples[index].line_force_Npm[component] = load_values[3 * index + component];
+    }
+  }
   std::vector<double> effective_base_load = base_load;
   if (base_load_source == BaseLoadSource::ModelStatic) {
     try {
@@ -656,12 +692,18 @@ int process_step(const std::vector<char>& payload, std::vector<char>& response,
   state.time_s = time_s - dt_s; state.step = static_cast<std::size_t>(global_step - 1);
   std::vector<double> internal_before; cfd_ancf::Matrix tangent;
   cfd_ancf::internal_force_tangent(state.q, model, internal_before, tangent);
-  const std::vector<double> external = cfd_ancf::external_force(model, slice_force);
+  const std::vector<double> external = model.spanwise_load_reconstruction ==
+      cfd_ancf::SpanwiseLoadReconstruction::PiecewiseLinearDistributed
+      ? cfd_ancf::external_force(model, distributed_load)
+      : cfd_ancf::external_force(model, load_values);
   std::vector<double> generalized = effective_base_load;
   for (std::size_t index = 0; index < generalized.size(); ++index) generalized[index] += external[index];
   cfd_ancf::StepDiagnostics diagnostics;
   try {
-    diagnostics = cfd_ancf::advance(state, model, slice_force);
+    diagnostics = model.spanwise_load_reconstruction ==
+        cfd_ancf::SpanwiseLoadReconstruction::PiecewiseLinearDistributed
+        ? cfd_ancf::advance(state, model, distributed_load)
+        : cfd_ancf::advance(state, model, load_values);
   } catch (const std::exception& error) {
     // Keep the wire return code stable while exposing the fail-closed reason.
     std::cerr << "advance exception: " << error.what() << '\n';

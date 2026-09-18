@@ -349,6 +349,22 @@ void validate_model(const Model& model) {
       }
     }
   }
+  if (model.spanwise_load_reconstruction ==
+      SpanwiseLoadReconstruction::PiecewiseLinearDistributed) {
+    if (model.spanwise_endpoint_policy != SpanwiseEndpointPolicy::NearestConstant ||
+        model.slice_positions_m.size() != model.slices || model.slices < 2 ||
+        !finite(model.spanwise_active_s_min_m) || !finite(model.spanwise_active_s_max_m) ||
+        model.spanwise_active_s_min_m < 0.0 ||
+        model.spanwise_active_s_max_m > model.length_m ||
+        model.spanwise_active_s_min_m > model.spanwise_active_s_max_m ||
+        model.spanwise_active_s_min_m > model.slice_positions_m.front() ||
+        model.slice_positions_m.back() > model.spanwise_active_s_max_m) {
+      throw std::invalid_argument("ANCF distributed-load model contract is invalid");
+    }
+  } else if (model.spanwise_load_reconstruction !=
+             SpanwiseLoadReconstruction::LegacyPointLumped) {
+    throw std::invalid_argument("ANCF spanwise-load reconstruction mode is unknown");
+  }
 }
 
 Matrix mapping_H3(const Model& model) {
@@ -412,6 +428,95 @@ std::vector<double> external_force(const Model& model, const std::vector<double>
                   [](double value) { return std::isfinite(value); })) {
     throw std::runtime_error("mapped external force contains NaN/Inf");
   }
+  return out;
+}
+
+std::vector<double> external_force(const Model& model, const SpanwiseLoadInput& load) {
+  validate_model(model);
+  if (load.mode != SpanwiseLoadReconstruction::PiecewiseLinearDistributed ||
+      load.endpoint_policy != SpanwiseEndpointPolicy::NearestConstant ||
+      load.samples.size() < 2) {
+    throw std::invalid_argument("ANCF distributed-load input contract is invalid");
+  }
+  const double s_min = load.active_region.s_min_m;
+  const double s_max = load.active_region.s_max_m;
+  if (!std::isfinite(s_min) || !std::isfinite(s_max) || s_min < 0.0 ||
+      s_max > model.length_m || s_min > s_max) {
+    throw std::invalid_argument("ANCF distributed-load active region is invalid");
+  }
+  for (std::size_t index = 0; index < load.samples.size(); ++index) {
+    const auto& sample = load.samples[index];
+    if (!std::isfinite(sample.s_m) || sample.s_m < 0.0 || sample.s_m > model.length_m ||
+        (index > 0 && sample.s_m <= load.samples[index - 1].s_m) ||
+        !std::all_of(sample.line_force_Npm.begin(), sample.line_force_Npm.end(),
+                     [](double value) { return std::isfinite(value); })) {
+      throw std::invalid_argument("ANCF distributed-load samples are invalid");
+    }
+  }
+  if (s_min > load.samples.front().s_m || load.samples.back().s_m > s_max) {
+    throw std::invalid_argument("ANCF distributed-load samples do not cover the active region");
+  }
+
+  const auto reconstructed_force = [&](double s) {
+    std::array<double, 3> value{};
+    if (s < s_min || s > s_max) return value;
+    if (s <= load.samples.front().s_m) return load.samples.front().line_force_Npm;
+    if (s >= load.samples.back().s_m) return load.samples.back().line_force_Npm;
+    std::size_t upper = 1;
+    while (upper < load.samples.size() && s > load.samples[upper].s_m) ++upper;
+    if (upper >= load.samples.size()) return load.samples.back().line_force_Npm;
+    const auto& left_sample = load.samples[upper - 1];
+    const auto& right_sample = load.samples[upper];
+    const double fraction = (s - left_sample.s_m) /
+                            (right_sample.s_m - left_sample.s_m);
+    for (std::size_t component = 0; component < value.size(); ++component) {
+      value[component] = left_sample.line_force_Npm[component] +
+          fraction * (right_sample.line_force_Npm[component] -
+                      left_sample.line_force_Npm[component]);
+    }
+    return value;
+  };
+
+  std::vector<double> out(model.ndof(), 0.0);
+  const double element_length = model.length_m / static_cast<double>(model.elements);
+  const auto [xi, weights] = gauss(3);
+  for (std::size_t element = 0; element < model.elements; ++element) {
+    const double element_start = element_length * static_cast<double>(element);
+    const double element_end = element_start + element_length;
+    const double overlap_start = (std::max)(element_start, s_min);
+    const double overlap_end = (std::min)(element_end, s_max);
+    if (overlap_end <= overlap_start) continue;
+    std::vector<double> breakpoints{overlap_start, overlap_end};
+    for (const auto& sample : load.samples) {
+      if (sample.s_m > overlap_start && sample.s_m < overlap_end)
+        breakpoints.push_back(sample.s_m);
+    }
+    std::sort(breakpoints.begin(), breakpoints.end());
+    breakpoints.erase(std::unique(breakpoints.begin(), breakpoints.end(),
+                                   [](double left, double right) {
+                                     return left == right;
+                                   }),
+                       breakpoints.end());
+    for (std::size_t interval = 0; interval + 1 < breakpoints.size(); ++interval) {
+      const double left = breakpoints[interval];
+      const double right = breakpoints[interval + 1];
+      if (right <= left) continue;
+      for (std::size_t quadrature = 0; quadrature < xi.size(); ++quadrature) {
+        const double s = 0.5 * (left + right) + 0.5 * (right - left) * xi[quadrature];
+        const auto force = reconstructed_force(s);
+        const Matrix N = block_matrix(shape(s - element_start, element_length, 0));
+        const double weight = 0.5 * (right - left) * weights[quadrature];
+        for (std::size_t column = 0; column < 12; ++column) {
+          double contribution = 0.0;
+          for (std::size_t component = 0; component < 3; ++component)
+            contribution += N(component, column) * force[component];
+          out[6 * element + column] += weight * contribution;
+        }
+      }
+    }
+  }
+  if (!finite_vector(out))
+    throw std::runtime_error("mapped distributed external force contains NaN/Inf");
   return out;
 }
 
@@ -601,8 +706,10 @@ void symmetrize_mass(State& state) {
   }
 }
 
-StepDiagnostics advance(State& state, const Model& model, const std::vector<double>& slice_force,
-                        std::vector<NewtonIterationTrace>* trace) {
+template <typename ExternalLoadResolver>
+StepDiagnostics advance_impl(State& state, const Model& model,
+                             ExternalLoadResolver&& resolve_external_load,
+                             std::vector<NewtonIterationTrace>* trace) {
   validate_model(model);
   using Clock = std::chrono::steady_clock;
   const auto total_start = Clock::now();
@@ -629,7 +736,7 @@ StepDiagnostics advance(State& state, const Model& model, const std::vector<doub
   }
   std::vector<double> Qext = state.base_load;
   auto external_start = Clock::now();
-  std::vector<double> qext = external_force(model, slice_force);
+  std::vector<double> qext = resolve_external_load();
   const auto external_end = Clock::now();
   for (std::size_t i = 0; i < Qext.size(); ++i) Qext[i] += qext[i];
   if (!finite_vector(Qext))
@@ -799,6 +906,22 @@ StepDiagnostics advance(State& state, const Model& model, const std::vector<doub
   d.external_mapping_s = std::chrono::duration<double>(external_end - external_start).count();
   (void)total_start;
   return d;
+}
+
+StepDiagnostics advance(State& state, const Model& model, const std::vector<double>& slice_force,
+                        std::vector<NewtonIterationTrace>* trace) {
+  return advance_impl(state, model,
+                      [&model, &slice_force]() {
+                        return external_force(model, slice_force);
+                      }, trace);
+}
+
+StepDiagnostics advance(State& state, const Model& model, const SpanwiseLoadInput& load,
+                        std::vector<NewtonIterationTrace>* trace) {
+  return advance_impl(state, model,
+                      [&model, &load]() {
+                        return external_force(model, load);
+                      }, trace);
 }
 
 namespace {
