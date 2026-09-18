@@ -134,10 +134,10 @@ def generate_precice_xml(
         ET.SubElement(scheme, "exchange", data=item.motion_data, mesh=item.structure_mesh,
                       **{"from": manifest.structure_participant, "to": item.fluid_participant})
         # Force is written on the fluid mesh and conservatively mapped to the
-        # structure mesh.  The exchange declaration therefore names the
-        # source (fluid) mesh, while the structure participant reads the
-        # mapped data from its own mesh.
-        ET.SubElement(scheme, "exchange", data=item.force_data, mesh=item.fluid_mesh,
+        # structure mesh.  The coupling-scheme exchange names the destination
+        # mesh, matching the current OpenFOAM adapter contract and the
+        # established single-slice preCICE configuration.
+        ET.SubElement(scheme, "exchange", data=item.force_data, mesh=item.structure_mesh,
                       **{"from": item.fluid_participant, "to": manifest.structure_participant})
     return ET.tostring(root, encoding="unicode", xml_declaration=True)
 
