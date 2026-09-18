@@ -1,0 +1,313 @@
+{
+  "schema_version": "ancf_coupling_baseline_manifest_v1",
+  "baseline_name": "ANCF_COUPLING_BASELINE_V1",
+  "production_commit": "dfb1a3e7e92220a2e4c9400317de372e637095eb",
+  "production_parent": "e85c751d92d50483b7ea0f744c45d13af5d340ac",
+  "branch_at_freeze": "validation/g1-terminal-diagnostic-serialization-repair-v1",
+  "tag_name": "ancf-coupling-baseline-v1",
+  "tag_target": "dfb1a3e7e92220a2e4c9400317de372e637095eb",
+  "created_at": "2026-09-18T16:30:33+08:00",
+  "numerical_execution": false,
+  "push_performed": false,
+  "production_identities": [
+    {
+      "path": "src/coupling/cpp_worker_persistent_ipc_v1/ancf_kernel.cpp",
+      "sha256": "0F8EC9259F6B3DC32DEA517B0130DDE4461E6B62E93C7B02A1B5C3BCCD01A29E",
+      "role": "ANCF production kernel implementation",
+      "tracked": true,
+      "classification": "production"
+    },
+    {
+      "path": "src/coupling/cpp_worker_persistent_ipc_v1/ancf_kernel.hpp",
+      "sha256": "2CBBA16E9ED0502B6959E1BC9036470037F138D9440D6E00431A3C0A7A538E52",
+      "role": "ANCF production public C++ API and model/state types",
+      "tracked": true,
+      "classification": "production"
+    },
+    {
+      "path": "src/coupling/cpp_worker_persistent_ipc_v1/ancf_worker_main.cpp",
+      "sha256": "16D1BA919C31036712B322594041CFDF304D0EC3426B9FB04940D753FD4927AD",
+      "role": "persistent C++ worker and structural runtime entry point",
+      "tracked": true,
+      "classification": "production"
+    },
+    {
+      "path": "src/coupling/cpp_worker_persistent_ipc_v1/kernel_protocol.py",
+      "sha256": "6A5E7AD8FC9B42A9BAE4B221A6BDDA595A6BFF463072331D5F199E866BF256C4",
+      "role": "Python-side kernel request/response wire schema",
+      "tracked": true,
+      "classification": "production"
+    }
+  ],
+  "structural_side_stack_inventory": [
+    {
+      "path": "src/coupling/cpp_worker_persistent_ipc_v1/CMakeLists.txt",
+      "sha256": "15E1F07FC54767CA5242AE2BB795334B213BDB9D65FC0EE06B438B8AE0625502",
+      "role": "C++ worker/kernel build contract",
+      "tracked": true,
+      "classification": "runtime/build"
+    },
+    {
+      "path": "src/coupling/cpp_worker_persistent_ipc_v1/ancf_kernel.cpp",
+      "sha256": "0F8EC9259F6B3DC32DEA517B0130DDE4461E6B62E93C7B02A1B5C3BCCD01A29E",
+      "role": "ANCF constitutive, element, static/dynamic solver implementation",
+      "tracked": true,
+      "classification": "production/runtime"
+    },
+    {
+      "path": "src/coupling/cpp_worker_persistent_ipc_v1/ancf_kernel.hpp",
+      "sha256": "2CBBA16E9ED0502B6959E1BC9036470037F138D9440D6E00431A3C0A7A538E52",
+      "role": "public ANCF model, state, solver, section, damping, and diagnostics API",
+      "tracked": true,
+      "classification": "production/runtime"
+    },
+    {
+      "path": "src/coupling/cpp_worker_persistent_ipc_v1/ancf_worker_main.cpp",
+      "sha256": "16D1BA919C31036712B322594041CFDF304D0EC3426B9FB04940D753FD4927AD",
+      "role": "persistent structural worker, force/state exchange, section and damping resolution",
+      "tracked": true,
+      "classification": "production/runtime"
+    },
+    {
+      "path": "src/coupling/cpp_worker_persistent_ipc_v1/kernel_protocol.py",
+      "sha256": "6A5E7AD8FC9B42A9BAE4B221A6BDDA595A6BFF463072331D5F199E866BF256C4",
+      "role": "kernel request/response codec and section/base-load/damping contract",
+      "tracked": true,
+      "classification": "production/protocol"
+    },
+    {
+      "path": "src/coupling/cpp_worker_persistent_ipc_v1/protocol.py",
+      "sha256": "0C66CA5947D9788D8FA9525E29C0F7BA55F65EA3073A9EDAC7223B5627B84ABB",
+      "role": "persistent IPC framing and control protocol",
+      "tracked": true,
+      "classification": "runtime/protocol"
+    },
+    {
+      "path": "src/coupling/cpp_worker_persistent_ipc_v1/worker_client.py",
+      "sha256": "2B29D48982CDD9EFB289AB16C4D9665611E074BFCD99961D1394645617341DDA",
+      "role": "Python persistent-worker client and response validation",
+      "tracked": true,
+      "classification": "runtime/coupling"
+    },
+    {
+      "path": "src/coupling/cpp_worker_persistent_ipc_v1/sha256.hpp",
+      "sha256": "B670525A491F18DAAFB650B3BD65C1426AB60BC0835E02DA0190C273608A658A",
+      "role": "worker identity/hash support",
+      "tracked": true,
+      "classification": "production/runtime"
+    },
+    {
+      "path": "tools/precice_ancf_adapter_v1/ancf_case_config_v1.py",
+      "sha256": "CAAF4B57940D3B947DF89CABCB659636E538BE4BB58C894E127DDB63D0719E2C",
+      "role": "generic ANCF case/config parser, boundary, section, damping, prestress, and state identity",
+      "tracked": true,
+      "classification": "coupling/config"
+    },
+    {
+      "path": "tools/precice_ancf_adapter_v1/ancf_kinematics_v1.py",
+      "sha256": "BE8F5720B9A3903765E94A0FA7BFA05147125F13BE8A48CC95FAE405FB0AD525",
+      "role": "ANCF Hermite kinematics and state interpolation for interface mapping",
+      "tracked": true,
+      "classification": "coupling/mapping"
+    },
+    {
+      "path": "tools/precice_ancf_adapter_v1/ancf_generic_participant_v1.py",
+      "sha256": "B7B28099AE9680ABB3EBA9C1821AFCB9739582CDAA50E5494A10731238BB1472",
+      "role": "generic configured N-slice ANCF participant over the existing worker API",
+      "tracked": true,
+      "classification": "coupling/runtime"
+    },
+    {
+      "path": "tools/precice_ancf_adapter_v1/ancf_damping_preprocessor_v1.py",
+      "sha256": "C2F9A3F734708142AD16BA6012F95F16E6EE28440873319D5AC97C297B6BD8FD",
+      "role": "Rayleigh damping configuration/preprocessing and identity support",
+      "tracked": true,
+      "classification": "coupling/config"
+    },
+    {
+      "path": "tools/precice_ancf_adapter_v1/ancf_static_prestress_v1.py",
+      "sha256": "DEB3B8D7F1263C6DAB396C573CE71E2896D8EE8335E188116D2895C95A652637",
+      "role": "generic static-prestress calibration, loader, and state handoff",
+      "tracked": true,
+      "classification": "coupling/runtime/config"
+    },
+    {
+      "path": "tools/precice_ancf_adapter_v1/ancf_static_prestress_driver_v1.cpp",
+      "sha256": "08562B53468189DF88C910CFF1C604307D053CC9B840F7C0FAB5A896F213799B",
+      "role": "static-prestress driver linked to the current ANCF kernel",
+      "tracked": true,
+      "classification": "coupling/runtime"
+    },
+    {
+      "path": "tools/precice_ancf_adapter_v1/ancf_cpp_worker_single_slice_participant_v1.py",
+      "sha256": "81AD44DD58657D7D83533F1C11C49A131599BF39C8F498F4A916717465853BF6",
+      "role": "worker-backed single-slice preCICE structural participant glue",
+      "tracked": true,
+      "classification": "coupling/participant"
+    },
+    {
+      "path": "tools/precice_ancf_adapter_v1/ancf_cpp_worker_three_slice_participant_v1.py",
+      "sha256": "9DF1E38059D0B8080DE2F8DDE184DFADCFCB618D62A46FFAE8EF2B64A3F948EC",
+      "role": "worker-backed three-slice preCICE structural participant glue",
+      "tracked": true,
+      "classification": "coupling/participant"
+    },
+    {
+      "path": "src/coupling/multi_slice_mapping/mapping.py",
+      "sha256": "D46FDD1CF1FDA291803DB0B9B41228C2A071F691961F23C20E85A23FA7F746BA",
+      "role": "canonical multi-slice force, motion, H/H-transpose, identity, and virtual-work mapping",
+      "tracked": true,
+      "classification": "coupling/mapping"
+    },
+    {
+      "path": "src/coupling/multi_slice_driver/ancf_adapter.py",
+      "sha256": "0A6FF2DDC6360053C0D2BDF87E0FBA18161FCD4C22143828403CDCD504C8C5AF",
+      "role": "production ANCF multi-slice prediction/correction adapter",
+      "tracked": true,
+      "classification": "coupling/runtime"
+    },
+    {
+      "path": "src/coupling/multi_slice_driver/contract.py",
+      "sha256": "5FAC4B7146D97952280E101F81317F219A505A291794668B46B4EEAA39E67286",
+      "role": "multi-slice case, exchange-path, and record contract",
+      "tracked": true,
+      "classification": "coupling/config/protocol"
+    },
+    {
+      "path": "src/coupling/multi_slice_driver/protocol.py",
+      "sha256": "BCC64EA37072079538DFF194EB71A4735F7E311CF79BA6E17E61D3186DC5893B",
+      "role": "multi-slice publish/ready/consumed exchange protocol",
+      "tracked": true,
+      "classification": "coupling/protocol"
+    },
+    {
+      "path": "src/coupling/multi_slice_driver/real_process.py",
+      "sha256": "373E7DD2A658D3AC3BF3EEDCB0CACA643E4F867350F8DCBE4AD69BD62D841B9B",
+      "role": "real slice-process lifecycle and force-file freshness integration",
+      "tracked": true,
+      "classification": "coupling/runtime"
+    },
+    {
+      "path": "src/coupling/multi_slice_driver/scheduler.py",
+      "sha256": "39BE511F780CA45608858F754923AF454D98B6278DA17873CC7CE7B65836B79D",
+      "role": "multi-slice scheduler and transactional step orchestration",
+      "tracked": true,
+      "classification": "coupling/runtime"
+    },
+    {
+      "path": "src/coupling/multi_slice_driver/restart_bridge_mapping.py",
+      "sha256": "D08B44E57D006E8FC8DCE2071DDCE6CB5C1142EACCF1C4C330F32649A6330551",
+      "role": "restart/checkpoint bridge mapping for multi-slice coupling",
+      "tracked": true,
+      "classification": "coupling/runtime"
+    },
+    {
+      "path": "src/coupling/precice_ancf_adapter_v1/__init__.py",
+      "sha256": "660A78E2A61759EB548A4FF23F8184776D77F1F24D1A2B914A37F5F2A504D5FE",
+      "role": "ANCF-to-preCICE contract-layer exports",
+      "tracked": true,
+      "classification": "coupling/protocol"
+    },
+    {
+      "path": "src/coupling/precice_ancf_adapter_v1/barrier.py",
+      "sha256": "A196D45D7205E22C8A99B789C86577CDF55E9DEBB96A98858A51AC7CF8AE5999",
+      "role": "three-slice global barrier and fail-closed lifecycle",
+      "tracked": true,
+      "classification": "coupling/protocol"
+    },
+    {
+      "path": "src/coupling/precice_ancf_adapter_v1/guards.py",
+      "sha256": "7EB3874F0EA5B222C7B3000B9EC4E686383C56ECBA2801E81B69C7FA1CED3B70",
+      "role": "solver-launch and process-count guards",
+      "tracked": true,
+      "classification": "coupling/runtime"
+    },
+    {
+      "path": "src/coupling/precice_ancf_adapter_v1/mapping.py",
+      "sha256": "F823E75E04E2BBC25CF224CC26B2C2314143CD6A12F9E1304C1C293F8555D4CB",
+      "role": "preCICE bridge-clock and consistent/conservative mapping",
+      "tracked": true,
+      "classification": "coupling/mapping"
+    },
+    {
+      "path": "src/coupling/precice_ancf_adapter_v1/protocol.py",
+      "sha256": "0D2960F0CBC58AA7AFBEC97677E6E43C93746FD55CD6A5B4BC811187FB874C9A",
+      "role": "preCICE ANCF envelope identity and payload protocol",
+      "tracked": true,
+      "classification": "coupling/protocol"
+    },
+    {
+      "path": "src/coupling/precice_ancf_adapter_v1/storage.py",
+      "sha256": "E95C19D2FBE822EBF130891E1DF6F8E0F8681D20CEB7DD67B3EE6BFA60DE94B0",
+      "role": "atomic checkpoint/restart/force storage and journal",
+      "tracked": true,
+      "classification": "coupling/runtime"
+    },
+    {
+      "path": "src/coupling/precice_ancf_adapter_v1/worker_adapter.py",
+      "sha256": "9914A3ADD9E47B9F0E4F3B3BF61BA65D92D5D6151E8FF6D0FFC9D1C547B62C5E",
+      "role": "worker state envelope and conservative force adapter",
+      "tracked": true,
+      "classification": "coupling/runtime"
+    }
+  ],
+  "validation_status": {
+    "A_current_line": "PASS",
+    "B_v1": "FAIL_RETAINED",
+    "B_v1_1": "PASS",
+    "B_current_line": "CLOSED",
+    "C_numerical_v1_identity_evidence": "INCOMPLETE_RETAINED",
+    "C_identity_closure": "PASS",
+    "C_current_line": "CLOSED",
+    "D_v1": "FAIL_RETAINED",
+    "D_v1_1": "FAIL_RETAINED",
+    "D_v1_2": "PASS",
+    "D_current_line": "CLOSED",
+    "E_historical_predecessors": "RETAINED",
+    "E_current_line_replacement_v1": "PASS",
+    "E_current_line": "CLOSED",
+    "F_historical": "PASS_RETAINED",
+    "F_current_line_v1": "STOPPED_BEFORE_PROTOCOL_RETAINED",
+    "F_current_line_v1_1": "FAIL_RETAINED",
+    "F_current_line_v1_2": "PASS",
+    "F_current_line": "CLOSED",
+    "historical_G1_v1_2": "FAIL_RETAINED",
+    "G1_current_line_v1": "FAIL / G1_PREFLIGHT_IDENTITY_MISMATCH",
+    "G1_current_line_v1_numerical_execution": 0,
+    "G1_harness_qualification_predecessors": "RETAINED",
+    "G1_current_line_v1_1": "FAIL / G1_STATIC_SOLVE_FAIL",
+    "G1_current_line_underlying": "STATIC_NEWTON_DID_NOT_CONVERGE",
+    "G1_mesh_136_residual_plateau": "UNRESOLVED",
+    "G1_current_line_validation": "NOT_CLOSED",
+    "ANCF_independent_structural_validation": "NOT_CLOSED",
+    "static_terminal_state_observability_v1_2": "PASS"
+  },
+  "known_limitations": [
+    "G1_CURRENT_LINE_VALIDATION = NOT_CLOSED",
+    "ANCF_INDEPENDENT_STRUCTURAL_VALIDATION = NOT_CLOSED",
+    "mesh-136 Newton residual plateau remains unresolved",
+    "This baseline is not a fully independently validated ANCF structural solver",
+    "No CFD, FSI, VIV, OpenFOAM, or preCICE validation closure is implied"
+  ],
+  "future_case_provenance_fields": [
+    "ANCF_BASELINE_TAG",
+    "ANCF_BASELINE_COMMIT",
+    "ANCF_PRODUCTION_MANIFEST_SHA256",
+    "PRECICE_CONFIG_SHA256",
+    "STRUCTURAL_CASE_CONFIG_SHA256",
+    "OPENFOAM_CASE_IDENTITY_OR_EQUIVALENT_CASE_MANIFEST",
+    "PARTICIPANT_SOURCE_AND_CONFIG_IDENTITIES",
+    "SLICE_COUNT",
+    "SLICE_LENGTH",
+    "FORCE_DIMENSIONAL_CONVENTION",
+    "FORCE_MAPPING_CONVENTION",
+    "MOTION_DISPLACEMENT_MAPPING_CONVENTION"
+  ],
+  "freeze_controls": {
+    "production_source_modified": false,
+    "existing_cases_modified": false,
+    "numerical_cases_executed": false,
+    "unrelated_files_staged": false,
+    "push_performed": false
+  }
+}
