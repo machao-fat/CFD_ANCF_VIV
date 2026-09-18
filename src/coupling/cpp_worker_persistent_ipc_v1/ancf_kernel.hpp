@@ -146,6 +146,13 @@ struct StepDiagnostics {
   // MATLAB's free-DOF residual scale, retained for audit diagnostics.
   double residual_scale = 0.0;
   std::string failure_reason;
+  // Transactionally separate snapshot of the solver's working state. This
+  // never commits a failed solve into State::q and is not part of the IPC wire
+  // contract.
+  bool terminal_state_available = false;
+  std::vector<double> terminal_q;
+  bool terminal_residual_vector_available = false;
+  std::vector<double> terminal_residual;
   std::vector<StaticNewtonIterationDiagnostic> static_newton_trace;
 };
 

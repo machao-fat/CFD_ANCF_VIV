@@ -839,6 +839,22 @@ StepDiagnostics static_equilibrium_impl(State& state, const Model& model,
   StepDiagnostics diagnostics;
   diagnostics.residual_scale = scale_value;
   std::vector<double> q = state.q;
+  auto capture_terminal = [&diagnostics, n](const std::vector<double>& terminal_q,
+                                            const std::vector<double>& terminal_residual) {
+    if (terminal_q.size() != n || terminal_residual.size() != n ||
+        !finite_vector(terminal_q) || !finite_vector(terminal_residual)) {
+      diagnostics.terminal_state_available = false;
+      diagnostics.terminal_q.clear();
+      diagnostics.terminal_residual_vector_available = false;
+      diagnostics.terminal_residual.clear();
+      return;
+    }
+    diagnostics.terminal_q = terminal_q;
+    diagnostics.terminal_state_available = true;
+    diagnostics.terminal_residual = terminal_residual;
+    diagnostics.terminal_residual_vector_available = true;
+  };
+  std::vector<double> residual(n, 0.0);
   for (std::size_t load_step = 1; load_step <= load_steps; ++load_step) {
     const double factor = static_cast<double>(load_step) / static_cast<double>(load_steps);
     bool converged = false;
@@ -846,7 +862,7 @@ StepDiagnostics static_equilibrium_impl(State& state, const Model& model,
       std::vector<double> internal;
       Matrix tangent;
       internal_force_tangent(q, model, internal, tangent);
-      std::vector<double> residual(n);
+      std::fill(residual.begin(), residual.end(), 0.0);
       const double load_factor = factor;
       double norm = 0.0;
       for (std::size_t i = 0; i < n; ++i) {
@@ -918,6 +934,7 @@ StepDiagnostics static_equilibrium_impl(State& state, const Model& model,
           diagnostics.failure_reason = "STATIC_POTENTIAL_NON_DESCENT_DIRECTION";
           diagnostics.converged = false;
           diagnostics.static_newton_trace.push_back(std::move(iteration_diagnostic));
+          capture_terminal(q, residual);
           return diagnostics;
         }
 
@@ -943,6 +960,7 @@ StepDiagnostics static_equilibrium_impl(State& state, const Model& model,
         for (std::size_t backtrack = 0; backtrack <= 12; ++backtrack) {
           const double beta = std::ldexp(1.0, -static_cast<int>(backtrack));
           StaticNewtonTrialDiagnostic trial_diagnostic;
+          std::vector<double> trial_residual(n, 0.0);
           trial_diagnostic.beta = beta;
           trial_diagnostic.r_dot_p = r_dot_p;
           trial_diagnostic.armijo_rhs = 1.0e-4 * beta * r_dot_p;
@@ -964,7 +982,6 @@ StepDiagnostics static_equilibrium_impl(State& state, const Model& model,
             internal_force_tangent(trial_q, model, trial_internal, trial_tangent);
             if (!finite_vector(trial_internal) || !finite_matrix(trial_tangent))
               throw std::runtime_error("static potential trial contains NaN/Inf");
-            std::vector<double> trial_residual(n);
             for (std::size_t i = 0; i < n; ++i) {
               trial_residual[i] = trial_internal[i] - factor * base_load[i];
               if (fixed[i]) trial_residual[i] = 0.0;
@@ -1022,6 +1039,7 @@ StepDiagnostics static_equilibrium_impl(State& state, const Model& model,
           iteration_diagnostic.trials.push_back(trial_diagnostic);
           if (trial_accepted) {
             q = std::move(trial_q);
+            residual = std::move(trial_residual);
             diagnostics.residual = trial_norm;
             converged = trial_diagnostic.convergence_pass;
             iteration_diagnostic.beta_accepted = beta;
@@ -1040,6 +1058,7 @@ StepDiagnostics static_equilibrium_impl(State& state, const Model& model,
           diagnostics.static_newton_trace.push_back(std::move(iteration_diagnostic));
           diagnostics.failure_reason = "STATIC_POTENTIAL_LINE_SEARCH_FAILED";
           diagnostics.converged = false;
+          capture_terminal(q, residual);
           return diagnostics;
         }
         diagnostics.static_newton_trace.push_back(std::move(iteration_diagnostic));
@@ -1082,13 +1101,13 @@ StepDiagnostics static_equilibrium_impl(State& state, const Model& model,
 
         double trial_norm = 0.0;
         double trial_merit = (std::numeric_limits<double>::infinity)();
+        std::vector<double> trial_residual(n, 0.0);
         try {
           std::vector<double> trial_internal;
           Matrix trial_tangent;
           internal_force_tangent(trial_q, model, trial_internal, trial_tangent);
           if (!finite_vector(trial_internal) || !finite_matrix(trial_tangent))
             throw std::runtime_error("static trial contains NaN/Inf");
-          std::vector<double> trial_residual(n);
           for (std::size_t i = 0; i < n; ++i) {
             trial_residual[i] = trial_internal[i] - factor * base_load[i];
             if (fixed[i]) trial_residual[i] = 0.0;
@@ -1117,6 +1136,7 @@ StepDiagnostics static_equilibrium_impl(State& state, const Model& model,
         iteration_diagnostic.trials.push_back(trial_diagnostic);
         if (trial_accepted) {
           q = std::move(trial_q);
+          residual = std::move(trial_residual);
           diagnostics.residual = trial_norm;
           converged = trial_diagnostic.convergence_pass;
           iteration_diagnostic.beta_accepted = beta;
@@ -1131,6 +1151,7 @@ StepDiagnostics static_equilibrium_impl(State& state, const Model& model,
         diagnostics.static_newton_trace.push_back(std::move(iteration_diagnostic));
         diagnostics.failure_reason = "STATIC_LINE_SEARCH_FAILED";
         diagnostics.converged = false;
+        capture_terminal(q, residual);
         return diagnostics;
       }
       diagnostics.static_newton_trace.push_back(std::move(iteration_diagnostic));
@@ -1140,6 +1161,7 @@ StepDiagnostics static_equilibrium_impl(State& state, const Model& model,
           mode == StaticSolverMode::PotentialBacktrackingNewton) {
         diagnostics.failure_reason = "STATIC_NEWTON_DID_NOT_CONVERGE";
         diagnostics.converged = false;
+        capture_terminal(q, residual);
         return diagnostics;
       }
       throw std::runtime_error("static equilibrium did not converge at load step " +
@@ -1153,6 +1175,7 @@ StepDiagnostics static_equilibrium_impl(State& state, const Model& model,
   state.time_s = 0.0;
   state.step = 0;
   diagnostics.converged = true;
+  capture_terminal(state.q, residual);
   return diagnostics;
 }
 
