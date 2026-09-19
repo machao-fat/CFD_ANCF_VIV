@@ -317,6 +317,40 @@ double Model::mass_per_length() const {
   return material_density * area();
 }
 
+namespace {
+
+void validate_spanwise_hydrodynamic_regions_contract(
+    const Model& model, const std::vector<SpanwiseHydrodynamicRegion>& regions) {
+  double previous_start = 0.0;
+  double previous_end = 0.0;
+  bool have_previous = false;
+  for (const auto& region : regions) {
+    if (!std::isfinite(region.s_min_m) || !std::isfinite(region.s_max_m) ||
+        region.s_min_m < 0.0 || region.s_min_m >= region.s_max_m ||
+        region.s_max_m > model.length_m) {
+      throw std::invalid_argument("spanwise hydrodynamic region interval is invalid");
+    }
+    for (double value : region.added_mass_per_length_kg_m) {
+      if (!std::isfinite(value) || value < 0.0)
+        throw std::invalid_argument("spanwise hydrodynamic added-mass coefficient is invalid");
+    }
+    for (double value : region.linear_damping_per_length_Ns_m2) {
+      if (!std::isfinite(value) || value < 0.0)
+        throw std::invalid_argument("spanwise hydrodynamic damping coefficient is invalid");
+    }
+    // Regions are ordered by start. Exact touching endpoints are valid;
+    // only a positive-measure overlap is rejected, without a geometric epsilon.
+    if (have_previous && (region.s_min_m < previous_start || region.s_min_m < previous_end)) {
+      throw std::invalid_argument("spanwise hydrodynamic regions are unsorted or overlap");
+    }
+    previous_start = region.s_min_m;
+    previous_end = region.s_max_m;
+    have_previous = true;
+  }
+}
+
+}  // namespace
+
 void validate_model(const Model& model) {
   const auto finite = [](double value) { return std::isfinite(value); };
   const bool legacy_section =
@@ -356,6 +390,7 @@ void validate_model(const Model& model) {
   if (model.newton_tolerance <= 0.0) {
     throw std::invalid_argument("ANCF Newton tolerance must be positive");
   }
+  validate_spanwise_hydrodynamic_regions_contract(model, model.hydrodynamic_regions);
   if (model.boundary_contract_id.empty()) {
     throw std::invalid_argument("ANCF boundary contract identity is missing");
   }
@@ -726,30 +761,7 @@ ForensicResult internal_force_forensic(const std::vector<double>& q, const Model
 void validate_spanwise_hydrodynamic_regions(
     const Model& model, const std::vector<SpanwiseHydrodynamicRegion>& regions) {
   validate_model(model);
-  double previous_start = 0.0;
-  double previous_end = 0.0;
-  bool have_previous = false;
-  for (const auto& region : regions) {
-    if (!std::isfinite(region.s_min_m) || !std::isfinite(region.s_max_m) ||
-        region.s_min_m < 0.0 || region.s_min_m >= region.s_max_m ||
-        region.s_max_m > model.length_m) {
-      throw std::invalid_argument("spanwise hydrodynamic region interval is invalid");
-    }
-    for (double value : region.added_mass_per_length_kg_m) {
-      if (!std::isfinite(value) || value < 0.0)
-        throw std::invalid_argument("spanwise hydrodynamic added-mass coefficient is invalid");
-    }
-    for (double value : region.linear_damping_per_length_Ns_m2) {
-      if (!std::isfinite(value) || value < 0.0)
-        throw std::invalid_argument("spanwise hydrodynamic damping coefficient is invalid");
-    }
-    if (have_previous && (region.s_min_m < previous_start || region.s_min_m < previous_end)) {
-      throw std::invalid_argument("spanwise hydrodynamic regions are unsorted or overlap");
-    }
-    previous_start = region.s_min_m;
-    previous_end = region.s_max_m;
-    have_previous = true;
-  }
+  validate_spanwise_hydrodynamic_regions_contract(model, regions);
 }
 
 Matrix assemble_spanwise_added_mass(

@@ -16,6 +16,8 @@ add_executable(cfd_ancf_cpp_worker worker_main.cpp)
 add_executable(cfd_ancf_ancf_kernel_selftest ancf_kernel.cpp ancf_kernel_selftest.cpp)
 add_executable(cfd_ancf_spanwise_hydrodynamic_matrix_selftest
   ancf_kernel.cpp ancf_spanwise_hydrodynamic_matrix_selftest.cpp)
+add_executable(cfd_ancf_spanwise_hydrodynamic_model_selftest
+  ancf_kernel.cpp ancf_spanwise_hydrodynamic_model_selftest.cpp)
 add_executable(cfd_ancf_dense_solver_selftest ancf_solver_selftest.cpp)
 add_executable(cfd_ancf_ancf_kernel_worker ancf_kernel.cpp ancf_worker_main.cpp)
 add_executable(cfd_ancf_cpp_state_initializer ancf_kernel.cpp ancf_state_initializer.cpp)
@@ -52,6 +54,7 @@ if (MSVC)
   target_compile_options(cfd_ancf_dense_solver_selftest PRIVATE /W4 /permissive-)
   target_compile_options(cfd_ancf_ancf_kernel_selftest PRIVATE /W4 /permissive-)
   target_compile_options(cfd_ancf_spanwise_hydrodynamic_matrix_selftest PRIVATE /W4 /permissive-)
+  target_compile_options(cfd_ancf_spanwise_hydrodynamic_model_selftest PRIVATE /W4 /permissive-)
   target_compile_options(cfd_ancf_ancf_kernel_worker PRIVATE /W4 /permissive-)
   target_compile_options(cfd_ancf_cpp_state_initializer PRIVATE /W4 /permissive-)
   target_compile_options(cfd_ancf_mean_drag_initialization_diagnostic PRIVATE /W4 /permissive-)
@@ -71,6 +74,7 @@ else()
       cfd_ancf_dense_solver_selftest
       cfd_ancf_ancf_kernel_selftest
       cfd_ancf_spanwise_hydrodynamic_matrix_selftest
+      cfd_ancf_spanwise_hydrodynamic_model_selftest
       cfd_ancf_ancf_kernel_worker
       cfd_ancf_cpp_state_initializer
       cfd_ancf_mean_drag_initialization_diagnostic

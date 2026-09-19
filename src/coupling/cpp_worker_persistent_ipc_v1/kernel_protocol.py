@@ -41,6 +41,9 @@ SPANWISE_LOAD_EXTENSION_MARKER = 0x31444C53  # "SLD1", little-endian
 SPANWISE_LOAD_EXTENSION_VERSION = 1
 _SPANWISE_LOAD_MODE_PIECEWISE_LINEAR_WIRE = 1
 SPANWISE_ENDPOINT_NEAREST_CONSTANT = 1
+SPANWISE_HYDRODYNAMIC_EXTENSION_MARKER = 0x314D4853  # "SHM1", little-endian
+SPANWISE_HYDRODYNAMIC_EXTENSION_VERSION = 1
+MAX_SPANWISE_HYDRODYNAMIC_REGIONS = 10_000
 SPANWISE_LOAD_MODE_LEGACY = "legacy_point_lumped"
 SPANWISE_LOAD_MODE_PIECEWISE_LINEAR = "piecewise_linear_distributed"
 SPANWISE_ENDPOINT_POLICY_NEAREST_CONSTANT = "nearest_constant"
@@ -64,6 +67,8 @@ RESPONSE_FIELD_SEMANTICS = {
 _PREFIX = struct.Struct("<IIIiiQddiiiiiQQ")
 _MODEL = struct.Struct("<13dii")
 _SECTION_PROPERTY_EXTENSION = struct.Struct("<III4d")
+_SPANWISE_HYDRODYNAMIC_EXTENSION_HEADER = struct.Struct("<III")
+_SPANWISE_HYDRODYNAMIC_REGION = struct.Struct("<8d")
 _BOUNDARY_ID = 64
 _RESPONSE_PREFIX = struct.Struct("<IIIiiQdiiidQQI")
 
@@ -130,6 +135,45 @@ def _bounded_int(value: int, name: str, minimum: int, maximum: int) -> int:
 
 
 @dataclass(frozen=True)
+class SpanwiseHydrodynamicRegion:
+    """Resolved global-coordinate regional hydro coefficients for SHM1."""
+
+    s_min_m: float
+    s_max_m: float
+    added_mass_per_length_kg_m: tuple[float, float, float]
+    linear_damping_per_length_Ns_m2: tuple[float, float, float]
+
+    def wire_values(self) -> tuple[float, ...]:
+        return (float(self.s_min_m), float(self.s_max_m),
+                *(float(value) for value in self.added_mass_per_length_kg_m),
+                *(float(value) for value in self.linear_damping_per_length_Ns_m2))
+
+
+def _validate_spanwise_hydrodynamic_regions(
+        regions: Sequence[SpanwiseHydrodynamicRegion], length_m: float) -> None:
+    if isinstance(regions, (str, bytes)):
+        raise FrameError("hydrodynamic_regions is not a sequence")
+    if len(regions) > MAX_SPANWISE_HYDRODYNAMIC_REGIONS:
+        raise FrameError("hydrodynamic_regions exceeds its wire bound")
+    previous_start: float | None = None
+    previous_end: float | None = None
+    for index, region in enumerate(regions):
+        if not isinstance(region, SpanwiseHydrodynamicRegion):
+            raise FrameError(f"hydrodynamic_regions[{index}] has an invalid type")
+        values = region.wire_values()
+        if any(not math.isfinite(value) for value in values):
+            raise FrameError(f"hydrodynamic_regions[{index}] contains NaN/Inf")
+        if region.s_min_m < 0.0 or region.s_min_m >= region.s_max_m or region.s_max_m > length_m:
+            raise FrameError(f"hydrodynamic_regions[{index}] interval is invalid")
+        if any(value < 0.0 for value in values[2:]):
+            raise FrameError(f"hydrodynamic_regions[{index}] coefficient is negative")
+        if (previous_start is not None and
+                (region.s_min_m < previous_start or region.s_min_m < previous_end)):
+            raise FrameError("hydrodynamic_regions are unsorted or overlap")
+        previous_start, previous_end = region.s_min_m, region.s_max_m
+
+
+@dataclass(frozen=True)
 class KernelModel:
     length_m: float = 100.0
     diameter_m: float = 0.028
@@ -172,6 +216,9 @@ class KernelModel:
     spanwise_active_s_min_m: float = 0.0
     spanwise_active_s_max_m: float | None = None
     spanwise_endpoint_policy: str = SPANWISE_ENDPOINT_POLICY_NEAREST_CONSTANT
+    # Empty remains byte-identical to the historical model layout: SHM1 is
+    # emitted only for a non-empty, validated regional contract.
+    hydrodynamic_regions: tuple[SpanwiseHydrodynamicRegion, ...] = ()
 
     @property
     def ndof(self) -> int:
@@ -247,6 +294,7 @@ class KernelModel:
         if (self.length_m <= 0.0 or self.diameter_m <= 0.0 or
                 self.diameter_m <= self.inner_diameter_m or self.inner_diameter_m < 0.0 or dt_s <= 0.0):
             raise FrameError("kernel geometry or time step is invalid")
+        _validate_spanwise_hydrodynamic_regions(self.hydrodynamic_regions, float(self.length_m))
         if isinstance(self.slice_positions_m, (str, bytes)):
             raise FrameError("kernel slice positions are not numeric")
         if self.slice_positions_m and (len(self.slice_positions_m) != self.slices or
@@ -332,6 +380,14 @@ class KernelModel:
                 float(self.spanwise_active_s_min_m),
                 float(self.spanwise_active_s_max_m),
             )
+        if self.hydrodynamic_regions:
+            model_bytes += _SPANWISE_HYDRODYNAMIC_EXTENSION_HEADER.pack(
+                SPANWISE_HYDRODYNAMIC_EXTENSION_MARKER,
+                SPANWISE_HYDRODYNAMIC_EXTENSION_VERSION,
+                len(self.hydrodynamic_regions),
+            )
+            for region in self.hydrodynamic_regions:
+                model_bytes += _SPANWISE_HYDRODYNAMIC_REGION.pack(*region.wire_values())
         return model_bytes
 
 

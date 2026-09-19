@@ -28,6 +28,7 @@ try:
         damping_identity_sha256,
         damping_reference_state_sha256,
         KernelModel,
+        SpanwiseHydrodynamicRegion,
     )
     from coupling.multi_slice_mapping.mapping import SliceDefinition, SliceManifest
 except ModuleNotFoundError:  # pragma: no cover - supports direct script imports
@@ -45,6 +46,7 @@ except ModuleNotFoundError:  # pragma: no cover - supports direct script imports
         damping_identity_sha256,
         damping_reference_state_sha256,
         KernelModel,
+        SpanwiseHydrodynamicRegion,
     )
     from coupling.multi_slice_mapping.mapping import SliceDefinition, SliceManifest  # type: ignore
 
@@ -63,6 +65,10 @@ PINNED_PRESET = "pinned_position_both_ends"
 DOF_ORDER = "per_node[r_x,r_y,r_z,r_sx,r_sy,r_sz]"
 DAMPING_MODES = ("none", "rayleigh_coefficients")
 DAMPING_REFERENCE_STATE = "dynamic_initial"
+HYDRODYNAMIC_REGION_KEYS = (
+    "s_min_m", "s_max_m", "added_mass_per_length_kg_m",
+    "linear_damping_per_length_Ns_m2",
+)
 
 
 class CaseConfigError(ValueError):
@@ -141,6 +147,32 @@ def _optional_number(mapping: Mapping[str, Any], key: str, default: float, name:
     return _finite(mapping[key], f"{name}.{key}") if key in mapping else default
 
 
+def _hydrodynamic_regions(value: Any, length_m: float) -> tuple[SpanwiseHydrodynamicRegion, ...]:
+    if not isinstance(value, Sequence) or isinstance(value, (str, bytes)):
+        raise CaseConfigError("model.hydrodynamic_regions must be an array")
+    result: list[SpanwiseHydrodynamicRegion] = []
+    previous_start: float | None = None
+    previous_end: float | None = None
+    for index, raw_region in enumerate(value):
+        region = _mapping(raw_region, f"model.hydrodynamic_regions[{index}]")
+        _require(region, HYDRODYNAMIC_REGION_KEYS, f"model.hydrodynamic_regions[{index}]")
+        left = _finite(region["s_min_m"], f"model.hydrodynamic_regions[{index}].s_min_m")
+        right = _finite(region["s_max_m"], f"model.hydrodynamic_regions[{index}].s_max_m")
+        mass = _vector(region["added_mass_per_length_kg_m"],
+                       f"model.hydrodynamic_regions[{index}].added_mass_per_length_kg_m", 3)
+        damping = _vector(region["linear_damping_per_length_Ns_m2"],
+                          f"model.hydrodynamic_regions[{index}].linear_damping_per_length_Ns_m2", 3)
+        if left < 0.0 or left >= right or right > length_m:
+            raise CaseConfigError("model.hydrodynamic_regions interval is invalid")
+        if any(item < 0.0 for item in mass + damping):
+            raise CaseConfigError("model.hydrodynamic_regions coefficients must be nonnegative")
+        if previous_start is not None and (left < previous_start or left < previous_end):
+            raise CaseConfigError("model.hydrodynamic_regions must be sorted and non-overlapping")
+        result.append(SpanwiseHydrodynamicRegion(left, right, tuple(mass), tuple(damping)))
+        previous_start, previous_end = left, right
+    return tuple(result)
+
+
 def _physics_view(value: Any) -> Any:
     """Remove identity/runtime-only data from a configuration before hashing."""
 
@@ -191,6 +223,7 @@ class CaseConfig:
         model = _mapping(root["model"], "model")
         _positive(model.get("length_m"), "model.length_m")
         _positive_int(model.get("elements"), "model.elements")
+        _hydrodynamic_regions(model.get("hydrodynamic_regions", []), float(model["length_m"]))
         section = _mapping(root["section"], "section")
         mode = section.get("mode")
         if mode not in SECTION_MODES:
@@ -362,6 +395,18 @@ class CaseConfig:
         fields = {key: self.raw[key] for key in ("model", "section", "environment", "base_load", "boundary")}
         return canonical_sha256(_physics_view(fields))
 
+    def hydrodynamic_regions(self) -> tuple[SpanwiseHydrodynamicRegion, ...]:
+        return _hydrodynamic_regions(
+            self.raw["model"].get("hydrodynamic_regions", []), self.length_m)
+
+    def hydrodynamic_regions_spec(self) -> list[dict[str, Any]]:
+        return [{
+            "s_min_m": region.s_min_m,
+            "s_max_m": region.s_max_m,
+            "added_mass_per_length_kg_m": list(region.added_mass_per_length_kg_m),
+            "linear_damping_per_length_Ns_m2": list(region.linear_damping_per_length_Ns_m2),
+        } for region in self.hydrodynamic_regions()]
+
     def damping_spec(self) -> dict[str, Any]:
         value = dict(_mapping(self.raw.get("damping", {"mode": "none"}), "damping"))
         mode = value.get("mode", "none")
@@ -384,9 +429,29 @@ class CaseConfig:
     @property
     def damping_identity_sha256(self) -> str:
         spec = self.damping_spec()
+        # This is the unchanged DMP1 wire identity.  SHM1 must not be folded
+        # into it: the worker independently verifies this exact Rayleigh
+        # digest whenever a DMP1 request trailer is present.
         if spec["mode"] == "none":
             return canonical_sha256(spec)
         return damping_identity_sha256(spec["alpha_mass_per_s"], spec["beta_stiffness_s"])
+
+    @property
+    def total_damping_identity_sha256(self) -> str:
+        """Identity of the future C_R + C_hydro contract.
+
+        With no SHM1 this intentionally equals the historical DMP1/none
+        identity.  With SHM1 it binds the retained DMP1 semantics and the
+        exact resolved regional coefficients without changing the DMP1 wire.
+        """
+        hydro = self.hydrodynamic_regions_spec()
+        if not hydro:
+            return self.damping_identity_sha256
+        return canonical_sha256({
+            "contract": "DMP1-SHM1-total-damping-v1",
+            "rayleigh_identity_sha256": self.damping_identity_sha256,
+            "hydrodynamic_regions": hydro,
+        })
 
     def damping_reference_identity_sha256(self, q_ref: Sequence[float],
                                           model_identity: str | None = None) -> str:
@@ -399,11 +464,16 @@ class CaseConfig:
     def dynamic_identity_sha256(self, q_ref: Sequence[float],
                                 model_identity: str | None = None) -> str:
         resolved_model = model_identity or self.model_identity_sha256
+        wire_contract = []
+        if self.damping_spec()["mode"] != "none":
+            wire_contract.append("DMP1-v1")
+        if self.hydrodynamic_regions():
+            wire_contract.append("SHM1-v1")
         return canonical_sha256({
             "model_identity_sha256": resolved_model,
-            "damping_identity_sha256": self.damping_identity_sha256,
+            "damping_identity_sha256": self.total_damping_identity_sha256,
             "damping_reference_state_identity_sha256": self.damping_reference_identity_sha256(q_ref, resolved_model),
-            "wire_contract": "DMP1-v1" if self.damping_spec()["mode"] != "none" else "none",
+            "wire_contract": "+".join(wire_contract) if wire_contract else "none",
         })
 
     def model_identity_sha256_for_boundary(self, fixed_dof: Sequence[int],
@@ -608,6 +678,7 @@ class CaseConfig:
             spanwise_endpoint_policy=spanwise["endpoint_policy"],
             spanwise_active_s_min_m=spanwise["active_start_m"],
             spanwise_active_s_max_m=spanwise["active_end_m"],
+            hydrodynamic_regions=self.hydrodynamic_regions(),
         )
         if mode == "legacy_physical":
             kwargs["section_property_mode"] = SECTION_PROPERTY_MODE_LEGACY
@@ -692,6 +763,12 @@ class CaseConfig:
                 if (_finite(state_damping.get("alpha_mass_per_s"), "state.damping.alpha_mass_per_s") != damping["alpha_mass_per_s"] or
                         _finite(state_damping.get("beta_stiffness_s"), "state.damping.beta_stiffness_s") != damping["beta_stiffness_s"]):
                     raise CaseConfigError("DAMPING_STATE_IDENTITY_FAIL: damping coefficient mismatch")
+            if self.hydrodynamic_regions():
+                if (not isinstance(state_damping, Mapping) or
+                        state_damping.get("total_identity_sha256") != self.total_damping_identity_sha256 or
+                        _physics_view(state_damping.get("spanwise_hydrodynamic_regions")) !=
+                        _physics_view(self.hydrodynamic_regions_spec())):
+                    raise CaseConfigError("DAMPING_STATE_IDENTITY_FAIL: spanwise hydrodynamic identity mismatch")
         required = ("q", "qdot", "qddot")
         _require(state, required, "initial state")
         result = {key: _vector(state[key], key, model.ndof) for key in required}
@@ -789,6 +866,9 @@ class CaseConfig:
             "identity_sha256": self.damping_identity_sha256,
             "reference_identity_sha256": self.damping_reference_identity_sha256(reference, resolved_model),
         }
+        if self.hydrodynamic_regions():
+            artifact["damping"]["spanwise_hydrodynamic_regions"] = self.hydrodynamic_regions_spec()
+            artifact["damping"]["total_identity_sha256"] = self.total_damping_identity_sha256
         artifact["damping_reference_q"] = list(reference)
         artifact["dynamic_identity_sha256"] = self.dynamic_identity_sha256(reference, resolved_model)
         return artifact

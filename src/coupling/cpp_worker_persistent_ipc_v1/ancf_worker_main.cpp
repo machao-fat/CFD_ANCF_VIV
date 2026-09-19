@@ -48,6 +48,9 @@ constexpr std::uint32_t SPANWISE_LOAD_EXTENSION_MARKER = 0x31444C53;
 constexpr std::uint32_t SPANWISE_LOAD_EXTENSION_VERSION = 1;
 constexpr std::uint32_t SPANWISE_LOAD_MODE_PIECEWISE_LINEAR = 1;
 constexpr std::uint32_t SPANWISE_ENDPOINT_NEAREST_CONSTANT = 1;
+constexpr std::uint32_t SPANWISE_HYDRODYNAMIC_EXTENSION_MARKER = 0x314D4853;
+constexpr std::uint32_t SPANWISE_HYDRODYNAMIC_EXTENSION_VERSION = 1;
+constexpr std::uint32_t MAX_SPANWISE_HYDRODYNAMIC_REGIONS = 10000;
 constexpr std::uint32_t DAMPING_EXTENSION_MARKER = 0x31504D44;
 constexpr std::uint32_t DAMPING_EXTENSION_VERSION = 1;
 constexpr std::uint32_t DAMPING_MODE_RAYLEIGH = 1;
@@ -411,6 +414,33 @@ int process_step(const std::vector<char>& payload, std::vector<char>& response,
     model.spanwise_load_reconstruction =
         cfd_ancf::SpanwiseLoadReconstruction::PiecewiseLinearDistributed;
     model.spanwise_endpoint_policy = cfd_ancf::SpanwiseEndpointPolicy::NearestConstant;
+  }
+  // SHM1 is a model trailer, deliberately before request-level DMP1.  M2
+  // decodes and binds it to identity only; State mass/damping integration is
+  // deferred to M3.
+  std::uint32_t hydrodynamic_marker = 0;
+  if (offset <= payload.size() && sizeof(hydrodynamic_marker) <= payload.size() - offset)
+    std::memcpy(&hydrodynamic_marker, payload.data() + offset, sizeof(hydrodynamic_marker));
+  if (hydrodynamic_marker == SPANWISE_HYDRODYNAMIC_EXTENSION_MARKER) {
+    constexpr std::size_t hydrodynamic_header_size = 3u * sizeof(std::uint32_t);
+    constexpr std::size_t hydrodynamic_region_size = 8u * sizeof(double);
+    std::uint32_t hydrodynamic_version = 0, region_count = 0;
+    if (hydrodynamic_header_size > payload.size() - offset ||
+        !take(payload, offset, hydrodynamic_marker) ||
+        !take(payload, offset, hydrodynamic_version) ||
+        !take(payload, offset, region_count) ||
+        hydrodynamic_version != SPANWISE_HYDRODYNAMIC_EXTENSION_VERSION ||
+        region_count > MAX_SPANWISE_HYDRODYNAMIC_REGIONS ||
+        static_cast<std::size_t>(region_count) >
+            (payload.size() - offset) / hydrodynamic_region_size) return 4;
+    model.hydrodynamic_regions.resize(region_count);
+    for (auto& region : model.hydrodynamic_regions) {
+      if (!take(payload, offset, region.s_min_m) || !take(payload, offset, region.s_max_m)) return 4;
+      for (double& value : region.added_mass_per_length_kg_m)
+        if (!take(payload, offset, value)) return 4;
+      for (double& value : region.linear_damping_per_length_Ns_m2)
+        if (!take(payload, offset, value)) return 4;
+    }
   }
   bool damping_extension = false;
   std::uint32_t damping_marker = 0, damping_version = 0, damping_mode = 0,

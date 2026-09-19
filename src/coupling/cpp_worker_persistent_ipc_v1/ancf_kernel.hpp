@@ -63,9 +63,9 @@ struct Matrix {
   double operator()(std::size_t r, std::size_t c) const { return data[r * cols + c]; }
 };
 
-// A data-only, reference-coordinate interval used by the pure M1 matrix
-// assemblers. It is intentionally not a Model member yet: lifecycle, wire,
-// identity and restart integration are deferred to M2/M3.
+// A data-only, reference-coordinate interval.  Its resolved coefficients are
+// deliberately global ANCF x/y/z values; deriving them from a fluid model is
+// outside the kernel contract.
 struct SpanwiseHydrodynamicRegion {
   double s_min_m = 0.0;
   double s_max_m = 0.0;
@@ -89,6 +89,9 @@ struct Model {
   SpanwiseEndpointPolicy spanwise_endpoint_policy = SpanwiseEndpointPolicy::NearestConstant;
   double spanwise_active_s_min_m = 0.0;
   double spanwise_active_s_max_m = 0.0;
+  // Optional SHM1 model extension.  M2 carries this identity through the
+  // model/wire path only; M3 will explicitly connect its assemblers to State.
+  std::vector<SpanwiseHydrodynamicRegion> hydrodynamic_regions;
   double top_tension_N = 1.0e7;
   double youngs_modulus_Pa = 2.07e11;
   double material_density = 7850.0;
