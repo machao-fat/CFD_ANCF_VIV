@@ -776,14 +776,110 @@ Matrix assemble_spanwise_linear_damping(
   return assemble_spanwise_region_matrix(model, regions, false);
 }
 
+namespace {
+
+void validate_symmetric_dynamic_matrix(const Matrix& matrix, std::size_t n,
+                                       const char* name) {
+  if (matrix.rows != n || matrix.cols != n || matrix.data.size() != n * n ||
+      !finite_matrix(matrix)) {
+    throw std::invalid_argument(std::string(name) + " dimensions or values are invalid");
+  }
+  for (std::size_t row = 0; row < n; ++row) {
+    for (std::size_t col = row + 1; col < n; ++col) {
+      if (matrix(row, col) != matrix(col, row))
+        throw std::invalid_argument(std::string(name) + " must be symmetric");
+    }
+  }
+}
+
+Matrix add_dynamic_matrices(const Matrix& left, const Matrix& right,
+                            const char* name) {
+  if (left.rows != right.rows || left.cols != right.cols)
+    throw std::invalid_argument(std::string(name) + " dimensions are inconsistent");
+  Matrix total(left.rows, left.cols);
+  for (std::size_t index = 0; index < total.data.size(); ++index)
+    total.data[index] = left.data[index] + right.data[index];
+  if (!finite_matrix(total))
+    throw std::runtime_error(std::string(name) + " contains NaN/Inf");
+  return total;
+}
+
+}  // namespace
+
+Matrix resolve_total_mass(const Model& model, const Matrix& base_mass) {
+  validate_model(model);
+  const std::size_t n = model.ndof();
+  validate_symmetric_dynamic_matrix(base_mass, n, "base mass matrix");
+  if (model.hydrodynamic_regions.empty()) return base_mass;
+  const Matrix hydro_mass =
+      assemble_spanwise_added_mass(model, model.hydrodynamic_regions);
+  const Matrix total = add_dynamic_matrices(base_mass, hydro_mass, "total mass matrix");
+  validate_symmetric_dynamic_matrix(total, n, "total mass matrix");
+  return total;
+}
+
+Matrix resolve_total_damping(const Model& model, const Matrix& total_mass,
+                             const std::vector<double>& q_ref,
+                             bool require_free_tangent_positive_semidefinite) {
+  validate_model(model);
+  const std::size_t n = model.ndof();
+  validate_symmetric_dynamic_matrix(total_mass, n, "total mass matrix");
+  const Matrix rayleigh = resolve_rayleigh_damping(
+      model, total_mass, q_ref, require_free_tangent_positive_semidefinite);
+  if (model.hydrodynamic_regions.empty()) return rayleigh;
+  const Matrix hydro_damping =
+      assemble_spanwise_linear_damping(model, model.hydrodynamic_regions);
+  const Matrix total = add_dynamic_matrices(rayleigh, hydro_damping,
+                                            "total damping matrix");
+  validate_symmetric_dynamic_matrix(total, n, "total damping matrix");
+  return total;
+}
+
 State make_reference_state(const Model& model) {
   validate_model(model);
-  State state;state.q.assign(model.ndof(),0);state.qdot.assign(model.ndof(),0);state.qddot.assign(model.ndof(),0);double Le=model.length_m/model.elements;for(std::size_t node=0;node<=model.elements;++node){std::size_t base=6*node;double s=node*Le;state.q[base+2]=s;state.q[base+5]=1.0;}state.mass=Matrix(model.ndof(),model.ndof());
+  State state;
+  state.q.assign(model.ndof(), 0.0);
+  state.qdot.assign(model.ndof(), 0.0);
+  state.qddot.assign(model.ndof(), 0.0);
+  const double Le = model.length_m / model.elements;
+  for (std::size_t node = 0; node <= model.elements; ++node) {
+    const std::size_t base = 6 * node;
+    const double s = node * Le;
+    state.q[base + 2] = s;
+    state.q[base + 5] = 1.0;
+  }
+  Matrix structural_mass(model.ndof(), model.ndof());
   // MATLAB ancf_mass_matrix.m deliberately uses a fixed five-point rule,
   // independent of the internal-force quadrature order.  Keep the mass
   // contract separate so a valid gauss_order=3 request cannot silently
   // change inertia while the MATLAB baseline remains unchanged.
-  auto [xi,w]=gauss(model.mass_gauss_order);double rhoA=model.mass_per_length();for(std::size_t e=0;e<model.elements;++e){Matrix Me(12,12);for(std::size_t k=0;k<xi.size();++k){double x=0.5*(xi[k]+1)*Le;Matrix N=block_matrix(shape(x,Le,0));Matrix Nt=transpose(N);Matrix local=multiply(Nt,N);for(std::size_t i=0;i<12;++i)for(std::size_t j=0;j<12;++j)Me(i,j)+=w[k]*local(i,j)*Le/2*rhoA;}for(int i=0;i<12;++i)for(int j=0;j<12;++j)state.mass(6*e+i,6*e+j)+=Me(i,j);}state.damping=Matrix(model.ndof(),model.ndof());state.base_load.assign(model.ndof(),0);return state;
+  const auto [xi, w] = gauss(model.mass_gauss_order);
+  const double rhoA = model.mass_per_length();
+  for (std::size_t e = 0; e < model.elements; ++e) {
+    Matrix Me(12, 12);
+    for (std::size_t k = 0; k < xi.size(); ++k) {
+      const double x = 0.5 * (xi[k] + 1.0) * Le;
+      const Matrix N = block_matrix(shape(x, Le, 0));
+      const Matrix local = multiply(transpose(N), N);
+      for (std::size_t i = 0; i < 12; ++i)
+        for (std::size_t j = 0; j < 12; ++j)
+          Me(i, j) += w[k] * local(i, j) * Le / 2.0 * rhoA;
+    }
+    for (std::size_t i = 0; i < 12; ++i)
+      for (std::size_t j = 0; j < 12; ++j)
+        structural_mass(6 * e + i, 6 * e + j) += Me(i, j);
+  }
+  // SHM1 added mass is inertia only. It neither changes static_base_load nor
+  // enters static_equilibrium, which does not consume State::mass.
+  state.mass = resolve_total_mass(model, structural_mass);
+  // Ch is available for direct structural users even without DMP1. The worker
+  // replaces this with resolve_total_damping when Rayleigh reference data is
+  // present, preventing any double addition of Ch.
+  state.damping = model.hydrodynamic_regions.empty()
+      ? Matrix(model.ndof(), model.ndof())
+      : assemble_spanwise_linear_damping(model, model.hydrodynamic_regions);
+  state.base_load.assign(model.ndof(), 0.0);
+  return state;
 }
 
 void symmetrize_mass(State& state) {

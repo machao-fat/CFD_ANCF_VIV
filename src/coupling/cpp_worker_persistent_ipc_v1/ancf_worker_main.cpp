@@ -415,9 +415,8 @@ int process_step(const std::vector<char>& payload, std::vector<char>& response,
         cfd_ancf::SpanwiseLoadReconstruction::PiecewiseLinearDistributed;
     model.spanwise_endpoint_policy = cfd_ancf::SpanwiseEndpointPolicy::NearestConstant;
   }
-  // SHM1 is a model trailer, deliberately before request-level DMP1.  M2
-  // decodes and binds it to identity only; State mass/damping integration is
-  // deferred to M3.
+  // SHM1 is a model trailer, deliberately before request-level DMP1.  Its
+  // constant regional matrices are composed once into State after decoding.
   std::uint32_t hydrodynamic_marker = 0;
   if (offset <= payload.size() && sizeof(hydrodynamic_marker) <= payload.size() - offset)
     std::memcpy(&hydrodynamic_marker, payload.data() + offset, sizeof(hydrodynamic_marker));
@@ -673,23 +672,23 @@ int process_step(const std::vector<char>& payload, std::vector<char>& response,
   cfd_ancf::State state = cfd_ancf::make_reference_state(model);
   cfd_ancf::symmetrize_mass(state);
   if (mass_n != 0) {
-    state.mass = cfd_ancf::Matrix(static_cast<std::size_t>(n), static_cast<std::size_t>(n));
+    cfd_ancf::Matrix external_base_mass(static_cast<std::size_t>(n), static_cast<std::size_t>(n));
     for (std::size_t row = 0; row < static_cast<std::size_t>(n); ++row) {
       for (std::size_t col = 0; col < static_cast<std::size_t>(n); ++col) {
-        state.mass(row, col) = input[input_offset++];
+        external_base_mass(row, col) = input[input_offset++];
       }
     }
     // The source MATLAB mass matrix is symmetrized before export. Reject a
     // mutated asymmetric matrix instead of changing the numerical contract
     // or feeding a non-symmetric inertia matrix into Newton.
-    if (!exactly_symmetric(state.mass)) return 17;
-  }
-  if (damping_extension) {
+    if (!exactly_symmetric(external_base_mass)) return 17;
     try {
-      state.damping = cfd_ancf::resolve_rayleigh_damping(
-          model, state.mass, damping_q_ref, true);
+      // SHM1 never means that an external matrix has already been augmented:
+      // the wire always carries external base/structural mass. Compose Mh
+      // exactly once here so it cannot be lost or double counted.
+      state.mass = cfd_ancf::resolve_total_mass(model, external_base_mass);
     } catch (const std::exception& error) {
-      std::cerr << "Rayleigh damping exception: " << error.what() << '\n';
+      std::cerr << "total mass composition exception: " << error.what() << '\n';
       return 12;
     }
   }
@@ -718,6 +717,15 @@ int process_step(const std::vector<char>& payload, std::vector<char>& response,
     }
   }
   state.q = q; state.qdot = qdot; state.qddot = qddot; state.base_load = effective_base_load;
+  if (damping_extension || !model.hydrodynamic_regions.empty()) {
+    try {
+      const std::vector<double>& q_ref = damping_extension ? damping_q_ref : state.q;
+      state.damping = cfd_ancf::resolve_total_damping(model, state.mass, q_ref, true);
+    } catch (const std::exception& error) {
+      std::cerr << "total damping composition exception: " << error.what() << '\n';
+      return 12;
+    }
+  }
   if (global_step <= 0 || time_s < dt_s) return 10;
   state.time_s = time_s - dt_s; state.step = static_cast<std::size_t>(global_step - 1);
   std::vector<double> internal_before; cfd_ancf::Matrix tangent;

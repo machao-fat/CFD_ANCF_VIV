@@ -43,11 +43,15 @@ int main() {
     };
     cfd_ancf::validate_model(shm1);
     const cfd_ancf::State structural = cfd_ancf::make_reference_state(legacy);
-    const cfd_ancf::State nonconnected = cfd_ancf::make_reference_state(shm1);
-    require(exactly_equal(structural.mass, nonconnected.mass),
-            "SHM1 unexpectedly changed State.mass before M3");
-    require(exactly_equal(structural.damping, nonconnected.damping) && zero(nonconnected.damping),
-            "SHM1 unexpectedly changed State.damping before M3");
+    const cfd_ancf::State connected = cfd_ancf::make_reference_state(shm1);
+    const cfd_ancf::Matrix expected_mass = cfd_ancf::resolve_total_mass(
+        shm1, structural.mass);
+    const cfd_ancf::Matrix expected_hydro_damping =
+        cfd_ancf::assemble_spanwise_linear_damping(shm1, shm1.hydrodynamic_regions);
+    require(exactly_equal(expected_mass, connected.mass),
+            "SHM1 State.mass is not structural mass plus Mh");
+    require(exactly_equal(expected_hydro_damping, connected.damping) && !zero(connected.damping),
+            "SHM1 hydro-only State.damping is not Ch");
     cfd_ancf::Model rayleigh_legacy = legacy;
     cfd_ancf::Model rayleigh_shm1 = shm1;
     rayleigh_legacy.damping_alpha = 0.125;
@@ -55,11 +59,14 @@ int main() {
     const cfd_ancf::Matrix legacy_rayleigh = cfd_ancf::resolve_rayleigh_damping(
         rayleigh_legacy, structural.mass, structural.q, false);
     const cfd_ancf::Matrix shm1_rayleigh = cfd_ancf::resolve_rayleigh_damping(
-        rayleigh_shm1, nonconnected.mass, nonconnected.q, false);
-    require(exactly_equal(legacy_rayleigh, shm1_rayleigh),
-            "SHM1 unexpectedly changed Rayleigh damping before M3");
-    std::cout << "{\"status\":\"pass\",\"state_mass_nonconnection\":true,"
-                 "\"state_damping_nonconnection\":true,\"rayleigh_nonconnection\":true,"
+        rayleigh_shm1, connected.mass, connected.q, false);
+    require(!exactly_equal(legacy_rayleigh, shm1_rayleigh),
+            "Rayleigh mass proportional damping did not use M_total");
+    const cfd_ancf::Matrix total_damping = cfd_ancf::resolve_total_damping(
+        rayleigh_shm1, connected.mass, connected.q, false);
+    require(!zero(total_damping), "SHM1 total damping is unexpectedly zero");
+    std::cout << "{\"status\":\"pass\",\"state_mass_connected\":true,"
+                 "\"hydro_only_state_damping\":true,\"rayleigh_uses_total_mass\":true,"
                  "\"touching_regions_accepted\":true}\n";
     return 0;
   } catch (const std::exception& error) {

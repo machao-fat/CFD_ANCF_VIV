@@ -89,8 +89,8 @@ struct Model {
   SpanwiseEndpointPolicy spanwise_endpoint_policy = SpanwiseEndpointPolicy::NearestConstant;
   double spanwise_active_s_min_m = 0.0;
   double spanwise_active_s_max_m = 0.0;
-  // Optional SHM1 model extension.  M2 carries this identity through the
-  // model/wire path only; M3 will explicitly connect its assemblers to State.
+  // Optional SHM1 model extension. Its constant reference-coordinate
+  // matrices are resolved once into State during M3 state construction.
   std::vector<SpanwiseHydrodynamicRegion> hydrodynamic_regions;
   double top_tension_N = 1.0e7;
   double youngs_modulus_Pa = 2.07e11;
@@ -276,12 +276,21 @@ void validate_model(const Model& model);
 // is applied or introduced by this contract.
 void validate_spanwise_hydrodynamic_regions(
     const Model& model, const std::vector<SpanwiseHydrodynamicRegion>& regions);
-// Pure M1 core assemblers. They do not mutate Model/State and are not yet
-// connected to production mass, damping, transient or wire lifecycle paths.
+// Pure regional assemblers. They do not mutate Model or State.
 Matrix assemble_spanwise_added_mass(
     const Model& model, const std::vector<SpanwiseHydrodynamicRegion>& regions);
 Matrix assemble_spanwise_linear_damping(
     const Model& model, const std::vector<SpanwiseHydrodynamicRegion>& regions);
+// Compose the physical dynamic mass from an already-validated base consistent
+// mass and the model-defined SHM1 added mass. The external worker mass
+// contract supplies this base matrix, never a pre-composed total matrix.
+Matrix resolve_total_mass(const Model& model, const Matrix& base_mass);
+// Compose the physical damping matrix once for a reconstructed State:
+// C = alpha*M_total + beta*K_ref + Ch. resolve_rayleigh_damping remains the
+// Rayleigh-only primitive; this helper does not alter its formula.
+Matrix resolve_total_damping(const Model& model, const Matrix& total_mass,
+                             const std::vector<double>& q_ref,
+                             bool require_free_tangent_positive_semidefinite = true);
 void symmetrize_mass(State& state);
 StepDiagnostics advance(State& state, const Model& model, const std::vector<double>& slice_force,
                         std::vector<NewtonIterationTrace>* trace = nullptr);
