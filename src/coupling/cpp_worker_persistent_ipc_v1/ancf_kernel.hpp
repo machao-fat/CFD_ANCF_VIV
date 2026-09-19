@@ -63,6 +63,18 @@ struct Matrix {
   double operator()(std::size_t r, std::size_t c) const { return data[r * cols + c]; }
 };
 
+// A data-only, reference-coordinate interval used by the pure M1 matrix
+// assemblers. It is intentionally not a Model member yet: lifecycle, wire,
+// identity and restart integration are deferred to M2/M3.
+struct SpanwiseHydrodynamicRegion {
+  double s_min_m = 0.0;
+  double s_max_m = 0.0;
+  // Global ANCF x/y/z components, in kg/m.
+  std::array<double, 3> added_mass_per_length_kg_m{};
+  // Global ANCF x/y/z components, in N*s/m^2.
+  std::array<double, 3> linear_damping_per_length_Ns_m2{};
+};
+
 struct Model {
   double length_m = 10.0;
   double diameter_m = 1.0;
@@ -256,6 +268,17 @@ struct AssemblyTrace {
 
 State make_reference_state(const Model& model);
 void validate_model(const Model& model);
+// Validate explicit M1 assembler input. Regions must be ordered and
+// non-overlapping. Exact touching endpoints are valid; no geometric epsilon
+// is applied or introduced by this contract.
+void validate_spanwise_hydrodynamic_regions(
+    const Model& model, const std::vector<SpanwiseHydrodynamicRegion>& regions);
+// Pure M1 core assemblers. They do not mutate Model/State and are not yet
+// connected to production mass, damping, transient or wire lifecycle paths.
+Matrix assemble_spanwise_added_mass(
+    const Model& model, const std::vector<SpanwiseHydrodynamicRegion>& regions);
+Matrix assemble_spanwise_linear_damping(
+    const Model& model, const std::vector<SpanwiseHydrodynamicRegion>& regions);
 void symmetrize_mass(State& state);
 StepDiagnostics advance(State& state, const Model& model, const std::vector<double>& slice_force,
                         std::vector<NewtonIterationTrace>* trace = nullptr);

@@ -239,6 +239,51 @@ void element_force_tangent(const std::vector<double>& qe, double Le, double EA, 
      if (trace != nullptr) trace->points.push_back(point);
    }
 }
+
+Matrix assemble_spanwise_region_matrix(
+    const Model& model, const std::vector<SpanwiseHydrodynamicRegion>& regions,
+    bool added_mass) {
+  const std::size_t n = model.ndof();
+  Matrix result(n, n);
+  const double element_length = model.length_m / static_cast<double>(model.elements);
+  const auto [points, weights] = gauss(5);
+  for (std::size_t element = 0; element < model.elements; ++element) {
+    const double element_start = static_cast<double>(element) * element_length;
+    const double element_end = element_start + element_length;
+    for (const auto& region : regions) {
+      const std::array<double, 3>& coefficients =
+          added_mass ? region.added_mass_per_length_kg_m
+                     : region.linear_damping_per_length_Ns_m2;
+      if (coefficients[0] == 0.0 && coefficients[1] == 0.0 && coefficients[2] == 0.0)
+        continue;
+      const double left = std::max(element_start, region.s_min_m);
+      const double right = std::min(element_end, region.s_max_m);
+      if (right <= left) continue;
+      for (std::size_t row = 0; row < 12; ++row) {
+        for (std::size_t col = row; col < 12; ++col) {
+          double entry = 0.0;
+          for (std::size_t point = 0; point < points.size(); ++point) {
+            const double s = 0.5 * (left + right) + 0.5 * (right - left) * points[point];
+            const Matrix N = block_matrix(shape(s - element_start, element_length, 0));
+            double integrand = 0.0;
+            for (std::size_t component = 0; component < 3; ++component) {
+              integrand += coefficients[component] * N(component, row) * N(component, col);
+            }
+            entry += weights[point] * integrand;
+          }
+          entry *= 0.5 * (right - left);
+          const std::size_t global_row = 6 * element + row;
+          const std::size_t global_col = 6 * element + col;
+          result(global_row, global_col) += entry;
+          if (global_row != global_col) result(global_col, global_row) += entry;
+        }
+      }
+    }
+  }
+  if (!finite_matrix(result))
+    throw std::runtime_error("spanwise hydrodynamic matrix contains NaN/Inf");
+  return result;
+}
 }
 
 double Model::area() const { return PI*(diameter_m*diameter_m-inner_diameter_m*inner_diameter_m)/4.0; }
@@ -676,6 +721,47 @@ ForensicResult internal_force_forensic(const std::vector<double>& q, const Model
   result.global_force_after_element = std::move(trace.global_force_after_element);
   result.global_tangent_after_element = std::move(trace.global_tangent_after_element);
   return result;
+}
+
+void validate_spanwise_hydrodynamic_regions(
+    const Model& model, const std::vector<SpanwiseHydrodynamicRegion>& regions) {
+  validate_model(model);
+  double previous_start = 0.0;
+  double previous_end = 0.0;
+  bool have_previous = false;
+  for (const auto& region : regions) {
+    if (!std::isfinite(region.s_min_m) || !std::isfinite(region.s_max_m) ||
+        region.s_min_m < 0.0 || region.s_min_m >= region.s_max_m ||
+        region.s_max_m > model.length_m) {
+      throw std::invalid_argument("spanwise hydrodynamic region interval is invalid");
+    }
+    for (double value : region.added_mass_per_length_kg_m) {
+      if (!std::isfinite(value) || value < 0.0)
+        throw std::invalid_argument("spanwise hydrodynamic added-mass coefficient is invalid");
+    }
+    for (double value : region.linear_damping_per_length_Ns_m2) {
+      if (!std::isfinite(value) || value < 0.0)
+        throw std::invalid_argument("spanwise hydrodynamic damping coefficient is invalid");
+    }
+    if (have_previous && (region.s_min_m < previous_start || region.s_min_m < previous_end)) {
+      throw std::invalid_argument("spanwise hydrodynamic regions are unsorted or overlap");
+    }
+    previous_start = region.s_min_m;
+    previous_end = region.s_max_m;
+    have_previous = true;
+  }
+}
+
+Matrix assemble_spanwise_added_mass(
+    const Model& model, const std::vector<SpanwiseHydrodynamicRegion>& regions) {
+  validate_spanwise_hydrodynamic_regions(model, regions);
+  return assemble_spanwise_region_matrix(model, regions, true);
+}
+
+Matrix assemble_spanwise_linear_damping(
+    const Model& model, const std::vector<SpanwiseHydrodynamicRegion>& regions) {
+  validate_spanwise_hydrodynamic_regions(model, regions);
+  return assemble_spanwise_region_matrix(model, regions, false);
 }
 
 State make_reference_state(const Model& model) {
