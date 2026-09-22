@@ -1,0 +1,96 @@
+{
+  "audit": "HH06_REAL_IMPLICIT_MESH_ROLLBACK_OBSERVABILITY_AUDIT",
+  "classification": "DO_NOT_PASS_ALE_MOTION_NOT_EXERCISED",
+  "execution": {
+    "isolated_case": "D:/研二文件/开题准备/CFD_ANCF_VIV/runtime/hh06_real_mesh_rollback_audit_v1/case",
+    "original_case": "\\\\wsl.localhost\\Ubuntu-22.04\\home\\machao\\OpenFOAM\\coupling\\singal_slice\\slice0000",
+    "real_fluid_participant": "Fluid_0000",
+    "real_structure_participant": "Structure_0000",
+    "scheme": "parallel-implicit",
+    "dt_s": 0.0002,
+    "max_time_s": 0.0002,
+    "max_windows": 1,
+    "accepted_windows": 1,
+    "rollback_triggered": true,
+    "original_case_modified": false,
+    "original_case_new_time_directory": false,
+    "long_production_run": false
+  },
+  "worker": {
+    "path": "/home/machao/OpenFOAM/coupling/singal_slice/slice0000/cfd_ancf_ancf_kernel_worker_shm1_qualified",
+    "sha256": "69F045EB7F4576E5178D10711F0F265D7458282A7A4ECBCB860A913ADA45BEEF",
+    "shm1": true
+  },
+  "diagnostic_adapter": {
+    "path": "/home/machao/OpenFOAM/hh06_real_mesh_rollback_audit_v1/diagnostic_lib/libpreciceAdapterFunctionObject.so",
+    "sha256": "10dc208671840f3e8b800a10ccbad0cb703acf86185ab9c7aa15704b5fcf0ec4",
+    "identity": "HH06_REAL_MESH_ROLLBACK_DIAGNOSTIC_ADAPTER_OF10_V1",
+    "does_not_replace_production_library": true
+  },
+  "structure": {
+    "length_m": 13.12,
+    "elements": 32,
+    "dof": 198,
+    "q0_source": "P1 REF_NE32 static equilibrium",
+    "coupling_s_m": 2.97,
+    "structure_mesh_points": 1,
+    "initial_displacement_xy_m": [0.0, 0.0],
+    "final_recorded_motion_m": [1.0452091616563741e-07, 9.588691723237472e-08, 4.163871573314992e-04]
+  },
+  "events": [
+    {"event": "CHECKPOINT_WRITE", "window_id": 1, "iteration_id": 0, "physical_time_s": 30.0, "time_index": 150000},
+    {"event": "PRE_ROLLBACK_TRIAL", "window_id": 1, "iteration_id": 1, "physical_time_s": 30.0002, "time_index": 150001},
+    {"event": "CHECKPOINT_READ_AFTER_RESTORE", "window_id": 1, "iteration_id": 1, "physical_time_s": 30.0, "time_index": 150000},
+    {"event": "AFTER_INPUT_UPDATE", "window_id": 1, "iteration_id": 1, "physical_time_s": 30.0, "time_index": 150000},
+    {"event": "AFTER_INPUT_UPDATE", "window_id": 1, "iteration_id": 1, "physical_time_s": 30.0002, "time_index": 150001}
+  ],
+  "rollback_comparison": {
+    "points": {"write": "84b09858d2e5c718", "read": "84b09858d2e5c718", "equal": true},
+    "oldPoints": {"write": "84b09858d2e5c718", "read": "84b09858d2e5c718", "equal": true},
+    "phi": {"write": "5e737856cbb4000a", "read": "5e737856cbb4000a", "equal": true},
+    "cellVolume": {"write": "e49d59bd4291f4bd", "read": "e49d59bd4291f4bd", "equal": true},
+    "faceArea": {"write": "a8d92acd46eb7fe9", "read": "a8d92acd46eb7fe9", "equal": true},
+    "U": {"write": "61e10298d5371efa", "read": "61e10298d5371efa", "equal": true},
+    "p": {"write": "ab1feb7ccf1379cf", "read": "ab1feb7ccf1379cf", "equal": true},
+    "k": {"write": "a1bd220b765c52dd", "read": "a1bd220b765c52dd", "equal": true},
+    "omega": {"write": "6b21c90b8ea937f2", "read": "6b21c90b8ea937f2", "equal": true},
+    "nut": {"write": "32af9d4eac163202", "read": "32af9d4eac163202", "equal": true},
+    "pointDisplacement": {"write": "403a37f08d8872c4", "read": "403a37f08d8872c4", "equal": true},
+    "cellDisplacement": {"write": "054f811aba347c5a", "read": "054f811aba347c5a", "equal": true},
+    "meshPhi": {"write": null, "read": "643e6457c48e9183", "equal": null, "status": "NOT_OBSERVABLE_AT_CHECKPOINT_WRITE"}
+  },
+  "mesh_motion": {
+    "max_point_displacement_m": 0.0,
+    "max_mesh_velocity_m_per_s": 0.0,
+    "max_mesh_courant": 0.0,
+    "nonzero_ALE_motion_exercised": false,
+    "mesh_velocity_jump_observed": false,
+    "mesh_anomaly_before_co_explosion": false,
+    "co_max_observed": 0.4182184878
+  },
+  "turbulence_health": {
+    "k_min": 2.7019925326939857e-10,
+    "k_max": 0.01589701042637011,
+    "omega_min": 1.9835945737137965,
+    "omega_max": 93792.84749159748,
+    "finite": true,
+    "nan_inf": false
+  },
+  "judgement": {
+    "A_mesh_rollback": "PARTIAL_PASS_MESHPHI_WRITE_HASH_MISSING",
+    "B_mesh_velocity_jump": "NOT_OBSERVED",
+    "C_mesh_anomaly_before_co": "NOT_OBSERVED",
+    "D_structure_fluid_displacement_identity": "NOT_EXERCISED_FOR_NONZERO_ALE_MOTION",
+    "requires_followup": true,
+    "followup_not_started": true
+  },
+  "sha256": {
+    "isolated_precice_config": "EFBB3B1D0BDE6C3024D4B8462E1FD22C140EB1F0E63718F5C14C2C99791DC5A8",
+    "isolated_preciceDict": "5D018D744D1F76280FAD2B1CC788E5DD32B331FE2BD0D9AA7900260CF4C7F229",
+    "isolated_controlDict": "FACD315653B628432629F3FE015CAF5CDA5750C7912A54E32B81E65CC9251B5F",
+    "participant": "731B910CADCF760172A76208EE8C55916A29384FAD15F7AF1CE7C95470AB6ED2",
+    "fingerprint_jsonl": "7EBE4E60D54D68916790E6AD01CE9505ABB412DDA189DB8685D1B7F226E7C8D0",
+    "fluid_stdout": "395F5029F23C13BCC1BFC0090F031A3DC233CE983159967FDE3F2D8A64832510",
+    "participant_stdout": "6A95FFE625274F9236597C2C6D8D6B704F9160AEBE8BCEEC84C6E31AB8092A81"
+  }
+}

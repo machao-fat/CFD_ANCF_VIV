@@ -1,0 +1,78 @@
+{
+  "task": "HH06_WORKER_LINEAGE_TRANSITION_FIX_AUDIT",
+  "classification": "PASS_HH06_WORKER_LINEAGE_TRANSITION_FIX_AUDIT",
+  "production_deployment": false,
+  "openfoam_started": false,
+  "precice_started": false,
+  "fluid_adapter_started": false,
+  "cfd_time_advance": false,
+  "source_identity": {
+    "qualified_baseline_source_dir": "D:/研二文件/开题准备/CFD_ANCF_VIV_BUILD/hh06_shm1_source_blob_355640e1",
+    "baseline_ancf_worker_main_sha256": "83F2D643F855894C8E74AAA11D0C76684E74886FFA0CCFA044B9FB368367DEB9",
+    "patched_ancf_worker_main_sha256": "22072322A4D0559C1958C81C0D70D57AB89C0C4D5B30DB54FA86E0863D044E0C",
+    "ancf_kernel_cpp_sha256": "6DDE195A8EA27F253A21D4A859BF41A620697963AB0A834BB9D982B51863AC06",
+    "ancf_kernel_hpp_sha256": "C1182AB921D5517C2A5282F8B5FE51C3AB298BEC8B6015BFDCDBCA733C17E22C"
+  },
+  "qualified_worker": {
+    "path": "D:/研二文件/开题准备/CFD_ANCF_VIV/runtime/hh06_worker_lineage_transition_fix_audit_v1/qualified_source_v1/build/cfd_ancf_ancf_kernel_worker_lineage_transition_qualified",
+    "sha256": "6CD66A7B37028C6BFD24C8190E46A7F9074AAE1E9561B63302555D60D78EC06D",
+    "compiler": "GCC 11.4.0",
+    "cmake": "3.22.1",
+    "build_type": "Release"
+  },
+  "patch_contract": {
+    "parity_branch_removed": true,
+    "same_window_identity": [
+      "global_step",
+      "bridge_step",
+      "integer_tick",
+      "time_s",
+      "dt_s"
+    ],
+    "next_window_requires_exact_one_dt": true,
+    "duplicate_id_detection_retained": true,
+    "transport_counters_rollback": false
+  },
+  "lineage_transition_table": [
+    {
+      "physical_window": 1,
+      "sequences": [1, 2, 3, 4, 5],
+      "global_step": 1,
+      "bridge_step": 1,
+      "integer_tick": 200000,
+      "time_s": 0.0002,
+      "dt_s": 0.0002,
+      "rollback_count": 4,
+      "committed": true,
+      "response_headers": 5
+    },
+    {
+      "physical_window": 2,
+      "sequences": [6, 7, 8, 9, 10],
+      "global_step": 2,
+      "bridge_step": 2,
+      "integer_tick": 400000,
+      "time_s": 0.0004,
+      "dt_s": 0.0002,
+      "rollback_count": 4,
+      "committed": true,
+      "response_headers": 5
+    }
+  ],
+  "accepted_window_count": 2,
+  "target_accepted_window_count": 2,
+  "rollback_count": 8,
+  "response_count": 10,
+  "sequence_range": [1, 10],
+  "request_id_range": [910001, 910010],
+  "transaction_id_range": [1910001, 1910010],
+  "sequence_monotonic": true,
+  "request_id_monotonic": true,
+  "transaction_id_monotonic": true,
+  "all_response_headers_returned": true,
+  "all_states_finite": true,
+  "physical_checkpoint_restores_exact": true,
+  "worker_lineage_window_transition_parity_defect": false,
+  "raw_test_result": "lineage_transition_test_result.json",
+  "authorized_next_phase": null
+}

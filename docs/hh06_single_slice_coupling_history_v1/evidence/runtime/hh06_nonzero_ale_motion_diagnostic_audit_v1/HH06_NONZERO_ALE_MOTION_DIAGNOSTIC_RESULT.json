@@ -1,0 +1,82 @@
+{
+  "audit": "HH06_NONZERO_ALE_MOTION_DIAGNOSTIC_AUDIT",
+  "classification": "ALE_NOT_EXERCISED",
+  "execution": {
+    "isolated_case": "D:/研二文件/开题准备/CFD_ANCF_VIV/runtime/hh06_nonzero_ale_motion_diagnostic_audit_v1/case",
+    "original_case": "\\\\wsl.localhost\\Ubuntu-22.04\\home\\machao\\OpenFOAM\\coupling\\singal_slice\\slice0000",
+    "fluid_participant": "Fluid_0000",
+    "structure_participant": "Structure_0000",
+    "scheme": "parallel-implicit",
+    "dt_s": 0.0002,
+    "coupling_windows": 1,
+    "rollback_triggered": true,
+    "original_case_modified": false,
+    "original_case_new_time_directory": false,
+    "production_physics_result": false
+  },
+  "qualified_worker": {
+    "path": "/home/machao/OpenFOAM/coupling/singal_slice/slice0000/cfd_ancf_ancf_kernel_worker_shm1_qualified",
+    "sha256": "69F045EB7F4576E5178D10711F0F265D7458282A7A4ECBCB860A913ADA45BEEF",
+    "shm1": true
+  },
+  "diagnostic_displacement": {
+    "offset_xy_m": [0.0, 0.0001],
+    "ancf_section_motion_m": [1.0452091616563741e-7, 9.588691723237472e-8, 0.0004163871573314992],
+    "sent_to_precice_m": [1.0452091616563741e-7, 0.00010009588691723237, 0.0004163871573314992],
+    "diagnostic_only": true,
+    "physical_contract_modified": false
+  },
+  "rollback_events": [
+    {"event": "CHECKPOINT_WRITE", "time_s": 30.0, "iteration": 0},
+    {"event": "PRE_ROLLBACK_TRIAL", "time_s": 30.0002, "iteration": 1},
+    {"event": "CHECKPOINT_READ_AFTER_RESTORE", "time_s": 30.0, "iteration": 1},
+    {"event": "AFTER_INPUT_UPDATE", "time_s": 30.0, "iteration": 1},
+    {"event": "AFTER_INPUT_UPDATE", "time_s": 30.0002, "iteration": 1}
+  ],
+  "rollback_fingerprints": {
+    "points": {"write": "84b09858d2e5c718", "read": "84b09858d2e5c718", "equal": true},
+    "oldPoints": {"write": "84b09858d2e5c718", "read": "84b09858d2e5c718", "equal": true},
+    "phi": {"write": "5e737856cbb4000a", "read": "5e737856cbb4000a", "equal": true},
+    "cellVolume": {"write": "e49d59bd4291f4bd", "read": "e49d59bd4291f4bd", "equal": true},
+    "faceArea": {"write": "a8d92acd46eb7fe9", "read": "a8d92acd46eb7fe9", "equal": true},
+    "pointDisplacement": {"write": "403a37f08d8872c4", "read": "403a37f08d8872c4", "equal": true},
+    "cellDisplacement": {"write": "054f811aba347c5a", "read": "054f811aba347c5a", "equal": true},
+    "meshPhi": {"write": null, "read": "643e6457c48e9183", "equal": null, "status": "NOT_OBSERVABLE_AT_CHECKPOINT_WRITE"}
+  },
+  "mesh_motion": {
+    "max_point_displacement_m": 0.0,
+    "max_cell_displacement_m": 0.0,
+    "max_mesh_velocity_m_per_s": 0.0,
+    "mesh_courant_max": 0.0,
+    "nonzero_ale_motion_exercised": false,
+    "mesh_velocity_spike": false,
+    "mesh_anomaly_before_co_growth": false,
+    "fluid_courant_max": 0.4182184878
+  },
+  "fluid_read_path": {
+    "precice_mapdata_displacement_observed": true,
+    "adapter_read_coupling_data_runtime_event_observed": false,
+    "displacement_field_hash_changed": false,
+    "immediate_blocker": "FLUID_ADAPTER_READ_TO_ALE_FIELD_NOT_OBSERVED"
+  },
+  "health": {
+    "nan_inf": false,
+    "fpe": false,
+    "worker_duplicate_id": false,
+    "checkpoint_error": false,
+    "precice_failure": false,
+    "k_min": 2.7019925326939857e-10,
+    "k_max": 0.01589762717275139,
+    "omega_min": 1.9835945737137965,
+    "omega_max": 93792.84749159747
+  },
+  "evidence_sha256": {
+    "participant_script": "25D1F131071B6BFAD7A92B36044EBD710C2C054FEE3A986E5F6F1DB98D1E2792",
+    "precice_config": "E868003009601F8AC7625D60F4BE1D4D43E292F8E26140C912656DA256156A61",
+    "run_script": "6300411B85E7807DC880DB8968881D339C7128181E53E8D6EC5E4B6F2EF601B7",
+    "fingerprint_jsonl": "E801EC4ED4DAA67404D4C562895056F824BF2EC63C6D5529D3AB3A5C12AEFD45",
+    "participant_stdout": "3D9840A7897B2837E3B137DA3828A1F148260FA0B03E76FAC9EB2ED9397F1387",
+    "fluid_stdout": "7098216C7AE6B9E630143A6848F0A27C1734D9FEF7B3A548F52A1C77C1E2DEFB",
+    "diagnostic_adapter": "638d60dc9236e8ec38f656237fc9f658f3b4589b0af1acb66ed23c0683cbaad9"
+  }
+}

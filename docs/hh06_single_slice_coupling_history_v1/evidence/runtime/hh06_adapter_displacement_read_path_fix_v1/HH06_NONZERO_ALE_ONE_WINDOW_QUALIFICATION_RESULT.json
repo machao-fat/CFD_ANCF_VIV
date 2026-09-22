@@ -1,0 +1,103 @@
+{
+  "stage": "HH06_NONZERO_ALE_ONE_WINDOW_QUALIFICATION",
+  "classification": "PASS_HH06_NONZERO_ALE_ONE_WINDOW_QUALIFICATION",
+  "authorized_next_phase": "HH06_BOUNDED_MULTIWINDOW_ALE_QUALIFICATION",
+  "production_physics_result": false,
+  "diagnostic_only_offset_m": [0.0, 0.0001],
+  "run": {
+    "dt_s": 0.0002,
+    "accepted_windows": 1,
+    "coupling_iterations": 2,
+    "rollback_count": 1,
+    "fluid_return_code": 0,
+    "structure_return_code": 0,
+    "runtime_adapter_path": "/home/machao/OpenFOAM/hh06_adapter_displacement_read_path_fix_v1/qualification_lib_attempt2b/libpreciceAdapterFunctionObject.so",
+    "runtime_adapter_sha256": "8c2c0fda85dc7ed452eb144b03a92ac9bf739e62ee8369baf489b3439cfdf458",
+    "worker_sha256": "69f045eb7f4576e5178d10711f0f265d7458282a7a4ecbcb860a913ada45beef"
+  },
+  "displacement_read_path": {
+    "adapter_read_count": 2,
+    "fsi_displacement_apply_count": 2,
+    "initial_received_xy_m": [0.0, 0.0001],
+    "retry_received_xy_m": [0.0, 0.00002],
+    "point_displacement_nonzero": true,
+    "cell_displacement_nonzero": true
+  },
+  "ale": {
+    "trial1": {
+      "max_point_motion_m": 0.0001,
+      "max_mesh_velocity_m_per_s": 0.5,
+      "mesh_courant_max": 1.6214322762125877,
+      "minimum_cell_volume_m3": 7.687364979487006e-10,
+      "max_non_orthogonality_deg": 44.01320300890506,
+      "max_skewness": 0.21911858889651062
+    },
+    "retry": {
+      "max_point_motion_m": 0.00002,
+      "max_mesh_velocity_m_per_s": 0.1,
+      "mesh_courant_max": 0.32428645512885634,
+      "minimum_cell_volume_m3": 7.687364981758701e-10,
+      "max_non_orthogonality_deg": 44.005562173080406,
+      "max_skewness": 0.2191159628336284
+    },
+    "points_hash_changed": true,
+    "mesh_phi_changed": true,
+    "positive_cell_volumes": true
+  },
+  "rollback": {
+    "actual_implicit_rollback_observed": true,
+    "exact_hash_restore": {
+      "U": true,
+      "p": true,
+      "k": true,
+      "omega": true,
+      "nut": true,
+      "phi": true,
+      "pointDisplacement": true,
+      "cellDisplacement": true,
+      "points": true,
+      "oldPoints": true,
+      "cellVolume": true,
+      "faceArea": true
+    },
+    "mesh_phi_checkpoint_state": "NOT_REGISTERED_BEFORE_FIRST_MESH_MOVE",
+    "mesh_phi_restored_state": "REGISTERED_ZERO_EQUIVALENT",
+    "mesh_velocity_after_restore_m_per_s": 0.0,
+    "mesh_courant_after_restore": 0.0,
+    "retry_drives_ale": true
+  },
+  "fluid_health": {
+    "courant_mean": 0.01601199855,
+    "courant_max": 0.4182184878,
+    "max_abs_local_continuity": 7.467839243e-7,
+    "max_abs_global_continuity": 1.689503433e-7,
+    "max_abs_U_m_per_s": 0.8350736776461803,
+    "minimum_k": 2.7019925326939857e-10,
+    "maximum_omega": 93792.84755415023,
+    "maximum_nut": 0.0002803168310185041,
+    "nan_count": 0,
+    "inf_count": 0,
+    "fpe_crash_count": 0,
+    "negative_volume_count": 0,
+    "checkpoint_error_count": 0,
+    "duplicate_worker_id_count": 0,
+    "fatal_count": 0,
+    "pass": true
+  },
+  "pass_criteria": {
+    "adapter_read_called": true,
+    "fsi_displacement_read_executed": true,
+    "nonzero_displacement_received": true,
+    "motion_fields_nonzero": true,
+    "points_changed": true,
+    "mesh_velocity_positive": true,
+    "mesh_courant_positive": true,
+    "mesh_phi_observed_and_updated": true,
+    "rollback_state_restored": true,
+    "retry_ale_observed": true,
+    "no_numerical_or_protocol_fatal": true
+  },
+  "new_openfoam_numeric_time_directory_created": false,
+  "no_50_window_run": true,
+  "no_0p2s_production_run": true
+}

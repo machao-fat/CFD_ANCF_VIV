@@ -1,0 +1,109 @@
+{
+  "schema_version": "hh06_bounded_multiwindow_ale_qualification_v1",
+  "status": "DO_NOT_PASS",
+  "classification": "DO_NOT_PASS",
+  "primary_blocker": "LATE_WINDOW_ALE_FLOW_TURBULENCE_RUNAWAY",
+  "force_unit_chain_pre_gate": {
+    "status": "PASS",
+    "formula": "F_slice=(F_raw/0.028)*1.98",
+    "combined_factor": 70.71428571428571,
+    "max_abs_closure_error_N": 0.0,
+    "scaling_exactly_once": true,
+    "report": "HH06_SINGLE_SLICE_FORCE_UNIT_CHAIN_AUDIT.md",
+    "result": "HH06_SINGLE_SLICE_FORCE_UNIT_CHAIN_AUDIT_RESULT.json"
+  },
+  "candidate_freeze": {
+    "status": "PASS",
+    "adapter_source_sha256": "710F45FBA682442CBEC979D6993A24B2C530B0E592B62C18041D429CA4DD6301",
+    "adapter_binary_sha256": "8C2C0FDA85DC7ED452EB144B03A92AC9BF739E62EE8369BAF489B3439CFDF458",
+    "worker_sha256": "69F045EB7F4576E5178D10711F0F265D7458282A7A4ECBCB860A913ADA45BEEF",
+    "actual_loaded_adapter_proved_by_proc_maps": true,
+    "production_adapter_overwritten": false,
+    "dt_s": 0.0002,
+    "diagnostic_displacement_offset_used": false
+  },
+  "runtime": {
+    "start_global_time_s": 30.0,
+    "target_global_time_s": 30.005,
+    "accepted_windows": 25,
+    "target_accepted_windows": 25,
+    "coupling_attempts": 50,
+    "rollback_count": 25,
+    "fluid_return_code": 0,
+    "structure_return_code": 0,
+    "real_process_starts": {
+      "openfoam": 1,
+      "structure_participant": 1,
+      "ancf_worker": 1
+    },
+    "automatic_retries": 0,
+    "owned_residual_processes": 0,
+    "crossed_historical_failure_time_30p0044": true
+  },
+  "state_management": {
+    "fluid_rollback_exact": true,
+    "structure_rollback_exact": true,
+    "transport_ids_strictly_monotonic": true,
+    "duplicate_transport_id_count": 0,
+    "checkpoint_error_count": 0,
+    "force_chain_max_abs_error_N": 0.0
+  },
+  "health": {
+    "openfoam_co_mean_max": 1.050443746,
+    "openfoam_co_max": 184.6621404,
+    "mesh_courant_max": 58.75197066196972,
+    "mesh_velocity_max_mps": 18.117324389501427,
+    "max_abs_U_mps": 392.27421700250454,
+    "minimum_cell_volume_m3": 7.687364920849661e-10,
+    "maximum_non_orthogonality_deg": 44.10418392430988,
+    "maximum_skewness": 0.21928340334875018,
+    "k_min": 2.7019925326939857e-10,
+    "k_max": 0.023726235919399197,
+    "omega_min": 1.9647272025602887,
+    "omega_max": 925092.9681176426,
+    "nut_min": 2.8808087284283664e-15,
+    "nut_max": 0.00028056162604581607,
+    "max_abs_local_continuity": 0.0007454802298,
+    "max_abs_global_continuity": 0.0001821769753,
+    "max_received_force_norm_N": 2121.1391920065053,
+    "max_applied_slice_force_norm_N": 149994.84286331714,
+    "max_structure_xy_displacement_norm_m": 0.004043076810915152,
+    "fpe_count": 0,
+    "field_nan_count": 0,
+    "field_inf_count": 0,
+    "precice_zero_normalization_relative_inf_count": 2,
+    "negative_volume_count": 0,
+    "preCICE_fatal_count": 0,
+    "ancf_fatal_count": 0,
+    "omega_nonphysical_explosion": true,
+    "flow_velocity_runaway": true,
+    "courant_runaway": true
+  },
+  "pass_condition_evaluation": {
+    "accepted_25_of_25": true,
+    "crossed_30p0044": true,
+    "ale_motion_exercised": true,
+    "rollback_closed": true,
+    "force_unit_chain_correct": true,
+    "transport_monotonic": true,
+    "mesh_volume_positive": true,
+    "no_field_fpe_nan_inf": true,
+    "turbulence_and_flow_bounded": false,
+    "overall_pass": false
+  },
+  "filesystem_boundary": {
+    "isolated_numeric_time_directories": ["30"],
+    "original_slice0000_numeric_time_directories": ["30"],
+    "new_openfoam_time_directory_created": false
+  },
+  "authorized_next_phase": null,
+  "fifty_window_run_started": false,
+  "production_0p2s_run_started": false,
+  "evidence": {
+    "machine_analysis": "artifacts/run_analysis.json",
+    "window_summary": "artifacts/window_summary.csv",
+    "historical_failure_region": "artifacts/historical_failure_region_per_iteration.csv",
+    "fluid_fingerprints": "phase_c_25window/fluid_rollback_fingerprint.jsonl",
+    "structure_trace": "phase_c_25window/structure_force_trace.jsonl"
+  }
+}

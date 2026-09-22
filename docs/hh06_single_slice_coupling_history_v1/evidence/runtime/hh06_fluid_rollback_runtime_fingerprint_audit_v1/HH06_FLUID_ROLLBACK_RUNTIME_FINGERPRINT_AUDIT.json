@@ -1,0 +1,60 @@
+{
+  "classification": "DO_NOT_PASS_PRODUCTION_FLUID_ROLLBACK_AUDIT",
+  "scope": {
+    "isolated_case": true,
+    "original_case_modified": false,
+    "production_fsi_started": false,
+    "window_count": 1,
+    "global_start_time_s": 30.0,
+    "global_end_time_s": 30.0002,
+    "dt_s": 0.0002,
+    "preCICE_iterations": 2,
+    "rollback_count": 1
+  },
+  "binary_identity": {
+    "production_adapter_sha256": "26ad8529822f96ca8ddfb3370f85257b0d19b56958538d6073cf8af897aac572",
+    "temporary_diagnostic_adapter_sha256": "85cd9a6a0a1bf4999662f376f825844d235dcebcdf94f5cb57414443cbc67306",
+    "production_identity_proven": false
+  },
+  "events": [
+    {"event": "CHECKPOINT_WRITE", "window_id": 1, "iteration_id": 0, "time_s": 30.0},
+    {"event": "PRE_ROLLBACK_TRIAL", "window_id": 1, "iteration_id": 1, "time_s": 30.0002},
+    {"event": "POST_ROLLBACK_BEFORE_NEXT_INPUT", "window_id": 1, "iteration_id": 1, "time_s": 30.0},
+    {"event": "FINAL_COMMIT", "window_id": 1, "iteration_id": 1, "time_s": 30.0002}
+  ],
+  "field_hash_comparison": {
+    "points": true,
+    "oldPoints": true,
+    "U": true,
+    "p": true,
+    "phi": true,
+    "k": true,
+    "omega": true,
+    "nut": true,
+    "pointDisplacement": true,
+    "cellDisplacement": true,
+    "meshPhi": null
+  },
+  "health": {
+    "max_co": 0.4182184878,
+    "mean_co": 0.01601199855,
+    "max_local_continuity_abs": 8.145416056e-09,
+    "max_global_continuity_abs": 1.80747064e-10,
+    "fpe_nan_inf_negative_volume": false,
+    "mesh_velocity_proxy_mps": 0.0,
+    "omega_post_rollback_anomaly": false
+  },
+  "limitations": [
+    "meshPhi was not observable at checkpoint write",
+    "nonzero mesh motion was not exercised",
+    "temporary diagnostic binary is not the production binary",
+    "structure retry displacement was intentionally changed between trials"
+  ],
+  "evidence": {
+    "trace": "adapter_rollback_trace.jsonl",
+    "participant": "participant_evidence.json",
+    "fluid_stdout": "fluid.stdout",
+    "fluid_stderr": "fluid.stderr",
+    "returns": "returns.txt"
+  }
+}

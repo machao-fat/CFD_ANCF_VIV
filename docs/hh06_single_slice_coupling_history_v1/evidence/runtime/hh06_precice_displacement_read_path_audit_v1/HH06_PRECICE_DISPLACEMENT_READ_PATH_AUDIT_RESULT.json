@@ -1,0 +1,136 @@
+{
+  "audit": "HH06_PRECICE_DISPLACEMENT_READ_PATH_AUDIT",
+  "classification": "DO_NOT_PASS_DISPLACEMENT_READ_PATH_NOT_CONNECTED",
+  "execution_boundary": {
+    "real_fluid_participant": true,
+    "real_structure_participant": true,
+    "coupling_scheme": "parallel-implicit",
+    "coupling_windows": 1,
+    "dt_s": 0.0002,
+    "production_fsi": false,
+    "fifty_window_run": false,
+    "original_case_modified": false,
+    "original_case_numeric_time_directories_after_run": ["30"]
+  },
+  "isolated_case": {
+    "root": "D:\\研二文件\\开题准备\\CFD_ANCF_VIV\\runtime\\hh06_precice_displacement_read_path_audit_v1",
+    "case": "D:\\研二文件\\开题准备\\CFD_ANCF_VIV\\runtime\\hh06_precice_displacement_read_path_audit_v1\\case",
+    "socket": "/home/machao/OpenFOAM/coupling/singal_slice/hh06_precice_displacement_read_path_audit_v1/precice-sockets"
+  },
+  "adapter": {
+    "loaded_path": "/home/machao/OpenFOAM/hh06_precice_displacement_read_path_audit_v1/diagnostic_lib/libpreciceAdapterFunctionObject.so",
+    "sha256": "11c512af6bf35ba03541fcc96392bcda579b4e1328a89a4e61b40d423910562c",
+    "build_identity": "HH06_PRECICE_DISPLACEMENT_READ_PATH_AUDIT_ADAPTER_OF10_V1",
+    "source_files": {
+      "Adapter.C": "90142EC256174708E2278BB35FAA8E105756FE934B0885DF268ADA2BDB4A1CA5",
+      "Adapter.H": "73059E038FEC0E3FFAE0B39B8AF1069F5B5AC88EEB014902E7EC85E3DECAB2C2",
+      "Interface.C": "819E1B8DF9A94B99C70C1290DECCCB9CA9F8F73E82B5D7400C4C5F3D5EBD3662",
+      "FSI/FSI.C": "4F0C282B1D0ABBACE9612F92D22655213CA143A990FF1F87BE48D883E62E287A",
+      "FSI/Displacement.C": "201E4443C90D35F2E04C2EE5096AF132CEB8E98C19A967FA4C8A87704A600736"
+    }
+  },
+  "registration": {
+    "participant": "Fluid_0000",
+    "mesh": "Fluid-Mesh",
+    "read_data": ["Displacement"],
+    "write_data": ["Force"],
+    "point_field": "pointDisplacement",
+    "cell_field": "cellDisplacement",
+    "location_type": "faceCenters",
+    "patches": ["cylinder"],
+    "reader_registration_log": true,
+    "precice_mapping_observed": true,
+    "structure_sent_displacement_m": [1.0452091616563741e-07, 0.00010009588691723237, 0.0004163871573314992],
+    "preCICE_displacement_convergence_norms": [0.0001, 0.00008]
+  },
+  "static_call_graph": {
+    "interface_precice_readData_call_present": true,
+    "interface_precice_readData_call_source": "diagnostic_adapter_source/Interface.C:604",
+    "adapter_readCouplingData_method_present": true,
+    "adapter_readCouplingData_call_site_present": false,
+    "execute_order": ["writeCouplingData", "advance", "optional readCheckpoint", "optional writeCheckpoint", "adjustSolverTimeStepAndReadData"],
+    "adjustSolverTimeStepAndReadData_reads_precice": false,
+    "displacement_user_read_executed": false,
+    "normal_movePoints_call_in_read_path": false,
+    "mesh_update_call_in_adapter_read_path": false
+  },
+  "runtime_trace": {
+    "fluid_return_code": 0,
+    "participant_return_code": 0,
+    "read_path_trace_file_present": false,
+    "read_data_entry_events": 0,
+    "read_data_exit_events": 0,
+    "read_data_interface_events": 0,
+    "schedule_only_events": ["READ_DATA_SCHEDULE_ENTRY", "READ_DATA_SCHEDULE_EXIT"],
+    "observed_events": [
+      "CHECKPOINT_WRITE",
+      "WRITE_DATA_ENTRY",
+      "WRITE_DATA_EXIT",
+      "PRE_ROLLBACK_TRIAL",
+      "CHECKPOINT_READ_AFTER_RESTORE",
+      "READ_DATA_SCHEDULE_ENTRY",
+      "READ_DATA_SCHEDULE_EXIT",
+      "AFTER_INPUT_UPDATE",
+      "WRITE_DATA_ENTRY",
+      "WRITE_DATA_EXIT",
+      "READ_DATA_SCHEDULE_ENTRY",
+      "READ_DATA_SCHEDULE_EXIT",
+      "AFTER_INPUT_UPDATE"
+    ]
+  },
+  "field_fingerprints": {
+    "checkpoint_30": {
+      "pointDisplacement": "403a37f08d8872c4",
+      "cellDisplacement": "054f811aba347c5a",
+      "points": "84b09858d2e5c718",
+      "oldPoints": "84b09858d2e5c718",
+      "meshPhi": null,
+      "max_point_displacement_m": 0.0,
+      "max_cell_displacement_m": 0.0,
+      "max_mesh_velocity_m_per_s": 0.0
+    },
+    "trial_and_retry_30_0002": {
+      "pointDisplacement": "403a37f08d8872c4",
+      "cellDisplacement": "054f811aba347c5a",
+      "points": "84b09858d2e5c718",
+      "oldPoints": "84b09858d2e5c718",
+      "meshPhi": "643e6457c48e9183",
+      "max_point_displacement_m": 0.0,
+      "max_cell_displacement_m": 0.0,
+      "max_mesh_velocity_m_per_s": 0.0,
+      "mesh_courant_max": 0.0
+    },
+    "rollback_after_restore": {
+      "pointDisplacement": "403a37f08d8872c4",
+      "cellDisplacement": "054f811aba347c5a",
+      "points": "84b09858d2e5c718",
+      "oldPoints": "84b09858d2e5c718",
+      "meshPhi": "643e6457c48e9183"
+    }
+  },
+  "motion_path": {
+    "dynamic_mesh_solver": "displacementLaplacian",
+    "diffusivity": "quadratic inverseDistance 1(cylinder)",
+    "field_update": false,
+    "motion_solver_received_nonzero_input": false,
+    "rollback_movePoints_observed": true,
+    "rollback_movePoints_runtime_context": {
+      "window_id": 1,
+      "iteration_id": 1,
+      "time_s_before_restore": 30.0002,
+      "restored_time_s": 30.0,
+      "source": "fluid.stdout rollback debug lines"
+    },
+    "movePoints_normal_path_observed": false,
+    "mesh_motion_exercised": false,
+    "classification": "ALE_NOT_EXERCISED"
+  },
+  "artifacts": {
+    "report": "HH06_PRECICE_DISPLACEMENT_READ_PATH_AUDIT.md",
+    "result": "HH06_PRECICE_DISPLACEMENT_READ_PATH_AUDIT_RESULT.json",
+    "fluid_stdout_sha256": "DC4D782AEE7A3FF9AE77E21C3B94A8D26941CA9C08C5DFBD88090E87539E4824",
+    "participant_stdout_sha256": "78681EFED9CC21EC0F456FDA2FDE83E037A2682E116519BE143959E0997B6EFE",
+    "fingerprint_sha256": "18065A0406D9A54406A061066642F655F690F294566BDBD258A45289A21BFF8F"
+  },
+  "authorized_next_phase": null
+}

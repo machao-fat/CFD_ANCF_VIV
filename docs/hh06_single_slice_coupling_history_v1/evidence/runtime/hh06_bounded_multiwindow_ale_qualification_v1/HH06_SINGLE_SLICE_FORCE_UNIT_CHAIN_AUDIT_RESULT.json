@@ -1,0 +1,47 @@
+{
+  "schema_version": "hh06_single_slice_force_unit_chain_audit_v1",
+  "status": "PASS",
+  "classification": "PASS_FORCE_UNIT_CHAIN_PRE_GATE",
+  "force_unit_chain": "PASS",
+  "physical_window": 1,
+  "implicit_iteration_used": 2,
+  "cfd_extrusion_span_m": 0.028,
+  "representative_strip_length_m": 1.98,
+  "combined_factor": 70.71428571428571,
+  "values": {
+    "openfoam_raw_integrated_force_N": [0.06440713207168003, 0.05908675094604829, 0.0],
+    "adapter_precice_write_component_sum_N": [0.06440713207168003, 0.05908675094604829],
+    "mapped_structure_point_force_N": [0.06440713207168003, 0.05908675094604829, 0.0],
+    "participant_received_force_N": [0.06440713207168003, 0.05908675094604829, 0.0],
+    "force_per_unit_span_Npm": [2.3002547168457155, 2.1102411052160104, 0.0],
+    "strip_resultant_force_N": [4.554504339354517, 4.1782773883277, 0.0],
+    "worker_request_slice_force_N": [4.554504339354517, 4.1782773883277, 0.0],
+    "ancf_applied_physical_resultant_N": [4.554504339354517, 4.1782773883277, 0.0]
+  },
+  "closure": {
+    "adapter_to_mapped_max_abs_error_N": 0.0,
+    "mapped_to_received_max_abs_error_N": 0.0,
+    "formula_to_strip_resultant_max_abs_error_N": 0.0,
+    "strip_to_worker_max_abs_error_N": 0.0,
+    "scaling_exactly_once": true,
+    "extra_span_factor_detected": false,
+    "extra_strip_length_factor_detected": false
+  },
+  "runtime": {
+    "fluid_return_code": 0,
+    "participant_return_code": 0,
+    "diagnostic_displacement_offset_used": false,
+    "accepted_windows": 1,
+    "real_process_starts": {
+      "openfoam": 1,
+      "structure_participant": 1,
+      "ancf_worker": 1
+    }
+  },
+  "identity": {
+    "audit_adapter_binary_sha256": "EEAA70CC2AB72E513AB69945866A6F5AE439786E54B2609AF2444B158494F002",
+    "candidate_adapter_source_sha256": "710F45FBA682442CBEC979D6993A24B2C530B0E592B62C18041D429CA4DD6301",
+    "production_coordinator_sha256": "E612D5BFDFFB54DB07A7A325934CBB9D1CFF65EC22B48639AD085B79CB0A90A3"
+  },
+  "authorized_next_phase": "HH06_BOUNDED_MULTIWINDOW_PHASE_B_C"
+}

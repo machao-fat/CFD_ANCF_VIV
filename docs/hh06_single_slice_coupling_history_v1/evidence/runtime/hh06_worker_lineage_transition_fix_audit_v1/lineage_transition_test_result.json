@@ -1,0 +1,362 @@
+{
+  "test": "HH06_WORKER_LINEAGE_TRANSITION_FIX_AUDIT",
+  "execution_boundary": {
+    "openfoam": false,
+    "precice": false,
+    "fluid_adapter": false,
+    "physical_cfd_time_advance": false,
+    "isolated_worker_only": true
+  },
+  "case": "/mnt/d/研二文件/开题准备/CFD_ANCF_VIV/runtime/hh06_bounded_multiwindow_ale_qualification_v1/implicit_retry_enabled_5window_v1/case",
+  "worker": "/mnt/d/研二文件/开题准备/CFD_ANCF_VIV/runtime/hh06_worker_lineage_transition_fix_audit_v1/qualified_source_v1/build/cfd_ancf_ancf_kernel_worker_lineage_transition_qualified",
+  "allow_implicit_retry": true,
+  "windows_requested": 2,
+  "requests_requested": 10,
+  "contract_audit": {
+    "audit": "HH06_STRUCTURE_0000_WRAPPER_CONTRACT_AUDIT_V1",
+    "status": "PASS",
+    "blocking_checks": [],
+    "checks": {
+      "status_is_dry_run": true,
+      "participants": true,
+      "parallel_implicit": true,
+      "hh06_geometry": true,
+      "q0_dimension_and_finite": true,
+      "one_structure_point": true,
+      "no_legacy_604_vertex": true,
+      "single_slice_mapping": true,
+      "absolute_displacement_declared": true,
+      "resultant_mapping_declared": true,
+      "tension_quantities_distinct": true,
+      "precice_xml_parse": true,
+      "hydrodynamic_wire_extension": true
+    },
+    "case_dir": "/mnt/d/研二文件/开题准备/CFD_ANCF_VIV/runtime/hh06_bounded_multiwindow_ale_qualification_v1/implicit_retry_enabled_5window_v1/case",
+    "case_id": "ANCF_SINGLE_SLICE_HIGHRE_0P2S_PREP_V1",
+    "participants": {
+      "fluid": "Fluid_0000",
+      "structure": "Structure_0000"
+    },
+    "model": {
+      "length_m": 13.12,
+      "diameter_m": 0.028,
+      "elements": 32,
+      "nodes": 33,
+      "dof": 198
+    },
+    "mapping": {
+      "mode": "single_slice_resultant_force",
+      "structure_points": 1,
+      "s_ref_m": 2.97,
+      "deltaL_m": 1.98,
+      "fluid_faces_external_only": true
+    },
+    "tension": {
+      "benchmark_top_tension_N": 1175.0,
+      "equilibrium_reaction_tension_N": 1188.28
+    },
+    "q0": {
+      "artifact": "/mnt/d/CFD/CFD_ANCF_VIV_reentry_runtime/HH06_P1_WET_MODAL_STRUCTURAL_GATE/ancf_static.raw",
+      "sha256": "b298979244f67e23d02a63566e718ccb1f8897570c12b0aab98f7cbbf6577091",
+      "count": 198,
+      "q_sha256": "e1ba7fc759244d8e0ef884f256980c6bd815c64932b0318fd021395815b1a9f0",
+      "velocity_zero": true
+    },
+    "wire_capability": {
+      "SHM1_hydrodynamic_regions": true,
+      "note": "Current checked-out protocol must expose SHM1 before a wet-mass runtime is authorized."
+    },
+    "no_runtime_started": true
+  },
+  "model": {
+    "length_m": 13.12,
+    "elements": 32,
+    "ndof": 198,
+    "dt_s": 0.0002,
+    "slice_center_m": 2.97
+  },
+  "test_force": {
+    "integrated_resultant_N": [
+      0.0,
+      1.0,
+      0.0
+    ],
+    "raw_openfoam_equivalent_N": [
+      0.0,
+      0.014141414141414142,
+      0.0
+    ],
+    "test_only": true,
+    "application_s_m": 2.97
+  },
+  "windows": [
+    {
+      "window_id": 1,
+      "time_s": 0.0002,
+      "checkpoint_id": "lineage-window-1",
+      "attempts": [
+        {
+          "attempt": 1,
+          "ids": {
+            "sequence": 1,
+            "request_id": 910001,
+            "transaction_id": 1910001
+          },
+          "physical": {
+            "global_step": 1,
+            "bridge_step": 1,
+            "time_s": 0.0002,
+            "dt_s": 0.0002
+          },
+          "response": {
+            "iterations": 3,
+            "residual": 7.826941494926132e-08,
+            "q_sha256": "094513e6ca2dc91d1c6766fe19d0fc05af4cac3b7432b4e25446489cb841ebb9"
+          },
+          "q_sha256": "094513e6ca2dc91d1c6766fe19d0fc05af4cac3b7432b4e25446489cb841ebb9",
+          "qdot_sha256": "45d23147688436fe7f587f6669bf4b60a12811c7ef938bfaa35b0655f48e91b4",
+          "qddot_sha256": "5fdb4faaad4058578f9e1dfa55f069a7b1a661bda5044ab7e4b16b3824d702bf",
+          "finite": true
+        },
+        {
+          "attempt": 2,
+          "ids": {
+            "sequence": 2,
+            "request_id": 910002,
+            "transaction_id": 1910002
+          },
+          "physical": {
+            "global_step": 1,
+            "bridge_step": 1,
+            "time_s": 0.0002,
+            "dt_s": 0.0002
+          },
+          "response": {
+            "iterations": 3,
+            "residual": 7.826941494926132e-08,
+            "q_sha256": "094513e6ca2dc91d1c6766fe19d0fc05af4cac3b7432b4e25446489cb841ebb9"
+          },
+          "q_sha256": "094513e6ca2dc91d1c6766fe19d0fc05af4cac3b7432b4e25446489cb841ebb9",
+          "qdot_sha256": "45d23147688436fe7f587f6669bf4b60a12811c7ef938bfaa35b0655f48e91b4",
+          "qddot_sha256": "5fdb4faaad4058578f9e1dfa55f069a7b1a661bda5044ab7e4b16b3824d702bf",
+          "finite": true
+        },
+        {
+          "attempt": 3,
+          "ids": {
+            "sequence": 3,
+            "request_id": 910003,
+            "transaction_id": 1910003
+          },
+          "physical": {
+            "global_step": 1,
+            "bridge_step": 1,
+            "time_s": 0.0002,
+            "dt_s": 0.0002
+          },
+          "response": {
+            "iterations": 3,
+            "residual": 7.826941494926132e-08,
+            "q_sha256": "094513e6ca2dc91d1c6766fe19d0fc05af4cac3b7432b4e25446489cb841ebb9"
+          },
+          "q_sha256": "094513e6ca2dc91d1c6766fe19d0fc05af4cac3b7432b4e25446489cb841ebb9",
+          "qdot_sha256": "45d23147688436fe7f587f6669bf4b60a12811c7ef938bfaa35b0655f48e91b4",
+          "qddot_sha256": "5fdb4faaad4058578f9e1dfa55f069a7b1a661bda5044ab7e4b16b3824d702bf",
+          "finite": true
+        },
+        {
+          "attempt": 4,
+          "ids": {
+            "sequence": 4,
+            "request_id": 910004,
+            "transaction_id": 1910004
+          },
+          "physical": {
+            "global_step": 1,
+            "bridge_step": 1,
+            "time_s": 0.0002,
+            "dt_s": 0.0002
+          },
+          "response": {
+            "iterations": 3,
+            "residual": 7.826941494926132e-08,
+            "q_sha256": "094513e6ca2dc91d1c6766fe19d0fc05af4cac3b7432b4e25446489cb841ebb9"
+          },
+          "q_sha256": "094513e6ca2dc91d1c6766fe19d0fc05af4cac3b7432b4e25446489cb841ebb9",
+          "qdot_sha256": "45d23147688436fe7f587f6669bf4b60a12811c7ef938bfaa35b0655f48e91b4",
+          "qddot_sha256": "5fdb4faaad4058578f9e1dfa55f069a7b1a661bda5044ab7e4b16b3824d702bf",
+          "finite": true
+        },
+        {
+          "attempt": 5,
+          "ids": {
+            "sequence": 5,
+            "request_id": 910005,
+            "transaction_id": 1910005
+          },
+          "physical": {
+            "global_step": 1,
+            "bridge_step": 1,
+            "time_s": 0.0002,
+            "dt_s": 0.0002
+          },
+          "response": {
+            "iterations": 3,
+            "residual": 7.826941494926132e-08,
+            "q_sha256": "094513e6ca2dc91d1c6766fe19d0fc05af4cac3b7432b4e25446489cb841ebb9"
+          },
+          "q_sha256": "094513e6ca2dc91d1c6766fe19d0fc05af4cac3b7432b4e25446489cb841ebb9",
+          "qdot_sha256": "45d23147688436fe7f587f6669bf4b60a12811c7ef938bfaa35b0655f48e91b4",
+          "qddot_sha256": "5fdb4faaad4058578f9e1dfa55f069a7b1a661bda5044ab7e4b16b3824d702bf",
+          "finite": true
+        }
+      ],
+      "rollback_count": 4,
+      "committed": true,
+      "committed_step": 1
+    },
+    {
+      "window_id": 2,
+      "time_s": 0.0004,
+      "checkpoint_id": "lineage-window-2",
+      "attempts": [
+        {
+          "attempt": 1,
+          "ids": {
+            "sequence": 6,
+            "request_id": 910006,
+            "transaction_id": 1910006
+          },
+          "physical": {
+            "global_step": 2,
+            "bridge_step": 2,
+            "time_s": 0.0004,
+            "dt_s": 0.0002
+          },
+          "response": {
+            "iterations": 3,
+            "residual": 9.32296835287616e-08,
+            "q_sha256": "8268d893c7c61cc4d0c63ba0ca478c64cc86da6973113411ecf99f050949f305"
+          },
+          "q_sha256": "8268d893c7c61cc4d0c63ba0ca478c64cc86da6973113411ecf99f050949f305",
+          "qdot_sha256": "8d54b30e57136c75a5b1aebe4b3c67653db148082bc20ab33f204b317b6e944b",
+          "qddot_sha256": "7a8b0edb44f757fa465c88db453811a14e9d1dc2d909d508969c8d3a9fcfc46f",
+          "finite": true
+        },
+        {
+          "attempt": 2,
+          "ids": {
+            "sequence": 7,
+            "request_id": 910007,
+            "transaction_id": 1910007
+          },
+          "physical": {
+            "global_step": 2,
+            "bridge_step": 2,
+            "time_s": 0.0004,
+            "dt_s": 0.0002
+          },
+          "response": {
+            "iterations": 3,
+            "residual": 9.32296835287616e-08,
+            "q_sha256": "8268d893c7c61cc4d0c63ba0ca478c64cc86da6973113411ecf99f050949f305"
+          },
+          "q_sha256": "8268d893c7c61cc4d0c63ba0ca478c64cc86da6973113411ecf99f050949f305",
+          "qdot_sha256": "8d54b30e57136c75a5b1aebe4b3c67653db148082bc20ab33f204b317b6e944b",
+          "qddot_sha256": "7a8b0edb44f757fa465c88db453811a14e9d1dc2d909d508969c8d3a9fcfc46f",
+          "finite": true
+        },
+        {
+          "attempt": 3,
+          "ids": {
+            "sequence": 8,
+            "request_id": 910008,
+            "transaction_id": 1910008
+          },
+          "physical": {
+            "global_step": 2,
+            "bridge_step": 2,
+            "time_s": 0.0004,
+            "dt_s": 0.0002
+          },
+          "response": {
+            "iterations": 3,
+            "residual": 9.32296835287616e-08,
+            "q_sha256": "8268d893c7c61cc4d0c63ba0ca478c64cc86da6973113411ecf99f050949f305"
+          },
+          "q_sha256": "8268d893c7c61cc4d0c63ba0ca478c64cc86da6973113411ecf99f050949f305",
+          "qdot_sha256": "8d54b30e57136c75a5b1aebe4b3c67653db148082bc20ab33f204b317b6e944b",
+          "qddot_sha256": "7a8b0edb44f757fa465c88db453811a14e9d1dc2d909d508969c8d3a9fcfc46f",
+          "finite": true
+        },
+        {
+          "attempt": 4,
+          "ids": {
+            "sequence": 9,
+            "request_id": 910009,
+            "transaction_id": 1910009
+          },
+          "physical": {
+            "global_step": 2,
+            "bridge_step": 2,
+            "time_s": 0.0004,
+            "dt_s": 0.0002
+          },
+          "response": {
+            "iterations": 3,
+            "residual": 9.32296835287616e-08,
+            "q_sha256": "8268d893c7c61cc4d0c63ba0ca478c64cc86da6973113411ecf99f050949f305"
+          },
+          "q_sha256": "8268d893c7c61cc4d0c63ba0ca478c64cc86da6973113411ecf99f050949f305",
+          "qdot_sha256": "8d54b30e57136c75a5b1aebe4b3c67653db148082bc20ab33f204b317b6e944b",
+          "qddot_sha256": "7a8b0edb44f757fa465c88db453811a14e9d1dc2d909d508969c8d3a9fcfc46f",
+          "finite": true
+        },
+        {
+          "attempt": 5,
+          "ids": {
+            "sequence": 10,
+            "request_id": 910010,
+            "transaction_id": 1910010
+          },
+          "physical": {
+            "global_step": 2,
+            "bridge_step": 2,
+            "time_s": 0.0004,
+            "dt_s": 0.0002
+          },
+          "response": {
+            "iterations": 3,
+            "residual": 9.32296835287616e-08,
+            "q_sha256": "8268d893c7c61cc4d0c63ba0ca478c64cc86da6973113411ecf99f050949f305"
+          },
+          "q_sha256": "8268d893c7c61cc4d0c63ba0ca478c64cc86da6973113411ecf99f050949f305",
+          "qdot_sha256": "8d54b30e57136c75a5b1aebe4b3c67653db148082bc20ab33f204b317b6e944b",
+          "qddot_sha256": "7a8b0edb44f757fa465c88db453811a14e9d1dc2d909d508969c8d3a9fcfc46f",
+          "finite": true
+        }
+      ],
+      "rollback_count": 4,
+      "committed": true,
+      "committed_step": 2
+    }
+  ],
+  "accepted_window_count": 2,
+  "rollback_count": 8,
+  "response_count": 10,
+  "sequence_range": [
+    1,
+    10
+  ],
+  "sequence_request_transaction_monotonic": true,
+  "all_responses_returned": true,
+  "parity_defect_present": false,
+  "classification": "PASS_HH06_WORKER_LINEAGE_TRANSITION_FIX_AUDIT",
+  "worker_close": {
+    "started": true,
+    "pid": 718116,
+    "return_code": 0,
+    "stderr": "",
+    "closed": true
+  }
+}

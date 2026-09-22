@@ -1,0 +1,110 @@
+{
+  "task": "HH06_IMPLICIT_RETRY_ENABLED_MULTIITER_QUALIFICATION",
+  "qualification_status": "DO_NOT_PASS",
+  "classification": "COUPLING_ITERATION_NOT_ENOUGH",
+  "late_window_runaway_assessment": "NOT_EVALUABLE",
+  "root_cause": "WORKER_LINEAGE_WINDOW_TRANSITION_PARITY_DEFECT",
+  "authorized_next_phase": null,
+  "execution_boundary": {
+    "openfoam_run": true,
+    "precice_run": true,
+    "structure_participant_run": true,
+    "worker_run": true,
+    "physical_contract_modified": false,
+    "solver_settings_modified": false,
+    "source_modified": false,
+    "automatic_retry_after_failure": false,
+    "target_windows": 5,
+    "completed_accepted_windows": 1,
+    "created_new_openfoam_time_directories": false,
+    "longer_qualification_started": false
+  },
+  "case": {
+    "isolated_directory": "D:\\研二文件\\开题准备\\CFD_ANCF_VIV\\runtime\\hh06_bounded_multiwindow_ale_qualification_v1\\implicit_retry_enabled_5window_v1",
+    "fluid_case": "D:\\研二文件\\开题准备\\CFD_ANCF_VIV\\runtime\\hh06_bounded_multiwindow_ale_qualification_v1\\implicit_retry_enabled_5window_v1\\case",
+    "openfoam_start_time_s": 30.0,
+    "dt_s": 0.0002,
+    "precice_min_iterations": 2,
+    "precice_max_iterations": 5,
+    "allow_implicit_retry": true,
+    "scheme": "parallel-implicit"
+  },
+  "binary_identity": {
+    "worker_path": "/home/machao/OpenFOAM/coupling/singal_slice/slice0000/cfd_ancf_ancf_kernel_worker_shm1_qualified",
+    "worker_sha256": "69f045eb7f4576e5178d10711f0f265d7458282a7a4ecbcb860a913ada45beef",
+    "adapter_sha256": "8c2c0fda85dc7ed452eb144b03a92ac9bf739e62ee8369baf489b3439cfdf458",
+    "worker_source_lineage_issue": true
+  },
+  "process_return_codes": {
+    "structure_participant": 2,
+    "fluid": 134
+  },
+  "windows": [
+    {
+      "window": 1,
+      "physical_time_s": 0.0002,
+      "global_time_s": 30.0002,
+      "iterations": 5,
+      "rollbacks": 4,
+      "committed": true,
+      "force_residual_abs_N": [0.0874, 0.0699, 0.0559, 0.0448, 0.0358],
+      "force_residual_relative": [1.0, 0.8, 0.64, 0.512, 0.410],
+      "displacement_residual_abs_m": [0.0, 0.0, 0.0, 0.0, 0.0],
+      "force_convergence_abs_limit_N": 0.001,
+      "force_convergence_relative_limit": 1e-5,
+      "force_converged_on_final_iteration": false,
+      "max_force_norm_N": 0.0874,
+      "max_ancf_applied_integrated_slice_force_norm_N": 6.180737149483844,
+      "mesh_velocity_max_mps": 0.00025531413966580765,
+      "mesh_courant_max": 0.0008279026514682621,
+      "fluid_courant_max": 0.4182184878,
+      "omega_max": 93792.84749163801,
+      "k_min": 2.7019925326939857e-10,
+      "min_cell_volume_m3": 7.687e-10,
+      "physical_nonfinite_or_fpe": false,
+      "rollback_physical_state_restored": true,
+      "newton_iterations": [3, 3, 3, 3, 3]
+    },
+    {
+      "window": 2,
+      "physical_time_s": 0.0004,
+      "global_time_s": 30.0004,
+      "iterations_observed_on_fluid_side": 3,
+      "structure_request_sequence": 6,
+      "structure_response": false,
+      "committed": false,
+      "force_residual_abs_N_observed": [0.00138, 0.0272, 0.0442],
+      "failure": "worker response header missing at sequence 6",
+      "formal_window_metrics_available": false
+    }
+  ],
+  "protocol_diagnosis": {
+    "sequence_1_to_5_completed": true,
+    "sequence_6_response_missing": true,
+    "window_1_commit_after_odd_sequence": true,
+    "next_window_sequence_even": true,
+    "worker_lineage_uses_sequence_parity": true,
+    "same_window_even_sequence_branch": true,
+    "next_window_odd_sequence_branch_only": true,
+    "diagnosis": "After a 5-iteration commit, sequence 6 is incorrectly validated as same-window by the current worker lineage state machine. The worker exits before returning a response header."
+  },
+  "health": {
+    "window_1_nan": false,
+    "window_1_inf": false,
+    "window_1_fpe": false,
+    "window_1_negative_volume": false,
+    "worker_duplicate_id": false,
+    "checkpoint_error": false,
+    "late_window_turbulence_runaway_demonstrated": false
+  },
+  "evidence_files": [
+    "participant.stdout",
+    "participant.stderr",
+    "fluid.stdout",
+    "fluid.stderr",
+    "structure_force_trace.jsonl",
+    "fluid_rollback_fingerprint.jsonl",
+    "read_path_trace.jsonl",
+    "artifacts/run_identity.txt"
+  ]
+}

@@ -1,0 +1,62 @@
+{
+  "stage": "HH06_ADAPTER_DISPLACEMENT_READ_PATH_IMPLEMENTATION_AND_QUALIFICATION",
+  "classification": "PASS_HH06_NONZERO_ALE_ONE_WINDOW_QUALIFICATION",
+  "authorized_next_phase": "HH06_BOUNDED_MULTIWINDOW_ALE_QUALIFICATION",
+  "implementation": {
+    "modified_adapter_source_files": [
+      "D:\\研二文件\\开题准备\\CFD_ANCF_VIV\\runtime\\hh06_adapter_displacement_read_path_fix_v1\\adapter_source\\Adapter.C"
+    ],
+    "adapter_source_sha256": "710f45fba682442cbec979d6993a24b2c530b0e592b62c18041d429ca4dd6301",
+    "initialize_order": [
+      "precice_initialize",
+      "readCouplingData_0",
+      "checkpoint",
+      "fluid_solve"
+    ],
+    "execute_order": [
+      "fluid_solve",
+      "writeCouplingData",
+      "advance",
+      "conditional_readCheckpoint",
+      "conditional_writeCheckpoint",
+      "readCouplingData_max_dt",
+      "adjust_timestep",
+      "normal_pimple_mesh_motion"
+    ],
+    "rollback_repairs": [
+      "full_pointVectorField_clone_reset",
+      "oldPoints_restore",
+      "first_window_meshPhi_zero_restore"
+    ]
+  },
+  "build": {
+    "binary": "/home/machao/OpenFOAM/hh06_adapter_displacement_read_path_fix_v1/qualification_lib_attempt2b/libpreciceAdapterFunctionObject.so",
+    "sha256": "8c2c0fda85dc7ed452eb144b03a92ac9bf739e62ee8369baf489b3439cfdf458",
+    "size_bytes": 1788952,
+    "openfoam": "10",
+    "wm_options": "linux64GccDPInt32Opt",
+    "compiler": "g++ 11.4.0",
+    "precice": "3.4.1",
+    "ldd_r_pass": true,
+    "actual_runtime_loaded_path_proved": true
+  },
+  "protected_artifacts": {
+    "production_adapter_modified": false,
+    "production_adapter_sha256": "26ad8529822f96ca8ddfb3370f85257b0d19b56958538d6073cf8af897aac572",
+    "original_slice0000_modified": false,
+    "worker_modified": false,
+    "worker_sha256": "69f045eb7f4576e5178d10711f0f265d7458282a7a4ecbcb860a913ada45beef",
+    "shm1_modified": false,
+    "physical_numerical_settings_modified": false
+  },
+  "diagnostic_only": true,
+  "production_physics_result": false,
+  "runs": {
+    "attempt1_preserved": true,
+    "attempt1_result": "DO_NOT_PASS_ROLLBACK_MESH_HISTORY_INCOMPLETE",
+    "attempt2_result": "PASS_HH06_NONZERO_ALE_ONE_WINDOW_QUALIFICATION"
+  },
+  "no_50_window_run": true,
+  "no_0p2s_production_run": true
+}
+
