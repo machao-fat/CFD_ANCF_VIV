@@ -1,0 +1,52 @@
+{
+  "archive_id": "HH06_SINGLE_SLICE_COUPLING_REPAIR_HISTORY_V1",
+  "archive_date": "2026-09-22",
+  "case": "/home/machao/OpenFOAM/coupling/singal_slice/slice0000",
+  "scope": "HH06 Case 1 high-Re single-slice Fluid_0000-preCICE-Structure_0000-ANCF coupling",
+  "execution_boundary": {
+    "openfoam_started_by_archive": false,
+    "precice_started_by_archive": false,
+    "ancf_physical_runtime_started_by_archive": false,
+    "new_cfd_time_directory_created_by_archive": false,
+    "production_worker_deployed_by_archive": false
+  },
+  "frozen_contract": {
+    "L_m": 13.12,
+    "D_m": 0.028,
+    "U_mps": 0.31,
+    "rho_kg_m3": 1000.0,
+    "nu_m2_s": 1.1388087116e-6,
+    "restart_global_time_s": 30.0,
+    "dt_s": 0.0002,
+    "Ne": 32,
+    "nodes": 33,
+    "dof": 198,
+    "coupling_s_m": 2.97,
+    "deltaL_m": 1.98,
+    "benchmark_top_tension_N": 1175.0,
+    "equilibrium_reaction_tension_N": 1188.28,
+    "shm1_region": [0.0, 13.12],
+    "shm1_added_mass_kg_m": [0.616, 0.616, 0.0],
+    "shm1_damping_Ns_m2": [0.0, 0.0, 0.0]
+  },
+  "milestones": [
+    {"id": "CONTRACT_WRAPPER", "status": "READY_FOR_DRY_RUN", "root_cause": "Structure_0000 entry and single-point mapping were missing", "fix": "P1 REF_NE32 wrapper using existing coordinator/backend/worker"},
+    {"id": "SHM1_PROTOCOL", "status": "PASS", "root_cause": "Python codec existed before runtime worker identity was proven", "fix": "qualified C++ worker and production payload cross-language qualification"},
+    {"id": "TRANSPORT_ROLLBACK", "status": "PASS", "root_cause": "checkpoint restored transport IDs and worker rejected duplicates", "fix": "session-monotonic transport counters outside physical checkpoint"},
+    {"id": "INITIAL_DATA", "status": "PASS", "root_cause": "Displacement initialize=yes had no pre-initialize write", "fix": "write q0 section displacement before Participant.initialize()"},
+    {"id": "CHECKPOINT_LIFECYCLE", "status": "PASS", "root_cause": "rollback cleared active checkpoint before same-window retry completed", "fix": "retain checkpoint through retries and clear only on commit"},
+    {"id": "FORCE_UNIT_CHAIN", "status": "PASS", "root_cause": "required scaling chain needed evidence", "fix": "verified raw/0.028*1.98 exactly once with zero closure error"},
+    {"id": "READ_PATH", "status": "PASS_ISOLATED", "root_cause": "Adapter execute path did not call readCouplingData before next fluid solve", "fix": "isolated adapter read ordering and field/history restore"},
+    {"id": "BOUNDED_25_WINDOW", "status": "DO_NOT_PASS", "root_cause": "late-window ALE/fluid/turbulence runaway", "fix": "no parameter tuning; retained fail-closed evidence"},
+    {"id": "LINEAGE_TRANSITION", "status": "PASS_ISOLATED_NOT_DEPLOYED", "root_cause": "sequence parity misclassified sequence 6 as same-window", "fix": "physical-window tuple lineage state machine in isolated worker"}
+  ],
+  "final_gate": {
+    "structure_and_protocol_layers": "PASS_WITH_EVIDENCE",
+    "bounded_multiwindow_ale_fsi": "DO_NOT_PASS",
+    "production_fsi": "NOT_AUTHORIZED",
+    "primary_unresolved_risk": "late-window ALE/fluid/turbulence feedback runaway"
+  },
+  "archived_evidence_directory": "docs/hh06_single_slice_coupling_history_v1/evidence",
+  "archived_evidence_file_count": 27,
+  "previous_git_commit": "e1425b42797a4b642d1000dd3d0d6ed67f2fee48"
+}
