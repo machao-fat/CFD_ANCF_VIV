@@ -1,0 +1,29 @@
+{
+  "status": "PASS_HH06_CHECKPOINT_LIFECYCLE_FIX",
+  "modified_files": [
+    "src/coupling/arbitrary_n_live_orchestration_v1/coordinator.py",
+    "tests/hh06_checkpoint_lifecycle/test_checkpoint_lifecycle.py"
+  ],
+  "checkpoint_semantics": {
+    "checkpoint_created": "begin_window",
+    "rollback": "restore_physical_state_and_keep_checkpoint_active",
+    "commit": "accept_window_and_clear_checkpoint"
+  },
+  "transport_identity": {
+    "checkpointed": false,
+    "rollback": "monotonic_counters_preserved",
+    "duplicate_detection": "enabled"
+  },
+  "tests": {
+    "syntax": "PASS",
+    "hh06_lifecycle": {"passed": 3, "failed": 0},
+    "multi_slice_orchestration": {"passed": 7, "failed": 0},
+    "precice_adapter": {"passed": 14, "failed": 0}
+  },
+  "runtime_boundary": {
+    "openfoam_started": false,
+    "precice_started": false,
+    "ancf_runtime_started": false,
+    "new_cfd_time_directory": false
+  }
+}

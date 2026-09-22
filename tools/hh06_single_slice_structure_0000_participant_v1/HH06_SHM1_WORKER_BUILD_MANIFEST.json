@@ -1,0 +1,71 @@
+{
+  "qualification": "HH06_SHM1_WORKER_BINARY_BUILD",
+  "source_identity": {
+    "git_repository": "https://github.com/machao-fat/CFD_ANCF_VIV.git",
+    "git_repository_local": "D:/研二文件/开题准备/CFD_ANCF_VIV",
+    "git_branch": "feature/ancf-spanwise-hydro-matrix-v1",
+    "git_head": "355640e11925b9feddd1a52bb3d93596e5ee8251",
+    "commit_author": "machao-fat",
+    "commit_date": "2026-09-20T01:13:28+08:00",
+    "commit_subject": "Connect spanwise hydrodynamic matrices to ANCF state",
+    "source_export": "D:/研二文件/开题准备/CFD_ANCF_VIV_BUILD/hh06_shm1_source_blob_355640e1",
+    "source_export_method": "git cat-file blob export from frozen commit (no line-ending conversion)",
+    "repository_worktree_status": "dirty only by pre-existing Python protocol change; frozen C++ commit itself was not modified",
+    "identity_status": "PASS"
+  },
+  "source_files": {
+    "ancf_worker_main.cpp": {
+      "git_path": "src/coupling/cpp_worker_persistent_ipc_v1/ancf_worker_main.cpp",
+      "absolute_path": "D:/研二文件/开题准备/CFD_ANCF_VIV_BUILD/hh06_shm1_source_blob_355640e1/ancf_worker_main.cpp",
+      "sha256": "83F2D643F855894C8E74AAA11D0C76684E74886FFA0CCFA044B9FB368367DEB9"
+    },
+    "ancf_kernel.cpp": {
+      "git_path": "src/coupling/cpp_worker_persistent_ipc_v1/ancf_kernel.cpp",
+      "absolute_path": "D:/研二文件/开题准备/CFD_ANCF_VIV_BUILD/hh06_shm1_source_blob_355640e1/ancf_kernel.cpp",
+      "sha256": "6DDE195A8EA27F253A21D4A859BF41A620697963AB0A834BB9D982B51863AC06"
+    },
+    "ancf_kernel.hpp": {
+      "git_path": "src/coupling/cpp_worker_persistent_ipc_v1/ancf_kernel.hpp",
+      "absolute_path": "D:/研二文件/开题准备/CFD_ANCF_VIV_BUILD/hh06_shm1_source_blob_355640e1/ancf_kernel.hpp",
+      "sha256": "C1182AB921D5517C2A5282F8B5FE51C3AB298BEC8B6015BFDCDBCA733C17E22C"
+    },
+    "CMakeLists.txt": {
+      "git_path": "src/coupling/cpp_worker_persistent_ipc_v1/CMakeLists.txt",
+      "absolute_path": "D:/研二文件/开题准备/CFD_ANCF_VIV_BUILD/hh06_shm1_source_blob_355640e1/CMakeLists.txt",
+      "sha256": "78E17A34BAC88BD1B6ECA40F68D80A356AA6D8C292E717F89D971991F12F5678"
+    }
+  },
+  "build_recipe": {
+    "recipe": "CMakeLists.txt target cfd_ancf_ancf_kernel_worker",
+    "source_directory": "D:/研二文件/开题准备/CFD_ANCF_VIV_BUILD/hh06_shm1_source_blob_355640e1",
+    "build_directory": "D:/研二文件/开题准备/CFD_ANCF_VIV_BUILD/hh06_shm1_qualification_build_exact",
+    "cmake_version": "3.22.1",
+    "compiler": "/usr/bin/c++ (GNU g++)",
+    "compiler_version": "g++ (Ubuntu 11.4.0-1ubuntu1~22.04.3) 11.4.0",
+    "build_type": "RelWithDebInfo",
+    "cxx_standard": "gnu++17",
+    "compile_flags": ["-O2", "-g", "-DNDEBUG", "-Wall", "-Wextra", "-Wpedantic", "-Werror", "-std=gnu++17"],
+    "link_flags": ["-O2", "-g", "-DNDEBUG"],
+    "linked_libraries": [],
+    "configure_command": "cmake -S <source> -B <build> -DCMAKE_BUILD_TYPE=RelWithDebInfo",
+    "build_command": "cmake --build <build> --target cfd_ancf_ancf_kernel_worker -j2",
+    "recipe_status": "PASS"
+  },
+  "binary": {
+    "absolute_path": "D:/研二文件/开题准备/CFD_ANCF_VIV_BUILD/hh06_shm1_qualification_build_exact/cfd_ancf_ancf_kernel_worker_shm1_qualified",
+    "wsl_path": "/mnt/d/研二文件/开题准备/CFD_ANCF_VIV_BUILD/hh06_shm1_qualification_build_exact/cfd_ancf_ancf_kernel_worker_shm1_qualified",
+    "size_bytes": 2647128,
+    "sha256": "69F045EB7F4576E5178D10711F0F265D7458282A7A4ECBCB860A913ADA45BEEF",
+    "shm1_marker_raw_byte_present": true,
+    "shm1_marker": "0x314D4853",
+    "shm1_version": 1,
+    "max_regions": 10000,
+    "deployed_to_slice0000": false,
+    "qualification_binary_status": "BUILT_NOT_DEPLOYED"
+  },
+  "protected_previous_binary": {
+    "absolute_path": "\\\\wsl.localhost\\Ubuntu-22.04\\home\\machao\\OpenFOAM\\coupling\\singal_slice\\slice0000\\cfd_ancf_ancf_kernel_worker",
+    "sha256": "7B246C53F2040CE9DCBA3100700E1D5DEF905E84D8452F560B6D1B29E88D8473",
+    "overwritten": false
+  }
+}

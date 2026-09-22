@@ -1,0 +1,71 @@
+{
+  "qualification": "HH06_SINGLE_SLICE_FSI_PREPRODUCTION_50WINDOW",
+  "classification": "DO_NOT_PASS",
+  "case": "/home/machao/OpenFOAM/coupling/singal_slice/slice0000",
+  "requested": {
+    "restart_global_time_s": 30.0,
+    "dt_s": 0.0002,
+    "accepted_windows": 50,
+    "target_end_global_time_s": 30.01
+  },
+  "actual": {
+    "accepted_windows_completed": 2,
+    "last_accepted_global_time_s": 30.0004,
+    "third_window_started": true,
+    "third_window_accepted": false,
+    "completed_window_evidence": 2,
+    "target_reached": false
+  },
+  "window_evidence": [
+    {"window": 1, "start_global_time_s": 30.0, "end_global_time_s": 30.0002, "status": "COMPLETED"},
+    {"window": 2, "start_global_time_s": 30.0002, "end_global_time_s": 30.0004, "status": "COMPLETED"},
+    {"window": 3, "start_global_time_s": 30.0004, "end_global_time_s": null, "status": "ROLLBACK_FAILURE_NOT_ACCEPTED"}
+  ],
+  "participants": {
+    "fluid": "Fluid_0000",
+    "structure": "Structure_0000",
+    "scheme": "parallel-implicit",
+    "mesh": {"fluid_vertices": 200, "structure_vertices": 1},
+    "force_mapping": "Fluid-Mesh -> Structure-Mesh conservative",
+    "displacement_mapping": "Structure-Mesh -> Fluid-Mesh consistent"
+  },
+  "health": {
+    "max_co_observed": 0.4182184878,
+    "mean_co_initial": 0.01601199855,
+    "max_local_continuity_observed": 8.145416056e-09,
+    "global_continuity_scale": "approximately 1e-10",
+    "fpe": false,
+    "nan_inf": false,
+    "negative_volume": false,
+    "solver_fatal": false,
+    "precice_convergence_failure": false,
+    "worker_duplicate_id": false,
+    "rollback_failure": true
+  },
+  "process": {
+    "structure_return_code": 1,
+    "fluid_return_code": 143,
+    "fluid_return_code_interpretation": "controlled termination after Structure failure",
+    "new_physical_time_directories": [],
+    "restart_directory_retained": "30"
+  },
+  "blocker": {
+    "id": "REPEATED_ROLLBACK_WITHOUT_ACTIVE_COORDINATOR_CHECKPOINT",
+    "exception": "CheckpointError: no active checkpoint",
+    "root_cause": "coordinator rollback consumes the checkpoint, while a later implicit retry requests another rollback without a new checkpoint",
+    "automatic_repair": false
+  },
+  "worker": {
+    "path": "/home/machao/OpenFOAM/coupling/singal_slice/slice0000/cfd_ancf_ancf_kernel_worker_shm1_qualified",
+    "sha256": "69f045eb7f4576e5178d10711f0f265d7458282a7a4ecbcb860a913ada45beef"
+  },
+  "raw_evidence": [
+    "HH06_50W_PARTICIPANT.stdout",
+    "HH06_50W_PARTICIPANT.stderr",
+    "HH06_50W_FLUID.stdout",
+    "HH06_50W_FLUID.stderr",
+    "HH06_50W_RESULT_RAW.json",
+    "HH06_50W_STATUS.txt"
+  ],
+  "authorized_next_phase": null
+}

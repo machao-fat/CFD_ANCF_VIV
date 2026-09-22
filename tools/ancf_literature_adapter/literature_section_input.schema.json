@@ -1,0 +1,53 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "ANCF literature section compatibility input",
+  "type": "object",
+  "properties": {
+    "case_id": {
+      "type": "string"
+    },
+    "assume_solid_equivalent_section": {
+      "type": "boolean"
+    },
+    "fields": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "D_hydro_m": { "$ref": "#/$defs/field" },
+        "D_struct_m": { "$ref": "#/$defs/field" },
+        "Di_m": { "$ref": "#/$defs/field" },
+        "E_Pa": { "$ref": "#/$defs/field" },
+        "rho_material_kg_m3": { "$ref": "#/$defs/field" },
+        "EA_N": { "$ref": "#/$defs/field" },
+        "EI_Nm2": { "$ref": "#/$defs/field" },
+        "mass_per_length_kg_m": { "$ref": "#/$defs/field" },
+        "displaced_area_m2": { "$ref": "#/$defs/field" },
+        "submerged_mass_per_length_kg_m": { "$ref": "#/$defs/field" },
+        "submerged_weight_per_length_N_m": { "$ref": "#/$defs/field" },
+        "rho_fluid_kg_m3": { "$ref": "#/$defs/field" }
+      }
+    }
+  },
+  "$defs": {
+    "field": {
+      "oneOf": [
+        {
+          "type": "number"
+        },
+        {
+          "type": "object",
+          "required": ["status"],
+          "properties": {
+            "status": {
+              "enum": ["known", "unknown", "not_reported"]
+            },
+            "value": {
+              "type": "number"
+            }
+          },
+          "additionalProperties": false
+        }
+      ]
+    }
+  }
+}

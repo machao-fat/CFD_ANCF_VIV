@@ -41,7 +41,20 @@ class PreciceStructureFleetBackend:
         self._participant: Any = None
         self._vertex_ids: dict[str, Any] = {}
 
-    def initialize(self) -> None:
+    def initialize(
+        self,
+        initial_motion_by_slice: Mapping[str, Sequence[Sequence[float]]] | None = None,
+    ) -> None:
+        """Define the structure mesh and initialize the preCICE participant.
+
+        preCICE configurations may request an initial write (for example the
+        HH06 absolute ``Displacement`` exchange).  In that case the initial
+        values must be written after mesh definition but before
+        ``Participant.initialize()``.  The argument is optional to preserve
+        the existing backend API for configurations that do not request
+        initial data; a live participant that does request it fails closed if
+        no values are supplied for a slice.
+        """
         if self._participant is not None:
             raise PreciceBackendError("structure participant already initialized")
         factory = self._factory
@@ -56,6 +69,21 @@ class PreciceStructureFleetBackend:
             for item in self.manifest.slices:
                 self._vertex_ids[item.slice_id] = self._participant.set_mesh_vertices(
                     item.structure_mesh, self.vertices_by_slice[item.slice_id])
+            requires_initial_data = getattr(self._participant, "requires_initial_data", None)
+            if callable(requires_initial_data) and bool(requires_initial_data()):
+                initial_values = initial_motion_by_slice or {}
+                for item in self.manifest.slices:
+                    if item.slice_id not in initial_values:
+                        raise PreciceBackendError(
+                            "preCICE requires initial data but no initial motion was supplied "
+                            f"for {item.slice_id}"
+                        )
+                    self._participant.write_data(
+                        item.structure_mesh,
+                        item.motion_data,
+                        self._vertex_ids[item.slice_id],
+                        initial_values[item.slice_id],
+                    )
             self._participant.initialize()
         except Exception:
             self._participant = None

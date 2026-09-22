@@ -44,6 +44,9 @@ SPANWISE_ENDPOINT_NEAREST_CONSTANT = 1
 SPANWISE_LOAD_MODE_LEGACY = "legacy_point_lumped"
 SPANWISE_LOAD_MODE_PIECEWISE_LINEAR = "piecewise_linear_distributed"
 SPANWISE_ENDPOINT_POLICY_NEAREST_CONSTANT = "nearest_constant"
+SPANWISE_HYDRODYNAMIC_EXTENSION_MARKER = 0x314D4853  # "SHM1", little-endian
+SPANWISE_HYDRODYNAMIC_EXTENSION_VERSION = 1
+MAX_SPANWISE_HYDRODYNAMIC_REGIONS = 10000
 _DAMPING_TAG = b"ancf-damping-v1\0"
 _DAMPING_REFERENCE_TAG = b"ancf-damping-ref-v1\0"
 DOF_ORDER_IDENTITY = "per_node[r_x,r_y,r_z,r_sx,r_sy,r_sz]"
@@ -64,6 +67,8 @@ RESPONSE_FIELD_SEMANTICS = {
 _PREFIX = struct.Struct("<IIIiiQddiiiiiQQ")
 _MODEL = struct.Struct("<13dii")
 _SECTION_PROPERTY_EXTENSION = struct.Struct("<III4d")
+_SPANWISE_HYDRODYNAMIC_EXTENSION_HEADER = struct.Struct("<III")
+_SPANWISE_HYDRODYNAMIC_REGION = struct.Struct("<8d")
 _BOUNDARY_ID = 64
 _RESPONSE_PREFIX = struct.Struct("<IIIiiQdiiidQQI")
 
@@ -129,6 +134,157 @@ def _bounded_int(value: int, name: str, minimum: int, maximum: int) -> int:
     return value
 
 
+def _triplet(values: Sequence[float], name: str) -> tuple[float, float, float]:
+    if isinstance(values, (str, bytes)):
+        raise FrameError(f"{name} is not a numeric triplet")
+    try:
+        result = tuple(values)
+    except TypeError as exc:
+        raise FrameError(f"{name} is not a numeric triplet") from exc
+    if len(result) != 3:
+        raise FrameError(f"{name} must contain exactly three values")
+    try:
+        return tuple(float(value) for value in result)
+    except (TypeError, ValueError, OverflowError) as exc:
+        raise FrameError(f"{name} contains a non-numeric value") from exc
+
+
+@dataclass(frozen=True, init=False)
+class SpanwiseHydrodynamicRegion:
+    """One versioned SHM1 spanwise hydrodynamic region.
+
+    The eight scalar fields deliberately follow the C++ wire order.  The
+    positional four-argument form (``s_min, s_max, added_mass_xyz,
+    damping_xyz``) is retained for the existing HH06 wrapper while the
+    scalar eight-field form is available for exact wire-oriented callers.
+    """
+
+    s_min_m: float
+    s_max_m: float
+    added_mass_x: float
+    added_mass_y: float
+    added_mass_z: float
+    damping_x: float
+    damping_y: float
+    damping_z: float
+
+    def __init__(self, s_min_m: float, s_max_m: float,
+                 added_mass_x: float | Sequence[float] | None = None,
+                 added_mass_y: float | Sequence[float] | None = None,
+                 added_mass_z: float | None = None,
+                 damping_x: float | None = None,
+                 damping_y: float | None = None,
+                 damping_z: float | None = None,
+                 *, added_mass_per_length_kg_m: Sequence[float] | None = None,
+                 linear_damping_per_length_Ns_m2: Sequence[float] | None = None) -> None:
+        # Compatibility form used by the already prepared HH06 wrapper:
+        # (s_min, s_max, (am_x, am_y, am_z), (c_x, c_y, c_z)).
+        if added_mass_per_length_kg_m is not None or linear_damping_per_length_Ns_m2 is not None:
+            if (added_mass_x is not None or added_mass_y is not None or
+                    added_mass_z is not None or damping_x is not None or
+                    damping_y is not None or damping_z is not None):
+                raise FrameError("SHM1 vector keywords cannot be mixed with scalar fields")
+            mass_values = _triplet(added_mass_per_length_kg_m or (), "added_mass_per_length_kg_m")
+            damping_values = _triplet(linear_damping_per_length_Ns_m2 or (),
+                                      "linear_damping_per_length_Ns_m2")
+        elif (not isinstance(added_mass_x, Real) and added_mass_y is not None and
+              added_mass_z is None and damping_x is None and damping_y is None and damping_z is None):
+            mass_values = _triplet(added_mass_x, "added_mass_per_length_kg_m")
+            damping_values = _triplet(added_mass_y, "linear_damping_per_length_Ns_m2")
+        else:
+            if any(value is None for value in (added_mass_y, added_mass_z, damping_x, damping_y, damping_z)):
+                raise FrameError("SHM1 scalar region requires eight values")
+            try:
+                mass_values = (float(added_mass_x), float(added_mass_y), float(added_mass_z))
+                damping_values = (float(damping_x), float(damping_y), float(damping_z))
+            except (TypeError, ValueError, OverflowError) as exc:
+                raise FrameError("SHM1 coefficients contain a non-numeric value") from exc
+        try:
+            interval = (float(s_min_m), float(s_max_m))
+        except (TypeError, ValueError, OverflowError) as exc:
+            raise FrameError("SHM1 interval contains a non-numeric value") from exc
+        object.__setattr__(self, "s_min_m", interval[0])
+        object.__setattr__(self, "s_max_m", interval[1])
+        object.__setattr__(self, "added_mass_x", mass_values[0])
+        object.__setattr__(self, "added_mass_y", mass_values[1])
+        object.__setattr__(self, "added_mass_z", mass_values[2])
+        object.__setattr__(self, "damping_x", damping_values[0])
+        object.__setattr__(self, "damping_y", damping_values[1])
+        object.__setattr__(self, "damping_z", damping_values[2])
+
+    @property
+    def added_mass_per_length_kg_m(self) -> tuple[float, float, float]:
+        return (self.added_mass_x, self.added_mass_y, self.added_mass_z)
+
+    @property
+    def linear_damping_per_length_Ns_m2(self) -> tuple[float, float, float]:
+        return (self.damping_x, self.damping_y, self.damping_z)
+
+    def wire_values(self) -> tuple[float, ...]:
+        return (self.s_min_m, self.s_max_m, self.added_mass_x, self.added_mass_y,
+                self.added_mass_z, self.damping_x, self.damping_y, self.damping_z)
+
+    def validate(self, length_m: float, index: int = 0) -> None:
+        values = self.wire_values()
+        if any(isinstance(value, bool) or not isinstance(value, Real) or
+               not math.isfinite(float(value)) for value in values):
+            raise FrameError(f"SHM1 region {index} contains NaN/Inf or non-numeric values")
+        if self.s_min_m < 0.0 or self.s_min_m >= self.s_max_m or self.s_max_m > length_m:
+            raise FrameError(f"SHM1 region {index} interval is outside model length")
+        if any(value < 0.0 for value in self.added_mass_per_length_kg_m):
+            raise FrameError(f"SHM1 region {index} added mass must be non-negative")
+        if any(value < 0.0 for value in self.linear_damping_per_length_Ns_m2):
+            raise FrameError(f"SHM1 region {index} damping must be non-negative")
+
+
+def decode_spanwise_hydrodynamic_extension(
+        payload: bytes, offset: int = 0) -> tuple[tuple[SpanwiseHydrodynamicRegion, ...], int]:
+    """Decode and validate one SHM1 trailer without interpreting later trailers.
+
+    The returned offset points immediately after SHM1, allowing a caller to
+    parse the request-level DMP1 extension that follows it.  Trailing bytes
+    are therefore intentionally permitted, but a truncated or malformed SHM1
+    header/region is rejected before any region is returned.
+    """
+    if not isinstance(payload, (bytes, bytearray, memoryview)):
+        raise FrameError("SHM1 payload must be bytes-like")
+    if isinstance(offset, bool) or not isinstance(offset, int) or offset < 0:
+        raise FrameError("SHM1 payload offset is invalid")
+    raw = bytes(payload)
+    if offset > len(raw) or _SPANWISE_HYDRODYNAMIC_EXTENSION_HEADER.size > len(raw) - offset:
+        raise FrameError("SHM1 header is truncated")
+    marker, version, count = _SPANWISE_HYDRODYNAMIC_EXTENSION_HEADER.unpack_from(raw, offset)
+    if marker != SPANWISE_HYDRODYNAMIC_EXTENSION_MARKER:
+        raise FrameError("SHM1 marker is invalid")
+    if version != SPANWISE_HYDRODYNAMIC_EXTENSION_VERSION:
+        raise FrameError("SHM1 version is unsupported")
+    if count > MAX_SPANWISE_HYDRODYNAMIC_REGIONS:
+        raise FrameError("SHM1 region count exceeds wire limit")
+    start = offset + _SPANWISE_HYDRODYNAMIC_EXTENSION_HEADER.size
+    required = count * _SPANWISE_HYDRODYNAMIC_REGION.size
+    if required > len(raw) - start:
+        raise FrameError("SHM1 region payload is truncated")
+    regions: list[SpanwiseHydrodynamicRegion] = []
+    cursor = start
+    previous_end: float | None = None
+    for index in range(count):
+        values = _SPANWISE_HYDRODYNAMIC_REGION.unpack_from(raw, cursor)
+        cursor += _SPANWISE_HYDRODYNAMIC_REGION.size
+        region = SpanwiseHydrodynamicRegion(*values)
+        # The model length is not part of SHM1 itself; validate local interval
+        # ordering here and let KernelModel.validate enforce the upper bound.
+        if (region.s_min_m < 0.0 or region.s_min_m >= region.s_max_m or
+                not all(math.isfinite(value) for value in region.wire_values()) or
+                any(value < 0.0 for value in region.added_mass_per_length_kg_m) or
+                any(value < 0.0 for value in region.linear_damping_per_length_Ns_m2)):
+            raise FrameError(f"SHM1 region {index} is malformed")
+        if previous_end is not None and region.s_min_m < previous_end:
+            raise FrameError("SHM1 regions overlap or are unsorted")
+        previous_end = region.s_max_m
+        regions.append(region)
+    return tuple(regions), cursor
+
+
 @dataclass(frozen=True)
 class KernelModel:
     length_m: float = 100.0
@@ -172,6 +328,9 @@ class KernelModel:
     spanwise_active_s_min_m: float = 0.0
     spanwise_active_s_max_m: float | None = None
     spanwise_endpoint_policy: str = SPANWISE_ENDPOINT_POLICY_NEAREST_CONSTANT
+    # Optional SHM1 hydrodynamic regions.  An empty tuple omits the trailer
+    # and preserves the historical model bytes exactly.
+    hydrodynamic_regions: tuple[SpanwiseHydrodynamicRegion, ...] = ()
 
     @property
     def ndof(self) -> int:
@@ -270,6 +429,26 @@ class KernelModel:
                     self.spanwise_active_s_min_m > self.slice_positions_m[0] or
                     self.slice_positions_m[-1] > self.spanwise_active_s_max_m):
                 raise FrameError("kernel distributed-load active region is invalid")
+        if isinstance(self.hydrodynamic_regions, (str, bytes)):
+            raise FrameError("kernel SHM1 hydrodynamic regions are not a sequence")
+        try:
+            hydrodynamic_regions = tuple(self.hydrodynamic_regions)
+        except TypeError as exc:
+            raise FrameError("kernel SHM1 hydrodynamic regions are not a sequence") from exc
+        if len(hydrodynamic_regions) > MAX_SPANWISE_HYDRODYNAMIC_REGIONS:
+            raise FrameError("kernel SHM1 hydrodynamic region count exceeds wire limit")
+        previous_end: float | None = None
+        previous_start: float | None = None
+        for index, region in enumerate(hydrodynamic_regions):
+            if not isinstance(region, SpanwiseHydrodynamicRegion):
+                raise FrameError(f"kernel SHM1 region {index} has an invalid type")
+            region.validate(float(self.length_m), index)
+            if previous_start is not None and region.s_min_m < previous_start:
+                raise FrameError("kernel SHM1 regions are not sorted")
+            if previous_end is not None and region.s_min_m < previous_end:
+                raise FrameError("kernel SHM1 regions overlap")
+            previous_start = region.s_min_m
+            previous_end = region.s_max_m
         fixed = self.fixed_dof or (0, 1, 2, 6 * self.elements, 6 * self.elements + 1)
         prescribed = self.prescribed_values or (0.0,) * len(fixed)
         if (len(fixed) != len(prescribed) or not fixed or
@@ -332,6 +511,16 @@ class KernelModel:
                 float(self.spanwise_active_s_min_m),
                 float(self.spanwise_active_s_max_m),
             )
+        hydrodynamic_regions = tuple(self.hydrodynamic_regions)
+        if hydrodynamic_regions:
+            model_bytes += struct.pack(
+                "<III",
+                SPANWISE_HYDRODYNAMIC_EXTENSION_MARKER,
+                SPANWISE_HYDRODYNAMIC_EXTENSION_VERSION,
+                len(hydrodynamic_regions),
+            )
+            for region in hydrodynamic_regions:
+                model_bytes += struct.pack("<8d", *region.wire_values())
         return model_bytes
 
 

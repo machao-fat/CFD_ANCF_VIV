@@ -1,0 +1,70 @@
+{
+  "qualification": "HH06_PRECICE_INITIAL_DATA_FIX",
+  "classification": "PASS_HH06_PRECICE_INITIAL_DATA_FIX",
+  "modified_files": [
+    "src/coupling/arbitrary_n_live_orchestration_v1/precice_backend.py",
+    "tools/hh06_single_slice_structure_0000_participant_v1/structure_0000_participant.py"
+  ],
+  "unchanged_contracts": [
+    "precice-config.xml",
+    "OpenFOAM case",
+    "ANCF kernel",
+    "qualified worker binary",
+    "SHM1 protocol",
+    "HH06 contracts"
+  ],
+  "initial_data": {
+    "source": "P1 REF_NE32 static equilibrium Q record from ancf_static.raw",
+    "s_m": 2.97,
+    "q0_position_m": [0.0, 0.0, 2.9704163869346836],
+    "reference_position_m": [0.0, 0.0, 2.97],
+    "written_displacement_m": [[0.0, 0.0]],
+    "structure_mesh_vertices": 1,
+    "full_ancf_dof_internal": 198,
+    "absolute_displacement": true
+  },
+  "tests": {
+    "python_syntax": "PASS",
+    "initial_data_backend_unit": "PASS",
+    "existing_precice_adapter_tests": {"passed": 14, "failed": 0}
+  },
+  "one_window": {
+    "status": "PASS",
+    "dt_s": 0.0002,
+    "accepted_windows": 1,
+    "fluid_mesh_vertices": 200,
+    "structure_mesh_vertices": 1,
+    "force_N": [0.06440713207168003, 0.05908675094604829, 0.0],
+    "structure_displacement_m": [1.0452091616563741e-07, 9.588691723237472e-08],
+    "worker_newton_iterations": 3,
+    "worker_residual": 7.826941494926132e-08,
+    "mean_co": 0.01601199855,
+    "max_co": 0.4182184878,
+    "max_local_continuity_shown": 8.145416056e-09,
+    "fpe": false,
+    "nan_inf": false,
+    "negative_volume": false,
+    "precice_convergence_failure": false,
+    "second_window_accepted": false,
+    "new_time_directories": []
+  },
+  "worker": {
+    "path": "/home/machao/OpenFOAM/coupling/singal_slice/slice0000/cfd_ancf_ancf_kernel_worker_shm1_qualified",
+    "sha256": "69f045eb7f4576e5178d10711f0f265d7458282a7a4ecbcb860a913ada45beef"
+  },
+  "execution_path_note": "A non-persistent WSL path-normalization shim resolved the frozen D:/ P1 artifact root for this qualification; no contract or source data was changed.",
+  "file_sha256": {
+    "precice_backend.py": "c2cdcef8c77135de71307ae5c9ad74c468c4c67a78f8442bb6329f94921f3aa6",
+    "structure_0000_participant.py": "0ea97426100bb9fb8460b5b8c68787f225080018a4ffbc31c538c04abddfa0b2",
+    "precice-config.xml": "fe6d44106154111e17eaf6955e6f7e0a627b8d4965bd8308dd35ceab9fbaffc8"
+  },
+  "execution_boundary": {
+    "long_fsi": false,
+    "production_0p2s": false,
+    "multi_slice": false,
+    "worker_modified": false,
+    "xml_modified": false,
+    "openfoam_case_modified": false
+  },
+  "authorized_next_phase": null
+}

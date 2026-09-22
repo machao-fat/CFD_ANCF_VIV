@@ -1,0 +1,227 @@
+{
+  "schema_version": "one-window-implicit-qualification-v1",
+  "run_id": "implicit_one_window_requal_v1_run_001",
+  "case_id": "implicit_one_window_v1_case_001",
+  "dt_s": 0.005,
+  "duration_s": 0.005,
+  "number_of_steps": 1,
+  "ANCF": {
+    "length_m": 50.0,
+    "elements": 16,
+    "diameter_m": 1.0,
+    "inner_diameter_m": 0.9,
+    "youngs_modulus_Pa": 3227125779.2218256,
+    "material_density_kgpm3": 26315.789473684214,
+    "top_tension_N": 2179104.0029808935,
+    "gravity_mps2": 9.81,
+    "damping_alpha": 0.0,
+    "damping_beta": 0.0,
+    "newmark_beta": 0.25,
+    "newmark_gamma": 0.5,
+    "newton_tolerance": 1e-08,
+    "max_newton_iterations": 40,
+    "gauss_order": 3,
+    "mass_gauss_order": 5,
+    "initial_state": {
+      "kind": "fresh_cpp_static_equilibrium",
+      "source": "runtime/stage4f_d_cpp_worker_initialization_v1/run_20260827_cpp_only/ancf_t0_state_cpp.json",
+      "sha256": "d4c8d0a63c95f07c53d8f4dd2bda2f60c2625ab70f52598cf97bd60404caca7f"
+    }
+  },
+  "slices": {
+    "partition_algorithm": "bounded_midpoint_voronoi_v1",
+    "represented_interval_m": [
+      0.0,
+      50.0
+    ],
+    "items": [
+      {
+        "slice_id": 0,
+        "s_ref_m": 8.333333333333334,
+        "unit_span_m": 1.0
+      },
+      {
+        "slice_id": 1,
+        "s_ref_m": 25.0,
+        "unit_span_m": 1.0
+      },
+      {
+        "slice_id": 2,
+        "s_ref_m": 41.666666666666664,
+        "unit_span_m": 1.0
+      }
+    ]
+  },
+  "CFD": {
+    "solver": "OpenFOAM 10 pimpleFoam",
+    "fluid_density_kgpm3": 1000.0,
+    "kinematic_viscosity_m2ps": 0.01,
+    "inlet_velocity_mps": 1.0,
+    "Re": 100.0,
+    "mesh_source": "cases/openfoam/single_slice_ancf_fsi/constant/polyMesh",
+    "mesh_points_sha256": "fbdbb5f484af3b11e025dbeba34ac41459cb3cf08bf5544c561e16a77149012f",
+    "unit_span_source": "actual OpenFOAM polyMesh point-coordinate extent: z_min=0 m, z_max=1 m",
+    "force_source": "preCICE conservative Force summed over all Structure-Mesh vertices; independently reconciled against OpenFOAM forces function object"
+  },
+  "preCICE": {
+    "version": "3.4.1",
+    "participant_names": [
+      "Structure_0000",
+      "Structure_0001",
+      "Structure_0002",
+      "Fluid_0000",
+      "Fluid_0001",
+      "Fluid_0002"
+    ],
+    "mesh_names": [
+      "Structure-Mesh",
+      "Fluid-Mesh"
+    ],
+    "data_names": [
+      "Displacement",
+      "Force"
+    ],
+    "coupling_scheme": "parallel-explicit",
+    "time_window_size_s": 0.005,
+    "displacement_semantics": "displacement_relative_to_undeformed_reference_mesh"
+  },
+  "cpp_worker_response": {
+    "generalized_force_field_semantics": "total_Qext_N=base_load_N+H_transpose_integrated_slice_force_N",
+    "mapping_comparison_representation": "generalized_force_N_minus_frozen_base_load_N"
+  },
+  "quality_contract": {
+    "frozen_before_run": true,
+    "courant_limit": 0.5,
+    "residual_semantic_definition": "max_final_residual_across_all_parsed_Solving_for_lines_per_time",
+    "residual_threshold": 0.001,
+    "continuity_semantic_definition": "last_parsed_global_continuity_error_per_time",
+    "continuity_threshold": 1e-06,
+    "iteration_semantic_definition": "maximum_iterations_across_all_parsed_Solving_for_lines_per_time",
+    "iteration_warning": 100,
+    "iteration_failure": 999,
+    "role": "legacy_diagnostic_only_not_a_v2_gate"
+  },
+  "quality_contract_v2": {
+    "source": "tools/numerical_quality_evidence_closure_v1/openfoam_numerical_quality_contract_v2.json",
+    "schema_version": "openfoam-numerical-quality-contract-v2",
+    "frozen_before_run": true
+  },
+  "mapping_contract": {
+    "force_error_tolerance_N": 1e-08,
+    "force_chain_identity_tolerance_N": 1e-12,
+    "openfoam_force_function_reconciliation_tolerance_N": 1e-06,
+    "absolute_moment_error_tolerance_Nm": 1e-07,
+    "normalized_moment_v2_definition": "moment_error_absolute_Nm/max(contribution_scale_Nm,1.0)",
+    "normalized_moment_v2_tolerance": 1e-12,
+    "virtual_work_tolerance": 1e-12,
+    "displacement_identity_tolerance_m": 1e-12
+  },
+  "formal_status": {
+    "VIV": "not_evaluated",
+    "LOCK_IN": "not_evaluated",
+    "STROUHAL": "not_evaluated"
+  },
+  "git_commit": "5922d33887bf2401a294d57f501d9f0819f23d1e",
+  "timestamp_utc": "2026-09-05T16:12:20.159834+00:00",
+  "moving_mesh_patch_contract": {
+    "required_fields_from_dynamic_mesh_and_adapter": [
+      "pointDisplacement",
+      "cellDisplacement"
+    ],
+    "symmetry_plane_rule": "a symmetryPlane mesh patch requires a symmetryPlane field patch",
+    "preflight_required": true,
+    "mesh_tracking_tolerance_m": 1e-08,
+    "snapshot_interval_s": 0.1
+  },
+  "source_git_commit": "867cba399132d076771a30c6ad028b9d0a8e1c75",
+  "generalized_force_metric_v2": {
+    "schema_version": "generalized-force-metric-v2.0.0",
+    "formula": "abs(Q_cpp_j-Q_formal_j) <= atol_group + rtol * sum_i(abs(Q_formal_i_j))",
+    "contribution_scale": "sum over structural slices of abs(formal H_i^T F_i contribution for DOF j)",
+    "mixed_unit_policy": "evaluate positional and slope DOFs independently; no mixed-unit vector norm is a hard gate",
+    "floating_point_basis": {
+      "machine_epsilon": 2.220446049250313e-16,
+      "safety_ulps": 128,
+      "rtol": 2.842170943040401e-14
+    },
+    "position": {
+      "q_unit": "m",
+      "Q_unit": "N",
+      "atol": 2.842170943040401e-14
+    },
+    "slope": {
+      "q_unit": "1 (m/m)",
+      "Q_unit": "N*m",
+      "atol": 8.881784197001252e-14,
+      "element_length_m": 3.125
+    },
+    "zero_contribution_policy": "when contribution_scale is zero, apply the dimensionally correct absolute floor; exact zero is separately required by the zero-force regression",
+    "legacy_metric": "legacy_absolute_inf_error is diagnostic only"
+  },
+  "micro_smoke_evidence": {
+    "mesh_snapshot_times_s": [
+      0.0,
+      0.05,
+      0.1
+    ],
+    "purpose": "coupled mapping and moving-mesh/Courant diagnostic only; no VIV or physical-power conclusion"
+  },
+  "openfoam_physical_time_offset_s": 0.1,
+  "initial_structure_state": "NO_FLOW_EQUILIBRIUM",
+  "initialization_policy": "zero-geometry precursor state; mean-drag equilibrium explicitly prohibited",
+  "quality_contract_v3": {
+    "source": "D:\\研二文件\\开题准备\\CFD_ANCF_VIV\\tools\\parallel_explicit_fsi_timestep_stability_diagnostic_v1\\openfoam_quality_contract_v4.json",
+    "sha256": "94dc586f99d7241e3a9b7bf6fb218849f9b003279fda99262d720a52ef674967",
+    "frozen_before_run": true
+  },
+  "precursor_state": {
+    "source": "D:\\研二文件\\开题准备\\CFD_ANCF_VIV\\results\\fixed_cylinder_precursor_initialization_contract_v1_run_002\\PRECURSOR_STATE_V1",
+    "manifest_sha256": "cc6cd22d56c316d129d81ab6fdf1f78e0b4cb290457419734fb7ef6720e75a87",
+    "source_openfoam_time_s": 0.1,
+    "U_p_phi": "exact manifest hashes",
+    "Uf": "OpenFOAM reconstruction",
+    "meshPhi": "zero under initial zero motion"
+  },
+  "cold_start_guard": {
+    "raw_first_abs_Fx_max_N": 5000.0,
+    "basis": "inherited precursor startup-balanced contract"
+  },
+  "structural_startup_sanity_guard": {
+    "max_abs_ux_m": 0.05,
+    "max_abs_vx_mps": 1.0,
+    "basis": "10x ANCF-only normal-drag 0.1 s reference (0.004209 m, 0.07482 m/s); runaway screen only"
+  },
+  "mesh_snapshot_coupling_times_s": [
+    0,
+    0.025,
+    0.05,
+    0.075,
+    0.1
+  ],
+  "coupling_scheme": "parallel-implicit",
+  "implicit_convergence": {
+    "min_iterations": 2,
+    "max_iterations": 8,
+    "acceleration": "none",
+    "measures": [
+      {
+        "data": "Displacement",
+        "mesh": "Structure-Mesh",
+        "abs_limit": 1e-08,
+        "rel_limit": 1e-05
+      },
+      {
+        "data": "Force",
+        "mesh": "Structure-Mesh",
+        "abs_limit": 0.001,
+        "rel_limit": 1e-05
+      }
+    ]
+  },
+  "quality_contract_v4": {
+    "source": "D:\\研二文件\\开题准备\\CFD_ANCF_VIV\\tools\\parallel_explicit_fsi_timestep_stability_diagnostic_v1\\openfoam_quality_contract_v4.json",
+    "sha256": "94dc586f99d7241e3a9b7bf6fb218849f9b003279fda99262d720a52ef674967",
+    "frozen_before_run": true
+  },
+  "qualification_scope": "exactly one physical window; stop after commit"
+}

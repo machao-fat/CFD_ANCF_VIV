@@ -478,6 +478,14 @@ class GenericStructuralCoordinator:
         return state
 
     def rollback(self) -> None:
+        """Restore the active physical checkpoint for a retry.
+
+        A preCICE parallel-implicit time window may request more than one
+        rollback before the window is accepted.  The checkpoint therefore
+        remains active across retries and is cleared only by :meth:`commit`.
+        Backend snapshots contain physical/solver state only; transport
+        counters are intentionally owned by the backend and remain monotonic.
+        """
         checkpoint = self._checkpoint
         if checkpoint is None:
             raise CheckpointError("no active checkpoint")
@@ -491,7 +499,8 @@ class GenericStructuralCoordinator:
         self._last_motion = {}
         self._pending_advance = False
         self.committed_step = checkpoint.committed_step
-        self._checkpoint = None
+        # Keep the same window checkpoint alive.  It is cleared only after an
+        # accepted window in commit(), allowing repeated rollback/retry cycles.
 
     def reset_iteration(self) -> None:
         if self._pending_advance:

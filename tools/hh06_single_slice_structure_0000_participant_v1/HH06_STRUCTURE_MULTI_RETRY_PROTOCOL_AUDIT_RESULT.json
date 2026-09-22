@@ -1,0 +1,80 @@
+{
+  "audit": "HH06_STRUCTURE_MULTI_RETRY_PROTOCOL_AUDIT",
+  "STRUCTURE_MULTI_RETRY_STATUS": "WORKER_PROTOCOL_SINGLE_RETRY_LIMIT",
+  "root_cause": "CFD_ANCF_ALLOW_IMPLICIT_RETRY_NOT_ENABLED_IN_SENSITIVITY_RUNNER",
+  "classification": {
+    "A_WORKER_PROTOCOL_SINGLE_RETRY_LIMIT": true,
+    "B_CHECKPOINT_RESTORE_INCOMPLETE": false,
+    "C_WORKER_CRASH_UNRELATED": false
+  },
+  "checkpoint": {
+    "q": true,
+    "qdot": true,
+    "qddot": true,
+    "committed_physical_window_state": true,
+    "tentative_state": true,
+    "additional_opaque_ancf_internal_state_required": false,
+    "coordinator_time_field_present": true,
+    "transport_ids_checkpointed": false,
+    "checkpoint_survives_multiple_rollbacks": true
+  },
+  "observed_retry_sequence": [
+    {
+      "iteration": 1,
+      "sequence": 1,
+      "request_id": 910001,
+      "transaction_id": 1910001,
+      "worker_response": true,
+      "rollback_complete": true
+    },
+    {
+      "iteration": 2,
+      "sequence": 2,
+      "request_id": 910002,
+      "transaction_id": 1910002,
+      "worker_response": true,
+      "rollback_complete": true
+    },
+    {
+      "iteration": 3,
+      "sequence": 3,
+      "request_id": 910003,
+      "transaction_id": 1910003,
+      "worker_response": false,
+      "failure": "worker response header missing at sequence 3"
+    },
+    {
+      "iteration": 4,
+      "reached": false
+    },
+    {
+      "iteration": 5,
+      "reached": false
+    }
+  ],
+  "worker": {
+    "path": "/home/machao/OpenFOAM/coupling/singal_slice/slice0000/cfd_ancf_ancf_kernel_worker_shm1_qualified",
+    "sha256": "69f045eb7f4576e5178d10711f0f265d7458282a7a4ecbcb860a913ada45beef",
+    "binary_contains_multi_retry_gate": true,
+    "gate_name": "CFD_ANCF_ALLOW_IMPLICIT_RETRY",
+    "gate_enabled_by_sensitivity_runner": false,
+    "intrinsic_binary_multi_retry_capability": true
+  },
+  "evidence": {
+    "max_iterations_5_trace": "runtime/hh06_bounded_multiwindow_ale_qualification_v1/sensitivity_iter5/structure_force_trace.jsonl",
+    "max_iterations_10_trace": "runtime/hh06_bounded_multiwindow_ale_qualification_v1/sensitivity_iter10/structure_force_trace.jsonl",
+    "sensitivity_runner": "runtime/hh06_bounded_multiwindow_ale_qualification_v1/artifacts/run_sensitivity_case.sh",
+    "participant_source": "tools/hh06_single_slice_structure_0000_participant_v1/structure_0000_participant.py",
+    "coordinator_source": "src/coupling/arbitrary_n_live_orchestration_v1/coordinator.py",
+    "worker_source": "src/coupling/cpp_worker_persistent_ipc_v1/ancf_worker_main.cpp"
+  },
+  "execution_boundary": {
+    "code_modified": false,
+    "configuration_modified": false,
+    "runtime_logs_modified": false,
+    "openfoam_started": false,
+    "precice_started": false,
+    "ancf_worker_started": false,
+    "fifty_window_run_started": false
+  }
+}

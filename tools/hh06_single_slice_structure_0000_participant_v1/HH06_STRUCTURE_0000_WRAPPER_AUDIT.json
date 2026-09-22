@@ -1,0 +1,58 @@
+{
+  "audit": "HH06_STRUCTURE_0000_WRAPPER_CONTRACT_AUDIT_V1",
+  "status": "BLOCKED",
+  "blocking_checks": [
+    "hydrodynamic_wire_extension"
+  ],
+  "checks": {
+    "status_is_dry_run": true,
+    "participants": true,
+    "parallel_implicit": true,
+    "hh06_geometry": true,
+    "q0_dimension_and_finite": true,
+    "one_structure_point": true,
+    "no_legacy_604_vertex": true,
+    "single_slice_mapping": true,
+    "absolute_displacement_declared": true,
+    "resultant_mapping_declared": true,
+    "tension_quantities_distinct": true,
+    "precice_xml_parse": true,
+    "hydrodynamic_wire_extension": false
+  },
+  "case_dir": "\\\\wsl.localhost\\Ubuntu-22.04\\home\\machao\\OpenFOAM\\coupling\\singal_slice\\slice0000",
+  "case_id": "ANCF_SINGLE_SLICE_HIGHRE_0P2S_PREP_V1",
+  "participants": {
+    "fluid": "Fluid_0000",
+    "structure": "Structure_0000"
+  },
+  "model": {
+    "length_m": 13.12,
+    "diameter_m": 0.028,
+    "elements": 32,
+    "nodes": 33,
+    "dof": 198
+  },
+  "mapping": {
+    "mode": "single_slice_resultant_force",
+    "structure_points": 1,
+    "s_ref_m": 2.97,
+    "deltaL_m": 1.98,
+    "fluid_faces_external_only": true
+  },
+  "tension": {
+    "benchmark_top_tension_N": 1175.0,
+    "equilibrium_reaction_tension_N": 1188.28
+  },
+  "q0": {
+    "artifact": "D:\\CFD\\CFD_ANCF_VIV_reentry_runtime\\HH06_P1_WET_MODAL_STRUCTURAL_GATE\\ancf_static.raw",
+    "sha256": "b298979244f67e23d02a63566e718ccb1f8897570c12b0aab98f7cbbf6577091",
+    "count": 198,
+    "q_sha256": "e1ba7fc759244d8e0ef884f256980c6bd815c64932b0318fd021395815b1a9f0",
+    "velocity_zero": true
+  },
+  "wire_capability": {
+    "SHM1_hydrodynamic_regions": false,
+    "note": "Current checked-out protocol must expose SHM1 before a wet-mass runtime is authorized."
+  },
+  "no_runtime_started": true
+}

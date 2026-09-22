@@ -1,0 +1,151 @@
+{
+  "qualification": "HH06_SHM1_CROSS_LANGUAGE_PROTOCOL",
+  "classification": "PASS_HH06_SHM1_CROSS_LANGUAGE_PROTOCOL",
+  "authorized_next_phase": "HH06_WORKER_DEPLOYMENT_AND_OFFLINE_RUNTIME_QUALIFICATION",
+  "execution_boundary": {
+    "openfoam_run": false,
+    "precice_handshake": false,
+    "launch_sh": false,
+    "ancf_physical_advance": false,
+    "new_time_directory": false,
+    "python_protocol_modified": false,
+    "hh06_wrapper_modified": false,
+    "ancf_kernel_source_modified": false,
+    "old_slice0000_binary_overwritten": false
+  },
+  "source_identity": {
+    "git_repository": "https://github.com/machao-fat/CFD_ANCF_VIV.git",
+    "git_branch": "feature/ancf-spanwise-hydro-matrix-v1",
+    "git_head": "355640e11925b9feddd1a52bb3d93596e5ee8251",
+    "commit_subject": "Connect spanwise hydrodynamic matrices to ANCF state",
+    "source_hashes_match_prior_shm1_baseline": true,
+    "ancf_worker_main_cpp_sha256": "83F2D643F855894C8E74AAA11D0C76684E74886FFA0CCFA044B9FB368367DEB9",
+    "ancf_kernel_cpp_sha256": "6DDE195A8EA27F253A21D4A859BF41A620697963AB0A834BB9D982B51863AC06",
+    "ancf_kernel_hpp_sha256": "C1182AB921D5517C2A5282F8B5FE51C3AB298BEC8B6015BFDCDBCA733C17E22C",
+    "identity_status": "PASS"
+  },
+  "build": {
+    "recipe": "formal CMakeLists.txt",
+    "cmake_version": "3.22.1",
+    "compiler": "g++ 11.4.0 (Ubuntu 22.04)",
+    "build_type": "RelWithDebInfo",
+    "compile_flags": ["-O2", "-g", "-DNDEBUG", "-Wall", "-Wextra", "-Wpedantic", "-Werror", "-std=gnu++17"],
+    "link_flags": ["-O2", "-g", "-DNDEBUG"],
+    "linked_libraries": [],
+    "binary_path": "D:/研二文件/开题准备/CFD_ANCF_VIV_BUILD/hh06_shm1_qualification_build_exact/cfd_ancf_ancf_kernel_worker_shm1_qualified",
+    "binary_size_bytes": 2647128,
+    "binary_sha256": "69F045EB7F4576E5178D10711F0F265D7458282A7A4ECBCB860A913ADA45BEEF",
+    "shm1_marker_present_in_binary": true
+  },
+  "python_production_payload": {
+    "kernel_protocol_sha256": "46719654EF6A283F9E9FFEED602AC2EF3BE560B472E383B691F2DEAB63C1C280",
+    "case_id": "ANCF_SINGLE_SLICE_HIGHRE_0P2S_PREP_V1",
+    "ndof": 198,
+    "dt_s": 0.0002,
+    "hydrodynamic_regions": [
+      {
+        "s_min_m": 0.0,
+        "s_max_m": 13.12,
+        "added_mass_per_length_kg_m": [0.616, 0.616, 0.0],
+        "linear_damping_per_length_Ns_m2": [0.0, 0.0, 0.0]
+      }
+    ],
+    "model_bytes_sha256": "1cf5189b5270de532730d37d9962767284b40d80bca6fbef9a0cdaf511616164",
+    "request_payload_sha256_with_symmetric_identity_mass": "05c8a87431aa777f50062acae4479d35b6dba2e741d712b0c024565d38e53bd5",
+    "shm1_offset_bytes": 256,
+    "shm1_marker_bytes_hex": "53484d31",
+    "shm1_version": 1,
+    "region_count": 1,
+    "region_raw_length_bytes": 64,
+    "region_raw_sha256": "916e2fde1563525d11ee53391493815f691c916cb707f55c45b10a277cb1a87f"
+  },
+  "worker_runtime_checks": {
+    "initialize_ack": {
+      "pass": true,
+      "schema": 1,
+      "protocol": 1,
+      "message_type": 7,
+      "role": "cfd_ancf_kernel_worker_v1"
+    },
+    "clean_shutdown": {
+      "pass": true,
+      "return_code": 0,
+      "physical_advance": false
+    },
+    "process_start_count": 6,
+    "process_start_count_breakdown": {
+      "initialize_shutdown": 2,
+      "shm1_guard": 1,
+      "shm1_dmp1_guard": 1,
+      "sld1_shm1_dmp1_guard": 1,
+      "legacy_guard": 1
+    }
+  },
+  "real_binary_pre_advance_guards": {
+    "guard_return_code": 17,
+    "physical_advance": false,
+    "hh06_shm1": {
+      "payload_length_bytes": 320560,
+      "initialize_ack": true,
+      "return_code": 17,
+      "stdout_after_request_bytes": 0,
+      "contract_sha256_after_controlled_mass_mutation": "9b709e5b8605c0e25f44ac15e65f9ce1fd564178f973c8559163987d3c6e145f",
+      "pass": true
+    },
+    "hh06_shm1_dmp1": {
+      "payload_length_bytes": 322264,
+      "initialize_ack": true,
+      "return_code": 17,
+      "stdout_after_request_bytes": 0,
+      "contract_sha256_after_controlled_mass_mutation": "150e0918d6f1554dfde883cdfd81369e2041715b908463420d538cb2477cd102",
+      "pass": true
+    },
+    "sld1_shm1_dmp1_order": {
+      "payload_length_bytes": 322328,
+      "marker_offsets": {
+        "SPX1": 208,
+        "BLS1": 252,
+        "SLD1": 264,
+        "SHM1": 296,
+        "DMP1": 372
+      },
+      "ordering": "SPX1 -> BLS1 -> SLD1 -> SHM1 -> DMP1",
+      "initialize_ack": true,
+      "return_code": 17,
+      "stdout_after_request_bytes": 0,
+      "pass": true
+    }
+  },
+  "legacy_compatibility": {
+    "hydrodynamic_regions": [],
+    "shm1_marker_present": false,
+    "initialize_ack": true,
+    "return_code": 17,
+    "physical_advance": false,
+    "payload_length_bytes": 320484,
+    "pass": true,
+    "python_existing_protocol_regression": "3/3 PASS"
+  },
+  "semantic_evidence": {
+    "status": "PASS",
+    "basis": [
+      "actual binary reached post-model/full-contract pre-advance guard for SHM1 payload",
+      "actual binary reached the same guard for SHM1+DMP1 payload",
+      "C++ SHM1 matrix selftest PASS (13/13)",
+      "C++ SHM1 model selftest PASS",
+      "C++ SHM1 state selftest PASS"
+    ],
+    "advance_called": false,
+    "production_cxx_debug_interface_added": false
+  },
+  "selftests": {
+    "matrix": {"status": "PASS", "tests_passed": 13, "binary_sha256": "88DD0065E8DA4DEACFB20A8CA15BCD69278CA14E5BA5A93EE5DB4B50FF18BF91"},
+    "model": {"status": "PASS", "binary_sha256": "57FBA974907ABA4AE7745DA59C1C030994306FC3F3180C81BBAC2B5D43E895A8"},
+    "state": {"status": "PASS", "binary_sha256": "5EC4B0AA3A0C08ADFA669C01DDF8279E222F3018736366CC87269B410D1C6D75"}
+  },
+  "reports": {
+    "build_manifest": "tools/hh06_single_slice_structure_0000_participant_v1/HH06_SHM1_WORKER_BUILD_MANIFEST.json",
+    "build_report": "tools/hh06_single_slice_structure_0000_participant_v1/HH06_SHM1_WORKER_BUILD_REPORT.md",
+    "qualification_report": "tools/hh06_single_slice_structure_0000_participant_v1/HH06_SHM1_CROSS_LANGUAGE_PROTOCOL_REPORT.md"
+  }
+}

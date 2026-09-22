@@ -1,0 +1,25 @@
+{
+  "schema_version": "hh06_worker_qualified_runtime_v1",
+  "purpose": "Offline HH06 Structure_0000 worker deployment selector; does not authorize preCICE or OpenFOAM.",
+  "case_id": "ANCF_SINGLE_SLICE_HIGHRE_0P2S_PREP_V1",
+  "participant": "Structure_0000",
+  "worker": {
+    "path_windows": "D:/研二文件/开题准备/CFD_ANCF_VIV_BUILD/hh06_shm1_qualification_build_exact/cfd_ancf_ancf_kernel_worker_shm1_qualified",
+    "path_wsl": "/home/machao/OpenFOAM/coupling/singal_slice/slice0000/cfd_ancf_ancf_kernel_worker_shm1_qualified",
+    "sha256": "69F045EB7F4576E5178D10711F0F265D7458282A7A4ECBCB860A913ADA45BEEF",
+    "source_git_branch": "feature/ancf-spanwise-hydro-matrix-v1",
+    "source_git_head": "355640e11925b9feddd1a52bb3d93596e5ee8251"
+  },
+  "protected_legacy_worker": {
+    "path_wsl": "/home/machao/OpenFOAM/coupling/singal_slice/slice0000/cfd_ancf_ancf_kernel_worker",
+    "sha256": "7B246C53F2040CE9DCBA3100700E1D5DEF905E84D8452F560B6D1B29E88D8473",
+    "overwritten": false
+  },
+  "qualification_scope": {
+    "offline_structure_only": true,
+    "preCICE_initialize": false,
+    "openfoam_run": false,
+    "fluid_participant": false,
+    "new_openfoam_time_directory": false
+  }
+}

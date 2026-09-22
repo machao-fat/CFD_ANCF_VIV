@@ -1,0 +1,131 @@
+{
+  "qualification": "HH06_OFFLINE_RUNTIME_QUALIFICATION_RETRY_AFTER_TRANSPORT_FIX",
+  "classification": "PASS_HH06_STRUCTURE_OFFLINE_RUNTIME_QUALIFICATION",
+  "case": "/home/machao/OpenFOAM/coupling/singal_slice/slice0000",
+  "worker": {
+    "path": "/home/machao/OpenFOAM/coupling/singal_slice/slice0000/cfd_ancf_ancf_kernel_worker_shm1_qualified",
+    "expected_sha256": "69F045EB7F4576E5178D10711F0F265D7458282A7A4ECBCB860A913ADA45BEEF",
+    "actual_sha256": "69F045EB7F4576E5178D10711F0F265D7458282A7A4ECBCB860A913ADA45BEEF",
+    "sha256_match": true,
+    "size_bytes": 2647128,
+    "return_code": 0
+  },
+  "backend": {
+    "source": "tools/hh06_single_slice_structure_0000_participant_v1/structure_0000_participant.py",
+    "sha256": "C5401DDF05C0C312B69F2C6DDE0C8CC130BCCE16753CDD0E5258CFBBE95D1C46",
+    "checkpoint_transport_ids": false,
+    "transport_counters_session_monotonic": true
+  },
+  "contract": {
+    "length_m": 13.12,
+    "elements": 32,
+    "nodes": 33,
+    "dof": 198,
+    "dt_s": 0.0002,
+    "q0_source": "P1 REF_NE32 static equilibrium",
+    "v0": "zero",
+    "shm1": {
+      "region_count": 1,
+      "s_min_m": 0.0,
+      "s_max_m": 13.12,
+      "added_mass_per_length_kg_m": [0.616, 0.616, 0.0],
+      "linear_damping_per_length_Ns_m2": [0.0, 0.0, 0.0],
+      "model_bytes_sha256": "1CF5189B5270DE532730D37D9962767284B40D80BCA6FBEF9A0CDAF511616164",
+      "shm1_offset": 176,
+      "shm1_marker_hex": "53484d31",
+      "shm1_version": 1
+    }
+  },
+  "test_force": {
+    "resultant_force_N": [0.0, 1.0, 0.0],
+    "application_s_m": 2.97,
+    "axis": "cross-flow y",
+    "test_only_not_HH06_fluid_force": true
+  },
+  "checkpoint_A": {
+    "id": "hh06-offline-checkpoint-A",
+    "committed_step": 0,
+    "q_sha256": "E1BA7FC759244D8E0EF884F256980C6BD815C64932B0318FD021395815B1A9F0",
+    "qdot_sha256": "C87499548F9EFBD98C824A95A664AF38F414EFB1C9EEDE544E55E019473D6B24",
+    "qddot_sha256": "C87499548F9EFBD98C824A95A664AF38F414EFB1C9EEDE544E55E019473D6B24"
+  },
+  "trial_A": {
+    "physical_window": {
+      "global_step": 1,
+      "case_local_bridge_step": 1,
+      "time_s": 0.0002,
+      "dt_s": 0.0002
+    },
+    "transport_identity": {
+      "sequence": 1,
+      "request_id": 910001,
+      "transaction_id": 1910001
+    },
+    "iterations": 3,
+    "residual": 7.826941494926132e-08,
+    "q_sha256": "094513E6CA2DC91D1C6766FE19D0FC05AF4CAC3B7432B4E25446489CB841EBB9",
+    "state_changed": true,
+    "finite": true
+  },
+  "rollback": {
+    "physical_state_restored": true,
+    "transport_counters_restored": false,
+    "transport_counters_remained_monotonic": true,
+    "q_restored_exactly": true,
+    "qdot_restored_exactly": true,
+    "qddot_restored_exactly": true,
+    "pending_cleared": true
+  },
+  "trial_B": {
+    "physical_window": {
+      "global_step": 1,
+      "case_local_bridge_step": 1,
+      "time_s": 0.0002,
+      "dt_s": 0.0002
+    },
+    "transport_identity": {
+      "sequence": 2,
+      "request_id": 910002,
+      "transaction_id": 1910002
+    },
+    "iterations": 3,
+    "residual": 7.826941494926132e-08,
+    "q_sha256": "094513E6CA2DC91D1C6766FE19D0FC05AF4CAC3B7432B4E25446489CB841EBB9",
+    "finite": true
+  },
+  "replay_comparison": {
+    "max_abs_diff_q": 0.0,
+    "max_abs_diff_qdot": 0.0,
+    "max_abs_diff_qddot": 0.0,
+    "max_abs_diff_section_displacement_m": 0.0,
+    "deterministic_tolerance_policy": "existing exact floating-point replay policy",
+    "pass": true
+  },
+  "transport_audit": {
+    "sequence_strictly_increased": true,
+    "request_id_strictly_increased": true,
+    "transaction_id_strictly_increased": true,
+    "physical_window_identity_equal": true,
+    "worker_duplicate_detection_retained": true
+  },
+  "commit": {
+    "passed": true,
+    "committed_step": 1,
+    "backend_committed_advance_count": 1,
+    "state_is_B2": true
+  },
+  "execution_boundary": {
+    "NO_OPENFOAM_RUN": true,
+    "NO_FLUID_0000": true,
+    "NO_PRECICE_INITIALIZE_OR_HANDSHAKE": true,
+    "NO_LAUNCH_SH": true,
+    "NO_NEW_OPENFOAM_TIME_DIRECTORY": true,
+    "NO_SOURCE_OR_PROTOCOL_MODIFICATION": true
+  },
+  "raw_evidence": {
+    "path": "tools/hh06_single_slice_structure_0000_participant_v1/HH06_OFFLINE_RUNTIME_QUALIFICATION_RESULT_RETRY_RAW.json",
+    "sha256": "7620EC5172AAD679258AB0E82A7BD325EBD4950A21840BAFC071E192E0D0A5A4"
+  },
+  "previous_failure_evidence_preserved": "tools/hh06_single_slice_structure_0000_participant_v1/HH06_OFFLINE_RUNTIME_QUALIFICATION_RESULT_PRE_TRANSPORT_FIX.json",
+  "authorized_next_phase": "HH06_PRECICE_HANDSHAKE_QUALIFICATION"
+}

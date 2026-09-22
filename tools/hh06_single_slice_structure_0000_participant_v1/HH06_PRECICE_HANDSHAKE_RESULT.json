@@ -1,0 +1,83 @@
+{
+  "qualification": "HH06_PRECICE_HANDSHAKE_QUALIFICATION",
+  "classification": "DO_NOT_PASS",
+  "case": "/home/machao/OpenFOAM/coupling/singal_slice/slice0000",
+  "execution_boundary": {
+    "openfoam_long_run": false,
+    "production_0p2s_fsi": false,
+    "multi_slice": false,
+    "new_time_directory": false,
+    "worker_modified": false,
+    "shm1_modified": false,
+    "openfoam_case_modified": false,
+    "launch_sh_used": false
+  },
+  "participants": {
+    "fluid": "Fluid_0000",
+    "structure": "Structure_0000",
+    "scheme": "parallel-implicit",
+    "dt_s": 0.0002,
+    "requested_max_windows": 1
+  },
+  "worker": {
+    "path": "/home/machao/OpenFOAM/coupling/singal_slice/slice0000/cfd_ancf_ancf_kernel_worker_shm1_qualified",
+    "sha256": "69f045eb7f4576e5178d10711f0f265d7458282a7a4ecbcb860a913ada45beef",
+    "size_bytes": 2647128
+  },
+  "protocol": {
+    "precice_python_version": "3.4.0",
+    "precice_runtime_reported_version": "3.4.1",
+    "xml_parse": true,
+    "fluid_mesh_vertices": 200,
+    "structure_mesh_vertices": 1,
+    "force_mapping": "Fluid-Mesh -> Structure-Mesh conservative",
+    "displacement_mapping": "Structure-Mesh -> Fluid-Mesh consistent",
+    "direct_face_to_ancf_node_mapping": false,
+    "displacement_type": "absolute"
+  },
+  "phases": {
+    "initialization": {
+      "status": "FAIL",
+      "error_class": "PRECICE_INITIAL_DATA_NOT_WRITTEN_BEFORE_INITIALIZE",
+      "error": "Initial data has to be written to preCICE before calling initialize(). After defining your mesh, call requiresInitialData() to check if the participant is required to write initial data using the writeData() function."
+    },
+    "one_window": {
+      "status": "NOT_REACHED",
+      "accepted_windows": 0,
+      "force_received": false,
+      "structure_advanced": false,
+      "displacement_written": false,
+      "fluid_received_displacement": false
+    },
+    "checkpoint": {
+      "status": "NOT_REACHED",
+      "precice_checkpoint_requested": false,
+      "rollback_exercised": false,
+      "transport_ids_checked": false
+    }
+  },
+  "process": {
+    "structure_return_code": 1,
+    "fluid_return_code": 143,
+    "remaining_processes": false,
+    "new_time_directories": [],
+    "existing_restart_time": "30"
+  },
+  "blocker": {
+    "id": "PRECICE_INITIAL_DATA_NOT_WRITTEN_BEFORE_INITIALIZE",
+    "location": "PreciceStructureFleetBackend.initialize()",
+    "required_behavior": "After set_mesh_vertices, call requires_initial_data(); if true, write absolute zero Displacement at Structure-Mesh before participant.initialize().",
+    "xml_exchange": "Displacement initialize=\"yes\"",
+    "source_sha256": "5082447ec3c99799593c3739fbd579488d1f4f7ab71cca79464ccd46ffa51929"
+  },
+  "input_sha256": {
+    "precice-config.xml": "fe6d44106154111e17eaf6955e6f7e0a627b8d4965bd8308dd35ceab9fbaffc8",
+    "system/preciceDict": "5d018d744d1f76280fad2b1cc788e5dd32b331fe2bd0d9aa7900260cf4c7f229",
+    "contract.json": "040d81a692658d3c075e80d37873297e4d1d5fcc5b3a68eca48dfa6200c6957d",
+    "structure_contract.json": "6140027d309358c787798d81916417bf33730f7b8a8d47a02619fa35c26e0a24",
+    "mapping_contract.json": "fbfce29e99507cea6d99b93ecb6465e8a97c6c2dd0f53ee238805fcd8c8f10ae",
+    "interface_contract.json": "da2eec39f4226dc43552c0e2870246d699974e6fbe23547afa150693997dbdbf",
+    "structure_0000_participant.py": "c5401ddf05c0c312b69f2c6dde0c8cc130bcce16753cdd0e5258cfbbe95d1c46"
+  },
+  "authorized_next_phase": null
+}

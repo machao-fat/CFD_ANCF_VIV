@@ -26,6 +26,16 @@ out/
 *.dep
 *.dep.*
 **/Make/*/
+tools/**/Make/
+tools/**/.time-layer-work/
+tools/**/.time-layer-work-diagnostic-base/
+tools/**/_tmp_*
+
+# Presentation exports are generated deliverables, not solver source.
+presentation/
+rendered_slides/
+GROUP_MEETING_*
+ANCF_G1_LOW_LANGLEY_CURRENT_LINE_VALIDATION_V1_CENTERLINE_*.csv
 
 # Local solver/runtime state and generated experiment output
 runtime/
@@ -39,6 +49,12 @@ processor*/
 **/lnInclude/
 cases/**/coupling/
 cases/**/mesh/**/generated/
+
+# OpenFOAM campaign workspaces are local run data rather than repository
+# source.  The existing tracked templates remain tracked; new campaign
+# directories must be deliberately force-added if they are intended as
+# reusable source templates.
+cases/openfoam/**
 
 # Profiling traces and vendored/public reference datasets
 precice-profiling/

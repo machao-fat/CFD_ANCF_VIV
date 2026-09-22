@@ -1,0 +1,87 @@
+{
+  "audit": "HH06_FLUID_ROLLBACK_STATE_AUDIT",
+  "date": "2026-09-22",
+  "case": "/home/machao/OpenFOAM/coupling/singal_slice/slice0000",
+  "execution_boundary": {
+    "read_only": true,
+    "openfoam_started": false,
+    "precice_started": false,
+    "ancf_started": false,
+    "new_time_directory_created": false,
+    "case_modified": false
+  },
+  "classification": "PARTIAL_NOT_EVALUABLE",
+  "fluid_rollback_complete": "NOT_PROVEN",
+  "runtime_field_identity": "NOT_OBSERVABLE",
+  "primary_crash_class": "RAS_TURBULENCE_STATE_BLOWUP_BEFORE_GAMG_FPE",
+  "adapter_binary": {
+    "path": "/home/machao/OpenFOAM/machao-10/platforms/linux64GccDPInt32Opt/lib/libpreciceAdapterFunctionObject.so",
+    "sha256": "26ad8529822f96ca8ddfb3370f85257b0d19b56958538d6073cf8af897aac572",
+    "size_bytes": 1692328,
+    "banner": "OpenFOAM-preCICE adapter v1.3.0",
+    "build_id": "e76f7d6491a2f32cf9d6d5712c79b1ce55cd862b",
+    "checkpoint_symbols_present": [
+      "readCheckpoint",
+      "writeCheckpoint",
+      "readMeshCheckpoint",
+      "writeMeshCheckpoint",
+      "setupCheckpointing",
+      "storeCheckpointTime",
+      "reloadCheckpointTime"
+    ]
+  },
+  "visible_source": {
+    "path": "D:\\研二文件\\开题准备\\CFD_ANCF_VIV\\runtime\\openfoam_adapter_v131_rollback_observability_source",
+    "git_revision": "3d45c38c5091331906bd32517b400d8cb0786bb1",
+    "exact_binary_match_proven": false,
+    "rebuild_against_current_environment": false,
+    "build_blocker": "faceTriangulation.H missing_or_incompatible"
+  },
+  "field_audit": {
+    "points": {"source_design": "YES", "runtime_identity": "NOT_OBSERVABLE"},
+    "meshPhi": {"source_design": "YES", "runtime_identity": "NOT_OBSERVABLE"},
+    "U": {"source_design": "YES", "runtime_identity": "NOT_OBSERVABLE"},
+    "p": {"source_design": "YES", "runtime_identity": "NOT_OBSERVABLE"},
+    "k": {"source_design": "CONDITIONAL_YES_IF_REGISTERED", "runtime_identity": "NOT_PROVEN"},
+    "omega": {"source_design": "CONDITIONAL_YES_IF_REGISTERED", "runtime_identity": "NOT_PROVEN"},
+    "nut": {"source_design": "CONDITIONAL_YES_IF_REGISTERED", "runtime_identity": "NOT_PROVEN"},
+    "phi": {"source_design": "YES", "runtime_identity": "NOT_OBSERVABLE"},
+    "Uf": {"source_design": "CONDITIONAL_YES_IF_PRESENT", "runtime_identity": "NOT_OBSERVABLE"},
+    "pointDisplacement": {"source_design": "YES", "runtime_identity": "NOT_OBSERVABLE"},
+    "cellDisplacement": {"source_design": "YES", "runtime_identity": "NOT_OBSERVABLE"},
+    "time_and_timeIndex": {"source_design": "YES", "runtime_identity": "NOT_OBSERVABLE"},
+    "topology": {"source_design": "NO_DEDICATED_CHECKPOINT", "runtime_identity": "STATIC_CASE_TO_BE_FINGERPRINTED"}
+  },
+  "rollback_calls": {
+    "read_checkpoint_trigger": "preCICE requiresReadingCheckpoint()",
+    "mesh_restore": "fvMesh.movePoints()",
+    "mesh_phi_restore": "readMeshCheckpoint()",
+    "field_restore": "copy checkpointed registered geometric fields and oldTime levels",
+    "time_restore": "Time.setTime(value,timeIndex)",
+    "turbulence_correct_on_rollback": "NOT_FOUND_IN_VISIBLE_SOURCE",
+    "mesh_update_on_rollback": "NOT_FOUND_IN_VISIBLE_SOURCE",
+    "fvModels_update_on_rollback": "NOT_FOUND_IN_VISIBLE_SOURCE"
+  },
+  "iteration_observability": {
+    "precice_iteration_logs_present": true,
+    "fluid_callback_trial_id_present": false,
+    "field_hash_at_read_write_checkpoint_present": false,
+    "exact_iteration_to_field_mapping": "NOT_AVAILABLE",
+    "observed_examples": [
+      "RETRY7 window 22 it 1 and it 2 before Fluid EOF/FPE",
+      "RETRY11 window 18 it 1 through it 7 before manual stop"
+    ]
+  },
+  "crash_sequence": {
+    "time_30_0038_co_max": 0.4258242566,
+    "time_30_0040_co_max": 1.497721095,
+    "time_30_0042_co_max": 21.04137642,
+    "time_30_0042_omega_min": -142448.3008,
+    "time_30_0042_omega_max": 9936783773.0,
+    "time_30_0042_k_min": -9.43608139e-7,
+    "time_30_0044_co_max": 14.38620211,
+    "time_30_0044_omega_min": -1155651408.0,
+    "gamg_fpe_after_ras_blowup": true
+  },
+  "required_next_evidence": "callback-level field fingerprints aligned to preCICE iteration IDs; not executed in this audit"
+}

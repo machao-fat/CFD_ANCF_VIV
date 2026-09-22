@@ -1,0 +1,60 @@
+{
+  "case": "/home/machao/OpenFOAM/coupling/singal_slice/slice0000",
+  "diagnostic_scope": "read_only_after_user_stop",
+  "no_new_cfd_run": true,
+  "no_precice_run_after_stop": true,
+  "no_ancf_physical_advance_after_stop": true,
+  "residual_processes_found": false,
+  "classification": {
+    "overall": "DO_NOT_PASS",
+    "primary": "A_TURBULENCE_RAS_DIVERGENCE",
+    "secondary": "D_PRESSURE_GAMG_FPE",
+    "mesh_motion": "B_NOT_SUPPORTED_AS_PRIMARY_BY_EVIDENCE",
+    "fluid_rollback": "C_FLUID_FIELD_RESTORE_UNRESOLVED"
+  },
+  "time_step_s": 0.0002,
+  "last_directly_inspectable_time_s": 30.0,
+  "crash_time_directory_available": false,
+  "crash_interval_s": [30.0042, 30.0044],
+  "observed_sequence": [
+    {"time_s": 30.0038, "co_max": 0.4258242566},
+    {"time_s": 30.0040, "co_max": 1.497721095, "k_min": -4.517129971e-13},
+    {"time_s": 30.0042, "co_max": 21.04137642, "omega_min": -142448.3008, "omega_max": 120771.218},
+    {"time_s": 30.0044, "co_max": 14.38620211, "omega_min": -1155651408.0, "omega_max": 123013.8165, "k_min": -8.699802771e-7}
+  ],
+  "last_normal_mesh": {
+    "time_s": 30.0,
+    "cells": 46826,
+    "min_volume": 7.687364982e-10,
+    "max_non_orthogonality_deg": 44.00486412,
+    "max_skewness": 0.8545162319,
+    "checkMesh": "Mesh OK"
+  },
+  "retry11": {
+    "stopped_by_user": true,
+    "iteration_log_rows": 17,
+    "convergence_true_rows": 1,
+    "max_iteration_nonconverged_rows": 16,
+    "target_accepted_windows": 50,
+    "window18_in_progress_at_stop": true
+  },
+  "field_ranges_at_time_30": {
+    "U_magnitude": [2.7428636649494627e-05, 0.5579681196998714],
+    "p": [-0.143416, 0.0535786],
+    "k": [2.70199e-10, 0.015897],
+    "omega": [1.98359, 93792.8],
+    "nut": [2.88081e-15, 0.000280314],
+    "finite_values_observed": true
+  },
+  "raw_evidence": [
+    "HH06_50W_RETRY7_FLUID.stdout",
+    "HH06_50W_RETRY7_FLUID.stderr",
+    "HH06_50W_RETRY8_FLUID.stdout",
+    "HH06_50W_RETRY8_FLUID.stderr",
+    "HH06_50W_RETRY10_FLUID.stdout",
+    "HH06_50W_RETRY10_FLUID.stderr",
+    "HH06_50W_RETRY11_FLUID.stdout",
+    "precice-Fluid_0000-iterations.log"
+  ],
+  "report_status": "DIAGNOSTIC_COMPLETE"
+}
